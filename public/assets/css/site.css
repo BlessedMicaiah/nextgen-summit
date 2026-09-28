@@ -135,6 +135,12 @@ h1,h2,h3,p{margin:0}
   .count__l{font-size:10px;letter-spacing:.12em}
   .nav__links{gap:10px}
 }
+/* tablets: the text links move into Menu, as on phones, so the bar never runs past the edge */
+@media (min-width:761px) and (max-width:1000px){
+  .nav__link{display:none}
+  .nav__menu{display:inline-flex}
+  .count__to{display:none}
+}
 /* small phones: the CTA keeps its full wording by tightening, so it never crowds MENU */
 @media (max-width:440px){
   .nav .btn--sm{--h:40px;font-size:10.5px;letter-spacing:.07em;padding:0 .85em;gap:.5em}

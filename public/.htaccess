@@ -3,11 +3,13 @@ Options -Indexes
 
 # The review site is served from a folder inside this one. It must only ever be reached as
 # staging.nextgensummit.us, never as nextgensummit.us/staging/, so on any other host that
-# path does not exist. (This file also governs the staging folder, hence the host test.)
+# path does not exist. The review site ships this same file, and a folder's own rewrite rules
+# replace its parent's, so the test uses the full request path: it holds in either place.
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteCond %{HTTP_HOST} !^staging\. [NC]
-  RewriteRule ^staging(/.*)?$ - [R=404,L]
+  RewriteCond %{REQUEST_URI} ^/staging(/|$) [NC]
+  RewriteRule ^ - [R=404,L]
 </IfModule>
 
 <IfModule mod_headers.c>

@@ -907,6 +907,17 @@
     });
   }
 
+  // every link to another site opens in a new tab, so visitors keep their place here; the markup
+  // already says so, this keeps it true for any link added later without target="_blank"
+  function initExternalLinks() {
+    $$('a[href^="http"]').forEach(function (a) {
+      if (a.host === location.host || a.target === '_blank') return;
+      a.target = '_blank';
+      a.rel = (a.rel + ' noopener noreferrer').trim();
+    });
+  }
+
+  initExternalLinks();
   initMotionPrefs();
   initNav();
   initCountdown();

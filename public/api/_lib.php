@@ -11,7 +11,7 @@ if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__
 
 require __DIR__ . '/config.php';
 
-const NGS_KINDS = ['waitlist', 'registration', 'volunteer', 'partner'];
+const NGS_KINDS = ['waitlist', 'registration', 'volunteer', 'partner', 'question'];
 
 function ngs_text(array $src, string $key, int $max): string
 {
@@ -39,10 +39,14 @@ function ngs_data_dir(): string
     }
     $candidates = [];
     $root = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
-    if ($root !== '') {
-        $candidates[] = dirname($root) . '/nextgen-data';   // outside public_html on Hostinger
+    if (defined('NGS_DATA_DIR')) {
+        $candidates[] = (string) NGS_DATA_DIR;               // set in config.php; used alone, never falls back
+    } else {
+        if ($root !== '') {
+            $candidates[] = dirname($root) . '/nextgen-data';   // outside public_html on Hostinger
+        }
+        $candidates[] = dirname(__DIR__) . '/data';              // fallback inside, locked by .htaccess
     }
-    $candidates[] = dirname(__DIR__) . '/data';              // fallback inside, locked by .htaccess
     foreach ($candidates as $c) {
         if ((@is_dir($c) || @mkdir($c, 0750, true)) && @is_writable($c)) {
             ngs_protect_dir($c);
@@ -212,4 +216,70 @@ function ngs_delete(string $id): void
     fflush($fh);
     flock($fh, LOCK_UN);
     fclose($fh);
+}
+
+/** Merges $patch into one submission's data, leaving every other field as it was. */
+function ngs_update_data(string $id, array $patch): void
+{
+    $db = ngs_db();
+    if ($db) {
+        $st = $db->prepare('SELECT data FROM submissions WHERE id = ?');
+        $st->execute([$id]);
+        $raw = $st->fetchColumn();
+        if ($raw === false) {
+            return;
+        }
+        $data = array_merge(json_decode((string) $raw, true) ?: [], $patch);
+        $db->prepare('UPDATE submissions SET data = ? WHERE id = ?')->execute([json_encode($data, JSON_UNESCAPED_UNICODE), $id]);
+        return;
+    }
+    $path = ngs_jsonl_path();
+    if (!is_file($path)) {
+        return;
+    }
+    $fh = fopen($path, 'c+');
+    if (!$fh) {
+        return;
+    }
+    flock($fh, LOCK_EX);
+    $out = '';
+    while (($line = fgets($fh)) !== false) {
+        $r = json_decode($line, true);
+        if (!is_array($r)) {
+            continue;
+        }
+        if (($r['id'] ?? '') === $id) {
+            $r['data'] = array_merge(is_array($r['data'] ?? null) ? $r['data'] : [], $patch);
+            $line = json_encode($r, JSON_UNESCAPED_UNICODE);
+        }
+        $out .= rtrim($line, "\r\n") . "\n";
+    }
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, $out);
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+}
+
+/** True when a submission of this kind already holds exactly these values (ignoring case and spacing). */
+function ngs_is_duplicate(string $kind, array $match): bool
+{
+    $norm = function ($v): string {
+        $v = preg_replace('/\s+/u', ' ', trim((string) $v)) ?? '';
+        return function_exists('mb_strtolower') ? mb_strtolower($v) : strtolower($v);
+    };
+    foreach (ngs_all($kind) as $r) {
+        $same = true;
+        foreach ($match as $k => $v) {
+            if ($norm($r['data'][$k] ?? '') !== $norm($v)) {
+                $same = false;
+                break;
+            }
+        }
+        if ($same) {
+            return true;
+        }
+    }
+    return false;
 }

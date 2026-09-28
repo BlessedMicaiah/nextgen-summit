@@ -1,79 +1,105 @@
 /* ============================================================================
-   NextGen Summit — tickets
-   Composition only. Every colour here comes from the tokens in site.css, so the
-   page and the Eventbrite modal are branded from one source (--accent).
+   NextGen Summit — tickets and the scholarship application
+   Composition only. Every colour comes from the tokens in site.css, so the page
+   and the Eventbrite modal are branded from one source (--accent).
    ========================================================================= */
 
-.tk{max-width:var(--maxw);margin:0 auto;padding:calc(var(--nav-h) + clamp(40px,8vh,90px)) var(--gutter) clamp(90px,15vh,170px)}
-.tk__head{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);align-items:end;gap:26px clamp(30px,5vw,90px)}
-.tk__head .label{grid-column:1/-1}
-.tk__title{margin-top:clamp(18px,3vh,36px);font-size:clamp(44px,7.6vw,124px);line-height:.92}
-.tk__meta{margin:0}
-.tk__meta div{display:grid;grid-template-columns:minmax(4.5rem,auto) minmax(0,1fr);gap:6px 24px;align-items:baseline;padding:15px 0;border-top:1px solid var(--rule)}
-.tk__meta div:last-child{border-bottom:1px solid var(--rule)}
-.tk__meta dt{font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
-.tk__meta dd{margin:0;font:800 clamp(14px,1.2vw,18px)/1.3 var(--f-sans);letter-spacing:.02em;text-transform:uppercase}
+.nav__link.is-here{color:var(--accent-ink);cursor:default}
+.on-photo .nav__link.is-here{color:var(--accent)}
 
-/* the three ways in */
-.tk__list{list-style:none;margin:clamp(46px,8vh,90px) 0 0;padding:0;border-top:1px solid var(--rule)}
-.tier{padding:clamp(28px,4.4vh,46px) 0;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:14px clamp(24px,4vw,70px)}
-.tier__head{grid-column:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px clamp(14px,2vw,28px)}
-.tier__name{font:800 clamp(22px,2.6vw,40px)/1.05 var(--f-sans);letter-spacing:.01em;text-transform:uppercase}
-.tier__price{font:800 clamp(26px,3.2vw,52px)/1 var(--f-sans);letter-spacing:-.02em;color:var(--accent-ink)}
-.tier__cur{color:var(--accent-ink)}
-.tier__per{font-size:.42em;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
-.tier__price--word{font:800 clamp(14px,1.2vw,18px)/1.3 var(--f-sans);letter-spacing:.14em;text-transform:uppercase}
-.tier__note{grid-column:1;max-width:52ch;font:500 15.5px/1.6 var(--f-sans);color:var(--ink-2)}
-.tier__cta{grid-column:2;grid-row:1 / span 2;justify-self:end}
-.tier__second{grid-column:1/-1;margin-top:4px;font:600 14px/1.6 var(--f-sans);color:var(--ink-2)}
-.tier--schol{border-bottom:0}
-.tk__fine{margin-top:clamp(24px,3.6vh,36px);font:600 13px/1.6 var(--f-sans);color:var(--ink-3);max-width:52ch}
+/* ---------- hero: the photograph, the line, the date ---------- */
+.tkh{position:relative;z-index:71;min-height:74vh;min-height:74svh;display:flex;align-items:flex-end;color:#fff;overflow:hidden;background:#0B0B0F}
+.tkh__media{position:absolute;inset:0;margin:0}
+.tkh__img{width:100%;height:100%;object-fit:cover;object-position:42% 45%;filter:grayscale(1) contrast(1.04)}
+.tkh__shade{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(6,6,9,.78) 0%,rgba(6,6,9,.42) 46%,rgba(6,6,9,.08) 78%,rgba(6,6,9,0) 100%),
+  linear-gradient(180deg,rgba(6,6,9,.6) 0%,rgba(6,6,9,.1) 24%,rgba(6,6,9,.18) 50%,rgba(6,6,9,.84) 90%,rgba(6,6,9,.94) 100%)}
+.tkh__inner{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:calc(var(--nav-h) + 24px) var(--gutter) clamp(30px,6vh,60px)}
+.tkh__eyebrow{font:700 clamp(10px,.82vw,12px)/1.4 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+.tkh__title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(52px,9.6vw,164px);line-height:.88;text-shadow:0 2px 40px rgba(6,6,9,.4)}
+.tkh__foot{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 40px;margin-top:clamp(22px,3.6vh,40px);padding-top:clamp(16px,2.4vh,24px);border-top:1px solid rgba(255,255,255,.28)}
+.tkh__when{font:700 clamp(12px,1vw,14px)/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:#fff;text-shadow:0 1px 10px rgba(6,6,9,.7)}
+/* small on purpose: supporting information, never louder than the page */
+.tkh__early{font:700 11px/1.5 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);text-shadow:0 1px 10px rgba(6,6,9,.7)}
 
-@media (max-width:860px){
-  .tk__head{grid-template-columns:1fr}
-  .tier{grid-template-columns:1fr}
-  .tier__cta{grid-column:1;grid-row:auto;justify-self:stretch;margin-top:8px}
-  .tier__cta .btn{width:100%;justify-content:center}
+/* ---------- the two ways in: two columns of type, not pricing cards ---------- */
+.tk{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,10vh,120px) var(--gutter) clamp(64px,11vh,130px)}
+.tk__opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.opt{display:flex;flex-direction:column;align-items:flex-start;padding:clamp(30px,5vh,56px) clamp(24px,4vw,72px) clamp(34px,5.6vh,60px) 0}
+.opt + .opt{padding-left:clamp(24px,4vw,72px);padding-right:0;border-left:1px solid var(--rule)}
+.opt__h{display:flex;flex-direction:column;align-items:flex-start;gap:clamp(10px,1.6vh,18px)}
+.opt__name{font:800 clamp(15px,1.3vw,19px)/1.2 var(--f-sans);letter-spacing:.16em;text-transform:uppercase}
+.opt__dash{color:var(--ink-3)}
+.opt__price{font-family:var(--f-display);font-weight:900;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:clamp(84px,11vw,188px);line-height:.84;letter-spacing:-.045em;color:var(--ink)}
+.opt__cur{font-size:.46em;vertical-align:.86em;margin-right:.04em;letter-spacing:0;color:var(--accent-ink)}
+.opt__per{margin-left:.12em;font:800 clamp(14px,1.2vw,18px)/1 var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.opt__copy{margin-top:clamp(16px,2.4vh,24px);max-width:44ch;font:500 clamp(16px,1.25vw,19px)/1.5 var(--f-sans);color:var(--ink-2)}
+.opt__cta{margin-top:auto;padding-top:clamp(24px,3.6vh,38px)}
+.tk__fine{margin-top:clamp(18px,2.8vh,28px);max-width:60ch;font:600 13px/1.6 var(--f-sans);color:var(--ink-2)}
+.tk__fine[hidden],.tk__opts[hidden]{display:none}
+
+@media (max-width:760px){
+  .tk__opts{grid-template-columns:1fr}
+  .opt,.opt + .opt{padding:clamp(28px,4.6vh,40px) 0}
+  .opt + .opt{border-left:0;border-top:1px solid var(--rule)}
+  .opt__cta{width:100%}
+  .opt__cta .btn{width:100%}
 }
 
-/* Eventbrite binds to this by id; it must stay in the layout to be clickable, so it is
-   taken out of view rather than display:none, and out of the tab order */
+/* Eventbrite binds to this by id. It has to stay in the layout to be clickable, so it is taken
+   out of view rather than display:none, and out of the tab order. */
 .eb-trigger{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;pointer-events:none}
 
-/* ---------- ours, after their order goes through ---------- */
-.tkdone{padding:clamp(40px,8vh,90px) 0 0;outline:none}
-.tkdone[hidden]{display:none}
-.tkdone__title{margin-top:14px;font-size:clamp(56px,9vw,130px);line-height:.9;padding-bottom:.04em}
-.tkdone__copy{margin-top:clamp(12px,2vh,20px);max-width:40ch;font:600 clamp(17px,1.5vw,22px)/1.5 var(--f-sans)}
-.tkdone__small{margin-top:12px;max-width:44ch;font:500 15px/1.6 var(--f-sans);color:var(--ink-2)}
-.tkdone__cta{margin-top:clamp(26px,4vh,42px)}
-@media (max-width:560px){.tkdone__cta .btn{width:100%;justify-content:center}}
-
-@media (prefers-reduced-motion:reduce){
-  .tk__list .rv,.tkdone{transform:none}
+/* ---------- financial assistance: its own quiet band, a different kind of way in ---------- */
+.aid{background:var(--ink);color:#fff}
+.aid__in{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,10vh,120px) var(--gutter);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px clamp(30px,6vw,120px);align-items:end}
+.aid__title{font:800 clamp(28px,3.6vw,56px)/1.02 var(--f-sans);letter-spacing:.005em;text-transform:uppercase;max-width:14ch}
+.aid__copy{max-width:44ch;font:500 clamp(16px,1.25vw,19px)/1.55 var(--f-sans);color:rgba(255,255,255,.84)}
+.aid__cta{margin-top:clamp(22px,3.4vh,34px)}
+@media (max-width:760px){
+  .aid__in{grid-template-columns:1fr}
+  .aid__cta .btn{width:100%}
 }
 
+/* ---------- ours, after their order goes through ---------- */
+.tkdone{padding:clamp(20px,4vh,40px) 0 0;outline:none}
+.tkdone[hidden]{display:none}
+.tkdone__title{font-size:clamp(64px,10vw,150px);line-height:.88;padding-bottom:.04em}
+.tkdone__copy{margin-top:clamp(12px,2vh,20px);font:700 clamp(18px,1.6vw,24px)/1.4 var(--f-sans)}
+.tkdone__small{margin-top:10px;max-width:44ch;font:500 15px/1.6 var(--f-sans);color:var(--ink-2)}
+.tkdone__cta{margin-top:clamp(26px,4vh,42px)}
+@media (max-width:560px){.tkdone__cta .btn{width:100%}}
+
 /* ---------- scholarship application ---------- */
-.sch{max-width:62rem;margin:0 auto;padding:calc(var(--nav-h) + clamp(36px,7vh,80px)) var(--gutter) clamp(80px,13vh,150px)}
-.sch__title{margin-top:clamp(16px,2.6vh,30px);font-size:clamp(40px,6.4vw,96px);line-height:.94}
-.sch__intro{margin-top:clamp(20px,3.2vh,34px);max-width:58ch}
-.sch__intro p{font:500 clamp(15px,1.2vw,18px)/1.6 var(--f-sans);color:var(--ink-2)}
-.sch__intro p + p{margin-top:12px}
-.sch__caveat{font-weight:700;color:var(--ink)}
-.sch__form{margin-top:clamp(34px,5.5vh,64px)}
-.sch__set{margin:0;padding:clamp(24px,3.6vh,36px) 0;border:0;border-top:1px solid var(--rule);display:grid;gap:18px}
-.sch__legend{padding:0;margin-bottom:4px;font:700 11px/1.3 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:var(--accent-ink)}
-.sch__note{max-width:58ch;font:500 15px/1.6 var(--f-sans);color:var(--ink-2)}
-.field__help{margin-top:7px;font:500 13px/1.5 var(--f-sans);color:var(--ink-3);max-width:52ch}
-.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--rule-strong);border-radius:8px;background:#fff;color:var(--ink);font:500 16px/1.5 var(--f-sans);resize:vertical;transition:border-color .3s var(--ease)}
-.field textarea:focus{border-color:var(--accent-ink);outline:none}
-.field select{width:100%;height:52px;padding:0 14px;border:1.5px solid var(--rule-strong);border-radius:8px;background:#fff;color:var(--ink);font:500 16px/1 var(--f-sans)}
-.field select:focus{border-color:var(--accent-ink);outline:none}
-.field input[type=file]{width:100%;font:500 15px/1.5 var(--f-sans);color:var(--ink-2)}
-.field input[type=file]::file-selector-button{margin-right:14px;min-height:44px;padding:0 18px;border:1.5px solid var(--rule-strong);border-radius:8px;background:#fff;color:var(--ink);font:700 13px/1 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
-.field input[type=file]::file-selector-button:hover{border-color:var(--ink)}
-.sch__check{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;max-width:62ch;font:500 15px/1.55 var(--f-sans);color:var(--ink-2);cursor:pointer}
-.sch__check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent-ink);cursor:pointer}
-.sch__actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin-top:clamp(26px,4vh,40px)}
-.sch__fine{font:600 13px/1.5 var(--f-sans);color:var(--ink-3);max-width:34ch}
-@media (max-width:560px){.sch__actions .btn{width:100%;justify-content:center}}
+.sch{max-width:52rem;margin:0 auto;padding:calc(var(--nav-h) + clamp(36px,7vh,80px)) var(--gutter) clamp(80px,13vh,150px)}
+.sch__title{margin-top:clamp(16px,2.6vh,30px);font-size:clamp(44px,7vw,104px);line-height:.92}
+.sch__lede{margin-top:clamp(18px,3vh,30px);max-width:46ch;font:500 clamp(16px,1.25vw,19px)/1.55 var(--f-sans);color:var(--ink-2)}
+.sch__form{display:grid;gap:clamp(26px,4vh,36px);margin-top:clamp(34px,5.5vh,60px);padding-top:clamp(28px,4.4vh,44px);border-top:1px solid var(--rule)}
+.sch__form[hidden]{display:none}
+.sch__form .field input{height:56px}
+.sch__pair{margin:0;padding:0;border:0;min-width:0}
+.sch__pair legend,.sch__q legend{padding:0;margin-bottom:9px;font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.sch__pair-in{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.sch__pair-in{grid-template-columns:1fr}}
+.sch__count{margin-top:7px;font:600 12.5px/1.4 var(--f-sans);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.sch__count.is-over{color:#8A1233}
+.sch__q{margin:0;padding:0;border:0;min-width:0}
+.sch__opts{display:grid;gap:10px}
+.sch__opt{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:14px;min-height:56px;padding:12px 16px;border:1.5px solid var(--rule-strong);border-radius:8px;background:#fff;font:600 15.5px/1.4 var(--f-sans);cursor:pointer;transition:border-color .3s var(--ease),background-color .3s var(--ease)}
+.sch__opt:hover{border-color:var(--ink)}
+.sch__opt input{width:20px;height:20px;margin:0;accent-color:var(--ink);cursor:pointer}
+.sch__opt:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.sch__opt:has(input:focus-visible){outline:2px solid var(--accent-ink);outline-offset:2px}
+.sch__opts--row{grid-template-columns:repeat(2,minmax(0,160px))}
+.sch__other{margin-top:10px}
+.sch__other[hidden]{display:none}
+.sch__q[aria-invalid="true"] .sch__opt,.sch__pair [aria-invalid="true"]{border-color:#B0123E}
+.sch__ack{margin-top:4px;padding:18px 20px;border-left:3px solid var(--accent);background:var(--paper-2);font:600 15px/1.55 var(--f-sans);color:var(--ink);max-width:62ch}
+.sch__actions{margin-top:2px}
+@media (max-width:560px){.sch__actions .btn{width:100%}}
+.sch__done{margin-top:clamp(34px,5.5vh,60px);padding-top:clamp(28px,4.4vh,44px);border-top:3px solid var(--accent);outline:none}
+.sch__done[hidden]{display:none}
+.sch__done-t{font:800 clamp(28px,3.4vw,48px)/1.05 var(--f-sans);letter-spacing:.01em;text-transform:uppercase}
+.sch__done-x{margin-top:14px;max-width:46ch;font:500 clamp(16px,1.25vw,19px)/1.55 var(--f-sans);color:var(--ink-2)}
+.sch__done-x small{display:block;margin-top:8px;font:600 13px/1.45 var(--f-sans)}
+.sch__done-cta{margin-top:clamp(24px,3.6vh,36px)}

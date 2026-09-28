@@ -1,5 +1,5 @@
 <?php
-/* Next Gen Summit: receives the waitlist, registration, volunteer, partner and question forms.
+/* Next Gen Summit: receives the waitlist, registration, volunteer, partner, question and scholarship forms.
    (Registration is paused while the waitlist is open; its handling below is kept for when it returns.)
    Answers JSON to the site's JavaScript, and redirects to a confirmation page
    when a browser posts the form directly (JavaScript off). */
@@ -23,17 +23,18 @@ function ngs_reply(bool $ok, string $kind, string $error, int $status, bool $jso
         exit;
     }
     if ($ok) {
-        header('Location: ' . (in_array($kind, ['waitlist', 'registration'], true) ? '/registration-received/' : '/thanks/'), true, 303);
+        $to = $kind === 'scholarship' ? '/scholarship/received/' : (in_array($kind, ['waitlist', 'registration'], true) ? '/registration-received/' : '/thanks/');
+        header('Location: ' . $to, true, 303);
         exit;
     }
     http_response_code($status);
     header('Content-Type: text/html; charset=utf-8');
-    $back = in_array($kind, ['waitlist', 'registration'], true) ? '/#registration' : ($kind === 'question' ? '/#faq' : '/#involved');
+    $back = ['waitlist' => '/tickets/', 'registration' => '/tickets/', 'question' => '/#faq', 'scholarship' => '/scholarship/'][$kind] ?? '/#involved';
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">'
         . '<title>Not sent yet · Next Gen Summit</title>'
         . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">'
-        . '<link rel="stylesheet" href="/assets/css/site.css?v=20260927-01"></head><body>'
+        . '<link rel="stylesheet" href="/assets/css/site.css?v=20260927-02"></head><body>'
         . '<div class="received"><main class="received__main">'
         . '<p class="draft-note">Not sent yet</p><h1 class="done__title wm">almost.</h1>'
         . '<p class="done__text">' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8') . '</p>'
@@ -119,6 +120,53 @@ if ($kind === 'waitlist') {
     } elseif ((function_exists('mb_strlen') ? mb_strlen($raw) : strlen($raw)) > 2000) {
         $errors['question'] = 'Please keep your question under 2,000 characters.';
     }
+} elseif ($kind === 'scholarship') {
+    // the visible wording of each choice, exactly as the form shows it
+    $reasons = [
+        'afford' => 'I’m unable to afford a ticket right now',
+        'easier' => 'Financial assistance would make it easier for me to attend',
+        'other' => 'Other',
+    ];
+    $reasonKey = ngs_text($_POST, 'reason', 10);
+    $whyRaw = isset($_POST['why']) && is_string($_POST['why']) ? trim($_POST['why']) : '';
+    $whyWords = count(preg_split('/\s+/u', $whyRaw, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+    $data = [
+        'name' => ngs_text($_POST, 'name', 120),
+        'email' => $email,
+        'phone' => ngs_text($_POST, 'phone', 30),
+        'organization' => ngs_text($_POST, 'organization', 150),
+        'why' => ngs_text($_POST, 'why', 1000),
+        'reason' => $reasons[$reasonKey] ?? '',
+        'reason_other' => $reasonKey === 'other' ? ngs_text($_POST, 'reason_other', 200) : '',
+        'commit' => ngs_text($_POST, 'commit', 3),
+        'status' => 'new',
+    ];
+    if ($data['name'] === '') {
+        $errors['name'] = 'Please add your full name.';
+    }
+    if (!$emailOk) {
+        $errors['email'] = 'Please check your email address.';
+    }
+    $digits = preg_replace('/\D+/', '', $data['phone']) ?? '';
+    if (strlen($digits) < 7 || strlen($digits) > 15 || !preg_match('/^[0-9+().\-\s]+$/', $data['phone'])) {
+        $errors['phone'] = 'Please check your phone number.';
+    }
+    if ($data['organization'] === '') {
+        $errors['organization'] = 'Please add your school, college or organization.';
+    }
+    if ($whyWords === 0) {
+        $errors['why'] = 'Please tell us why you want to attend.';
+    } elseif ($whyWords > 75 || (function_exists('mb_strlen') ? mb_strlen($whyRaw) : strlen($whyRaw)) > 1000) {
+        $errors['why'] = 'Please keep your answer to 75 words or fewer.';
+    }
+    if ($data['reason'] === '') {
+        $errors['reason'] = 'Please choose a reason.';
+    } elseif ($reasonKey === 'other' && $data['reason_other'] === '') {
+        $errors['reason_other'] = 'Please add your reason.';
+    }
+    if (!in_array($data['commit'], ['Yes', 'No'], true)) {
+        $errors['commit'] = 'Please choose Yes or No.';
+    }
 } else {
     $data = [
         'name' => ngs_text($_POST, 'name', 120),
@@ -149,6 +197,9 @@ try {
     }
     // the same question sent twice (a double tap, a retried connection) is kept once
     if ($kind === 'question' && ngs_is_duplicate('question', ['email' => $data['email'], 'question' => $data['question']])) {
+        ngs_reply(true, $kind, '', 200, $wantsJson);
+    }
+    if ($kind === 'scholarship' && ngs_is_duplicate('scholarship', ['email' => $data['email'], 'why' => $data['why']])) {
         ngs_reply(true, $kind, '', 200, $wantsJson);
     }
     ngs_store($kind, $data);

@@ -680,6 +680,8 @@
     function fromHash() {
       var id = location.hash.slice(1);
       if (dialogs[id]) open(id);
+      // once the early-access drawer is gone (ticketing is live), old #registration links go to tickets
+      else if (id === 'registration' && !document.getElementById('registration')) location.replace('/tickets/');
     }
     addEventListener('hashchange', fromHash);
     fromHash();

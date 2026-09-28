@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -10,8 +11,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-PRVSWFBN');</script>
 <!-- End Google Tag Manager -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3M5BCK61VB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3M5BCK61VB');
+</script>
 <title>Scholarship application · NextGen Summit</title>
-<meta name="description" content="Apply for a NextGen Summit scholarship ticket. A limited number of places are available for applicants who cannot currently afford full admission.">
+<meta name="description" content="Apply for one of 40 NextGen Summit scholarship tickets.">
 <meta name="theme-color" content="#FAFAF8">
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://nextgensummit.us/scholarship/">
@@ -20,109 +29,126 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20260926-01">
-<link rel="stylesheet" href="/assets/css/tickets.css?v=20260926-01">
-<script src="/assets/js/site.js?v=20260926-01" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20260927-02">
+<link rel="stylesheet" href="/assets/css/tickets.css?v=20260927-02">
+<script src="/assets/js/site.js?v=20260927-02" defer></script>
+<script src="/assets/js/scholarship.js?v=20260927-02" defer></script>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PRVSWFBN"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
-<a class="skip" href="#sch-title">Skip to content</a>
+<a class="skip" href="#sch-title">Skip to the application</a>
 <div class="grain" aria-hidden="true"></div>
 
 <header class="nav on-paper">
   <a class="nav__mark" href="/" aria-label="NextGen Summit, home">
     <span class="wm" aria-hidden="true">nextgen</span><span class="nav__summit" aria-hidden="true">Summit</span>
   </a>
+  <div class="count" data-until="2026-10-30T00:00:00-04:00">
+    <p class="sr" data-count-sr>NextGen Summit is on October 30.</p>
+    <p class="count__row" aria-hidden="true">
+      <span class="count__u"><span class="count__n" data-count="days">--</span><span class="count__l">d<span class="count__word">ays</span></span></span>
+      <span class="count__u count__u--hms"><span class="count__n" data-count="hours">--</span><span class="count__l">h</span></span>
+      <span class="count__u count__u--hms"><span class="count__n" data-count="minutes">--</span><span class="count__l">m</span></span>
+      <span class="count__u count__u--hms"><span class="count__n" data-count="seconds">--</span><span class="count__l">s</span></span>
+      <span class="count__to">to NextGen</span>
+    </p>
+  </div>
   <nav class="nav__links" aria-label="Utilities">
-    <a class="nav__link" href="/tickets/">Tickets</a>
     <a class="nav__link" href="/">The Summit</a>
+    <a class="nav__link" href="/pitch/">Pitch Competition</a>
+    <a class="btn btn--sm" href="/tickets/">Get tickets</a>
+    <button class="nav__link nav__menu" type="button" data-open="menu">Menu</button>
   </nav>
 </header>
 
 <main>
   <section class="sch" aria-labelledby="sch-title">
-    <p class="label rv">Scholarship</p>
-    <h1 class="sch__title wm rv" style="--d:.1s" id="sch-title">cost shouldn&rsquo;t<br> be the reason.</h1>
-    <div class="sch__intro rv" style="--d:.18s">
-      <p>We want cost to be as little of a barrier as possible for anyone who genuinely wants to be at NextGen Summit. A limited number of scholarship tickets are available for applicants who cannot currently afford the full cost of admission.</p>
-      <p class="sch__caveat">Scholarship tickets are limited. Submitting this form does not guarantee approval.</p>
-    </div>
+    <p class="label rv">Scholarship application</p>
+    <h1 class="sch__title wm rv" style="--d:.1s" id="sch-title">apply for a<br> scholarship.</h1>
+    <p class="sch__lede rv" style="--d:.18s">We&rsquo;ve set aside 40 scholarship tickets for young people who want to attend but may not be able to cover the cost.</p>
 
     <!-- posts to the same endpoint as every other form on the site, as form-name "scholarship".
-         A plain multipart POST rather than a fetch, so the resume upload shows real browser
-         progress and the whole thing works with no JavaScript at all. -->
-    <form class="sch__form" method="POST" action="/api/register.php" enctype="multipart/form-data" novalidate>
+         Approval happens with the team, never on this page: nothing here unlocks a ticket. -->
+    <form class="sch__form" name="scholarship" method="POST" action="/api/register.php" novalidate>
       <input type="hidden" name="form-name" value="scholarship">
       <p class="hp" aria-hidden="true"><label>Leave this field empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
 
-      <fieldset class="sch__set">
-        <legend class="sch__legend">Your information</legend>
-        <div class="field"><label for="s-name">Full name</label><input id="s-name" name="name" autocomplete="name" required></div>
-        <div class="field"><label for="s-email">Email address</label><input id="s-email" name="email" type="email" autocomplete="email" required></div>
-        <div class="field"><label for="s-phone">Phone number</label><input id="s-phone" name="phone" type="tel" autocomplete="tel" required></div>
-        <div class="field">
-          <label for="s-describes">What best describes you?</label>
-          <select id="s-describes" name="describes" required>
-            <option value="">Choose one</option>
-            <option>High school student</option>
-            <option>College student</option>
-            <option>Young professional</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div class="field"><label for="s-aff">School, organization or employer <span class="field__opt">optional</span></label><input id="s-aff" name="affiliation" autocomplete="organization"></div>
-      </fieldset>
+      <div class="field">
+        <label for="s-name">Full Name</label>
+        <input id="s-name" name="name" autocomplete="name" maxlength="120" required aria-describedby="s-name-err">
+        <p class="field__err" id="s-name-err" hidden></p>
+      </div>
 
-      <fieldset class="sch__set">
-        <legend class="sch__legend">Your request</legend>
-        <div class="field">
-          <label for="s-why">Why are you requesting a scholarship ticket?</label>
-          <textarea id="s-why" name="why_request" rows="4" required></textarea>
-          <p class="field__help">Briefly tell us about your current circumstances. No detailed financial information is needed.</p>
-        </div>
-        <div class="field">
-          <label for="s-attend">Why would you like to attend NextGen Summit?</label>
-          <textarea id="s-attend" name="why_attend" rows="4" required></textarea>
-        </div>
-        <div class="field">
-          <label for="s-gain">What are you hoping to gain from the summit?</label>
-          <textarea id="s-gain" name="hope_gain" rows="4" required></textarea>
-        </div>
-      </fieldset>
-
-      <fieldset class="sch__set">
-        <legend class="sch__legend">Resume <span class="field__opt">optional</span></legend>
-        <div class="field">
-          <label for="s-resume">Upload your resume</label>
-          <input id="s-resume" name="resume" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-          <p class="field__help">Helps us learn about your background and goals. PDF, DOC or DOCX, up to 5&nbsp;MB.</p>
-        </div>
-      </fieldset>
-
-      <fieldset class="sch__set">
-        <legend class="sch__legend">Commitment</legend>
-        <p class="sch__note">Scholarship tickets are limited. If you are selected, we ask that you only accept a ticket if you genuinely intend to come.</p>
-        <fieldset class="choice">
-          <legend>If awarded a scholarship ticket, do you plan to attend on Friday, October 30, 2026?</legend>
-          <div class="choice__opts">
-            <label class="chip"><input type="radio" name="plan_attend" value="Yes" required><span>Yes</span></label>
-            <label class="chip"><input type="radio" name="plan_attend" value="No"><span>No</span></label>
-            <label class="chip"><input type="radio" name="plan_attend" value="Unsure"><span>Unsure</span></label>
+      <fieldset class="sch__pair">
+        <legend>Email + Phone Number</legend>
+        <div class="sch__pair-in">
+          <div class="field">
+            <label class="sr" for="s-email">Email</label>
+            <input id="s-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="Email" required aria-describedby="s-email-err">
+            <p class="field__err" id="s-email-err" hidden></p>
           </div>
-        </fieldset>
-        <label class="sch__check">
-          <input type="checkbox" name="understood" value="yes" required>
-          <span>I understand that submitting this application does not guarantee a scholarship ticket, and that availability is limited.</span>
-        </label>
+          <div class="field">
+            <label class="sr" for="s-phone">Phone Number</label>
+            <input id="s-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" placeholder="Phone Number" required aria-describedby="s-phone-err">
+            <p class="field__err" id="s-phone-err" hidden></p>
+          </div>
+        </div>
       </fieldset>
 
+      <div class="field">
+        <label for="s-org">School / College / Organization</label>
+        <input id="s-org" name="organization" autocomplete="organization" maxlength="150" required aria-describedby="s-org-err">
+        <p class="field__err" id="s-org-err" hidden></p>
+      </div>
+
+      <div class="field">
+        <label for="s-why">Why do you want to attend NextGen Summit?</label>
+        <textarea id="s-why" name="why" rows="5" maxlength="1000" required aria-describedby="s-why-count s-why-err"></textarea>
+        <p class="sch__count" id="s-why-count" data-words>Max 75 words.</p>
+        <p class="field__err" id="s-why-err" hidden></p>
+      </div>
+
+      <fieldset class="sch__q" id="s-reason" aria-describedby="s-reason-err">
+        <legend>Why are you requesting a scholarship ticket?</legend>
+        <div class="sch__opts">
+          <label class="sch__opt"><input type="radio" name="reason" value="afford" required><span>I&rsquo;m unable to afford a ticket right now</span></label>
+          <label class="sch__opt"><input type="radio" name="reason" value="easier"><span>Financial assistance would make it easier for me to attend</span></label>
+          <label class="sch__opt"><input type="radio" name="reason" value="other" aria-controls="s-other-wrap"><span>Other:</span></label>
+        </div>
+        <div class="field sch__other" id="s-other-wrap" data-other>
+          <label class="sr" for="s-other">Other reason</label>
+          <input id="s-other" name="reason_other" maxlength="200" placeholder="Tell us briefly" aria-describedby="s-other-err">
+          <p class="field__err" id="s-other-err" hidden></p>
+        </div>
+        <p class="field__err" id="s-reason-err" hidden></p>
+      </fieldset>
+
+      <fieldset class="sch__q" id="s-commit" aria-describedby="s-commit-err">
+        <legend>If selected, can you commit to attending NextGen Summit on October 30?</legend>
+        <div class="sch__opts sch__opts--row">
+          <label class="sch__opt"><input type="radio" name="commit" value="Yes" required><span>Yes</span></label>
+          <label class="sch__opt"><input type="radio" name="commit" value="No"><span>No</span></label>
+        </div>
+        <p class="field__err" id="s-commit-err" hidden></p>
+      </fieldset>
+
+      <p class="sch__ack">Scholarship tickets are limited to 40 recipients. If selected, you&rsquo;ll have 48 hours to claim your ticket before it is offered to another applicant.</p>
+
+      <p class="form__error" role="alert" tabindex="-1" hidden></p>
       <div class="sch__actions">
-        <button class="btn btn--lg" type="submit">Submit application <span class="arr" aria-hidden="true">→</span></button>
-        <p class="sch__fine">We only use these answers to review your application.</p>
+        <button class="btn btn--lg" type="submit"><span class="btn__t">Submit application</span></button>
       </div>
     </form>
+
+    <div class="sch__done" data-sch-done role="status" tabindex="-1" hidden>
+      <p class="sch__done-t">Application received</p>
+      <p class="sch__done-x">Thank you. The NextGen team will review your application and follow up by email.</p>
+      <p class="sch__done-cta"><a class="btn btn--lg" href="/tickets/">Back to tickets</a></p>
+    </div>
   </section>
 </main>
 
@@ -136,5 +162,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </nav>
   <p class="foot__note">NextGen Summit 2026</p>
 </footer>
+
+<dialog class="drawer" id="menu" aria-label="Menu">
+  <div class="drawer__in">
+    <div class="drawer__top">
+      <span class="wm" style="font-size:26px" aria-hidden="true">nextgen</span>
+      <button class="drawer__close" type="button" data-close aria-label="Close menu">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </button>
+    </div>
+    <ul class="menu__list">
+      <li><a href="/">The Summit</a></li>
+      <li><a href="/tickets/">Get tickets</a></li>
+      <li><a href="/pitch/">Pitch Competition</a></li>
+      <li><a href="/#involved">Get Involved</a></li>
+      <li><a href="/#faq">FAQ</a></li>
+    </ul>
+  </div>
+</dialog>
+
 </body>
 </html>

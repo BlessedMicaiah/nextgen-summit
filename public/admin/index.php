@@ -1,6 +1,7 @@
 <?php
 /* Next Gen Summit admin: see, search, export and tidy up everyone who registered,
-   and the questions sent from the FAQ. Two tabs: Registrations and Questions. */
+   the questions sent from the FAQ, and scholarship applications.
+   Tabs: Registrations, Questions, Scholarships. */
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/api/_lib.php';
@@ -68,23 +69,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if (preg_match('/^[a-f0-9]{16}$/', $id)) {
             ngs_delete($id);
         }
-        $back = ($_POST['tab'] ?? '') === 'questions' ? 'questions' : 'registrations';
+        $back = in_array($_POST['tab'] ?? '', ['questions', 'scholarships'], true) ? $_POST['tab'] : 'registrations';
         header('Location: /admin/?tab=' . $back . '&deleted=1', true, 303);
         exit;
     } elseif ($action === 'status' && $authed) {
-        // New / Reviewed on a question; nothing else about the question changes
+        // New / Reviewed on a question or an application; nothing else about the entry changes
         $id = is_string($_POST['id'] ?? null) ? $_POST['id'] : '';
         $to = ($_POST['status'] ?? '') === 'reviewed' ? 'reviewed' : 'new';
-        if (preg_match('/^[a-f0-9]{16}$/', $id) && in_array($id, array_column(ngs_all('question'), 'id'), true)) {
+        $kindOf = ($_POST['tab'] ?? '') === 'scholarships' ? 'scholarship' : 'question';
+        if (preg_match('/^[a-f0-9]{16}$/', $id) && in_array($id, array_column(ngs_all($kindOf), 'id'), true)) {
             ngs_update_data($id, ['status' => $to]);
         }
-        header('Location: /admin/?tab=questions#q-' . $id, true, 303);
+        header('Location: /admin/?tab=' . ($kindOf === 'scholarship' ? 'scholarships' : 'questions') . '#q-' . $id, true, 303);
         exit;
     }
 }
 
 $error = '';
-$registrations = $notes = $questions = [];
+$registrations = $notes = $questions = $scholarships = [];
 if ($authed) {
     try {
         // waitlist sign-ups and any earlier registrations share one list, newest first
@@ -97,6 +99,7 @@ if ($authed) {
             return strcmp($b['created_at'], $a['created_at']);
         });
         $questions = ngs_all('question');
+        $scholarships = ngs_all('scholarship');
     } catch (Throwable $e) {
         error_log('Next Gen Summit admin error: ' . $e->getMessage());
         $error = 'The registration data could not be read. Check the PHP error log on the host.';
@@ -105,7 +108,7 @@ if ($authed) {
 
 // CSV export. A leading = + - @ is neutralized so spreadsheets never run a formula from a form.
 if ($authed && isset($_GET['export']) && $error === '') {
-    $which = in_array($_GET['export'], ['notes', 'questions'], true) ? $_GET['export'] : 'registrations';
+    $which = in_array($_GET['export'], ['notes', 'questions', 'scholarships'], true) ? $_GET['export'] : 'registrations';
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="nextgen-' . $which . '-' . gmdate('Y-m-d') . '.csv"');
     $out = fopen('php://output', 'w');
@@ -119,6 +122,12 @@ if ($authed && isset($_GET['export']) && $error === '') {
         foreach ($registrations as $r) {
             $d = $r['data'];
             fputcsv($out, array_map($safe, [et($r['created_at']), $r['kind'] === 'waitlist' ? 'Waitlist' : 'Registration', person_name($d), $d['email'] ?? '', $d['phone'] ?? '', $d['education_level'] ?? '', $d['school_name'] ?? '', $d['volunteer_interest'] ?? '']));
+        }
+    } elseif ($which === 'scholarships') {
+        fputcsv($out, ['Applied (ET)', 'Status', 'Full name', 'Email', 'Phone', 'School / College / Organization', 'Why attend', 'Scholarship reason', 'Other reason', 'Can commit to Oct 30']);
+        foreach ($scholarships as $r) {
+            $d = $r['data'];
+            fputcsv($out, array_map($safe, [et($r['created_at']), q_status($d) === 'reviewed' ? 'Reviewed' : 'New', $d['name'] ?? '', $d['email'] ?? '', $d['phone'] ?? '', $d['organization'] ?? '', $d['why'] ?? '', $d['reason'] ?? '', $d['reason_other'] ?? '', $d['commit'] ?? '']));
         }
     } elseif ($which === 'questions') {
         fputcsv($out, ['Received (ET)', 'Status', 'Full name', 'Email', 'Question']);
@@ -137,7 +146,7 @@ if ($authed && isset($_GET['export']) && $error === '') {
 }
 
 // ?tab=notes is an old link; those notes now live at the foot of Registrations
-$tab = ($_GET['tab'] ?? '') === 'questions' ? 'questions' : 'registrations';
+$tab = in_array($_GET['tab'] ?? '', ['questions', 'scholarships'], true) ? $_GET['tab'] : 'registrations';
 $q = is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '';
 
 $emailCount = [];
@@ -156,7 +165,7 @@ foreach ($registrations as $r) {
     }
 }
 
-/** Questions start as new; anything unrecognised reads as new too. */
+/** Questions and applications start as new; anything unrecognised reads as new too. */
 function q_status(array $d): string
 {
     return ($d['status'] ?? '') === 'reviewed' ? 'reviewed' : 'new';
@@ -180,6 +189,8 @@ $shownRegs = array_values(array_filter($registrations, function ($r) use ($q) { 
 $shownNotes = array_values(array_filter($notes, function ($r) use ($q) { return matches($r, $q); }));
 $shownQuestions = array_values(array_filter($questions, function ($r) use ($q) { return matches($r, $q); }));
 $newQuestions = count(array_filter($questions, function ($r) { return q_status($r['data']) === 'new'; }));
+$shownScholarships = array_values(array_filter($scholarships, function ($r) use ($q) { return matches($r, $q); }));
+$newScholarships = count(array_filter($scholarships, function ($r) { return q_status($r['data']) === 'new'; }));
 ?>
 <!doctype html>
 <html lang="en">
@@ -189,7 +200,7 @@ $newQuestions = count(array_filter($questions, function ($r) { return q_status($
 <meta name="robots" content="noindex, nofollow">
 <title>Admin · Next Gen Summit</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20260927-01">
+<link rel="stylesheet" href="/assets/css/site.css?v=20260927-02">
 <style>
   body{background:var(--paper)}
   .adm{max-width:1280px;margin:0 auto;padding:28px clamp(18px,4vw,48px) 80px}
@@ -209,7 +220,8 @@ $newQuestions = count(array_filter($questions, function ($r) { return q_status($
   .ptab:focus-visible{outline:2px solid var(--accent-ink);outline-offset:-2px;border-radius:4px}
   .ptab__n{font-weight:700;letter-spacing:.04em;color:var(--ink-2)}
   .ptab__new{padding:3px 7px;border-radius:4px;background:var(--ink);color:#fff;font:700 10px/1.2 var(--f-sans);letter-spacing:.1em;white-space:nowrap}
-  @media (max-width:480px){.ptab{letter-spacing:.1em}.ptab__n{display:none}}
+  @media (max-width:560px){.ptab{padding:0 10px;letter-spacing:.08em;font-size:11.5px}.ptab__n{display:none}}
+  @media (max-width:400px){.ptab__new{padding:3px 5px}}
   .panel[hidden]{display:none}
   .panel:focus-visible{outline:2px solid var(--accent-ink);outline-offset:6px;border-radius:4px}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin:30px 0 26px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
@@ -250,6 +262,9 @@ $newQuestions = count(array_filter($questions, function ($r) { return q_status($
   .q__acts form{margin:0}
   .mark{min-height:40px;padding:0 14px;border:1.5px solid var(--ink);border-radius:6px;font:700 11px/1 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
   .mark:hover{background:var(--ink);color:#fff}
+  .sfacts{margin:12px 0 0;display:grid;gap:10px;max-width:72ch}
+  .sfacts dt{font:700 10.5px/1.3 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+  .sfacts dd{margin:3px 0 0;font:500 15px/1.55 var(--f-sans)}
   @media (max-width:640px){
     .q{grid-template-columns:1fr}
     .q__acts{flex-direction:row;flex-wrap:wrap;align-items:center}
@@ -297,6 +312,8 @@ $newQuestions = count(array_filter($questions, function ($r) { return q_status($
         aria-selected="<?= $tab === 'registrations' ? 'true' : 'false' ?>" tabindex="<?= $tab === 'registrations' ? '0' : '-1' ?>">Registrations <span class="ptab__n">(<?= count($registrations) ?>)</span></a>
       <a class="ptab" role="tab" id="tab-questions" href="/admin/?tab=questions" aria-controls="panel-questions" data-tab="questions"
         aria-selected="<?= $tab === 'questions' ? 'true' : 'false' ?>" tabindex="<?= $tab === 'questions' ? '0' : '-1' ?>">Questions <span class="ptab__n">(<?= count($questions) ?>)</span><?php if ($newQuestions > 0): ?> <span class="ptab__new"><?= $newQuestions ?> new</span><?php endif; ?></a>
+      <a class="ptab" role="tab" id="tab-scholarships" href="/admin/?tab=scholarships" aria-controls="panel-scholarships" data-tab="scholarships"
+        aria-selected="<?= $tab === 'scholarships' ? 'true' : 'false' ?>" tabindex="<?= $tab === 'scholarships' ? '0' : '-1' ?>">Scholarships <span class="ptab__n">(<?= count($scholarships) ?>)</span><?php if ($newScholarships > 0): ?> <span class="ptab__new"><?= $newScholarships ?> new</span><?php endif; ?></a>
     </div>
 
     <section class="panel" role="tabpanel" id="panel-registrations" aria-labelledby="tab-registrations" tabindex="0"<?= $tab === 'registrations' ? '' : ' hidden' ?>>
@@ -434,6 +451,7 @@ $newQuestions = count(array_filter($questions, function ($r) { return q_status($
               <form method="post" action="/admin/">
                 <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                 <input type="hidden" name="action" value="status">
+                <input type="hidden" name="tab" value="questions">
                 <input type="hidden" name="id" value="<?= h($r['id']) ?>">
                 <input type="hidden" name="status" value="<?= $st === 'reviewed' ? 'new' : 'reviewed' ?>">
                 <button class="mark" type="submit"><?= $st === 'reviewed' ? 'Mark as new' : 'Mark reviewed' ?></button>
@@ -442,6 +460,68 @@ $newQuestions = count(array_filter($questions, function ($r) { return q_status($
                 <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="tab" value="questions">
+                <input type="hidden" name="id" value="<?= h($r['id']) ?>">
+                <button class="del" type="submit">Delete</button>
+              </form>
+            </div>
+          </li>
+        <?php endforeach; ?>
+        </ol>
+      <?php endif; ?>
+    </section>
+
+    <section class="panel" role="tabpanel" id="panel-scholarships" aria-labelledby="tab-scholarships" tabindex="0"<?= $tab === 'scholarships' ? '' : ' hidden' ?>>
+      <h2 class="wm">scholarships.</h2>
+      <p class="adm__sub">Scholarship ticket applications · 40 tickets · Times shown in Eastern Time.</p>
+      <?php if (isset($_GET['deleted']) && $tab === 'scholarships'): ?><p class="note note--ok" role="status" style="margin-top:18px">Application deleted.</p><?php endif; ?>
+
+      <div class="stats">
+        <div class="stat"><b><?= count($scholarships) ?></b><span>Applications</span></div>
+        <div class="stat"><b><?= $newScholarships ?></b><span>New</span></div>
+        <div class="stat"><b><?= count($scholarships) - $newScholarships ?></b><span>Reviewed</span></div>
+      </div>
+
+      <div class="bar">
+        <p class="bar__t">Newest first</p>
+        <div class="tools">
+          <form method="get" action="/admin/" role="search">
+            <input type="hidden" name="tab" value="scholarships">
+            <label class="sr" for="q-scholarships">Search applications</label>
+            <input id="q-scholarships" name="q" type="search" value="<?= h($q) ?>" placeholder="Search name, email, school">
+          </form>
+          <a class="btn btn--sm" href="/admin/?export=scholarships">Export CSV</a>
+        </div>
+      </div>
+
+      <?php if (!$shownScholarships): ?>
+        <div class="tablewrap"><p class="empty"><?= $q === '' ? 'No applications yet.' : 'Nothing matches that search.' ?></p></div>
+      <?php else: ?>
+        <ol class="qs">
+        <?php foreach ($shownScholarships as $r): $d = $r['data']; $st = q_status($d); ?>
+          <li class="q q--<?= $st ?>" id="q-<?= h($r['id']) ?>">
+            <div>
+              <p class="q__meta"><span class="badge badge--<?= $st ?>"><?= $st === 'reviewed' ? 'Reviewed' : 'New' ?></span><time datetime="<?= h($r['created_at']) ?>"><?= h(et($r['created_at'])) ?></time></p>
+              <p class="q__who"><?= h($d['name'] ?? '') ?> <span aria-hidden="true">·</span> <a href="mailto:<?= h($d['email'] ?? '') ?>?subject=<?= rawurlencode('Your NextGen Summit scholarship application') ?>"><?= h($d['email'] ?? '') ?></a><?php if (($d['phone'] ?? '') !== ''): ?> <span aria-hidden="true">·</span> <a href="tel:<?= h(preg_replace('/[^0-9+]/', '', $d['phone'])) ?>"><?= h($d['phone']) ?></a><?php endif; ?></p>
+              <dl class="sfacts">
+                <div><dt>School / College / Organization</dt><dd><?= h($d['organization'] ?? '') ?></dd></div>
+                <div><dt>Why attend</dt><dd class="q__text"><?= h($d['why'] ?? '') ?></dd></div>
+                <div><dt>Scholarship reason</dt><dd><?= h($d['reason'] ?? '') ?><?php if (($d['reason_other'] ?? '') !== ''): ?>: <?= h($d['reason_other']) ?><?php endif; ?></dd></div>
+                <div><dt>Can commit to October 30</dt><dd><?= h($d['commit'] ?? '') ?></dd></div>
+              </dl>
+            </div>
+            <div class="q__acts">
+              <form method="post" action="/admin/">
+                <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                <input type="hidden" name="action" value="status">
+                <input type="hidden" name="tab" value="scholarships">
+                <input type="hidden" name="id" value="<?= h($r['id']) ?>">
+                <input type="hidden" name="status" value="<?= $st === 'reviewed' ? 'new' : 'reviewed' ?>">
+                <button class="mark" type="submit"><?= $st === 'reviewed' ? 'Mark as new' : 'Mark reviewed' ?></button>
+              </form>
+              <form method="post" action="/admin/" onsubmit="return confirm('Delete this application? This cannot be undone.')">
+                <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="tab" value="scholarships">
                 <input type="hidden" name="id" value="<?= h($r['id']) ?>">
                 <button class="del" type="submit">Delete</button>
               </form>

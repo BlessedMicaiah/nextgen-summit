@@ -1,5 +1,5 @@
 <?php
-/* Next Gen Summit: receives the waitlist, registration, volunteer and partner forms.
+/* Next Gen Summit: receives the waitlist, registration, volunteer, partner and question forms.
    (Registration is paused while the waitlist is open; its handling below is kept for when it returns.)
    Answers JSON to the site's JavaScript, and redirects to a confirmation page
    when a browser posts the form directly (JavaScript off). */
@@ -13,32 +13,27 @@ header('Cache-Control: no-store');
 $wantsJson = stripos((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false;
 $kind = isset($_POST['form-name']) && is_string($_POST['form-name']) ? $_POST['form-name'] : '';
 
-function ngs_reply(bool $ok, string $kind, string $error, int $status, bool $json): void
+function ngs_reply(bool $ok, string $kind, string $error, int $status, bool $json, array $fields = []): void
 {
     if ($json) {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($ok ? ['ok' => true] : ['ok' => false, 'error' => $error]);
+        // $fields names the inputs that need attention, so the page can mark them
+        echo json_encode($ok ? ['ok' => true] : ['ok' => false, 'error' => $error, 'fields' => $fields]);
         exit;
     }
     if ($ok) {
-        $to = '/thanks/';
-        if (in_array($kind, ['waitlist', 'registration'], true)) {
-            $to = '/registration-received/';
-        } elseif ($kind === 'scholarship') {
-            $to = '/scholarship/received/';
-        }
-        header('Location: ' . $to, true, 303);
+        header('Location: ' . (in_array($kind, ['waitlist', 'registration'], true) ? '/registration-received/' : '/thanks/'), true, 303);
         exit;
     }
     http_response_code($status);
     header('Content-Type: text/html; charset=utf-8');
-    $back = in_array($kind, ['waitlist', 'registration'], true) ? '/#registration' : ($kind === 'scholarship' ? '/scholarship/' : '/#involved');
+    $back = in_array($kind, ['waitlist', 'registration'], true) ? '/#registration' : ($kind === 'question' ? '/#faq' : '/#involved');
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">'
         . '<title>Not sent yet · Next Gen Summit</title>'
         . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">'
-        . '<link rel="stylesheet" href="/assets/css/site.css?v=20260926-01"></head><body>'
+        . '<link rel="stylesheet" href="/assets/css/site.css?v=20260927-01"></head><body>'
         . '<div class="received"><main class="received__main">'
         . '<p class="draft-note">Not sent yet</p><h1 class="done__title wm">almost.</h1>'
         . '<p class="done__text">' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8') . '</p>'
@@ -72,15 +67,15 @@ if ($kind === 'waitlist') {
         'email' => $email,
     ];
     if ($data['name'] === '') {
-        $errors[] = 'Please add your name.';
+        $errors['name'] = 'Please add your name.';
     }
     // any common format is fine ((410) 555-0123, 410.555.0123, +1 410 555 0123); it just needs 7 to 15 digits
     $digits = preg_replace('/\D+/', '', $data['phone']) ?? '';
     if (strlen($digits) < 7 || strlen($digits) > 15 || !preg_match('/^[0-9+().\-\s]+$/', $data['phone'])) {
-        $errors[] = 'Please check your phone number.';
+        $errors['phone'] = 'Please check your phone number.';
     }
     if (!$emailOk) {
-        $errors[] = 'Please check your email address.';
+        $errors['email'] = 'Please check your email address.';
     }
 } elseif ($kind === 'registration') {
     $data = [
@@ -92,70 +87,37 @@ if ($kind === 'waitlist') {
         'volunteer_interest' => ngs_text($_POST, 'volunteer_interest', 3),
     ];
     if ($data['first_name'] === '' || $data['last_name'] === '') {
-        $errors[] = 'Please add your first and last name.';
+        $errors['first_name'] = 'Please add your first and last name.';
     }
     if (!$emailOk) {
-        $errors[] = 'Please check your email address.';
+        $errors['email'] = 'Please check your email address.';
     }
     if (!in_array($data['education_level'], ['High School', 'College', 'Other'], true)) {
-        $errors[] = 'Please choose your education level.';
+        $errors['education_level'] = 'Please choose your education level.';
     } elseif ($data['school_name'] === '' && $data['education_level'] !== 'Other') {
-        $errors[] = 'Please add your school name.';
+        $errors['school_name'] = 'Please add your school name.';
     }
     if (!in_array($data['volunteer_interest'], ['Yes', 'No'], true)) {
-        $errors[] = 'Please tell us whether you would like to volunteer.';
+        $errors['volunteer_interest'] = 'Please tell us whether you would like to volunteer.';
     }
-} elseif ($kind === 'scholarship') {
+} elseif ($kind === 'question') {
+    $raw = isset($_POST['question']) && is_string($_POST['question']) ? trim($_POST['question']) : '';
     $data = [
         'name' => ngs_text($_POST, 'name', 120),
         'email' => $email,
-        'phone' => ngs_text($_POST, 'phone', 30),
-        'describes' => ngs_text($_POST, 'describes', 40),
-        'affiliation' => ngs_text($_POST, 'affiliation', 150),
-        'why_request' => ngs_text($_POST, 'why_request', 1500),
-        'why_attend' => ngs_text($_POST, 'why_attend', 1500),
-        'hope_gain' => ngs_text($_POST, 'hope_gain', 1500),
-        'plan_attend' => ngs_text($_POST, 'plan_attend', 10),
+        'question' => ngs_text($_POST, 'question', 2000),
+        'status' => 'new',
     ];
     if ($data['name'] === '') {
-        $errors[] = 'Please add your name.';
+        $errors['name'] = 'Please add your full name.';
     }
     if (!$emailOk) {
-        $errors[] = 'Please check your email address.';
+        $errors['email'] = 'Please check your email address.';
     }
-    $digits = preg_replace('/\D+/', '', $data['phone']) ?? '';
-    if (strlen($digits) < 7 || strlen($digits) > 15) {
-        $errors[] = 'Please check your phone number.';
-    }
-    if (!in_array($data['describes'], ['High school student', 'College student', 'Young professional', 'Other'], true)) {
-        $errors[] = 'Please tell us what best describes you.';
-    }
-    foreach ([
-        'why_request' => 'Please tell us why you are requesting a scholarship ticket.',
-        'why_attend' => 'Please tell us why you would like to attend.',
-        'hope_gain' => 'Please tell us what you hope to gain.',
-    ] as $f => $msg) {
-        if ($data[$f] === '') {
-            $errors[] = $msg;
-        }
-    }
-    if (!in_array($data['plan_attend'], ['Yes', 'No', 'Unsure'], true)) {
-        $errors[] = 'Please tell us whether you plan to attend.';
-    }
-    if (ngs_text($_POST, 'understood', 5) !== 'yes') {
-        $errors[] = 'Please confirm you understand that a scholarship is not guaranteed.';
-    }
-    // the resume is optional, but a bad one should be said out loud rather than dropped
-    if (!$errors) {
-        try {
-            $resume = ngs_take_resume('resume');
-            if ($resume) {
-                $data['resume_file'] = $resume[0];
-                $data['resume_name'] = $resume[1];
-            }
-        } catch (RuntimeException $e) {
-            $errors[] = $e->getMessage();
-        }
+    if ($data['question'] === '') {
+        $errors['question'] = 'Please write your question.';
+    } elseif ((function_exists('mb_strlen') ? mb_strlen($raw) : strlen($raw)) > 2000) {
+        $errors['question'] = 'Please keep your question under 2,000 characters.';
     }
 } else {
     $data = [
@@ -166,24 +128,28 @@ if ($kind === 'waitlist') {
         $data['organization'] = ngs_text($_POST, 'organization', 150);
     }
     if ($data['name'] === '') {
-        $errors[] = 'Please add your name.';
+        $errors['name'] = 'Please add your name.';
     }
     if (!$emailOk) {
-        $errors[] = 'Please check your email address.';
+        $errors['email'] = 'Please check your email address.';
     }
     if ($kind === 'partner' && $data['organization'] === '') {
-        $errors[] = 'Please add your organization.';
+        $errors['organization'] = 'Please add your organization.';
     }
 }
 
 if ($errors) {
-    ngs_reply(false, $kind, implode(' ', $errors), 422, $wantsJson);
+    ngs_reply(false, $kind, implode(' ', array_unique(array_values($errors))), 422, $wantsJson, array_keys($errors));
 }
 
 try {
     // generous enough for a whole class registering on one campus network
     if (ngs_recent_from_ip(ngs_ip_hash(), 3600) >= 30) {
         ngs_reply(false, $kind, 'Too many submissions from this connection. Please try again in an hour.', 429, $wantsJson);
+    }
+    // the same question sent twice (a double tap, a retried connection) is kept once
+    if ($kind === 'question' && ngs_is_duplicate('question', ['email' => $data['email'], 'question' => $data['question']])) {
+        ngs_reply(true, $kind, '', 200, $wantsJson);
     }
     ngs_store($kind, $data);
 } catch (Throwable $e) {

@@ -11,82 +11,7 @@ if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__
 
 require __DIR__ . '/config.php';
 
-const NGS_KINDS = ['waitlist', 'registration', 'volunteer', 'partner', 'scholarship'];
-
-/* Resumes. Kept in the data folder beside the database, which sits outside the web root wherever
-   the host allows it and is denied by .htaccess where it does not, so an uploaded file can never
-   be requested over the web or run as a script. Only the admin page hands them back, through
-   api/resume.php, and only to a signed-in session. */
-const NGS_RESUME_MAX = 5242880;                       // 5 MB
-const NGS_RESUME_TYPES = [
-    'pdf'  => ['application/pdf'],
-    'doc'  => ['application/msword'],
-    'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-];
-
-function ngs_resume_dir(): string
-{
-    $dir = ngs_data_dir() . '/resumes';
-    if (!@is_dir($dir)) {
-        @mkdir($dir, 0750, true);
-    }
-    ngs_protect_dir($dir);
-    return $dir;
-}
-
-/** Validate and keep one uploaded resume. Returns [storedName, originalName] or null, and
-    throws with a readable message when the person picked something we cannot take. */
-function ngs_take_resume(string $field): ?array
-{
-    if (!isset($_FILES[$field]) || !is_array($_FILES[$field])) {
-        return null;
-    }
-    $f = $_FILES[$field];
-    $err = $f['error'] ?? UPLOAD_ERR_NO_FILE;
-    if ($err === UPLOAD_ERR_NO_FILE) {
-        return null;                                   // the resume is optional
-    }
-    if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
-        throw new RuntimeException('That resume is too large. Please keep it under 5 MB.');
-    }
-    if ($err !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) {
-        throw new RuntimeException('That resume did not upload. Please try again.');
-    }
-    if (($f['size'] ?? 0) > NGS_RESUME_MAX) {
-        throw new RuntimeException('That resume is too large. Please keep it under 5 MB.');
-    }
-    $orig = ngs_text(['n' => (string) ($f['name'] ?? '')], 'n', 120);
-    $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
-    if (!isset(NGS_RESUME_TYPES[$ext])) {
-        throw new RuntimeException('Please upload a PDF, DOC or DOCX.');
-    }
-    $mime = '';
-    if (class_exists('finfo')) {
-        $fi = new finfo(FILEINFO_MIME_TYPE);
-        $mime = (string) $fi->file($f['tmp_name']);
-    }
-    // .doc in particular is reported inconsistently, so an empty or generic type is allowed
-    $loose = ['application/octet-stream', 'application/zip', 'application/CDFV2', ''];
-    if ($mime !== '' && !in_array($mime, NGS_RESUME_TYPES[$ext], true) && !in_array($mime, $loose, true)) {
-        throw new RuntimeException('That file did not look like a PDF, DOC or DOCX.');
-    }
-    $stored = gmdate('Ymd-His') . '-' . bin2hex(random_bytes(8)) . '.' . $ext;
-    if (!@move_uploaded_file($f['tmp_name'], ngs_resume_dir() . '/' . $stored)) {
-        throw new RuntimeException('We could not save that resume. Please try again.');
-    }
-    @chmod(ngs_resume_dir() . '/' . $stored, 0640);
-    return [$stored, $orig];
-}
-
-/** Resolve a stored resume name to a path, refusing anything that is not one of ours. */
-function ngs_resume_path(string $stored): ?string
-{
-    if (!preg_match('/^\d{8}-\d{6}-[a-f0-9]{16}\.(pdf|doc|docx)$/', $stored)) {
-        return null;
-    }
-    $path = ngs_resume_dir() . '/' . $stored;
-    return is_file($path) ? $path : null;
-}
+const NGS_KINDS = ['waitlist', 'registration', 'volunteer', 'partner', 'question'];
 
 function ngs_text(array $src, string $key, int $max): string
 {
@@ -114,10 +39,14 @@ function ngs_data_dir(): string
     }
     $candidates = [];
     $root = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
-    if ($root !== '') {
-        $candidates[] = dirname($root) . '/nextgen-data';   // outside public_html on Hostinger
+    if (defined('NGS_DATA_DIR')) {
+        $candidates[] = (string) NGS_DATA_DIR;               // set in config.php; used alone, never falls back
+    } else {
+        if ($root !== '') {
+            $candidates[] = dirname($root) . '/nextgen-data';   // outside public_html on Hostinger
+        }
+        $candidates[] = dirname(__DIR__) . '/data';              // fallback inside, locked by .htaccess
     }
-    $candidates[] = dirname(__DIR__) . '/data';              // fallback inside, locked by .htaccess
     foreach ($candidates as $c) {
         if ((@is_dir($c) || @mkdir($c, 0750, true)) && @is_writable($c)) {
             ngs_protect_dir($c);
@@ -287,4 +216,70 @@ function ngs_delete(string $id): void
     fflush($fh);
     flock($fh, LOCK_UN);
     fclose($fh);
+}
+
+/** Merges $patch into one submission's data, leaving every other field as it was. */
+function ngs_update_data(string $id, array $patch): void
+{
+    $db = ngs_db();
+    if ($db) {
+        $st = $db->prepare('SELECT data FROM submissions WHERE id = ?');
+        $st->execute([$id]);
+        $raw = $st->fetchColumn();
+        if ($raw === false) {
+            return;
+        }
+        $data = array_merge(json_decode((string) $raw, true) ?: [], $patch);
+        $db->prepare('UPDATE submissions SET data = ? WHERE id = ?')->execute([json_encode($data, JSON_UNESCAPED_UNICODE), $id]);
+        return;
+    }
+    $path = ngs_jsonl_path();
+    if (!is_file($path)) {
+        return;
+    }
+    $fh = fopen($path, 'c+');
+    if (!$fh) {
+        return;
+    }
+    flock($fh, LOCK_EX);
+    $out = '';
+    while (($line = fgets($fh)) !== false) {
+        $r = json_decode($line, true);
+        if (!is_array($r)) {
+            continue;
+        }
+        if (($r['id'] ?? '') === $id) {
+            $r['data'] = array_merge(is_array($r['data'] ?? null) ? $r['data'] : [], $patch);
+            $line = json_encode($r, JSON_UNESCAPED_UNICODE);
+        }
+        $out .= rtrim($line, "\r\n") . "\n";
+    }
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, $out);
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+}
+
+/** True when a submission of this kind already holds exactly these values (ignoring case and spacing). */
+function ngs_is_duplicate(string $kind, array $match): bool
+{
+    $norm = function ($v): string {
+        $v = preg_replace('/\s+/u', ' ', trim((string) $v)) ?? '';
+        return function_exists('mb_strtolower') ? mb_strtolower($v) : strtolower($v);
+    };
+    foreach (ngs_all($kind) as $r) {
+        $same = true;
+        foreach ($match as $k => $v) {
+            if ($norm($r['data'][$k] ?? '') !== $norm($v)) {
+                $same = false;
+                break;
+            }
+        }
+        if ($same) {
+            return true;
+        }
+    }
+    return false;
 }

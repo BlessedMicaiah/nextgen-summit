@@ -702,6 +702,7 @@
         if (r.ok && data.ok) return;
         var err = new Error('Form post failed with ' + r.status);
         err.userMessage = data.error || '';
+        err.fields = Array.isArray(data.fields) ? data.fields : [];
         throw err;
       });
     });
@@ -764,6 +765,67 @@
     });
 
     initRegistration();
+    initQuestion();
+  }
+
+  // "Still have a question?" under the FAQ. Each problem is shown under its own field and
+  // announced with it; the button stays disabled while a send is in flight.
+  function initQuestion() {
+    var form = $('form[name="question"]');
+    if (!form) return;
+    var done = $('[data-ask-done]');
+    var btn = $('button[type=submit]', form);
+    var err = $('.form__error', form);
+    var MSG = {
+      name: 'Please add your full name.',
+      email: 'Please check your email address.',
+      question: 'Please write your question.'
+    };
+
+    function mark(name, text) {
+      var input = form.elements[name];
+      var note = input && document.getElementById(input.id + '-err');
+      if (!input) return;
+      if (text) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid');
+      if (note) { note.textContent = text || ''; note.hidden = !text; }
+    }
+
+    function problems() {
+      var out = [];
+      if (!form.elements.name.value.trim()) out.push('name');
+      var email = form.elements.email;
+      if (!email.value.trim() || !email.validity.valid) out.push('email');
+      if (!form.elements.question.value.trim()) out.push('question');
+      return out;
+    }
+
+    Object.keys(MSG).forEach(function (name) {
+      form.elements[name].addEventListener('input', function () {
+        if (this.getAttribute('aria-invalid') === 'true' && problems().indexOf(name) < 0) mark(name, '');
+      });
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (btn.disabled) return;
+      err.hidden = true;
+      var bad = problems();
+      Object.keys(MSG).forEach(function (name) { mark(name, bad.indexOf(name) >= 0 ? MSG[name] : ''); });
+      if (bad.length) { form.elements[bad[0]].focus(); return; }
+      setBusy(btn, true);
+      sendForm(form).then(function () {
+        form.hidden = true;
+        if (LOCAL_PREVIEW) $('.ask__done-x', done).appendChild(el('small', null, 'Local preview: nothing was sent. This form works once the site is live.'));
+        done.hidden = false;
+        done.focus();
+      }).catch(function (e) {
+        setBusy(btn, false);
+        var fields = (e && e.fields) || [];
+        fields.forEach(function (name) { if (MSG[name]) mark(name, MSG[name]); });
+        showError(err, (e && e.userMessage) || "That didn't go through. Please check your connection and try again.");
+        if (fields.length && form.elements[fields[0]]) form.elements[fields[0]].focus(); else err.focus();
+      });
+    });
   }
 
   // Drives the waitlist form, or the paused registration form if it is restored in index.html.

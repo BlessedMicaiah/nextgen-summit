@@ -1,48 +1,15 @@
 /* NextGen Summit — Pitch Competition page.
-   Rides on site.js (nav, countdown, reveals, drawers). This file owns three things:
-   the application link, the five-step progression, and the two tabs. */
+   Rides on site.js (nav, countdown, reveals, drawers). This file owns the five-step progression,
+   the two tabs and the People's Choice panel. The application link is plain HTML in /pitch/index.html. */
 (function () {
   'use strict';
-
-  /* ======================================================================
-     1. THE APPLICATION LINK  —  the only thing to change when it exists.
-
-     Paste the application URL between the quotes and the page switches
-     itself over: both buttons become "Apply to pitch", open the form in a
-     new tab, and the notes underneath stop promising a link by email.
-     Leave it empty and founders are sent to the waitlist instead, which is
-     honest about the form not being open yet.
-     ================================================================== */
-  var APPLY_URL = '';
-
-  var APPLY_LABEL = 'Apply to pitch';
-  var APPLY_NOTE = 'Applications close October 17, 2026. The form opens in a new tab.';
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
   var reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
-  function initApply() {
-    var url = String(APPLY_URL || '').trim();
-    if (!url) return;                                  // stay on the waitlist wording
-    $$('[data-apply]').forEach(function (a) {
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.removeAttribute('data-open');
-      var arrow = $('.arr', a);
-      a.textContent = APPLY_LABEL + ' ';
-      if (arrow) { arrow.textContent = '↗'; a.appendChild(arrow); }
-      var sr = document.createElement('span');
-      sr.className = 'sr';
-      sr.textContent = ' (opens in a new tab)';
-      a.appendChild(sr);
-    });
-    $$('[data-apply-note]').forEach(function (p) { p.textContent = APPLY_NOTE; });
-  }
-
   /* ======================================================================
-     2. THE FIVE STEPS
+     1. THE FIVE STEPS
      Whichever step is nearest the reading line is the active one, and every
      step above it is marked done so the rail reads as progress rather than
      as five separate rows. On a pointer device hover and keyboard focus
@@ -114,7 +81,7 @@
   }
 
   /* ======================================================================
-     3. THE TABS  —  Competition / People's Choice
+     2. THE TABS  —  Competition / People's Choice
      ================================================================== */
   function initTabs() {
     var list = $('[role="tablist"]');
@@ -150,7 +117,7 @@
   }
 
   /* ======================================================================
-     4. THE TOP 20  —  empty until the semifinalists are real.
+     3. THE TOP 20  —  empty until the semifinalists are real.
 
      When they are confirmed, fill this array and the People's Choice panel
      renders the cards in place of the pre-launch note. Nothing here ships
@@ -216,7 +183,6 @@
     });
   }
 
-  initApply();
   initSteps();
   initTabs();
   initVote();

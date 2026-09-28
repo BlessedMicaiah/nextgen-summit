@@ -469,9 +469,15 @@ h1,h2,h3,p{margin:0}
 .path{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 16px;padding:22px 0;text-decoration:none}
 .path__name{font:800 clamp(26px,3vw,34px)/1 var(--f-sans);letter-spacing:.01em;text-transform:uppercase}
 .path__note{grid-column:1;font:600 14px/1.4 var(--f-sans);color:var(--ink-2)}
-.path__arr{grid-column:2;grid-row:1 / span 2;font:700 26px/1 var(--f-sans);transition:transform .6s var(--ease),color .3s var(--ease)}
-.path:hover .path__arr{transform:translateX(6px);color:var(--accent-ink)}
-.path[aria-expanded="true"] .path__arr{transform:rotate(90deg);color:var(--accent-ink)}
+.path__name{transition:color .3s var(--ease)}
+@media (hover:hover){.path:hover .path__name{color:var(--accent-ink)}}
+/* rows that open a panel carry the FAQ's plus, which turns to a minus when open */
+.path__plus{grid-column:2;grid-row:1 / span 2;position:relative;width:16px;height:16px;transition:color .3s var(--ease)}
+.path__plus::before,.path__plus::after{content:"";position:absolute;left:0;right:0;top:7px;height:2px;background:currentColor;transition:transform .5s var(--ease)}
+.path__plus::after{transform:rotate(90deg)}
+.path[aria-expanded="true"] .path__plus{color:var(--accent-ink)}
+@media (hover:hover){.path:hover .path__plus{color:var(--accent-ink)}}
+.path[aria-expanded="true"] .path__plus::after{transform:rotate(0)}
 
 /* the volunteer panel: a short brief, the quick note, then applying for a role as the main move */
 .vol{padding:4px 0 30px}
@@ -506,6 +512,26 @@ h1,h2,h3,p{margin:0}
 .faq details[open] .faq__plus::after{transform:rotate(0)}
 .faq__a{padding:0 32px 22px 0;font:500 16px/1.6 var(--f-sans);color:var(--ink-2)}
 .faq__a p + p{margin-top:8px}
+
+/* "still have a question?": a plain form under the FAQ, big fields, labels above */
+.ask{margin-top:clamp(44px,7vh,72px)}
+.ask__title,.ask__done-t{font:800 clamp(24px,2.6vw,30px)/1.1 var(--f-sans);letter-spacing:.01em;text-transform:uppercase}
+.ask__lede{margin-top:10px;font:500 16px/1.55 var(--f-sans);color:var(--ink-2);max-width:40ch}
+.ask__form{display:grid;gap:22px;margin-top:clamp(24px,3.4vh,34px)}
+.ask__form[hidden]{display:none}
+.ask__form .field input{height:56px}
+.field textarea{display:block;width:100%;min-height:176px;padding:14px;border:1.5px solid var(--rule-strong);border-radius:8px;background:#fff;color:var(--ink);font:500 16px/1.5 var(--f-sans);resize:vertical;transition:border-color .3s var(--ease)}
+.field textarea:focus-visible{outline:2px solid var(--accent-ink);outline-offset:1px;border-color:var(--accent-ink)}
+.field input::placeholder,.field textarea::placeholder{color:#6B6B74;opacity:1}
+.field [aria-invalid="true"]{border-color:#B0123E}
+.field__err{margin-top:7px;font:600 13px/1.4 var(--f-sans);color:#8A1233}
+.field__err[hidden]{display:none}
+.ask__actions{margin-top:2px}
+@media (max-width:560px){.ask__actions .btn{width:100%}}
+.ask__done{margin-top:clamp(24px,3.4vh,34px);padding:26px 0 4px;border-top:3px solid var(--accent);outline:none}
+.ask__done[hidden]{display:none}
+.ask__done-x{margin-top:10px;font:500 16px/1.55 var(--f-sans);color:var(--ink-2);max-width:40ch}
+.ask__done-x small{display:block;margin-top:6px;font:600 13px/1.45 var(--f-sans)}
 @supports (interpolate-size:allow-keywords){
   .faq{interpolate-size:allow-keywords}
   .faq details::details-content{height:0;overflow:clip;transition:height .5s var(--ease),content-visibility .5s allow-discrete}

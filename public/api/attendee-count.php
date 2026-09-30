@@ -3,8 +3,11 @@
    Answers only {"count": N}. No names, emails, orders or credentials ever leave this file.
 
    Source of truth: Eventbrite's attendee list for the event, filtered to status=attending.
-   Eventbrite creates one attendee per ticket, so a group order of five counts as five;
-   cancelled, refunded and transferred-away tickets are "not attending" and are left out.
+   Eventbrite keeps one attendee record per ticket (each with quantity 1), whatever the ticket
+   type: a group order of three is three records, a claimed scholarship ticket is one. So the
+   count is records, never orders, and nothing is multiplied. Eventbrite's three filters split
+   every record: attending (counted), not_attending (cancelled, refunded, deleted or
+   transferred away) and unpaid (awaiting offline payment); only the first is counted.
    Its pagination reports object_count (the total across all pages), so one small request
    gives the whole count. If that field is ever missing, every page is walked instead.
 
@@ -89,14 +92,14 @@ function ngs_eb_count(callable $get): int
     if (isset($p['object_count']) && is_int($p['object_count']) && $p['object_count'] >= 0) {
         return $p['object_count'];
     }
-    // no total reported: walk every page and count the attendees themselves
+    // no total reported: walk every page and count the records themselves, one person each
     $count = 0;
     for ($i = 0; $i < 400; $i++) {
         foreach (($page['attendees'] ?? []) as $a) {
             if (!is_array($a) || !empty($a['cancelled']) || !empty($a['refunded'])) {
                 continue;
             }
-            $count += max(1, (int) ($a['quantity'] ?? 1));
+            $count++;
         }
         $p = is_array($page['pagination'] ?? null) ? $page['pagination'] : [];
         if (empty($p['has_more_items']) || empty($p['continuation'])) {

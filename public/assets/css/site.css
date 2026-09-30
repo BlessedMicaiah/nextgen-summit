@@ -178,6 +178,21 @@ h1,h2,h3,p{margin:0}
 }
 
 /* ---------- 02 what is next gen ---------- */
+/* live ticket count (counter.js): the bridge from the hero into "what is next gen".
+   Hidden until Eventbrite answers; while it shows, it takes the top of that section's space. */
+.tally{max-width:var(--maxw);margin:0 auto;padding:clamp(72px,12vh,140px) var(--gutter) 0;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:end;gap:16px clamp(22px,3.4vw,56px)}
+.tally[hidden]{display:none}
+.tally__n{font-family:var(--f-display);font-weight:900;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:clamp(104px,15vw,236px);line-height:.78;letter-spacing:-.05em;font-variant-numeric:lining-nums tabular-nums;white-space:nowrap;color:var(--ink)}
+.tally__txt{padding-bottom:.4em}
+.tally__k{font:800 clamp(15px,1.35vw,20px)/1.2 var(--f-sans);letter-spacing:.16em;text-transform:uppercase}
+.tally__k::before{content:"";display:block;width:40px;height:3px;margin-bottom:14px;background:var(--accent)}
+.tally__x{margin-top:8px;font:500 clamp(15px,1.15vw,17px)/1.5 var(--f-sans);color:var(--ink-2)}
+.tally:not([hidden]) + .what{padding-top:clamp(64px,11vh,130px)}
+@media (max-width:760px){
+  .tally{grid-template-columns:1fr;gap:14px;padding-top:clamp(56px,9vh,84px)}
+  .tally__n{font-size:clamp(92px,29vw,150px)}
+  .tally__txt{padding-bottom:0}
+}
 .what{position:relative;max-width:var(--maxw);margin:0 auto;padding:clamp(120px,22vh,250px) var(--gutter) clamp(110px,19vh,220px)}
 .what__title{margin-top:clamp(28px,6vh,70px);font-size:min(13.4vw,13rem);line-height:.92}
 .what__title > .wm{display:block}

@@ -29,6 +29,8 @@
 
   /* ---------- ours, after Eventbrite has done its own confirmation ---------- */
   function orderComplete() {
+    // tell any open NextGen homepage to refresh its ticket counter (counter.js); nothing else listens
+    try { new BroadcastChannel('nextgen-tickets').postMessage('order-complete'); } catch (e) {}
     var opts = $('[data-tickets]');
     var fine = $('[data-tickets-fine]');
     var done = $('[data-done]');

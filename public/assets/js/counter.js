@@ -61,7 +61,7 @@
       if (!es[0].isIntersecting) return;
       seen = true;
       io.disconnect();
-      if (target !== null) paint(0, target, 1100);
+      if (target > 0) paint(1, target, 1100);         // counts up from 1: the counter never reads 0
     }, { threshold: 0.4 });
     io.observe(box);
   } else {

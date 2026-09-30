@@ -42,7 +42,15 @@ Any host with **PHP 7.4 or newer** and Apache or LiteSpeed (`.htaccess` support)
 
 ## Deploying to Hostinger
 
-1. Zip the **contents** of `public/` so `index.html` is at the top level of the zip. Include the `.htaccess` files.
+**Nothing is released that is not on GitHub**, live or staging. Commit, push, then build the upload with:
+
+    python tools/release.py production   # from main          -> release/nextgensummit.us-<commit>.zip
+    python tools/release.py staging      # from monday-launch -> release/staging-<commit>.zip
+
+The script stops unless the right branch is checked out, clean, and identical to GitHub. The staging
+build adds noindex, drops the sitemap and keeps its own data folder (`nextgen-data-staging`).
+
+1. Deploy the zip from `release/`: the live one to nextgensummit.us, the staging one to staging.nextgensummit.us.
 2. Upload and extract into the domain's `public_html` folder (hPanel File Manager, or the Hostinger connector).
 3. Turn on SSL for the domain in hPanel, then **Force HTTPS**.
 4. Test: join the waitlist once, sign in at `/admin/`, confirm it appears, then delete it.

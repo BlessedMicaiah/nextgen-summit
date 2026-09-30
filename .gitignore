@@ -14,3 +14,6 @@ public/api/config.php
 
 # originals from the image generator (large); web sizes live in public/assets/img
 source-images/
+
+# release zips built by tools/release.py
+release/

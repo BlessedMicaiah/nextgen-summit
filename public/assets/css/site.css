@@ -220,7 +220,8 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- 03 the experience ---------- */
 .xp{position:relative;overflow:hidden;overflow:clip;background:var(--paper);color:var(--ink);transition:color .8s var(--ease)}
-.xp__stage{position:absolute;inset:0;z-index:0;background:#17120f;opacity:0;transition:opacity .9s var(--ease)}
+.xp__stage{position:absolute;inset:0;z-index:0;background:#17120f;opacity:0;transition:opacity .9s var(--ease);-webkit-mask-image:var(--dissolve);mask-image:var(--dissolve)}
+.xp{--seam:clamp(70px,12vh,140px)}
 .xp.is-lit .xp__stage{opacity:1}
 .xp__bg{position:absolute;inset:0;margin:0;opacity:0;transition:opacity 1.1s var(--ease)}
 .xp__bg img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);transform:scale(1.07);transition:transform 2.6s var(--ease)}
@@ -322,7 +323,14 @@ h1,h2,h3,p{margin:0}
 }
 
 /* ---------- the pitch competition, teased between the invitation and the lineup ---------- */
-.pcta{position:relative;display:flex;align-items:center;min-height:clamp(560px,86vh,860px);color:#fff;overflow:hidden;background:#0B0B0F}
+.pcta{--seam:clamp(80px,14vh,160px);position:relative;display:flex;align-items:center;min-height:clamp(560px,86vh,860px);color:#fff;overflow:hidden;background:transparent}
+/* one story, not separate slabs: the photo sections rise out of the paper and dissolve back into it.
+   --seam is how far each edge fades; site.js reads the same value, so the nav only turns white
+   where the photograph is solid. */
+/* defined on each section, where its own --seam lives (a :root definition would resolve --seam too early) */
+/* eased, like light falling off, so a fade has no visible start or end */
+.pcta,.finale,.xp{--dissolve:linear-gradient(to bottom,transparent 0,rgba(0,0,0,0.07) calc(var(--seam) * 0.2),rgba(0,0,0,0.26) calc(var(--seam) * 0.4),rgba(0,0,0,0.55) calc(var(--seam) * 0.6),rgba(0,0,0,0.84) calc(var(--seam) * 0.8),#000 var(--seam),#000 calc(100% - var(--seam)),rgba(0,0,0,0.84) calc(100% - var(--seam) * 0.8),rgba(0,0,0,0.55) calc(100% - var(--seam) * 0.6),rgba(0,0,0,0.26) calc(100% - var(--seam) * 0.4),rgba(0,0,0,0.07) calc(100% - var(--seam) * 0.2),transparent 100%)}
+.pcta__media,.pcta__shade,.finale__media,.finale__shade{-webkit-mask-image:var(--dissolve);mask-image:var(--dissolve)}
 .pcta__media{position:absolute;inset:0;margin:0}
 .pcta__media img{width:100%;height:100%;object-fit:cover;object-position:56% 50%;filter:grayscale(1) contrast(1.04)}
 .pcta__shade{position:absolute;inset:0;background:
@@ -339,7 +347,7 @@ h1,h2,h3,p{margin:0}
    turquoise hairline, and whichever panel is being looked at shows its phrase while the other two
    settle back. site.js writes --p (0→1 as the headline hands off) and --q (the hairline drawing in);
    with no script at all everything below still reads as a static layout. */
-.gen{position:relative;max-width:var(--maxw);margin:0 auto;padding:clamp(110px,18vh,210px) var(--gutter) clamp(100px,16vh,190px);border-top:1px solid var(--rule)}
+.gen{position:relative;max-width:var(--maxw);margin:0 auto;padding:clamp(110px,18vh,210px) var(--gutter) clamp(100px,16vh,190px)}
 .gen__head,.gen__art,.gen__end{position:relative;z-index:1}
 .gen__intro{margin-top:clamp(26px,4.5vh,54px)}
 .gen__title{font-size:clamp(46px,7.4vw,124px);line-height:.92;opacity:calc(1 - var(--p,0) * .55);transform:translate3d(0,calc(var(--p,0) * -3vh),0)}
@@ -430,7 +438,7 @@ h1,h2,h3,p{margin:0}
 }
 
 /* ---------- 07 finale ---------- */
-.finale{position:relative;min-height:100vh;min-height:100svh;display:flex;align-items:center;color:#fff;overflow:hidden;background:#231a14}
+.finale{--seam:clamp(80px,14vh,160px);position:relative;min-height:100vh;min-height:100svh;display:flex;align-items:center;color:#fff;overflow:hidden;background:transparent}
 .finale__media{position:absolute;inset:0;margin:0}
 .finale__media img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%)}
 .finale__shade{position:absolute;inset:0;background:radial-gradient(ellipse 72% 62% at 50% 52%,rgba(var(--shade),.74) 0%,rgba(var(--shade),.56) 60%,rgba(var(--shade),.34) 100%),linear-gradient(180deg,rgba(var(--shade),.35) 0%,rgba(var(--shade),0) 30%,rgba(var(--shade),0) 70%,rgba(var(--shade),.45) 100%)}
@@ -443,6 +451,7 @@ h1,h2,h3,p{margin:0}
 /* ---------- footer ---------- */
 /* footer: social icons on their own line, then the text links on one line, all centred */
 .foot{display:grid;justify-items:center;gap:clamp(18px,3vh,28px);padding:clamp(30px,5vh,48px) var(--gutter) clamp(24px,4vh,36px);background:var(--paper);border-top:1px solid var(--rule);text-align:center}
+main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the finale dissolves into the footer: no rule after it */
 .foot__social{display:flex;justify-content:center;gap:clamp(22px,4vw,40px);list-style:none;margin:0;padding:0}
 .soc{display:grid;justify-items:center;gap:9px;text-decoration:none;color:var(--ink)}
 .soc__icon{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--paper);transition:background-color .35s var(--ease),transform .35s var(--ease)}
@@ -598,6 +607,40 @@ h1,h2,h3,p{margin:0}
 body.paused *,body.paused *::before,body.paused *::after{animation-play-state:paused!important}
 
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+/* Lenis smooth scrolling (site.js). Lenis's own iframe rule is left out on purpose: it would
+   switch off pointer events on the Eventbrite checkout while the page is scrolling. */
+html.lenis,html.lenis body{height:auto}
+html.lenis{scroll-behavior:auto}
+.lenis [data-lenis-prevent]{overscroll-behavior:contain}
+/* Motion drives the drawers (site.js), so their CSS slide steps aside; it stays as the fallback */
+.has-motion .drawer{transition:none}
+.has-motion .drawer::backdrop{transition:none;background:rgba(var(--shade),calc(.5 * var(--bd,1)))}
+/* every .btn morphs with Motion (site.js). Motion owns their transform and corners, so the CSS
+   transitions and the :active scale step aside, and with a mouse the ink flood owns the hover colour. */
+.btn__ink{display:none}
+.has-motion .btn{position:relative;isolation:isolate;overflow:hidden;transition:none}
+.has-motion .btn:active{transform:none}
+.has-motion .btn:not(.btn--ghost) .btn__ink{display:block;position:absolute;z-index:-1;border-radius:50%;background:var(--accent-hover);pointer-events:none;transform:scale(0)}
+@media (hover:hover) and (pointer:fine){.has-motion .btn:not(.btn--ghost):hover{background:var(--accent)}}
+/* the FAQ thread (site.js): one rail marks the open question and stretches to the next. Motion
+   springs the answers open and shut, so the CSS height transition steps aside. */
+.faq{position:relative}
+.faq__rail{display:none}
+.has-motion .faq__rail{display:block;position:absolute;left:-14px;top:0;width:3px;height:0;border-radius:3px;background:var(--accent);opacity:0;pointer-events:none}
+/* FAQ questions that roll from ink to turquoise (site.js). Each letter is a window (clip-path, which
+   leaves the baseline alone where overflow would not) holding the letter and its turquoise twin
+   just below; hovering rolls the pair up by one line, letter after letter (--d), landing on a
+   small spring. Words never break inside. */
+.faq__w{white-space:nowrap}
+.faq__q.is-split .faq__l{display:inline-block;clip-path:inset(0 -.25em)}
+.faq__q.is-split .faq__r{position:relative;display:inline-block;transition:transform .55s cubic-bezier(.3,1.45,.55,1) var(--d,0ms)}
+.faq__t{position:absolute;left:0;top:100%;color:var(--accent-ink);user-select:none;-webkit-user-select:none}
+.has-motion .faq__q.is-split{color:var(--ink)}           /* the roll brings the colour, not the hover */
+.faq summary.is-rolled .faq__r{transform:translate3d(0,-100%,0)}
+.has-motion .faq details::details-content{transition:none}
+/* the hero wordmark's jelly letters (site.js): each letter becomes its own box once the opening
+   animation is over; site.js gives back the kerning, so at rest nothing moves */
+.reg__k.is-jelly .reg__l{display:inline-block;transform-origin:50% 60%}
 
 /* one photographic world: the closing frame shares the hero's black and white */
 .finale__media img{filter:grayscale(1) contrast(1.04)}

@@ -83,6 +83,61 @@
     items.forEach(function (n) { io.observe(n); });
   }
 
+  /* ---------- smooth scrolling (Lenis) ----------
+     Wheel and trackpad scrolling glide; touch keeps the phone's own native scroll (syncTouch is
+     off by default). Lenis still moves the real window scroll position every frame, so every
+     scroll listener on the site keeps working untouched. Off entirely for reduced motion. */
+  var lenis = null;
+  function initSmoothScroll() {
+    function start() {
+      if (lenis || reduced || typeof window.Lenis !== 'function') return;
+      lenis = new window.Lenis({
+        autoRaf: true,
+        // drawers scroll on their own; the page behind them must not move
+        prevent: function (node) { return !!(node && node.closest && node.closest('dialog')); }
+      });
+      if (document.querySelector('dialog[open]')) lenis.stop();
+    }
+    function end() {
+      if (!lenis) return;
+      lenis.destroy();
+      lenis = null;
+    }
+
+    // same-page links glide too (scroll-padding-top keeps targets clear of the nav); a target
+    // that takes focus, like <main> for the skip link, still receives it
+    document.addEventListener('click', function (e) {
+      if (!lenis || e.defaultPrevented || e.button > 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var a = e.target.closest('a[href^="#"]');
+      var id = a && a.getAttribute('href').slice(1);
+      var target = id && document.getElementById(id);
+      if (!target || target.tagName === 'DIALOG') return;
+      e.preventDefault();
+      lenis.scrollTo(target, { immediate: a.classList.contains('skip') });
+      history.replaceState(null, '', '#' + id);
+      if (target.hasAttribute('tabindex')) target.focus({ preventScroll: true });
+    });
+
+    // for other scripts (pitch.js): glide to an element when Lenis is running
+    window.NGScrollTo = function (target) {
+      if (!lenis) return false;
+      lenis.scrollTo(target);
+      return true;
+    };
+
+    start();
+    onMotionChange(function () { if (reduced) end(); else start(); });
+  }
+
+  /* ---------- Motion ----------
+     Motion's animate() and scroll() drive the drawers, the hero parallax and the ticket counter.
+     If the library is missing, or motion is reduced, the CSS transitions underneath take over. */
+  function motionOn() { return !reduced && !!window.Motion; }
+  function initMotionClass() {
+    doc.classList.toggle('has-motion', motionOn());
+    onMotionChange(function () { doc.classList.toggle('has-motion', motionOn()); });
+  }
+
   /* ---------- hero entrance ---------- */
   function initHero() {
     var hero = $('.hero');
@@ -90,6 +145,8 @@
     var img = $('.hero__img', hero);
     var mark = $('.hero__title .reg', hero);
     if (mark) buildReg(mark);
+    initHeroParallax(hero);
+    if (mark) initHeroMorph(hero, mark);
     var imgReady = new Promise(function (res) {
       if (!img || img.complete) return res();
       img.addEventListener('load', res, { once: true });
@@ -100,6 +157,216 @@
       doc.classList.add('is-ready');
       $$('.rv', hero).forEach(function (n) { n.classList.add('in'); settle(n); });
       if (mark) regPlay(mark, 280);
+    });
+  }
+
+  // As the hero scrolls away the photograph drifts down at a slower pace than the page and the
+  // words lift and fade. The photo only ever moves down, so the gap it opens at the top of the
+  // hero is always above the screen. Scroll-linked through Motion, transform and opacity only.
+  function initHeroParallax(hero) {
+    var media = $('.hero__media', hero), inner = $('.hero__inner', hero);
+    if (!media || !inner) return;
+    var stops = [];
+    function link(node, keyframes, times) {
+      var anim = Motion.animate(node, keyframes, { ease: 'linear', times: times });
+      var unlink = Motion.scroll(anim, { target: hero, offset: ['start start', 'end start'] });
+      stops.push(function () { unlink(); anim.cancel(); });
+    }
+    function on() {
+      if (stops.length || !motionOn()) return;
+      link(media, { transform: ['translate3d(0,0,0)', 'translate3d(0,22%,0)'] });
+      link(inner, { transform: ['translate3d(0,0,0)', 'translate3d(0,-48px,0)'] });
+      // the words stay solid for the first stretch, so the buttons never read as disabled
+      link(inner, { opacity: [1, 1, 0, 0] }, [0, 0.4, 0.85, 1]);
+    }
+    function off() {
+      stops.forEach(function (stop) { stop(); });
+      stops = [];
+      [media, inner].forEach(function (n) { n.style.removeProperty('transform'); n.style.removeProperty('opacity'); });
+    }
+    on();
+    onMotionChange(function () { if (reduced) off(); else on(); });
+  }
+
+  /* ---------- hero wordmark: jelly letters ----------
+     Each letter of "nextgen" is a small soft body: a damped spring ties it to its place in the
+     word, and it has its own velocity and spin. The pointer pushes nearby letters away, and a fast
+     swipe throws them; letters stretch along the way they are moving and squash as they stop,
+     lean into their motion, shove a neighbour they run into, then bounce home and jiggle out.
+     Phones get one hop through the word after the opening animation, and a tap knocks the
+     letters away from the finger. When everything is still the loop stops and every inline style
+     is removed, so the word at rest is exactly the static text.
+
+     A letter needs its own box to move, and separate boxes lose the font's kerning, so the kerned
+     position of every letter is measured first and given back to it as a margin (in em, so it
+     holds at every screen size): at rest the word sits exactly where it always did. */
+  function initHeroMorph(hero, mark) {
+    var word = $('.reg__k', mark);
+    if (!word) return;
+    var K = 170, C = 9.5;                               // spring home (1/s^2) and damping: under-damped, so it jiggles
+    var KR = 150, CR = 9;                               // the same for the lean
+    var letters = null, homes = [], fs = 1;
+    var raf = null, last = 0, doneAt = 0, ptr = null, hopped = false;
+
+    new MutationObserver(function () {
+      if (!doneAt && mark.classList.contains('is-done')) { doneAt = performance.now(); setTimeout(hop, 650); }
+    }).observe(mark, { attributes: true, attributeFilter: ['class'] });
+
+    // the letters split only once the opening registration animation has finished with the word
+    function ready() {
+      if (!motionOn()) return false;
+      if (mark.classList.contains('is-armed') && !(doneAt && performance.now() - doneAt > 600)) return false;
+      if (!letters) split();
+      return true;
+    }
+    function split() {
+      fs = parseFloat(getComputedStyle(word).fontSize) || 1;
+      var text = word.textContent;
+      word.textContent = '';
+      var spans = Array.prototype.map.call(text, function (ch) {
+        var s = el('span', 'reg__l', ch);
+        word.appendChild(s);
+        return s;
+      });
+      var kerned = spans.map(function (s) { return s.getBoundingClientRect().left; });   // inline: kerning intact
+      word.classList.add('is-jelly');                   // now each letter is its own box
+      spans.forEach(function (s, i) {
+        var shift = kerned[i] - s.getBoundingClientRect().left;
+        if (Math.abs(shift) > 0.01) s.style.marginLeft = (shift / fs).toFixed(4) + 'em';
+      });
+      letters = spans.map(function (s) { return { el: s, x: 0, y: 0, vx: 0, vy: 0, r: 0, vr: 0, moving: false }; });
+      measure();
+    }
+    // each letter's home centre, relative to the word's own box (layout, so transforms never skew it)
+    function measure() {
+      fs = parseFloat(getComputedStyle(word).fontSize) || 1;
+      homes = letters.map(function (l) { return { x: l.el.offsetLeft + l.el.offsetWidth / 2, y: l.el.offsetTop + l.el.offsetHeight * 0.55, w: l.el.offsetWidth }; });
+    }
+    function local(e) {
+      var r = word.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top, t: e.timeStamp };
+    }
+
+    /* ---- the simulation ---- */
+    function step(dt) {
+      var R = fs * 0.72, push = fs * 52, lean = 11 / fs, room = fs * 0.05;
+      letters.forEach(function (l, i) {
+        var h = homes[i];
+        var ax = -K * l.x - C * l.vx, ay = -K * l.y - C * l.vy;
+        if (ptr) {                                      // the pointer pushes letters out of its way
+          var dx = h.x + l.x - ptr.x, dy = h.y + l.y - ptr.y, d = Math.hypot(dx, dy);
+          if (d < R) {
+            var f = push * Math.pow(1 - d / R, 2);
+            ax += d > 1 ? f * dx / d : 0;
+            ay += d > 1 ? f * dy / d : -f;
+          }
+        }
+        l.ax = ax; l.ay = ay;
+        l.ar = -KR * l.r - CR * l.vr + lean * l.vx;     // a letter leans into the way it is moving
+      });
+      for (var i = 0; i < letters.length - 1; i++) {    // a letter running into its neighbour shoves it
+        var a = letters[i], b = letters[i + 1], over = (a.x - b.x) - room;
+        if (over > 0) { a.ax -= over * 420; b.ax += over * 420; }
+      }
+      letters.forEach(function (l) {
+        l.vx += l.ax * dt; l.vy += l.ay * dt; l.vr += l.ar * dt;
+        l.x += l.vx * dt; l.y += l.vy * dt; l.r += l.vr * dt;
+      });
+    }
+    function render() {
+      var still = true;
+      letters.forEach(function (l) {
+        var speed = Math.hypot(l.vx, l.vy);
+        var active = Math.abs(l.x) > 0.25 || Math.abs(l.y) > 0.25 || speed > 4 || Math.abs(l.r) > 0.002 || Math.abs(l.vr) > 0.02;
+        if (!active) {
+          if (l.moving) { l.moving = false; l.x = l.y = l.vx = l.vy = l.r = l.vr = 0; l.el.style.removeProperty('transform'); l.el.style.removeProperty('will-change'); }
+          return;
+        }
+        still = false;
+        if (!l.moving) { l.moving = true; l.el.style.willChange = 'transform'; }
+        // stretch along the motion and thin across it (the volume stays the same), then lean
+        var s = 1 + Math.min(0.34, speed / (fs * 8.5)), ang = Math.atan2(l.vy, l.vx);
+        l.el.style.transform = 'translate3d(' + l.x.toFixed(2) + 'px,' + l.y.toFixed(2) + 'px,0) rotate(' + ang.toFixed(4) + 'rad) scale(' + s.toFixed(4) + ',' + (1 / s).toFixed(4) + ') rotate(' + (-ang + l.r).toFixed(4) + 'rad)';
+      });
+      return still;
+    }
+    function frame(t) {
+      raf = null;
+      if (!letters) return;
+      var dt = last ? Math.min(1 / 30, (t - last) / 1000) : 1 / 60;
+      last = t;
+      for (var n = Math.max(1, Math.round(dt * 240)), k = 0; k < n; k++) step(dt / n);   // small fixed steps keep the springs stable
+      var still = render();
+      if (still && !ptr) { last = 0; return; }        // all home and no pointer: stop drawing altogether
+      // a pointer resting over the word holds the letters aside; once they stop moving there is
+      // nothing new to draw until the pointer moves again
+      if (ptr && letters.every(function (l) { return Math.hypot(l.vx, l.vy) < 2 && Math.abs(l.vr) < 0.02; })) { last = 0; return; }
+      raf = requestAnimationFrame(frame);
+    }
+    function wake() { if (raf === null && letters) { last = 0; raf = requestAnimationFrame(frame); } }
+
+    /* ---- input ---- */
+    // a moving pointer also throws the letters it passes through, harder the faster it goes
+    function throwAt(p, vx, vy) {
+      var R = fs * 0.72, cap = fs * 9;
+      vx = clamp(vx, -cap, cap); vy = clamp(vy, -cap, cap);
+      letters.forEach(function (l, i) {
+        var d = Math.hypot(homes[i].x + l.x - p.x, homes[i].y + l.y - p.y);
+        if (d < R) { var f = 0.32 * (1 - d / R); l.vx += vx * f; l.vy += vy * f; }
+      });
+    }
+    function near(p) { var r = word.getBoundingClientRect(); return p.x > -fs * 0.6 && p.x < r.width + fs * 0.6 && p.y > -fs * 0.5 && p.y < r.height + fs * 0.5; }
+
+    hero.addEventListener('pointermove', function (e) {
+      if (!ready()) return;
+      if (e.pointerType === 'touch' && !(e.buttons || e.pressure)) return;
+      var p = local(e);
+      if (!near(p)) { ptr = null; return; }
+      if (ptr && p.t > ptr.t) throwAt(p, (p.x - ptr.x) / (p.t - ptr.t) * 1000, (p.y - ptr.y) / (p.t - ptr.t) * 1000);
+      ptr = p;
+      wake();
+    });
+    function lift() { ptr = null; wake(); }
+    hero.addEventListener('pointerleave', lift);
+    hero.addEventListener('pointerup', function (e) { if (e.pointerType === 'touch') lift(); });
+    hero.addEventListener('pointercancel', lift);
+    // a tap knocks the letters away from the finger, the nearest hardest
+    hero.addEventListener('pointerdown', function (e) {
+      if (e.pointerType !== 'touch' || !ready()) return;
+      var p = local(e);
+      if (!near(p)) return;
+      letters.forEach(function (l, i) {
+        var dx = homes[i].x - p.x, dy = homes[i].y - p.y - fs * 0.25, d = Math.hypot(dx, dy) || 1;
+        var f = fs * 5.2 * Math.exp(-Math.pow(d / (fs * 1.3), 2));
+        l.vx += f * dx / d; l.vy += f * dy / d - f * 0.35;
+      });
+      wake();
+    });
+
+    // after the opening animation, one hop runs through the word, so every visitor sees it is alive
+    function hop() {
+      if (hopped || !ready()) return;
+      hopped = true;
+      letters.forEach(function (l, i) {
+        setTimeout(function () { if (motionOn()) { l.vy -= fs * 2.6; l.vr += (i % 2 ? 1 : -1) * 0.9; wake(); } }, 120 + i * 75);
+      });
+    }
+
+    var resizeT = null;
+    addEventListener('resize', function () {
+      if (!letters) return;
+      clearTimeout(resizeT);
+      resizeT = setTimeout(measure, 150);
+    });
+
+    onMotionChange(function () {
+      if (motionOn() || !letters) return;
+      if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+      ptr = null;
+      letters.forEach(function (l) {
+        l.x = l.y = l.vx = l.vy = l.r = l.vr = 0; l.moving = false;
+        l.el.style.removeProperty('transform'); l.el.style.removeProperty('will-change');
+      });
     });
   }
 
@@ -124,12 +391,17 @@
       out.minutes.textContent = pad(m);
       out.seconds.textContent = pad(sec % 60);
       if (sr) sr.textContent = left ? d + ' days until NextGen Summit on October 30.' : 'NextGen Summit is here.';
-      if (!left && timer) { clearInterval(timer); timer = null; }
+      return left;
+    }
+    // each tick lands just after the second turns over (a plain interval drifts and now and then skips one)
+    function loop() {
+      timer = null;
+      if (tick() && visible && !document.hidden) timer = setTimeout(loop, 1000 - Date.now() % 1000 + 15);
     }
     function run() {                        // only ticks while the hero is on screen and the tab is open
       var on = visible && !document.hidden;
-      if (on && !timer) { tick(); timer = setInterval(tick, 1000); }
-      else if (!on && timer) { clearInterval(timer); timer = null; }
+      if (on && !timer) loop();
+      else if (!on && timer) { clearTimeout(timer); timer = null; }
     }
     tick();
     new IntersectionObserver(function (es) { visible = es[0].isIntersecting; run(); }).observe(box);
@@ -146,6 +418,14 @@
     var state = '';
     var raf = null;
 
+    // --seam (site.css) is how far a photo section dissolves into the paper at each edge. It is
+    // registered as a length so its computed value comes back in px, from the one definition in CSS.
+    try { CSS.registerProperty({ name: '--seam', syntax: '<length>', inherits: true, initialValue: '0px' }); } catch (e) {}
+    function seamOf(s) {
+      var v = parseFloat(getComputedStyle(s).getPropertyValue('--seam'));
+      return isNaN(v) ? 0 : v;
+    }
+
     function update() {
       raf = null;
       var y = nav.offsetHeight / 2;
@@ -155,7 +435,10 @@
         if (r.top <= y && r.bottom > y) {
           var s = sections[i];
           var mode = s.getAttribute('data-nav');
-          theme = (mode === 'photo' || (mode === 'xp' && s.classList.contains('is-lit'))) ? 'photo' : 'paper';
+          var photo = mode === 'photo' || (mode === 'xp' && s.classList.contains('is-lit'));
+          // inside a fade the bar is still over paper; it turns white only where the photo is solid
+          var seam = photo ? seamOf(s) : 0;
+          theme = photo && y - r.top >= seam && r.bottom - y > seam ? 'photo' : 'paper';
           break;
         }
       }
@@ -639,15 +922,379 @@
     }, { threshold: 0.6 }).observe(t);
   }
 
+  /* ---------- buttons: liquid morph ----------
+     With a mouse, every .btn behaves like a drop of ink. The corners nearest the pointer swell
+     toward round while the far ones stay crisp, the button leans a few pixels after the pointer
+     (less for the smaller nav and form buttons),
+     and a deeper turquoise floods in from where the pointer entered and drains out where it left.
+     A press (mouse, touch, or Enter on the keyboard, all through Motion's press()) squashes
+     it and lets it spring back. Reduced motion, or no Motion, leaves the plain CSS button. */
+  function initButtonMorph() {
+    var btns = $$('.btn:not(.btn--ghost)');            // outline buttons have no fill to flood
+    if (!btns.length || !window.Motion || !Motion.hover || !Motion.press) return;
+    var fineMQ = matchMedia('(hover:hover) and (pointer:fine)');
+    var MORPH = { type: 'spring', visualDuration: 0.35, bounce: 0.3 };
+    var SETTLE = { type: 'spring', visualDuration: 0.5, bounce: 0.45 };
+    var FLOOD = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
+    var LEAN_X = 6, LEAN_Y = 3;                         // px a big (58px) button follows the pointer
+
+    function usable(btn) { return motionOn() && !btn.disabled; }
+
+    function reset(btn) {
+      btn.__morph = (btn.__morph || 0) + 1;            // any settle still running must not clean up later
+      ['transform', 'border-top-left-radius', 'border-top-right-radius', 'border-bottom-right-radius', 'border-bottom-left-radius']
+        .forEach(function (p) { btn.style.removeProperty(p); });
+      btn.__ink.removeAttribute('style');
+    }
+
+    btns.forEach(function (btn) {
+      if (btn.__ink) return;
+      btn.__ink = el('span', 'btn__ink', null, true);
+      btn.insertBefore(btn.__ink, btn.firstChild);
+      var target = null, raf = null, round = 29, lean = 1;
+      var base = parseFloat(getComputedStyle(btn).borderTopLeftRadius) || 8;   // read before any inline shape
+
+      // corner radii from where the pointer sits: (u, v) run 0..1 across the button. Each corner is
+      // its own property, so Motion springs four plain lengths rather than one shorthand string.
+      function morph() {
+        raf = null;
+        if (!target || !usable(btn)) return;
+        var u = target.u, v = target.v;
+        function corner(cx, cy) {
+          var k = 1 - Math.min(1, Math.hypot(u - cx, v - cy) / 1.1);
+          return (base + (round - base) * k * k).toFixed(1) + 'px';
+        }
+        Motion.animate(btn, {
+          x: (u - 0.5) * 2 * LEAN_X * lean,
+          y: (v - 0.5) * 2 * LEAN_Y * lean,
+          borderTopLeftRadius: corner(0, 0),
+          borderTopRightRadius: corner(1, 0),
+          borderBottomRightRadius: corner(1, 1),
+          borderBottomLeftRadius: corner(0, 1)
+        }, MORPH);
+      }
+      function track(e) {
+        var r = btn.getBoundingClientRect();
+        target = { u: clamp((e.clientX - r.left) / r.width, 0, 1), v: clamp((e.clientY - r.top) / r.height, 0, 1) };
+        if (raf === null) raf = requestAnimationFrame(morph);
+      }
+
+      Motion.hover(btn, function (_, start) {
+        if (!fineMQ.matches || !usable(btn)) return;
+        var token = btn.__morph = (btn.__morph || 0) + 1;
+        var r = btn.getBoundingClientRect();         // measured on every entry: widths change with the screen
+        round = r.height / 2;
+        lean = Math.min(1, r.height / 58);
+        var x = start.clientX - r.left, y = start.clientY - r.top;
+        var R = Math.ceil(Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y)));
+        var ink = btn.__ink;
+        ink.style.cssText = 'width:' + 2 * R + 'px;height:' + 2 * R + 'px;left:' + (x - R) + 'px;top:' + (y - R) + 'px';
+        Motion.animate(ink, { transform: ['scale(0)', 'scale(1)'] }, FLOOD);
+        track(start);
+        btn.addEventListener('pointermove', track);
+
+        return function (end) {
+          btn.removeEventListener('pointermove', track);
+          target = null;
+          if (btn.__morph !== token) return;
+          // the flood drains toward the point the pointer left from
+          var ir = ink.getBoundingClientRect();
+          ink.style.transformOrigin = (end.clientX - ir.left) + 'px ' + (end.clientY - ir.top) + 'px';
+          Motion.animate(ink, { transform: 'scale(0)' }, { duration: 0.4, ease: [0.65, 0, 0.35, 1] });
+          var b = base + 'px';
+          Motion.animate(btn, { x: 0, y: 0, borderTopLeftRadius: b, borderTopRightRadius: b, borderBottomRightRadius: b, borderBottomLeftRadius: b }, SETTLE).then(function () {
+            if (btn.__morph === token) reset(btn);     // hand the shape back to the stylesheet
+          });
+        };
+      });
+
+      Motion.press(btn, function () {
+        if (!usable(btn)) return;
+        Motion.animate(btn, { scaleX: 1.04, scaleY: 0.92 }, { type: 'spring', visualDuration: 0.18, bounce: 0 });
+        return function () {
+          Motion.animate(btn, { scaleX: 1, scaleY: 1 }, SETTLE);
+        };
+      });
+    });
+
+    onMotionChange(function () { if (reduced) btns.forEach(reset); });
+  }
+
+  /* ---------- FAQ: the morphing thread ----------
+     The buttons are drops of ink; the FAQ is a thread. One turquoise rail marks the open question,
+     and when another opens it stretches across both, like a drop pulling apart, before letting go
+     of the old one. The answer springs open and shut in every browser (the CSS height transition
+     needs interpolate-size, which only Chromium has), its text comes into focus out of a blur, and
+     the plus twists as it becomes a minus. Motion takes over the one-open-at-a-time rule from
+     <details name>, so the closing answer can animate too; with Motion off, the native accordion
+     and its CSS come back untouched. */
+  function initFaq() {
+    var faq = $('.faq');
+    if (!faq || !window.Motion) return;
+    var items = $$('details', faq);
+    if (!items.length) return;
+    var group = items[0].getAttribute('name');
+    var rail = el('span', 'faq__rail', null, true);
+    faq.appendChild(rail);
+    var OPEN = { type: 'spring', visualDuration: 0.45, bounce: 0.2 };
+    var CLOSE = { type: 'spring', visualDuration: 0.32, bounce: 0 };
+    var TWIST = { type: 'spring', visualDuration: 0.5, bounce: 0.4 };
+    var railAt = null, railToken = 0, railBusy = false; // where the rail sits: { top, h }, relative to .faq
+
+    function parts(d) { return { a: $('.faq__a', d), plus: $('.faq__plus', d), sum: $('summary', d) }; }
+    function kids(a) { return Array.prototype.slice.call(a.children); }
+    function clear(d) {
+      var p = parts(d);
+      ['height', 'padding-bottom', 'overflow'].forEach(function (k) { p.a.style.removeProperty(k); });
+      kids(p.a).forEach(function (k) { ['opacity', 'filter', 'transform'].forEach(function (s) { k.style.removeProperty(s); }); });
+    }
+
+    // returns the answer's full height, so the rail knows where the item will end
+    function expand(d) {
+      var p = parts(d), token = d.__anim = (d.__anim || 0) + 1;
+      var from = d.open ? p.a.offsetHeight : 0;       // reopened mid-close: carry on from there
+      d.__state = 'open';
+      d.open = true;
+      clear(d);
+      var full = p.a.offsetHeight, pad = getComputedStyle(p.a).paddingBottom;
+      p.a.style.overflow = 'hidden';
+      Motion.animate(p.a, { height: [from + 'px', full + 'px'], paddingBottom: [from ? pad : '0px', pad] }, OPEN).then(function () {
+        if (d.__anim === token) ['height', 'padding-bottom', 'overflow'].forEach(function (k) { p.a.style.removeProperty(k); });
+      });
+      Motion.animate(kids(p.a), { opacity: [0, 1], filter: ['blur(8px)', 'blur(0px)'], y: [10, 0] }, { duration: 0.5, delay: 0.06, ease: [0.16, 1, 0.3, 1] }).then(function () {
+        // a leftover filter, even blur(0), can soften text in some browsers
+        if (d.__anim === token) kids(p.a).forEach(function (k) { ['opacity', 'filter', 'transform'].forEach(function (s) { k.style.removeProperty(s); }); });
+      });
+      Motion.animate(p.plus, { rotate: 180 }, TWIST);
+      return full;
+    }
+
+    // returns the answer's current height, which is what the items below it are about to lose
+    function collapse(d) {
+      var p = parts(d), token = d.__anim = (d.__anim || 0) + 1;
+      var now = p.a.offsetHeight;
+      d.__state = 'closed';
+      p.a.style.overflow = 'hidden';
+      Motion.animate(kids(p.a), { opacity: 0, filter: 'blur(4px)' }, { duration: 0.18 });
+      Motion.animate(p.a, { height: '0px', paddingBottom: '0px' }, CLOSE).then(function () {
+        if (d.__anim !== token) return;
+        d.open = false;
+        clear(d);
+      });
+      Motion.animate(p.plus, { rotate: 0 }, TWIST);
+      return now;
+    }
+
+    function placeRail(top, h, opacity) {
+      railAt = h > 0 ? { top: top, h: h } : null;
+      rail.style.top = top + 'px';
+      rail.style.height = h + 'px';
+      rail.style.opacity = opacity;
+    }
+
+    // rail to (top, h): grow out of the question if nothing was marked, otherwise stretch across
+    // both places first and then contract onto the new one
+    function railTo(top, h) {
+      var token = ++railToken, from = railAt, anim;
+      railAt = h > 0 ? { top: top, h: h } : null;
+      if (h <= 0) {
+        if (!from) { railBusy = false; return; }
+        anim = Motion.animate(rail, { top: [from.top + 'px', top + 'px'], height: [from.h + 'px', '0px'], opacity: [1, 0] }, CLOSE);
+      } else if (!from) {
+        anim = Motion.animate(rail, { top: [top + 22 + 'px', top + 'px'], height: ['0px', h + 'px'], opacity: [0, 1] }, OPEN);
+      } else {
+        var lo = Math.min(from.top, top), hi = Math.max(from.top + from.h, top + h);
+        anim = Motion.animate(rail, {
+          top: [from.top + 'px', lo + 'px', top + 'px'],
+          height: [from.h + 'px', hi - lo + 'px', h + 'px'],
+          opacity: [1, 1, 1]
+        }, { duration: 0.7, times: [0, 0.42, 1], ease: [[0.65, 0, 0.35, 1], [0.16, 1, 0.3, 1]] });
+      }
+      railBusy = true;
+      anim.then(function () { if (token === railToken) { railBusy = false; placeRail(top, h, h > 0 ? 1 : 0); } });
+    }
+
+    function toggle(d) {
+      var sumH = parts(d).sum.offsetHeight;
+      if (d.__state === 'open') {
+        collapse(d);
+        railTo(d.offsetTop + sumH / 2, 0);
+        return;
+      }
+      var prev = items.filter(function (x) { return x !== d && x.__state === 'open'; })[0];
+      var lost = prev ? collapse(prev) : 0;
+      var full = expand(d);
+      // where this item will sit once the other answer has folded away above it
+      var top = d.offsetTop - (prev && prev.offsetTop < d.offsetTop ? lost : 0);
+      railTo(top, sumH + full);
+    }
+
+    items.forEach(function (d) {
+      d.__state = d.open ? 'open' : 'closed';
+      parts(d).sum.addEventListener('click', function (e) {
+        if (!motionOn()) return;
+        e.preventDefault();
+        toggle(d);
+      });
+      // opened by the browser itself (find in page): keep one open and the rail on it
+      d.addEventListener('toggle', function () {
+        if (!motionOn() || !d.open || d.__state === 'open') return;
+        items.forEach(function (x) { if (x !== d && x.open) { x.__anim = (x.__anim || 0) + 1; x.__state = 'closed'; x.open = false; clear(x); } });
+        d.__state = 'open';
+        placeRail(d.offsetTop, d.offsetHeight - 1, 1);
+      });
+    });
+
+    // the drawer can change width, which changes how tall an open answer is
+    new ResizeObserver(function () {
+      var d = items.filter(function (x) { return x.__state === 'open'; })[0];
+      if (d && railAt && !railBusy && !parts(d).a.style.height) placeRail(d.offsetTop, d.offsetHeight - 1, 1);
+    }).observe(faq);
+
+    function sync() {
+      items.forEach(function (d) {
+        if (motionOn()) d.removeAttribute('name');
+        else {
+          if (group) d.setAttribute('name', group);
+          d.__anim = (d.__anim || 0) + 1;
+          if (d.__state === 'closed') d.open = false;
+          d.__state = d.open ? 'open' : 'closed';
+          clear(d);
+          parts(d).plus.style.removeProperty('transform');
+        }
+      });
+      if (!motionOn()) { railToken++; railBusy = false; railAt = null; rail.removeAttribute('style'); }
+    }
+    sync();
+    onMotionChange(sync);
+  }
+
+  /* ---------- FAQ: questions that roll from ink to turquoise ----------
+     Every letter of a question sits in its own little window with a turquoise twin waiting just
+     below it. On hover the letters roll up, ink out of the top and turquoise in from below, one
+     after another, rippling out from the letter the pointer came in on and landing with a small
+     spring; leaving rolls them back down, rippling from the letter it left from. Keyboard focus
+     rolls the question the same way, from its first letter.
+     A question is split into letters the first time it is reached, with the font's kerning
+     measured and given back to each letter, so at rest the text sits exactly where it did. The
+     roll itself is a CSS transition: site.js only sets each letter's delay and the class. */
+  function initFaqText() {
+    var sums = $$('.faq summary');
+    if (!sums.length) return;
+    var fineMQ = matchMedia('(hover:hover) and (pointer:fine)');
+    var STAGGER = 16;                                   // ms between neighbouring letters
+
+    function split(sum) {
+      if (sum.__q) return sum.__q;
+      var text = sum.firstChild;
+      if (!text || text.nodeType !== 3 || !text.textContent.trim()) return null;
+      var q = el('span', 'faq__q');
+      sum.insertBefore(q, text);
+      sum.removeChild(text);
+      var letters = [];
+      text.textContent.trim().split(/(\s+)/).forEach(function (part) {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { q.appendChild(document.createTextNode(' ')); return; }
+        var w = el('span', 'faq__w');                   // a word never breaks inside
+        q.appendChild(w);
+        Array.prototype.forEach.call(part, function (ch) {
+          var s = el('span', 'faq__l', ch);
+          w.appendChild(s);
+          letters.push(s);
+        });
+      });
+      var fs = parseFloat(getComputedStyle(q).fontSize) || 16;
+      var kerned = letters.map(function (s) { return s.getBoundingClientRect().left; });
+      q.classList.add('is-split');                      // each letter is its own box now: give the kerning back
+      letters.forEach(function (s, i) {
+        var shift = kerned[i] - s.getBoundingClientRect().left;
+        if (Math.abs(shift) > 0.01) s.style.marginLeft = (shift / fs).toFixed(4) + 'em';
+        // the window's contents: the letter, and its turquoise twin underneath (hidden from
+        // screen readers and from copying, so the question still reads and copies once)
+        var ch = s.textContent;
+        s.textContent = '';
+        var roll = el('span', 'faq__r', ch);
+        var twin = el('span', 'faq__t', ch, true);
+        roll.appendChild(twin);
+        s.appendChild(roll);
+      });
+      sum.__q = letters;
+      return letters;
+    }
+    // the ripple: each letter waits in proportion to how far it is from where the pointer crossed
+    function stagger(letters, x, y) {
+      var near = 0, best = Infinity;
+      var boxes = letters.map(function (s) { return s.getBoundingClientRect(); });
+      boxes.forEach(function (r, i) {
+        var d = Math.hypot(r.left + r.width / 2 - x, (r.top + r.height / 2 - y) * 2);
+        if (d < best) { best = d; near = i; }
+      });
+      letters.forEach(function (s, i) { s.style.setProperty('--d', Math.abs(i - near) * STAGGER + 'ms'); });
+    }
+    function roll(sum, on, x, y) {
+      if (!motionOn()) return;
+      var letters = split(sum);
+      if (!letters) return;
+      stagger(letters, x, y);
+      sum.classList.toggle('is-rolled', on);
+    }
+
+    sums.forEach(function (sum) {
+      sum.addEventListener('pointerenter', function (e) {
+        if (e.pointerType === 'mouse' && fineMQ.matches) roll(sum, true, e.clientX, e.clientY);
+      });
+      sum.addEventListener('pointerleave', function (e) {
+        if (sum.classList.contains('is-rolled') && sum !== document.activeElement) roll(sum, false, e.clientX, e.clientY);
+      });
+      sum.addEventListener('focus', function () {
+        if (!sum.matches(':focus-visible')) return;
+        var r = sum.getBoundingClientRect();
+        roll(sum, true, r.left, r.top + r.height / 2);
+      });
+      sum.addEventListener('blur', function () {
+        if (!sum.classList.contains('is-rolled') || sum.matches(':hover')) return;
+        var r = sum.getBoundingClientRect();
+        roll(sum, false, r.left, r.top + r.height / 2);
+      });
+    });
+
+    onMotionChange(function () {
+      if (!motionOn()) sums.forEach(function (sum) { sum.classList.remove('is-rolled'); });
+    });
+  }
+
   /* ---------- utilities: drawers ---------- */
+  // With Motion the panel slides in and back out on a spring with no overshoot, and the backdrop
+  // fades through --bd (the ::backdrop reads it from its dialog). Every way of closing (the close
+  // button, Escape, a click on the backdrop) plays the exit before the dialog actually closes.
+  // Without Motion, the CSS slide in site.css does the work and close() is immediate.
+  var DRAWER_IN = { type: 'spring', bounce: 0, visualDuration: 0.5 };
+  var DRAWER_OUT = { type: 'spring', bounce: 0, visualDuration: 0.34 };
+
+  function dismiss(d) {
+    if (!d.open || d.__closing) return;
+    if (!motionOn()) { d.close(); return; }
+    d.__closing = true;
+    Promise.all([
+      Motion.animate(d, { transform: 'translate3d(100%,0,0)' }, DRAWER_OUT),
+      Motion.animate(d, { '--bd': 0 }, { duration: 0.3, ease: 'easeOut' })
+    ]).then(function () { if (d.__closing) d.close(); });
+  }
+
   function initDialogs() {
     var dialogs = {};
     $$('dialog.drawer').forEach(function (d) {
       dialogs[d.id] = d;
-      d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+      d.addEventListener('click', function (e) { if (e.target === d) dismiss(d); });
       // browsers close a modal dialog on Escape themselves; this covers the non-modal fallback too
-      d.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); d.close(); } });
+      d.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); dismiss(d); } });
+      d.addEventListener('cancel', function (e) { e.preventDefault(); dismiss(d); });
       d.addEventListener('close', function () {
+        if (d.open) return;                 // already opened again before this event arrived
+        d.__closing = false;
+        d.style.removeProperty('transform');
+        d.style.removeProperty('--bd');
+        if (lenis && !document.querySelector('dialog[open]')) lenis.start();
         if (location.hash === '#' + d.id) history.replaceState(null, '', location.pathname + location.search);
       });
     });
@@ -655,10 +1302,17 @@
     function open(id) {
       var d = dialogs[id];
       if (!d) return;
+      // switching from one drawer to another: the old one goes at once, the new one slides in
       Object.keys(dialogs).forEach(function (k) { if (k !== id && dialogs[k].open) dialogs[k].close(); });
+      if (d.__closing) { d.__closing = false; d.close(); }   // reopened mid-exit: the exit must not close it again
       if (!d.open) {
+        if (lenis) lenis.stop();
         if (typeof d.showModal === 'function') d.showModal();
         else d.setAttribute('open', '');
+        if (motionOn()) {
+          Motion.animate(d, { transform: ['translate3d(100%,0,0)', 'translate3d(0%,0,0)'] }, DRAWER_IN);
+          Motion.animate(d, { '--bd': [0, 1] }, { duration: 0.45, ease: 'easeOut' });
+        }
       }
       if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
     }
@@ -673,7 +1327,7 @@
       var closer = e.target.closest('[data-close]');
       if (closer) {
         var d = closer.closest('dialog');
-        if (d) d.close();
+        if (d) dismiss(d);
       }
     });
 
@@ -921,6 +1575,8 @@
 
   initExternalLinks();
   initMotionPrefs();
+  initMotionClass();
+  initSmoothScroll();
   initNav();
   initCountdown();
   initHero();
@@ -931,6 +1587,9 @@
   initRunway();
   initGen();
   initFinale();
+  initButtonMorph();
+  initFaq();
+  initFaqText();
   initDialogs();
   initForms();
 })();

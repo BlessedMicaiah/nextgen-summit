@@ -28,6 +28,47 @@ nextgen-summit/
 
 The three photos in the 17—29 section were generated with Higgsfield (Soul 2.0). The 2K originals are kept locally in `source-images/gen/` (ignored by git because of their size). To rebuild the web sizes after replacing an original, run `sh tools/make-gen-images.sh`: it trims the film border, crops each frame to its ratio and writes 600/900/1200px greyscale JPEGs to `public/assets/img/`.
 
+## Smooth scrolling and animation (Lenis + Motion)
+
+Two small libraries are vendored in `public/assets/vendor/` (MIT, no CDN at runtime), loaded before
+`site.js` on the homepage, tickets, pitch and scholarship pages:
+
+- **Lenis 1.3.26** (`lenis-1.3.26.min.js`): smooth wheel and trackpad scrolling. Touch keeps native
+  scrolling. Same-page links glide through it, and `scroll-padding-top` still keeps targets clear
+  of the nav. It pauses while a drawer is open, and drawers scroll on their own.
+- **Motion 13.5.0** (`motion-13.5.0.min.js`): the plain-JavaScript build of Motion (formerly Framer
+  Motion; the React version needs a build step this site does not have). It is a slim build with
+  only `animate`, `scroll`, `hover` and `press`; the header of the file says how it was made. It
+  drives the drawer slide in and out, the hero parallax, the ticket counter's count-up and the
+  "liquid" morph on every filled button (`.btn`, big, regular and small): with a mouse the corners
+  nearest the pointer round out, the button leans toward it (less for smaller buttons) and a deeper
+  turquoise floods in from the entry point; a press (mouse, touch or Enter) squashes it. The
+  confirmation pages and the admin do not load `site.js`, so their buttons stay plain (only
+  visitors with JavaScript off ever reach the confirmation pages). The FAQ accordion gets its own
+  morph: a turquoise rail marks the open question and stretches across to the next one before
+  letting go, answers spring open and shut (in every browser) with their text coming into focus
+  out of a blur, and the plus twists into a minus. While Motion runs it keeps one question open
+  itself, so the `name="faq"` attribute is removed; with Motion off the native accordion returns.
+  Hovering a question rolls its letters, odometer style, from ink to turquoise: each letter sits in
+  its own window with a turquoise twin below, and the roll ripples out from the letter the pointer
+  came in on (keyboard focus does the same). Kerning is measured and given back, so the text at
+  rest sits where it always did; the twins are hidden from screen readers and from copying.
+  The hero "nextgen" is jelly: each letter is a small soft body on a damped spring, with its own
+  velocity and lean. The pointer pushes nearby letters aside and a fast swipe throws them; they
+  stretch along their motion, squash as they stop, shove a neighbour they run into, bounce home
+  and jiggle out. Phones get one hop through the word after the opening animation, and a tap
+  knocks the letters away from the finger. The font's kerning is measured and given back to each
+  letter, so at rest the word is exactly the static text, and the loop stops when all is still.
+
+The homepage reads as one continuous story: the photo sections (the pitch band, the finale, and
+The Experience when a phrase lights it) rise out of the paper and dissolve back into it on an eased
+mask, and the rules between sections are gone. `--seam` in site.css sets how far each edge fades;
+site.js reads the same value, so the nav only turns white where a photograph is solid.
+
+Both switch off for `prefers-reduced-motion`, live. If either file fails to load, the CSS
+transitions and native scrolling underneath take over, so nothing breaks. To upgrade, replace the
+file, change the version in its name and update the four `<script>` tags.
+
 ## Updating CSS or JavaScript
 
 Browsers keep `site.css`, `site.js` and `liquid.js` for 7 days (see `.htaccess`). Whenever you change one of them, bump the `?v=` date on every link to it (`index.html`, `registration-received/`, `thanks/`, `admin/index.php`, `api/register.php`) so returning visitors get the new file straight away.

@@ -17,20 +17,20 @@
   var shown = null;          // the number on screen
   var target = null;         // the latest real count
   var seen = false;          // has the counter been scrolled into view yet
-  var timer = null, busy = false, raf = 0;
+  var timer = null, busy = false, anim = null;
 
   function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
 
+  // the count-up is a Motion tween (ease-out cubic); without Motion the number simply appears
   function paint(from, to, ms) {
-    cancelAnimationFrame(raf);
-    if (reduce.matches || from === to || !ms) { num.textContent = fmt(to); shown = to; return; }
-    var t0 = performance.now();
-    (function step(now) {
-      var p = Math.min(1, (now - t0) / ms);
-      var e = 1 - Math.pow(1 - p, 3);                  // ease-out
-      num.textContent = fmt(from + (to - from) * e);
-      if (p < 1) raf = requestAnimationFrame(step); else shown = to;
-    })(t0);
+    if (anim) { anim.stop(); anim = null; }
+    if (reduce.matches || from === to || !ms || !window.Motion) { num.textContent = fmt(to); shown = to; return; }
+    anim = window.Motion.animate(from, to, {
+      duration: ms / 1000,
+      ease: [0.33, 1, 0.68, 1],
+      onUpdate: function (v) { num.textContent = fmt(v); },
+      onComplete: function () { num.textContent = fmt(to); shown = to; anim = null; }
+    });
   }
 
   function show(n) {

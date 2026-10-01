@@ -208,4 +208,55 @@ try {
     ngs_reply(false, $kind, 'We could not save that right now. Please try again in a moment.', 500, $wantsJson);
 }
 
+// the application is saved; the email is a copy for the team, so a failed send never fails the applicant
+if ($kind === 'scholarship') {
+    ngs_email_scholarship($data);
+}
+
 ngs_reply(true, $kind, '', 200, $wantsJson);
+
+/** Sends a new scholarship application to the team inbox, with Reply-To set to the applicant. */
+function ngs_email_scholarship(array $d): void
+{
+    $to = 'hello@nextgensummit.us';
+    $from = 'hello@nextgensummit.us';
+    $host = preg_replace('/[^a-z0-9.\-]/i', '', (string) ($_SERVER['HTTP_HOST'] ?? 'nextgensummit.us'));
+    $oneLine = function ($s) { return trim(preg_replace('/[\r\n]+/', ' ', (string) $s)); };
+
+    $name = $oneLine($d['name'] ?? '');
+    $reason = (string) ($d['reason'] ?? '');
+    if (($d['reason_other'] ?? '') !== '') {
+        $reason .= ': ' . $d['reason_other'];
+    }
+    $subject = (stripos($host, 'staging.') === 0 ? '[STAGING TEST] ' : '') . 'Scholarship application: ' . $name;
+    $body = "A new NextGen Summit scholarship application was submitted.\n\n"
+        . 'Full name: ' . $name . "\n"
+        . 'Email: ' . $oneLine($d['email'] ?? '') . "\n"
+        . 'Phone: ' . $oneLine($d['phone'] ?? '') . "\n"
+        . 'School / College / Organization: ' . $oneLine($d['organization'] ?? '') . "\n\n"
+        . "Why do you want to attend NextGen Summit?\n" . trim((string) ($d['why'] ?? '')) . "\n\n"
+        . "Why are you requesting a scholarship ticket?\n" . $oneLine($reason) . "\n\n"
+        . 'Can commit to attending on October 30: ' . $oneLine($d['commit'] ?? '') . "\n\n"
+        . 'Submitted: ' . (new DateTime('now', new DateTimeZone('America/New_York')))->format('l, F j, Y \a\t g:i A T') . "\n"
+        . 'Review and mark it in the admin: https://' . $host . "/admin/?tab=scholarships\n\n"
+        . "Reply to this email to answer the applicant directly.\n";
+
+    $headers = [
+        'From: NextGen Summit Website <' . $from . '>',
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+    ];
+    $applicant = filter_var($d['email'] ?? '', FILTER_VALIDATE_EMAIL);
+    if ($applicant) {
+        $headers[] = 'Reply-To: ' . $applicant;
+    }
+    $encoded = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($subject, 'UTF-8', 'B', "\r\n") : $subject;
+    try {
+        if (!@mail($to, $encoded, $body, implode("\r\n", $headers), '-f' . $from)) {
+            error_log('Next Gen Summit: the scholarship email to ' . $to . ' was not accepted for delivery.');
+        }
+    } catch (Throwable $e) {
+        error_log('Next Gen Summit: scholarship email failed: ' . $e->getMessage());
+    }
+}

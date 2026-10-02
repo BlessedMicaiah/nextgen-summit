@@ -136,7 +136,7 @@ is live at nextgensummit.us.
 
 ## Still to do
 
-- Announce the lineup. Section 04 holds three "to be announced" cards showing an empty stage, so nothing
-  suggests who is coming. Replace one card at a time as each speaker is confirmed: swap the picture for
-  a portrait, put the name in `.person__role` and the title in `.person__status`, and drop `.person__tag`.
+- Announce the lineup. The "Who's in the room?" speakers section was removed from the homepage on
+  2026-10-02 rather than show placeholders. Its styles (`.room`, `.spk`, `.run`) and runway script remain;
+  to bring it back with real speakers, restore the section from commit 719787c in `public/index.html`.
 - Host the remaining Unsplash photos locally and credit the photographers.

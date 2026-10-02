@@ -233,61 +233,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- 05 who's in the room -->
-  <section class="room" id="room" data-nav="paper" aria-labelledby="room-title">
-    <div class="room__head">
-      <p class="label rv">The Lineup</p>
-      <h2 class="room__title wm rv" id="room-title" style="--d:.1s">who's in the room?</h2>
-      <div class="room__note rv" style="--d:.2s">
-        <p class="draft-note">Lineup announcing soon</p>
-        <p>Names are being locked in. We announce each one as it is confirmed.</p>
-      </div>
-    </div>
-    <!-- The lineup is not announced yet: three held places on a runway that runs on whatever speakers
-         it is given. The pictures are the empty stage, so a card can never suggest who is coming.
-         To announce someone: swap the picture for their portrait, put their name in .spk__name, their
-         role and organisation in .spk__role, a sentence in .spk__note, and drop .spk--tba (the chip).
-         Add or remove <li class="spk"> freely -- site.js measures the row and clones it to fit. -->
-    <div class="run" data-run>
-      <ul class="run__track" data-run-track>
-      <li class="spk spk--tba">
-        <article class="spk__card" tabindex="0" aria-describedby="spk-note-1">
-          <figure class="spk__img">
-            <img src="assets/img/stage-1-700.jpg" srcset="assets/img/stage-1-480.jpg 480w, assets/img/stage-1-700.jpg 700w, assets/img/stage-1-900.jpg 900w" sizes="(max-width:760px) 46vw, 286px" width="900" height="1200" alt="An empty microphone stand lit by a single hard spotlight." loading="lazy" decoding="async">
-            <span class="spk__chip">To be announced</span>
-          </figure>
-          <h3 class="spk__name">Speaker one</h3>
-          <p class="spk__role">Announcing soon</p>
-          <p class="spk__note" id="spk-note-1">Announced here the moment they are confirmed.</p>
-        </article>
-      </li>
-      <li class="spk spk--tba spk--drop">
-        <article class="spk__card" tabindex="0" aria-describedby="spk-note-2">
-          <figure class="spk__img">
-            <img src="assets/img/stage-2-700.jpg" srcset="assets/img/stage-2-480.jpg 480w, assets/img/stage-2-700.jpg 700w, assets/img/stage-2-900.jpg 900w" sizes="(max-width:760px) 46vw, 286px" width="900" height="1200" alt="A microphone stand in silhouette against a row of stage lights." loading="lazy" decoding="async">
-            <span class="spk__chip">To be announced</span>
-          </figure>
-          <h3 class="spk__name">Speaker two</h3>
-          <p class="spk__role">Announcing soon</p>
-          <p class="spk__note" id="spk-note-2">Announced here the moment they are confirmed.</p>
-        </article>
-      </li>
-      <li class="spk spk--tba">
-        <article class="spk__card" tabindex="0" aria-describedby="spk-note-3">
-          <figure class="spk__img">
-            <img src="assets/img/stage-3-700.jpg" srcset="assets/img/stage-3-480.jpg 480w, assets/img/stage-3-700.jpg 700w, assets/img/stage-3-900.jpg 900w" sizes="(max-width:760px) 46vw, 286px" width="900" height="1200" alt="A spotlight beam falling across a microphone on a dark stage." loading="lazy" decoding="async">
-            <span class="spk__chip">To be announced</span>
-          </figure>
-          <h3 class="spk__name">Speaker three</h3>
-          <p class="spk__role">Announcing soon</p>
-          <p class="spk__note" id="spk-note-3">Announced here the moment they are confirmed.</p>
-        </article>
-      </li>
-      </ul>
-    </div>
-    <p class="room__credit rv" style="--d:.26s">We announce each name as it is confirmed. <a class="linkish" href="/tickets/">Get your ticket</a> and be in the room.</p>
-  </section>
-
   <!-- 06 who nextgen is for: different generations, one stage -->
   <section class="gen" id="who" data-nav="paper" aria-labelledby="gen-title">
     <div class="gen__head">

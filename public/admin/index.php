@@ -200,7 +200,7 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
 <meta name="robots" content="noindex, nofollow">
 <title>Admin · Next Gen Summit</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261001-20">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261001-22">
 <style>
   body{background:var(--paper)}
   .adm{max-width:1280px;margin:0 auto;padding:28px clamp(18px,4vw,48px) 80px}

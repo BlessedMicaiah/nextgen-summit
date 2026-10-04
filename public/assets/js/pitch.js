@@ -177,7 +177,10 @@
         var target = document.querySelector(a.getAttribute('href'));
         if (!target) return;
         e.preventDefault();
-        target.scrollIntoView({ behavior: reduced.matches ? 'auto' : 'smooth', block: 'start' });
+        // glide with Lenis when site.js is running it, otherwise the browser's own scroll
+        if (!(window.NGScrollTo && window.NGScrollTo(target))) {
+          target.scrollIntoView({ behavior: reduced.matches ? 'auto' : 'smooth', block: 'start' });
+        }
         history.replaceState(null, '', a.getAttribute('href'));
       });
     });

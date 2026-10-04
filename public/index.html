@@ -38,10 +38,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preload" as="image" href="assets/img/hero-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="assets/img/hero-1600.jpg" imagesrcset="assets/img/hero-800.jpg 800w, assets/img/hero-1200.jpg 1200w, assets/img/hero-1600.jpg 1600w, assets/img/hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=20260930-01">
+<link rel="stylesheet" href="assets/css/site.css?v=20261001-20">
 <script src="assets/js/liquid.js?v=20260928-01" defer></script>
-<script src="assets/js/site.js?v=20260928-01" defer></script>
-<script src="assets/js/counter.js?v=20260930-02" defer></script>
+<!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
+<script src="assets/vendor/lenis-1.3.26.min.js" defer></script>
+<script src="assets/vendor/motion-13.5.0.min.js" defer></script>
+<script src="assets/js/site.js?v=20261001-20" defer></script>
+<script src="assets/js/counter.js?v=20261001-01" defer></script>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -105,7 +108,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="hero__row rv" style="--d:.5s">
         <div class="hero__copy">
           <p class="hero__line">See what's possible.</p>
-          <p class="hero__launch">Early Bird Special <span aria-hidden="true">·</span> 72 hours from Wednesday, Sept 30</p>
         </div>
         <div class="hero__actions">
           <a class="btn btn--lg" href="/tickets/">Get tickets</a>
@@ -206,7 +208,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div><dt>Venue</dt><dd>Gordon Center for Performing Arts</dd></div>
           <div><dt>Where</dt><dd>Maryland</dd></div>
           <div><dt>For</dt><dd>Students and young adults</dd></div>
-          <div><dt>Early Bird</dt><dd>Until October 3rd</dd></div>
         </dl>
         <div class="invite__cta rv" style="--d:.3s">
           <a class="btn btn--lg" href="/tickets/">Get tickets</a>
@@ -231,61 +232,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p class="pcta__copy rv" style="--d:.2s">Step into the NextGen Pitch Competition and put your idea in front of an audience ready to see what you can create. Build your pitch, take the stage, and compete.</p>
       <p class="pcta__cta rv" style="--d:.3s"><a class="btn btn--lg" href="/pitch/">Explore the pitch competition</a></p>
     </div>
-  </section>
-
-  <!-- 05 who's in the room -->
-  <section class="room" id="room" data-nav="paper" aria-labelledby="room-title">
-    <div class="room__head">
-      <p class="label rv">The Lineup</p>
-      <h2 class="room__title wm rv" id="room-title" style="--d:.1s">who's in the room?</h2>
-      <div class="room__note rv" style="--d:.2s">
-        <p class="draft-note">Lineup announcing soon</p>
-        <p>Names are being locked in. We announce each one as it is confirmed.</p>
-      </div>
-    </div>
-    <!-- The lineup is not announced yet: three held places on a runway that runs on whatever speakers
-         it is given. The pictures are the empty stage, so a card can never suggest who is coming.
-         To announce someone: swap the picture for their portrait, put their name in .spk__name, their
-         role and organisation in .spk__role, a sentence in .spk__note, and drop .spk--tba (the chip).
-         Add or remove <li class="spk"> freely -- site.js measures the row and clones it to fit. -->
-    <div class="run" data-run>
-      <ul class="run__track" data-run-track>
-      <li class="spk spk--tba">
-        <article class="spk__card" tabindex="0" aria-describedby="spk-note-1">
-          <figure class="spk__img">
-            <img src="assets/img/stage-1-700.jpg" srcset="assets/img/stage-1-480.jpg 480w, assets/img/stage-1-700.jpg 700w, assets/img/stage-1-900.jpg 900w" sizes="(max-width:760px) 46vw, 286px" width="900" height="1200" alt="An empty microphone stand lit by a single hard spotlight." loading="lazy" decoding="async">
-            <span class="spk__chip">To be announced</span>
-          </figure>
-          <h3 class="spk__name">Speaker one</h3>
-          <p class="spk__role">Announcing soon</p>
-          <p class="spk__note" id="spk-note-1">Announced here the moment they are confirmed.</p>
-        </article>
-      </li>
-      <li class="spk spk--tba spk--drop">
-        <article class="spk__card" tabindex="0" aria-describedby="spk-note-2">
-          <figure class="spk__img">
-            <img src="assets/img/stage-2-700.jpg" srcset="assets/img/stage-2-480.jpg 480w, assets/img/stage-2-700.jpg 700w, assets/img/stage-2-900.jpg 900w" sizes="(max-width:760px) 46vw, 286px" width="900" height="1200" alt="A microphone stand in silhouette against a row of stage lights." loading="lazy" decoding="async">
-            <span class="spk__chip">To be announced</span>
-          </figure>
-          <h3 class="spk__name">Speaker two</h3>
-          <p class="spk__role">Announcing soon</p>
-          <p class="spk__note" id="spk-note-2">Announced here the moment they are confirmed.</p>
-        </article>
-      </li>
-      <li class="spk spk--tba">
-        <article class="spk__card" tabindex="0" aria-describedby="spk-note-3">
-          <figure class="spk__img">
-            <img src="assets/img/stage-3-700.jpg" srcset="assets/img/stage-3-480.jpg 480w, assets/img/stage-3-700.jpg 700w, assets/img/stage-3-900.jpg 900w" sizes="(max-width:760px) 46vw, 286px" width="900" height="1200" alt="A spotlight beam falling across a microphone on a dark stage." loading="lazy" decoding="async">
-            <span class="spk__chip">To be announced</span>
-          </figure>
-          <h3 class="spk__name">Speaker three</h3>
-          <p class="spk__role">Announcing soon</p>
-          <p class="spk__note" id="spk-note-3">Announced here the moment they are confirmed.</p>
-        </article>
-      </li>
-      </ul>
-    </div>
-    <p class="room__credit rv" style="--d:.26s">We announce each name as it is confirmed. <a class="linkish" href="/tickets/">Get your ticket</a> and be in the room.</p>
   </section>
 
   <!-- 06 who nextgen is for: different generations, one stage -->

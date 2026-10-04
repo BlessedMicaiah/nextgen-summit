@@ -49,10 +49,14 @@ Two small libraries are vendored in `public/assets/vendor/` (MIT, no CDN at runt
   letting go, answers spring open and shut (in every browser) with their text coming into focus
   out of a blur, and the plus twists into a minus. While Motion runs it keeps one question open
   itself, so the `name="faq"` attribute is removed; with Motion off the native accordion returns.
-  Hovering a question rolls its letters, odometer style, from ink to turquoise: each letter sits in
+  Hovering a question (or a Get Involved option: Attend, Volunteer, Partner, Vendor) rolls its
+  letters, odometer style, from ink to turquoise: each letter sits in
   its own window with a turquoise twin below, and the roll ripples out from the letter the pointer
   came in on (keyboard focus does the same). Kerning is measured and given back, so the text at
   rest sits where it always did; the twins are hidden from screen readers and from copying.
+  Each drawer's close X is a print mark: its two strokes draw in when the drawer opens, and on
+  hover (or keyboard focus) it twists a quarter turn on a spring while cyan, magenta and yellow
+  plates slip out of register behind it; a press squeezes it.
   The hero "nextgen" is jelly: each letter is a small soft body on a damped spring, with its own
   velocity and lean. The pointer pushes nearby letters aside and a fast swipe throws them; they
   stretch along their motion, squash as they stop, shove a neighbour they run into, bounce home

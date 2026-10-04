@@ -1169,97 +1169,139 @@
     onMotionChange(sync);
   }
 
-  /* ---------- FAQ: questions that roll from ink to turquoise ----------
-     Every letter of a question sits in its own little window with a turquoise twin waiting just
-     below it. On hover the letters roll up, ink out of the top and turquoise in from below, one
-     after another, rippling out from the letter the pointer came in on and landing with a small
-     spring; leaving rolls them back down, rippling from the letter it left from. Keyboard focus
-     rolls the question the same way, from its first letter.
-     A question is split into letters the first time it is reached, with the font's kerning
-     measured and given back to each letter, so at rest the text sits exactly where it did. The
-     roll itself is a CSS transition: site.js only sets each letter's delay and the class. */
-  function initFaqText() {
-    var sums = $$('.faq summary');
-    if (!sums.length) return;
+  /* ---------- text that rolls from ink to turquoise ----------
+     Used by the FAQ questions and the Get Involved list. Every letter sits in its own little window
+     with a turquoise twin waiting just below it. On hover the letters roll up, ink out of the top
+     and turquoise in from below, one after another, rippling out from the letter the pointer came
+     in on and landing with a small spring; leaving rolls them back down, rippling from where it
+     left. Keyboard focus rolls the text the same way, from its first letter.
+     Text is split into letters the first time it is reached, with the font's kerning measured and
+     given back to each letter, so at rest it sits exactly where it did. The roll itself is a CSS
+     transition: site.js only sets each letter's delay and the class. */
+  function initRolls() {
     var fineMQ = matchMedia('(hover:hover) and (pointer:fine)');
     var STAGGER = 16;                                   // ms between neighbouring letters
+    var triggers = [];
 
-    function split(sum) {
-      if (sum.__q) return sum.__q;
-      var text = sum.firstChild;
-      if (!text || text.nodeType !== 3 || !text.textContent.trim()) return null;
-      var q = el('span', 'faq__q');
-      sum.insertBefore(q, text);
-      sum.removeChild(text);
+    function split(host) {
+      var text = host.textContent.trim();
+      if (!text) return null;
+      host.textContent = '';
+      host.classList.add('roll');
       var letters = [];
-      text.textContent.trim().split(/(\s+)/).forEach(function (part) {
+      text.split(/(\s+)/).forEach(function (part) {
         if (!part) return;
-        if (/^\s+$/.test(part)) { q.appendChild(document.createTextNode(' ')); return; }
-        var w = el('span', 'faq__w');                   // a word never breaks inside
-        q.appendChild(w);
+        if (/^\s+$/.test(part)) { host.appendChild(document.createTextNode(' ')); return; }
+        var w = el('span', 'roll__w');                  // a word never breaks inside
+        host.appendChild(w);
         Array.prototype.forEach.call(part, function (ch) {
-          var s = el('span', 'faq__l', ch);
+          var s = el('span', 'roll__l', ch);
           w.appendChild(s);
           letters.push(s);
         });
       });
-      var fs = parseFloat(getComputedStyle(q).fontSize) || 16;
+      var fs = parseFloat(getComputedStyle(host).fontSize) || 16;
       var kerned = letters.map(function (s) { return s.getBoundingClientRect().left; });
-      q.classList.add('is-split');                      // each letter is its own box now: give the kerning back
+      host.classList.add('is-split');                   // each letter is its own box now: give the kerning back
       letters.forEach(function (s, i) {
         var shift = kerned[i] - s.getBoundingClientRect().left;
         if (Math.abs(shift) > 0.01) s.style.marginLeft = (shift / fs).toFixed(4) + 'em';
         // the window's contents: the letter, and its turquoise twin underneath (hidden from
-        // screen readers and from copying, so the question still reads and copies once)
+        // screen readers and from copying, so the text still reads and copies once)
         var ch = s.textContent;
         s.textContent = '';
-        var roll = el('span', 'faq__r', ch);
-        var twin = el('span', 'faq__t', ch, true);
-        roll.appendChild(twin);
+        var roll = el('span', 'roll__r', ch);
+        roll.appendChild(el('span', 'roll__t', ch, true));
         s.appendChild(roll);
       });
-      sum.__q = letters;
       return letters;
     }
     // the ripple: each letter waits in proportion to how far it is from where the pointer crossed
     function stagger(letters, x, y) {
       var near = 0, best = Infinity;
-      var boxes = letters.map(function (s) { return s.getBoundingClientRect(); });
-      boxes.forEach(function (r, i) {
+      letters.forEach(function (s, i) {
+        var r = s.getBoundingClientRect();
         var d = Math.hypot(r.left + r.width / 2 - x, (r.top + r.height / 2 - y) * 2);
         if (d < best) { best = d; near = i; }
       });
       letters.forEach(function (s, i) { s.style.setProperty('--d', Math.abs(i - near) * STAGGER + 'ms'); });
     }
-    function roll(sum, on, x, y) {
-      if (!motionOn()) return;
-      var letters = split(sum);
-      if (!letters) return;
-      stagger(letters, x, y);
-      sum.classList.toggle('is-rolled', on);
+
+    // trigger: the element that is hovered or focused; host(): the element whose text rolls
+    function bind(trigger, host) {
+      var letters = null;
+      function roll(on, x, y) {
+        if (!motionOn()) return;
+        if (!letters) { var h = host(); letters = h && split(h); }
+        if (!letters) return;
+        stagger(letters, x, y);
+        trigger.classList.toggle('is-rolled', on);
+      }
+      function start() { var r = trigger.getBoundingClientRect(); return [r.left, r.top + r.height / 2]; }
+      trigger.addEventListener('pointerenter', function (e) {
+        if (e.pointerType === 'mouse' && fineMQ.matches) roll(true, e.clientX, e.clientY);
+      });
+      trigger.addEventListener('pointerleave', function (e) {
+        if (trigger.classList.contains('is-rolled') && trigger !== document.activeElement) roll(false, e.clientX, e.clientY);
+      });
+      trigger.addEventListener('focus', function () {
+        if (trigger.matches(':focus-visible')) roll.apply(null, [true].concat(start()));
+      });
+      trigger.addEventListener('blur', function () {
+        if (trigger.classList.contains('is-rolled') && !trigger.matches(':hover')) roll.apply(null, [false].concat(start()));
+      });
+      triggers.push(trigger);
     }
 
-    sums.forEach(function (sum) {
-      sum.addEventListener('pointerenter', function (e) {
-        if (e.pointerType === 'mouse' && fineMQ.matches) roll(sum, true, e.clientX, e.clientY);
+    // FAQ: the question is the summary's own text, ahead of the plus
+    $$('.faq summary').forEach(function (sum) {
+      bind(sum, function () {
+        var text = sum.firstChild;
+        if (!text || text.nodeType !== 3 || !text.textContent.trim()) return null;
+        var q = el('span', 'faq__q');
+        sum.insertBefore(q, text);
+        q.appendChild(text);
+        return q;
       });
-      sum.addEventListener('pointerleave', function (e) {
-        if (sum.classList.contains('is-rolled') && sum !== document.activeElement) roll(sum, false, e.clientX, e.clientY);
-      });
-      sum.addEventListener('focus', function () {
-        if (!sum.matches(':focus-visible')) return;
-        var r = sum.getBoundingClientRect();
-        roll(sum, true, r.left, r.top + r.height / 2);
-      });
-      sum.addEventListener('blur', function () {
-        if (!sum.classList.contains('is-rolled') || sum.matches(':hover')) return;
-        var r = sum.getBoundingClientRect();
-        roll(sum, false, r.left, r.top + r.height / 2);
-      });
+    });
+    // Get Involved: Attend, Volunteer, Partner, Vendor
+    $$('.paths .path').forEach(function (path) {
+      bind(path, function () { return $('.path__name', path); });
     });
 
     onMotionChange(function () {
-      if (!motionOn()) sums.forEach(function (sum) { sum.classList.remove('is-rolled'); });
+      if (!motionOn()) triggers.forEach(function (t) { t.classList.remove('is-rolled'); });
+    });
+  }
+
+  /* ---------- close buttons: the X as a print mark ----------
+     Each drawer's X is rebuilt as two strokes, plus a cyan, magenta and yellow copy behind them,
+     the same plates as the big headings. The CSS then draws the strokes in, one after the other,
+     whenever a drawer opens; on hover the X twists a quarter turn on a spring while the plates
+     slip out of register behind it; a press squeezes it in. Reduced motion keeps a still X. */
+  function initCloseButtons() {
+    var NS = 'http://www.w3.org/2000/svg';
+    $$('.drawer__close svg').forEach(function (svg) {
+      var path = svg.querySelector('path');
+      if (!path || svg.__mark) return;
+      svg.__mark = true;
+      var strokes = (path.getAttribute('d') || '').split(/(?=M)/).filter(Boolean);
+      function layer(cls) {
+        var g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', cls);
+        strokes.forEach(function (d, i) {
+          var s = document.createElementNS(NS, 'path');
+          s.setAttribute('d', d);
+          s.setAttribute('pathLength', '1');            // so the draw-in is the same for every stroke
+          s.setAttribute('class', 'x__s x__s' + (i + 1));
+          g.appendChild(s);
+        });
+        return g;
+      }
+      ['c', 'm', 'y'].forEach(function (p) { svg.insertBefore(layer('x__p x__p--' + p), path); });
+      svg.insertBefore(layer('x__k'), path);
+      svg.removeChild(path);
+      svg.setAttribute('class', 'x');
     });
   }
 
@@ -1589,7 +1631,8 @@
   initFinale();
   initButtonMorph();
   initFaq();
-  initFaqText();
+  initRolls();
+  initCloseButtons();
   initDialogs();
   initForms();
 })();

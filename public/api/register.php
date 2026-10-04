@@ -34,7 +34,7 @@ function ngs_reply(bool $ok, string $kind, string $error, int $status, bool $jso
         . '<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">'
         . '<title>Not sent yet · Next Gen Summit</title>'
         . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">'
-        . '<link rel="stylesheet" href="/assets/css/site.css?v=20261001-20"></head><body>'
+        . '<link rel="stylesheet" href="/assets/css/site.css?v=20261001-22"></head><body>'
         . '<div class="received"><main class="received__main">'
         . '<p class="draft-note">Not sent yet</p><h1 class="done__title wm">almost.</h1>'
         . '<p class="done__text">' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8') . '</p>'

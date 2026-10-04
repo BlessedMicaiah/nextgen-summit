@@ -489,6 +489,27 @@ main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the fi
 .drawer__close{display:inline-grid;place-items:center;width:48px;height:48px;margin-right:-12px;border-radius:8px;transition:background-color .3s var(--ease)}
 .drawer__close:hover{background:var(--paper-2)}
 .drawer__close svg{width:18px;height:18px}
+/* the X as a print mark (site.js builds the layers): drawn in when a drawer opens, a quarter twist on
+   a spring with the cyan, magenta and yellow plates slipping out of register on hover, a squeeze on
+   press. Only with motion: otherwise it is the same still X as before. */
+.x{overflow:visible}
+.x path{fill:none;stroke-width:2;stroke-linecap:butt}
+.x__k path{stroke:currentColor}
+.x__p{opacity:0;mix-blend-mode:multiply}
+.x__p--c path{stroke:var(--cyan)}
+.x__p--m path{stroke:var(--magenta)}
+.x__p--y path{stroke:var(--yellow)}
+.has-motion .drawer__close .x{transition:transform .6s cubic-bezier(.3,1.55,.5,1)}
+.has-motion .drawer__close .x__p{transition:transform .5s var(--ease),opacity .3s var(--ease)}
+.has-motion .drawer__close:hover .x,.has-motion .drawer__close:focus-visible .x{transform:rotate(90deg)}
+.has-motion .drawer__close:active .x{transform:rotate(90deg) scale(.8);transition-duration:.16s}
+.has-motion .drawer__close:hover .x__p,.has-motion .drawer__close:focus-visible .x__p{opacity:1}
+.has-motion .drawer__close:hover .x__p--c,.has-motion .drawer__close:focus-visible .x__p--c{transform:translate(-1.7px,.7px)}
+.has-motion .drawer__close:hover .x__p--m,.has-motion .drawer__close:focus-visible .x__p--m{transform:translate(1.5px,1.2px)}
+.has-motion .drawer__close:hover .x__p--y,.has-motion .drawer__close:focus-visible .x__p--y{transform:translate(.3px,-1.7px)}
+.has-motion .drawer[open] .x__s{stroke-dasharray:1;animation:x-draw .45s var(--ease) .3s both}
+.has-motion .drawer[open] .x__s2{animation-delay:.48s}
+@keyframes x-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 .drawer__title{margin:clamp(26px,6vh,64px) 0 clamp(24px,4vh,40px);font-size:clamp(46px,6vw,78px);line-height:.95}
 .drawer__foot{margin-top:auto;padding-top:36px;font:600 14px/1.5 var(--f-sans);color:var(--ink-2)}
 .linkish{display:inline;min-height:0;font:700 14px/1.5 var(--f-sans);color:var(--accent-ink);text-decoration:underline;text-underline-offset:3px}
@@ -627,16 +648,16 @@ html.lenis{scroll-behavior:auto}
 .faq{position:relative}
 .faq__rail{display:none}
 .has-motion .faq__rail{display:block;position:absolute;left:-14px;top:0;width:3px;height:0;border-radius:3px;background:var(--accent);opacity:0;pointer-events:none}
-/* FAQ questions that roll from ink to turquoise (site.js). Each letter is a window (clip-path, which
-   leaves the baseline alone where overflow would not) holding the letter and its turquoise twin
-   just below; hovering rolls the pair up by one line, letter after letter (--d), landing on a
-   small spring. Words never break inside. */
-.faq__w{white-space:nowrap}
-.faq__q.is-split .faq__l{display:inline-block;clip-path:inset(0 -.25em)}
-.faq__q.is-split .faq__r{position:relative;display:inline-block;transition:transform .55s cubic-bezier(.3,1.45,.55,1) var(--d,0ms)}
-.faq__t{position:absolute;left:0;top:100%;color:var(--accent-ink);user-select:none;-webkit-user-select:none}
-.has-motion .faq__q.is-split{color:var(--ink)}           /* the roll brings the colour, not the hover */
-.faq summary.is-rolled .faq__r{transform:translate3d(0,-100%,0)}
+/* text that rolls from ink to turquoise (site.js): the FAQ questions and the Get Involved list.
+   Each letter is a window (clip-path, which leaves the baseline alone where overflow would not)
+   holding the letter and its turquoise twin just below; hovering rolls the pair up by one line,
+   letter after letter (--d), landing on a small spring. Words never break inside. */
+.roll__w{white-space:nowrap}
+.roll.is-split .roll__l{display:inline-block;clip-path:inset(0 -.25em)}
+.roll.is-split .roll__r{position:relative;display:inline-block;transition:transform .55s cubic-bezier(.3,1.45,.55,1) var(--d,0ms)}
+.roll__t{position:absolute;left:0;top:100%;color:var(--accent-ink);user-select:none;-webkit-user-select:none}
+.has-motion .roll.is-split{color:var(--ink)}           /* the roll brings the colour, not the hover */
+.is-rolled .roll__r{transform:translate3d(0,-100%,0)}
 .has-motion .faq details::details-content{transition:none}
 /* the hero wordmark's jelly letters (site.js): each letter becomes its own box once the opening
    animation is over; site.js gives back the kerning, so at rest nothing moves */

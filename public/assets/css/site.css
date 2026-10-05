@@ -178,20 +178,113 @@ h1,h2,h3,p{margin:0}
 }
 
 /* ---------- 02 what is next gen ---------- */
-/* live ticket count (counter.js): the bridge from the hero into "what is next gen".
-   Hidden until Eventbrite answers; while it shows, it takes the top of that section's space. */
-.tally{max-width:var(--maxw);margin:0 auto;padding:clamp(72px,12vh,140px) var(--gutter) 0;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:end;gap:16px clamp(22px,3.4vw,56px)}
+/* live ticket count (counter.js): the bridge from the hero into "what is next gen", set as a press
+   proof. A white sheet on the paper with crop marks and registration targets outside its edges, a
+   slug line with the live status and a colour bar, the count in C/M/Y plates that settle into black,
+   and a halftone strip with one dot per person holding a ticket. Hidden until Eventbrite answers. */
+.tally{max-width:var(--maxw);margin:0 auto;padding:clamp(72px,12vh,140px) var(--gutter) 0}
 .tally[hidden]{display:none}
-.tally__n{font-family:var(--f-display);font-weight:900;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:clamp(104px,15vw,236px);line-height:.78;letter-spacing:-.05em;font-variant-numeric:lining-nums tabular-nums;white-space:nowrap;color:var(--ink)}
-.tally__txt{padding-bottom:.4em}
+.tally__sheet{--cm:18px;--cm-gap:7px;position:relative;padding:clamp(20px,2.4vw,34px) clamp(22px,3.4vw,56px) clamp(22px,2.8vw,40px);background:#fff;box-shadow:0 0 0 1px rgba(11,11,15,.06),0 2px 3px rgba(11,11,15,.04),0 34px 70px -40px rgba(11,11,15,.28)}
+/* crop marks: each corner is a zero-size point; its two hairlines stop short of the sheet, as on a press sheet */
+.tally__crop{position:absolute;inset:0;pointer-events:none}
+.tally__crop i{position:absolute;left:0;top:0;width:0;height:0}
+.tally__crop i::before,.tally__crop i::after{content:"";position:absolute;background:var(--ink-2)}
+.tally__crop i::before{right:var(--cm-gap);top:0;width:var(--cm);height:1px}
+.tally__crop i::after{bottom:var(--cm-gap);left:0;width:1px;height:var(--cm)}
+.tally__crop i:nth-child(2){left:100%;transform:scaleX(-1)}
+.tally__crop i:nth-child(3){top:100%;transform:scaleY(-1)}
+.tally__crop i:nth-child(4){left:100%;top:100%;transform:scale(-1)}
+.tally__target{position:absolute;top:50%;width:20px;height:20px;margin-top:-10px;fill:none;stroke:var(--ink-2);stroke-width:1;overflow:visible}
+.tally__target--l{left:calc(var(--cm) * -1 - 22px)}
+.tally__target--r{right:calc(var(--cm) * -1 - 22px)}
+.tally__slug{display:flex;align-items:center;justify-content:space-between;gap:12px 24px;padding-bottom:clamp(14px,1.6vw,20px);border-bottom:1px solid var(--rule)}
+.tally__live{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;font:800 11px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--ink);transition:color .5s var(--ease)}
+.tally__pulse{position:relative;width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+.tally__pulse::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--accent);animation:tally-pulse 2.4s var(--ease) infinite}
+@keyframes tally-pulse{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(3.2);opacity:0}}
+/* no good answer for a minute: the dot stops breathing and greys out, the last count stays */
+.tally__live.is-stale{color:var(--ink-3)}
+.tally__live.is-stale .tally__pulse{background:var(--ink-3)}
+.tally__live.is-stale .tally__pulse::after{animation:none;opacity:0}
+.tally__run{font:700 10.5px/1.3 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.tally__run span{margin:0 .5em;color:var(--rule-strong)}
+/* the colour bar: process inks, then their overprints, then black */
+.tally__bar{display:flex;flex:none}
+.tally__bar i{width:13px;height:10px}
+.tally__bar i:nth-child(1){background:var(--cyan)}
+.tally__bar i:nth-child(2){background:var(--magenta)}
+.tally__bar i:nth-child(3){background:var(--yellow)}
+.tally__bar i:nth-child(4){background:#2B3990}
+.tally__bar i:nth-child(5){background:#ED1C24}
+.tally__bar i:nth-child(6){background:var(--ink)}
+.tally__main{display:grid;grid-template-columns:minmax(min-content,1.05fr) minmax(0,1fr);align-items:end;gap:32px clamp(36px,5vw,96px);padding-top:clamp(32px,5.4vh,64px)}
+.tally__n{font-family:var(--f-display);font-weight:900;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:clamp(112px,17vw,272px);line-height:.78;letter-spacing:-.05em;font-variant-numeric:lining-nums tabular-nums;white-space:nowrap;color:var(--ink);margin-left:-.04em;padding-bottom:.1em}
+.tally__n .reg__p{white-space:nowrap}
+.tally__txt{margin-top:clamp(14px,2.4vh,26px);max-width:30rem}
 .tally__k{font:800 clamp(15px,1.35vw,20px)/1.2 var(--f-sans);letter-spacing:.16em;text-transform:uppercase}
 .tally__k::before{content:"";display:block;width:40px;height:3px;margin-bottom:14px;background:var(--accent)}
 .tally__x{margin-top:8px;font:500 clamp(15px,1.15vw,17px)/1.5 var(--f-sans);color:var(--ink-2)}
+.tally__cta{margin-top:clamp(20px,2.4vw,28px)}
+/* the crowd fills a block about the height of the number and its words: the screen is coarse while the room
+   is small and gets finer, darker and fuller as people register (counter.js sizes it from --crowd-h). It hangs
+   from the top of the row, so a new row of dots grows downward and nothing already printed moves. */
+@property --crowd-h{syntax:'<length>';inherits:false;initial-value:240px}   /* so its computed value comes back in px */
+.tally__crowd{align-self:start;min-width:0}
+.tally__crowd canvas{--crowd-h:clamp(250px,26vw,390px);display:block;width:100%;height:0}
+/* pointing at the crowd: the label floats over the screen and never moves a dot */
+.tally__screen{position:relative}
+/* the pointer is a registration target, haloed in white so it reads over any ink; over a dot its centre prints */
+.tally__screen canvas{cursor:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g fill='none' stroke-linecap='round'><g stroke='%23fff' stroke-width='4'><circle cx='16' cy='16' r='7'/><path d='M16 2v7M16 23v7M2 16h7M23 16h7'/></g><g stroke='%230B0B0F' stroke-width='1.6'><circle cx='16' cy='16' r='7'/><path d='M16 2v7M16 23v7M2 16h7M23 16h7'/></g></g></svg>") 16 16,crosshair;touch-action:manipulation}
+.tally__screen canvas.is-on-dot{cursor:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g fill='none' stroke-linecap='round'><g stroke='%23fff' stroke-width='4'><circle cx='16' cy='16' r='7'/><path d='M16 2v7M16 23v7M2 16h7M23 16h7'/></g><g stroke='%230B0B0F' stroke-width='1.6'><circle cx='16' cy='16' r='7'/><path d='M16 2v7M16 23v7M2 16h7M23 16h7'/></g></g><circle cx='16' cy='16' r='3.4' fill='%230B0B0F' stroke='%23fff' stroke-width='1.6'/></svg>") 16 16,crosshair}
+.tally__tip{position:absolute;left:0;top:0;z-index:2;pointer-events:none;padding:9px 13px 9px;border-radius:8px;background:var(--ink);color:#fff;white-space:nowrap;transform:translate(-50%,-100%);box-shadow:0 10px 24px -10px rgba(11,11,15,.5)}
+.tally__tip[hidden]{display:none}
+.tally__tip::after{content:"";position:absolute;left:50%;bottom:-5px;width:10px;height:10px;margin-left:-5px;background:inherit;transform:rotate(45deg);border-radius:0 0 2px 0}
+.tally__tip b{display:flex;align-items:center;gap:8px;font:800 13px/1.2 var(--f-sans);letter-spacing:.02em}
+.tally__tip.has-ink b::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--tip-ink);flex:none}
+.tally__tip span{display:block;margin-top:3px;font:600 11.5px/1.3 var(--f-sans);color:rgba(255,255,255,.72)}
+/* where they're coming from: a band across the foot of the sheet, one chip per state (most first),
+   the rest together, then "not given"; each lights its people in the crowd above */
+.tally__states{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;margin-top:clamp(26px,3.6vh,40px);padding-top:clamp(16px,1.8vw,22px);border-top:1px solid var(--rule)}
+.tally__states[hidden]{display:none}
+.tally__chips{display:flex;flex-wrap:wrap;gap:8px}
+.tally__chip{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 13px 0 11px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px var(--rule);font:800 11.5px/1 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);transition:box-shadow .3s var(--ease),background-color .3s var(--ease),color .3s var(--ease)}
+.tally__chip i{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 1.5px #fff}
+.tally__chip span{font-weight:600;letter-spacing:.02em;color:var(--ink-3);font-variant-numeric:tabular-nums;transition:color .3s var(--ease)}
+.tally__chip:hover{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.tally__chip[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.tally__chip[aria-pressed="true"] span{color:rgba(255,255,255,.7)}
+.tally__legend{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:clamp(14px,1.6vw,18px)}
+.tally__cap{display:flex;align-items:center;gap:10px;font:700 10.5px/1.3 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3)}
+.tally__key{width:7px;height:7px;border-radius:50%;background:var(--ink);flex:none}
+/* "+3 since you got here", keyed to the turquoise dots: only people who registered while this page was
+   open. Its line is held from the start (visibility, not display), so its arrival never moves the dots. */
+.tally__new{visibility:hidden;color:var(--ink-2)}
+.tally__new .tally__key{width:11px;height:11px;background:var(--ink);box-shadow:0 0 0 2px #fff,0 0 0 3.25px var(--ink);transform:scale(.72)}
+/* once states are in, the key is the inks themselves */
+.tally__inked{display:none}
+.is-coloured .tally__plain{display:none}
+.is-coloured .tally__inked{display:inline}
+.is-coloured .tally__cap--one .tally__key{background:conic-gradient(#1FC7BE 0 90deg,#EC008C 0 180deg,#00A3E6 0 270deg,#F2B300 0)}
+.tally__new.is-on{visibility:visible}
+.tally__new.is-pop{animation:tally-pop .7s cubic-bezier(.3,1.55,.5,1)}
+@keyframes tally-pop{0%{transform:translateY(6px);opacity:0}100%{transform:none;opacity:1}}
 .tally:not([hidden]) + .what{padding-top:clamp(64px,11vh,130px)}
+@media (max-width:1000px){
+  .tally__run{display:none}
+}
+@media (max-width:900px){
+  .tally__target{display:none}
+}
 @media (max-width:760px){
-  .tally{grid-template-columns:1fr;gap:14px;padding-top:clamp(56px,9vh,84px)}
-  .tally__n{font-size:clamp(92px,29vw,150px)}
-  .tally__txt{padding-bottom:0}
+  .tally{padding-top:clamp(56px,9vh,84px)}
+  .tally__sheet{--cm:10px;--cm-gap:4px;padding:18px 20px 22px}
+  .tally__main{grid-template-columns:1fr;gap:28px;padding-top:26px}
+  .tally__txt{margin-top:8px}
+  .tally__crowd{padding-top:22px;border-top:1px solid var(--rule)}
+  .tally__crowd canvas{--crowd-h:190px}
+  .tally__states{margin-top:6px}
+  .tally__n{font-size:clamp(104px,33vw,172px)}
+  .tally__cta{width:100%}
 }
 .what{position:relative;max-width:var(--maxw);margin:0 auto;padding:clamp(120px,22vh,250px) var(--gutter) clamp(110px,19vh,220px)}
 .what__title{margin-top:clamp(28px,6vh,70px);font-size:min(13.4vw,13rem);line-height:.92}
@@ -201,12 +294,27 @@ h1,h2,h3,p{margin:0}
 .what__word.is-current{opacity:1;transform:none}
 .what__word.is-leaving{opacity:0;transform:translate3d(0,-46%,0);transition:transform .55s var(--ease-io),opacity .35s var(--ease)}
 .what__dot{color:var(--accent)}
-.what__foot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,31rem);gap:28px 40px;align-items:end;margin-top:clamp(40px,8vh,96px)}
-.what__lede{grid-column:2;font:500 clamp(19px,1.65vw,25px)/1.48 var(--f-sans);max-width:30ch}
-.what__tools{grid-column:1;grid-row:1}
+/* the foot: the lede on the left, and the rotating words again as a numbered index on the right */
+.what__foot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,27rem);gap:36px clamp(40px,6vw,120px);align-items:start;margin-top:clamp(44px,8vh,100px);padding-top:clamp(22px,3vh,32px);border-top:1px solid var(--rule)}
+.what__lede{font:500 clamp(21px,2vw,30px)/1.4 var(--f-sans);max-width:24ch;letter-spacing:-.005em}
+.what__words{list-style:none;margin:0;padding:0;counter-reset:w}
+.what__w{position:relative;display:grid;grid-template-columns:2.6em minmax(0,1fr) auto;align-items:center;width:100%;min-height:48px;padding:12px 0;border-bottom:1px solid var(--rule);font:800 13px/1.2 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);transition:color .35s var(--ease)}
+.what__w::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);transform:scale(0);transition:transform .45s cubic-bezier(.3,1.55,.5,1)}
+.what__wn{font:700 11px/1 var(--f-sans);letter-spacing:.12em;font-variant-numeric:tabular-nums;color:var(--ink-3);transition:color .35s var(--ease)}
+.what__wt{transition:transform .5s var(--ease)}
+.what__w:hover{color:var(--ink-2)}
+.what__w:hover .what__wt{transform:translateX(4px)}
+.what__w.is-current{color:var(--ink)}
+.what__w.is-current .what__wn{color:var(--accent-ink)}
+.what__w.is-current::after{transform:none}
+/* the line under the word on screen: fills while it holds, stands full while it is held */
+.what__bar{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ink);transform:scaleX(0);transform-origin:0 50%}
+.what__w.is-current .what__bar{transform:none}
+.what__w.is-running .what__bar{animation:what-hold var(--hold,1.5s) linear both}
+@keyframes what-hold{from{transform:scaleX(0)}to{transform:none}}
+.what__toggle{margin-top:14px;margin-left:-12px;padding:0 12px}
 @media (max-width:760px){
   .what__foot{grid-template-columns:1fr}
-  .what__lede,.what__tools{grid-column:1;grid-row:auto}
 }
 
 .toggle{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:44px;min-height:44px;font:700 11px/1 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
@@ -258,26 +366,53 @@ h1,h2,h3,p{margin:0}
 .invite__fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 100%;display:none}
 .no-webgl .invite__liquid canvas{display:none}
 .no-webgl .invite__fallback{display:block}
-.invite__body{max-width:var(--maxw);margin:0 auto;padding:clamp(20px,4vh,48px) var(--gutter) clamp(110px,19vh,210px);display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:clamp(28px,5vw,96px);align-items:end}
-.invite__head{grid-column:1/-1}
-.invite__date{font:800 clamp(124px,23.5vw,400px)/.8 var(--f-sans);letter-spacing:-.05em;text-transform:uppercase;margin-left:-.05em}
-.invite__date .reg{display:block}
-.invite__date .reg + .reg{margin-top:.02em}
-.invite__card{padding-bottom:.4em}
-.invite__details{margin:0}
-.invite__details div{display:grid;grid-template-columns:minmax(5.5rem,auto) minmax(0,1fr);gap:8px 28px;align-items:baseline;padding:17px 0;border-top:1px solid var(--rule)}
-.invite__details div:last-child{border-bottom:1px solid var(--rule)}
-.invite__details dt{font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
-.invite__details dd{margin:0;font:800 clamp(16px,1.45vw,21px)/1.3 var(--f-sans);letter-spacing:.02em;text-transform:uppercase}
-.invite__cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin-top:30px}
-.invite__small{font:600 13px/1.45 var(--f-sans);color:var(--ink-2);max-width:30ch}
+/* the ask on the left, the ticket on the right: everything the invitation needs to say, said once */
+.invite__body{max-width:var(--maxw);margin:0 auto;padding:clamp(20px,4vh,48px) var(--gutter) clamp(110px,19vh,210px);display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,25rem);gap:clamp(36px,6vw,120px);align-items:center}
+.invite__head span{margin:0 .35em}
+.invite__date{margin:clamp(18px,3vh,30px) 0 0 -.05em;font:800 clamp(110px,15.5vw,250px)/.82 var(--f-sans);letter-spacing:-.05em;text-transform:uppercase}
+.invite__date .reg,.invite__line{display:block}
+.invite__line .reg{display:inline-block}
+.invite__date > * + *{margin-top:.04em}
+.invite__q{display:inline-block;color:var(--accent);margin-left:.02em;transform-origin:50% 85%}
+.invite__lede{margin-top:clamp(28px,4.4vh,44px);max-width:31ch;font:500 clamp(18px,1.45vw,22px)/1.5 var(--f-sans);color:var(--ink)}
+.invite__cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 28px;margin-top:clamp(26px,3.8vh,38px)}
+.invite__small{font:500 13px/1.5 var(--f-sans);color:var(--ink-2);max-width:30ch}
+.invite__small strong{font-weight:700;color:var(--ink)}
+
+/* the ticket: ink stock, a perforation with die-cut notches, tilts toward the pointer (site.js) */
+.ticket{perspective:1100px;filter:drop-shadow(0 30px 34px rgba(11,11,15,.28)) drop-shadow(0 8px 10px rgba(11,11,15,.18))}   /* a drop shadow follows the punched notches; a box shadow would not */
+.ticket__card{--rx:0deg;--ry:0deg;--gx:50%;--gy:30%;position:relative;padding:clamp(24px,2.2vw,30px);border-radius:16px;background:var(--ink);color:#fff;transform:rotateX(var(--rx)) rotateY(var(--ry));transform-style:preserve-3d;transition:transform .7s var(--ease);overflow:hidden}
+.ticket.is-tilting .ticket__card{transition:transform .12s linear}
+/* a soft light that follows the pointer across the stock */
+.ticket__sheen{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at var(--gx) var(--gy),rgba(255,255,255,.12),rgba(255,255,255,0) 55%);opacity:0;transition:opacity .5s var(--ease)}
+.ticket.is-tilting .ticket__sheen{opacity:1}
+.ticket__row{display:flex;justify-content:space-between;gap:16px;font:700 11px/1 var(--f-sans);letter-spacing:.22em;text-transform:uppercase}
+.ticket__admit{color:var(--accent)}
+.ticket__no{color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums}
+.ticket__when{display:flex;align-items:center;gap:16px;margin-top:clamp(18px,2vw,24px)}
+.ticket__day{font-size:clamp(76px,6.6vw,104px);line-height:.8;letter-spacing:-.05em;color:#fff}
+.ticket__month{display:flex;flex-direction:column;gap:7px;font:800 clamp(20px,1.65vw,24px)/1 var(--f-sans);letter-spacing:.04em;text-transform:uppercase}
+.ticket__dow{font:700 10.5px/1 var(--f-sans);letter-spacing:.22em;color:rgba(255,255,255,.55)}
+.ticket__name{margin-top:clamp(18px,2vw,24px);font:800 clamp(20px,1.75vw,25px)/1.1 var(--f-sans);letter-spacing:.02em;text-transform:uppercase}
+/* the perforation: a dashed rule between two notches punched out of the stock, paper showing through */
+.ticket__tear{position:relative;height:28px;margin:clamp(14px,1.6vw,20px) calc(clamp(24px,2.2vw,30px) * -1)}
+.ticket__tear::before{content:"";position:absolute;left:24px;right:24px;top:50%;border-top:1.5px dashed rgba(255,255,255,.28)}
+.ticket__card{-webkit-mask:radial-gradient(circle 14px at 0 var(--tear,50%),transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 14px at 100% var(--tear,50%),transparent 98%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 14px at 0 var(--tear,50%),transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 14px at 100% var(--tear,50%),transparent 98%,#000) right/51% 100% no-repeat}
+.ticket__details{display:grid;grid-template-columns:1fr 1fr;gap:20px 18px;margin:0}
+.ticket__details div{min-width:0}
+.ticket__wide{grid-column:1/-1}
+.ticket__details dt{font:700 10.5px/1 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.ticket__details dd{margin:8px 0 0;font:700 15px/1.35 var(--f-sans)}
+.ticket__doors{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-top:4px;padding-top:18px;border-top:1px solid rgba(255,255,255,.14)}
+.ticket__doors[hidden]{display:none}
+.ticket__doors dd{margin:0;font:800 14px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-variant-numeric:tabular-nums}
 
 @media (max-width:900px){
-  .invite__body{grid-template-columns:1fr}
+  .invite__body{grid-template-columns:1fr;align-items:start}
+  .ticket{max-width:26rem}
 }
-/* narrow phones: label above value, so a long label like "Registration" never crowds it */
 @media (max-width:420px){
-  .invite__details div{grid-template-columns:1fr;gap:6px}
+  .invite__date{font-size:clamp(96px,30vw,128px)}
 }
 
 /* ---------- 05 who's in the room ---------- */
@@ -595,6 +730,7 @@ main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the fi
 
 @media (pointer:coarse){
   .btn{min-height:max(var(--h),44px)}
+  .tally__chip{min-height:44px}
 }
 
 /* ---------- reduced motion: every choreographed element in its final state ---------- */
@@ -603,6 +739,7 @@ main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the fi
   .js .rv{opacity:1;transform:none}
   .hero__img{transform:none}
   .reg.is-armed .reg__p{opacity:0}
+  .tally__new.is-pop{animation:none}
   .xp__bg img{transform:none}
   /* the static version: no frame ever grows, recolours or yields; the numerals and the rail simply sit there */
   .gen__title{opacity:1;transform:none}

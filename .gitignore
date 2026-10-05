@@ -17,3 +17,7 @@ source-images/
 
 # release zips built by tools/release.py
 release/
+
+# local secrets (Hostinger API token etc.)
+.env
+.env.*

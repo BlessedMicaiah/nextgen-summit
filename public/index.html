@@ -38,13 +38,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preload" as="image" href="assets/img/hero-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="assets/img/hero-1600.jpg" imagesrcset="assets/img/hero-800.jpg 800w, assets/img/hero-1200.jpg 1200w, assets/img/hero-1600.jpg 1600w, assets/img/hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=20261001-22">
+<link rel="stylesheet" href="assets/css/site.css?v=20261005-04">
 <script src="assets/js/liquid.js?v=20260928-01" defer></script>
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="assets/js/site.js?v=20261001-22" defer></script>
-<script src="assets/js/counter.js?v=20261001-01" defer></script>
+<script src="assets/js/site.js?v=20261005-04" defer></script>
+<script src="assets/js/counter.js?v=20261005-04" defer></script>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -117,12 +117,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- live ticket count from Eventbrite (counter.js). Hidden until a real count arrives. -->
+  <!-- live ticket count from Eventbrite (counter.js). Hidden until a real count arrives.
+       Set as a press proof: crop marks, a slug line, the count in CMY plates that settle into black,
+       and one halftone dot per person holding a ticket. -->
   <section class="tally" data-tally data-nav="paper" aria-labelledby="tally-title" hidden>
-    <p class="tally__n" aria-hidden="true" data-tally-n></p>
-    <div class="tally__txt">
-      <h2 class="tally__k" id="tally-title"><span class="sr" data-tally-sr></span>Registered for NextGen</h2>
-      <p class="tally__x">Join them on Friday, October 30.</p>
+    <div class="tally__sheet">
+      <span class="tally__crop" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <svg class="tally__target tally__target--l" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><path d="M12 0v24M0 12h24"/></svg>
+      <svg class="tally__target tally__target--r" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><path d="M12 0v24M0 12h24"/></svg>
+
+      <div class="tally__slug">
+        <p class="tally__live" data-tally-live><span class="tally__pulse" aria-hidden="true"></span>Live from Eventbrite</p>
+        <p class="tally__run" aria-hidden="true">NextGen Summit <span>·</span> Fri 10.30 <span>·</span> Gordon Center, MD</p>
+        <span class="tally__bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+
+      <div class="tally__main">
+        <div class="tally__lead">
+          <p class="tally__n reg" aria-hidden="true" data-tally-n><span class="reg__k"></span><span class="reg__p reg__p--c"></span><span class="reg__p reg__p--m"></span><span class="reg__p reg__p--y"></span></p>
+          <div class="tally__txt">
+            <h2 class="tally__k" id="tally-title"><span class="sr" data-tally-sr></span>Registered for NextGen</h2>
+            <p class="tally__x">Join them on Friday, October 30.</p>
+            <a class="btn tally__cta" href="/tickets/">Get tickets <span class="arr" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+        <div class="tally__crowd">
+          <div class="tally__screen">
+            <canvas data-tally-crowd aria-hidden="true"></canvas>
+            <p class="tally__tip" data-tally-tip aria-hidden="true" hidden><b></b><span></span></p>
+          </div>
+          <div class="tally__legend">
+            <p class="tally__cap tally__cap--one" aria-hidden="true"><span class="tally__key"></span><span class="tally__plain">One dot, one person with a ticket</span><span class="tally__inked">One dot per person · its colour is their state</span></p>
+            <p class="tally__cap tally__new" data-tally-new aria-live="polite"><span class="tally__key" aria-hidden="true"></span><span data-tally-new-t>+0 since you got here</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- filled by counter.js once Eventbrite has at least one attendee's state -->
+      <div class="tally__states" data-tally-states hidden>
+        <p class="tally__cap" id="tally-states-k">Where they're coming from</p>
+        <div class="tally__chips" role="group" aria-labelledby="tally-states-k" data-tally-chips></div>
+      </div>
     </div>
   </section>
 
@@ -136,8 +171,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </h2>
     <div class="what__foot">
       <p class="what__lede rv" style="--d:.2s">A one-day experience for students and young adults to grow, connect, and see what's possible for their future.</p>
-      <div class="what__tools rv" style="--d:.3s">
-        <button class="toggle" type="button" aria-pressed="false" data-rotator-toggle aria-label="Pause the rotating words"><span class="toggle__i" aria-hidden="true"></span><span class="toggle__t sr">Pause words</span></button>
+      <!-- the rotating words as an index: the one on screen fills its line while it holds; pick any to stay on it -->
+      <div class="what__index rv" style="--d:.3s">
+        <ol class="what__words" aria-label="Nextgen is" data-rotator-index></ol>
+        <button class="toggle what__toggle" type="button" aria-pressed="false" data-rotator-toggle aria-label="Pause the rotating words"><span class="toggle__i" aria-hidden="true"></span><span class="toggle__t" aria-hidden="true">Pause</span></button>
       </div>
     </div>
   </section>
@@ -195,23 +232,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <img class="invite__fallback" src="assets/img/liquid-fallback.jpg" alt="" loading="lazy" decoding="async">
     </div>
     <div class="invite__body">
-      <p class="label invite__head rv">The Invitation</p>
-      <h2 class="invite__date" id="invite-title">
-        <span class="sr">You in?</span>
-        <span class="reg" aria-hidden="true">You</span>
-        <span class="reg" aria-hidden="true">in?</span>
-      </h2>
-      <div class="invite__card">
-        <dl class="invite__details rv" style="--d:.15s">
-          <div><dt>Event</dt><dd>NextGen Summit</dd></div>
-          <div><dt>Date</dt><dd>Friday, October 30</dd></div>
-          <div><dt>Venue</dt><dd>Gordon Center for Performing Arts</dd></div>
-          <div><dt>Where</dt><dd>Maryland</dd></div>
-          <div><dt>For</dt><dd>Students and young adults</dd></div>
-        </dl>
-        <div class="invite__cta rv" style="--d:.3s">
-          <a class="btn btn--lg" href="/tickets/">Get tickets</a>
-          <p class="invite__small">Groups of 3+ save 50%. Scholarship tickets are available.</p>
+      <div class="invite__ask">
+        <p class="label invite__head rv">Friday, October 30 <span aria-hidden="true">—</span> Maryland</p>
+        <h2 class="invite__date" id="invite-title">
+          <span class="sr">You in?</span>
+          <span class="reg" aria-hidden="true">You</span>
+          <span class="invite__line" aria-hidden="true"><span class="reg">in</span><span class="invite__q">?</span></span>
+        </h2>
+        <p class="invite__lede rv" style="--d:.15s">NextGen Summit is a one-day gathering for students and young adults at the Gordon Center for Performing Arts. Your seat is waiting.</p>
+        <div class="invite__cta rv" style="--d:.25s">
+          <a class="btn btn--lg" href="/tickets/">Yes — get tickets <span class="arr" aria-hidden="true">→</span></a>
+          <p class="invite__small"><strong>Groups of 3+ save 50%.</strong> Scholarship tickets are available.</p>
+        </div>
+      </div>
+
+      <!-- the ticket: real details, the next seat number from the live count (counter.js), days to doors (site.js) -->
+      <div class="ticket rv" style="--d:.2s" data-ticket>
+        <div class="ticket__card">
+          <div class="ticket__top">
+            <p class="ticket__row" aria-hidden="true"><span class="ticket__admit">Admit one</span><span class="ticket__no" data-ticket-no hidden></span></p>
+            <p class="ticket__when"><span class="ticket__day wm" aria-hidden="true">30</span><span class="ticket__month"><span class="sr">Friday, </span>October<span class="sr"> 30</span><span class="ticket__dow" aria-hidden="true">Friday</span></span></p>
+            <p class="ticket__name">NextGen Summit</p>
+          </div>
+          <div class="ticket__tear" aria-hidden="true"></div>
+          <dl class="ticket__details">
+            <div class="ticket__wide"><dt>Venue</dt><dd>Gordon Center for Performing Arts</dd></div>
+            <div><dt>Where</dt><dd>Maryland</dd></div>
+            <div><dt>For</dt><dd>Students &amp; young adults</dd></div>
+            <div class="ticket__doors" data-ticket-doors hidden><dt>Doors in</dt><dd data-ticket-days></dd></div>
+          </dl>
+          <span class="ticket__sheen" aria-hidden="true"></span>
         </div>
       </div>
     </div>

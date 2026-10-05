@@ -457,13 +457,18 @@
     update();
   }
 
-  /* ---------- 02 rotating identity ---------- */
+  /* ---------- 02 rotating identity ----------
+     The big word changes every HOLD ms while the title is on screen. Below it the same words are
+     an index: the word on screen fills its line as it holds, and picking one shows it and stays
+     there (the toggle then reads Play). Hovering the title also holds the word. */
   function initRotator() {
     var box = $('[data-rotator]');
     if (!box) return;
     var words;
     try { words = JSON.parse(box.getAttribute('data-rotator')); } catch (e) { return; }
+    var HOLD = 1500;
     var toggle = $('[data-rotator-toggle]');
+    var list = $('[data-rotator-index]');
     var title = box.closest('h2') || box;
     box.textContent = '';
     var nodes = words.map(function (w, i) {
@@ -474,24 +479,60 @@
       box.appendChild(wrap);
       return wrap;
     });
+    var picks = !list ? [] : words.map(function (w, i) {
+      var li = el('li');
+      var b = el('button', 'what__w' + (i === 0 ? ' is-current' : ''));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(i === 0));
+      b.appendChild(el('span', 'what__wn', (i < 9 ? '0' : '') + (i + 1), true));
+      b.appendChild(el('span', 'what__wt', w));
+      b.appendChild(el('span', 'what__bar', null, true));
+      b.addEventListener('click', function () { go(i); setPaused(true); });
+      li.appendChild(b);
+      list.appendChild(li);
+      return b;
+    });
+    if (list) list.style.setProperty('--hold', HOLD + 'ms');
 
     var idx = 0, timer = null, visible = false, userPaused = false, hovering = false;
 
     function canRun() { return visible && !userPaused && !hovering && !reduced && !document.hidden; }
-    function step() {
-      var cur = nodes[idx];
-      idx = (idx + 1) % nodes.length;
-      var nxt = nodes[idx];
+    function go(next) {
+      if (next === idx) return;
+      var cur = nodes[idx], nxt = nodes[next];
       cur.classList.remove('is-current');
-      cur.classList.add('is-leaving');
-      setTimeout(function () { cur.classList.remove('is-leaving'); }, 650);
+      if (reduced) cur.classList.remove('is-leaving');
+      else {
+        cur.classList.add('is-leaving');
+        setTimeout(function () { cur.classList.remove('is-leaving'); }, 650);
+      }
       nxt.classList.add('is-current');
       regPlay($('.reg', nxt), 60);
+      picks.forEach(function (b, i) { b.classList.toggle('is-current', i === next); b.setAttribute('aria-pressed', String(i === next)); });
+      idx = next;
+    }
+    // the current word's line fills while it holds; it restarts with each hold and stands full while held
+    function bar(running) {
+      var b = picks[idx];
+      picks.forEach(function (p) { p.classList.remove('is-running'); });
+      if (!b || !running) return;
+      void b.offsetWidth;
+      b.classList.add('is-running');
     }
     function schedule() {
       clearTimeout(timer);
       timer = null;
-      if (canRun()) timer = setTimeout(function () { step(); schedule(); }, 1500);   // time each word holds
+      if (canRun()) timer = setTimeout(function () { go((idx + 1) % nodes.length); schedule(); }, HOLD);
+      bar(!!timer);
+    }
+    function setPaused(on) {
+      userPaused = on;
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', String(on));
+        toggle.setAttribute('aria-label', on ? 'Play the rotating words' : 'Pause the rotating words');
+        $('.toggle__t', toggle).textContent = on ? 'Play' : 'Pause';
+      }
+      schedule();
     }
     function showFirst() {
       nodes.forEach(function (n, i) {
@@ -499,6 +540,7 @@
         n.classList.remove('is-leaving');
         regReset($('.reg', n));
       });
+      picks.forEach(function (b, i) { b.classList.toggle('is-current', i === 0); b.setAttribute('aria-pressed', String(i === 0)); });
       idx = 0;
     }
 
@@ -506,20 +548,11 @@
     title.addEventListener('pointerenter', function () { hovering = true; schedule(); });
     title.addEventListener('pointerleave', function () { hovering = false; schedule(); });
     document.addEventListener('visibilitychange', schedule);
+    if (toggle) toggle.addEventListener('click', function () { setPaused(!userPaused); });
 
-    if (toggle) {
-      toggle.addEventListener('click', function () {
-        userPaused = !userPaused;
-        toggle.setAttribute('aria-pressed', String(userPaused));
-        var label = userPaused ? 'Play the rotating words' : 'Pause the rotating words';
-        $('.toggle__t', toggle).textContent = userPaused ? 'Play words' : 'Pause words';
-        toggle.setAttribute('aria-label', label);
-        schedule();
-      });
-    }
-
+    // with reduced motion nothing turns by itself, but the index still picks a word
     onMotionChange(function () {
-      if (reduced) showFirst();
+      if (reduced && !picks.length) showFirst();
       if (toggle) toggle.hidden = reduced;
       schedule();
     });
@@ -625,6 +658,61 @@
       if (reduced) { liquid.pause(); liquid.setSep(SEP_REST, true); }
       else liquid.play();
       if (reduced) dates.forEach(regReset);
+    });
+
+    initTicket(sec);
+  }
+
+  /* ---------- 04 the ticket ----------
+     The notches are punched where the perforation actually falls (--tear), "Doors in" counts the
+     same date as the countdown in the bar, and on a fine pointer the stock tilts toward it with a
+     light that follows. The seat number comes from the live count (counter.js). */
+  function initTicket(sec) {
+    var ticket = $('[data-ticket]', sec);
+    if (!ticket) return;
+    var card = $('.ticket__card', ticket);
+    var tear = $('.ticket__tear', ticket);
+
+    function punch() { card.style.setProperty('--tear', (tear.offsetTop + tear.offsetHeight / 2) + 'px'); }
+    punch();
+    fontsReady.then(punch);
+    addEventListener('resize', punch);
+
+    var until = $('.count') && new Date($('.count').getAttribute('data-until')).getTime();
+    var doors = $('[data-ticket-doors]', ticket), days = $('[data-ticket-days]', ticket);
+    if (until && doors && days) {
+      var left = until - Date.now();
+      var d = Math.floor(left / 86400000);
+      if (left > 0) {
+        days.textContent = d > 1 ? d + ' days' : d === 1 ? '1 day' : 'Today';
+        doors.hidden = false;
+        punch();
+      }
+    }
+
+    if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    var raf = null, last = null;
+    function apply() {
+      raf = null;
+      if (!last || reduced) return;
+      var r = card.getBoundingClientRect();
+      var x = clamp((last.x - r.left) / r.width, 0, 1), y = clamp((last.y - r.top) / r.height, 0, 1);
+      card.style.setProperty('--ry', ((x - 0.5) * 12).toFixed(2) + 'deg');
+      card.style.setProperty('--rx', ((0.5 - y) * 10).toFixed(2) + 'deg');
+      card.style.setProperty('--gx', (x * 100).toFixed(1) + '%');
+      card.style.setProperty('--gy', (y * 100).toFixed(1) + '%');
+    }
+    ticket.addEventListener('pointermove', function (e) {
+      if (reduced) return;
+      last = { x: e.clientX, y: e.clientY };
+      ticket.classList.add('is-tilting');
+      if (raf === null) raf = requestAnimationFrame(apply);
+    });
+    ticket.addEventListener('pointerleave', function () {
+      last = null;
+      ticket.classList.remove('is-tilting');
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
     });
   }
 

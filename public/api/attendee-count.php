@@ -1,6 +1,7 @@
 <?php
 /* Next Gen Summit: how many people hold a ticket, straight from Eventbrite.
-   Answers only {"count": N}. No names, emails, orders or credentials ever leave this file.
+   Answers {"count": N}, plus totals per state (below). No names, emails, addresses, orders or
+   credentials ever leave this file.
 
    Source of truth: Eventbrite's attendee list for the event, filtered to status=attending.
    Eventbrite keeps one attendee record per ticket (each with quantity 1), whatever the ticket
@@ -13,7 +14,17 @@
 
    The result is cached for a few seconds in the private data folder, so visitors polling
    the homepage never hit Eventbrite more than about four times a minute in total. If
-   Eventbrite is unreachable the last good count is served; with none, {"count": null}. */
+   Eventbrite is unreachable the last good count is served; with none, {"count": null}.
+
+   Where people are coming from: once a snapshot exists the reply also carries
+   "states": [["MD", 84], ["VA", 12], ...] (most first) and "unknown": n. Those are totals per
+   state and nothing else; no attendee's answer, name or address ever leaves this file.
+   A state is read from the attendee's answer to a "State" question on the Eventbrite order form
+   (NGS_EB_STATE_QUESTION in config.php pins its id; otherwise any question with "state" in it),
+   then from Eventbrite's built-in home address. Anything outside the US counts as "INTL", and
+   anything missing or unrecognised as unknown. Building it means walking every attendee page,
+   so it has its own cache, refreshed at most every five minutes, after the reply has been
+   sent whenever the server allows it. */
 declare(strict_types=1);
 
 require __DIR__ . '/_lib.php';
@@ -25,11 +36,24 @@ header('Cache-Control: no-store');
 const NGS_EB_EVENT_ID = '1999190304016';
 const NGS_EB_TTL = 15;              // seconds a count is considered fresh
 const NGS_EB_KEEP = 86400;          // how long a last good count may stand in during an outage
+const NGS_EB_STATES_TTL = 300;      // seconds a per-state snapshot is considered fresh
+const NGS_EB_MAX_PAGES = 60;        // a walk reads at most this many pages of 50 (3,000 attendees)
+
+/** The JSON reply: the count, and the per-state totals when there is a snapshot. Does not exit. */
+function ngs_eb_send(?int $count, ?array $states = null, int $status = 200): void
+{
+    $out = ['count' => $count];
+    if ($count !== null && $states !== null && isset($states['states'], $states['unknown'])) {
+        $out['states'] = $states['states'];
+        $out['unknown'] = $states['unknown'];
+    }
+    http_response_code($status);
+    echo json_encode($out);
+}
 
 function ngs_eb_reply(?int $count, int $status = 200): void
 {
-    http_response_code($status);
-    echo json_encode(['count' => $count]);
+    ngs_eb_send($count, null, $status);
     exit;
 }
 
@@ -110,6 +134,110 @@ function ngs_eb_count(callable $get): int
     throw new RuntimeException('Eventbrite attendee list did not end.');
 }
 
+/** USPS code for a US state, DC or territory, from a code or a name in any case; null if it is not one. */
+function ngs_us_state(string $raw): ?string
+{
+    static $names = [
+        'alabama' => 'AL', 'alaska' => 'AK', 'arizona' => 'AZ', 'arkansas' => 'AR', 'california' => 'CA',
+        'colorado' => 'CO', 'connecticut' => 'CT', 'delaware' => 'DE', 'florida' => 'FL', 'georgia' => 'GA',
+        'hawaii' => 'HI', 'idaho' => 'ID', 'illinois' => 'IL', 'indiana' => 'IN', 'iowa' => 'IA',
+        'kansas' => 'KS', 'kentucky' => 'KY', 'louisiana' => 'LA', 'maine' => 'ME', 'maryland' => 'MD',
+        'massachusetts' => 'MA', 'michigan' => 'MI', 'minnesota' => 'MN', 'mississippi' => 'MS', 'missouri' => 'MO',
+        'montana' => 'MT', 'nebraska' => 'NE', 'nevada' => 'NV', 'new hampshire' => 'NH', 'new jersey' => 'NJ',
+        'new mexico' => 'NM', 'new york' => 'NY', 'north carolina' => 'NC', 'north dakota' => 'ND', 'ohio' => 'OH',
+        'oklahoma' => 'OK', 'oregon' => 'OR', 'pennsylvania' => 'PA', 'rhode island' => 'RI', 'south carolina' => 'SC',
+        'south dakota' => 'SD', 'tennessee' => 'TN', 'texas' => 'TX', 'utah' => 'UT', 'vermont' => 'VT',
+        'virginia' => 'VA', 'washington' => 'WA', 'west virginia' => 'WV', 'wisconsin' => 'WI', 'wyoming' => 'WY',
+        'district of columbia' => 'DC', 'washington dc' => 'DC', 'washington d c' => 'DC', 'd c' => 'DC',
+        'puerto rico' => 'PR', 'guam' => 'GU', 'us virgin islands' => 'VI', 'u s virgin islands' => 'VI',
+        'virgin islands' => 'VI', 'american samoa' => 'AS', 'northern mariana islands' => 'MP',
+    ];
+    $k = strtolower(trim((string) preg_replace('/[^A-Za-z]+/', ' ', $raw)));
+    if ($k === '') {
+        return null;
+    }
+    if (isset($names[$k])) {
+        return $names[$k];
+    }
+    if (strlen($k) === 2 && in_array(strtoupper($k), $names, true)) {
+        return strtoupper($k);
+    }
+    return null;
+}
+
+/** Where one attendee record says they are from: a USPS code, 'INTL' outside the US, or '' if not given. */
+function ngs_eb_attendee_state(array $a, string $questionId = ''): string
+{
+    // 1. their answer to a State question on the order form
+    foreach (($a['answers'] ?? []) as $ans) {
+        if (!is_array($ans)) {
+            continue;
+        }
+        $mine = $questionId !== ''
+            ? (string) ($ans['question_id'] ?? '') === $questionId
+            : (bool) preg_match('/\bstate\b/i', (string) ($ans['question'] ?? ''));
+        if (!$mine) {
+            continue;
+        }
+        $text = trim((string) ($ans['answer'] ?? ''));
+        if (preg_match('/^(outside|not in) (of )?(the )?(us|u\.s\.?|usa|united states)\b|^international$/i', $text)) {
+            return 'INTL';
+        }
+        $code = ngs_us_state($text);
+        if ($code !== null) {
+            return $code;
+        }
+        break;                                                 // blank or unrecognised: try the address
+    }
+    // 2. Eventbrite's built-in home address, if the order form collects it
+    $home = $a['profile']['addresses']['home'] ?? null;
+    if (is_array($home)) {
+        $country = strtoupper(trim((string) ($home['country'] ?? '')));
+        if ($country !== '' && $country !== 'US') {
+            return 'INTL';
+        }
+        $code = ngs_us_state((string) ($home['region'] ?? ''));
+        if ($code !== null) {
+            return $code;
+        }
+    }
+    return '';
+}
+
+/** Totals per state across every attending record: ['states' => [[code, n], ...], 'unknown' => n]. */
+function ngs_eb_states(callable $get, string $questionId = ''): array
+{
+    $base = 'https://www.eventbriteapi.com/v3/events/' . NGS_EB_EVENT_ID . '/attendees/?status=attending';
+    $tally = [];
+    $unknown = 0;
+    $page = $get($base);
+    for ($i = 0; $i < NGS_EB_MAX_PAGES; $i++) {
+        foreach (($page['attendees'] ?? []) as $a) {
+            if (!is_array($a) || !empty($a['cancelled']) || !empty($a['refunded'])) {
+                continue;
+            }
+            $code = ngs_eb_attendee_state($a, $questionId);
+            if ($code === '') {
+                $unknown++;
+            } else {
+                $tally[$code] = ($tally[$code] ?? 0) + 1;
+            }
+        }
+        $p = is_array($page['pagination'] ?? null) ? $page['pagination'] : [];
+        if (empty($p['has_more_items']) || empty($p['continuation'])) {
+            // most first; ties alphabetical, so the order never flickers between snapshots
+            $states = [];
+            foreach ($tally as $code => $n) {
+                $states[] = [(string) $code, $n];
+            }
+            usort($states, function ($x, $y) { return [$y[1], $x[0]] <=> [$x[1], $y[0]]; });
+            return ['states' => $states, 'unknown' => $unknown];
+        }
+        $page = $get($base . '&continuation=' . rawurlencode((string) $p['continuation']));
+    }
+    throw new RuntimeException('Eventbrite attendee list is longer than ' . NGS_EB_MAX_PAGES . ' pages.');
+}
+
 // included (by a test) rather than requested: stop here, the functions above are all it needs
 if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) !== realpath(__FILE__)) {
     return;
@@ -156,8 +284,57 @@ try {
     }
 
     $good = isset($cache['count'], $cache['at']) && is_int($cache['count']) && (time() - (int) $cache['at']) < NGS_EB_KEEP;
-    $good ? ngs_eb_reply($cache['count']) : ngs_eb_reply(null, 503);
+    if (!$good) {
+        ngs_eb_reply(null, 503);
+    }
+
+    // per-state totals: send the snapshot there is, then (if one is due) build the next
+    $sfile = ngs_data_dir() . '/eventbrite-states.json';
+    $readSnap = function () use ($sfile): array {
+        $c = is_file($sfile) ? json_decode((string) @file_get_contents($sfile), true) : null;
+        return is_array($c) ? $c : [];
+    };
+    $snap = $readSnap();
+    $usable = isset($snap['at'], $snap['states'], $snap['unknown']) && (time() - (int) $snap['at']) < NGS_EB_KEEP;
+    ngs_eb_send($cache['count'], $usable ? $snap : null);
+
+    if (isset($snap['checked']) && (time() - (int) $snap['checked']) < NGS_EB_STATES_TTL) {
+        exit;
+    }
+    // the visitor has their answer: close the response where the server allows it, then walk
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } elseif (function_exists('litespeed_finish_request')) {
+        litespeed_finish_request();
+    }
+    ignore_user_abort(true);
+    @set_time_limit(120);
+    $slock = fopen($sfile . '.lock', 'c');
+    if ($slock && flock($slock, LOCK_EX | LOCK_NB)) {                // one walk at a time; nobody waits on it
+        $snap = $readSnap();
+        if (!isset($snap['checked']) || (time() - (int) $snap['checked']) >= NGS_EB_STATES_TTL) {
+            $snap['checked'] = time();                               // a failed walk also waits a full interval
+            try {
+                $token = ngs_eb_token();
+                if ($token === '') {
+                    throw new RuntimeException('NGS_EVENTBRITE_TOKEN is not set in api/config.php.');
+                }
+                $qid = defined('NGS_EB_STATE_QUESTION') ? trim((string) constant('NGS_EB_STATE_QUESTION')) : '';
+                $snap = ngs_eb_states(function (string $url) use ($token) { return ngs_eb_get($url, $token); }, $qid)
+                    + ['at' => time(), 'checked' => time()];
+            } catch (Throwable $e) {
+                error_log('Next Gen Summit attendee states: ' . $e->getMessage());
+            }
+            @file_put_contents($sfile, json_encode($snap), LOCK_EX);
+        }
+        flock($slock, LOCK_UN);
+    }
+    if ($slock) {
+        fclose($slock);
+    }
 } catch (Throwable $e) {
     error_log('Next Gen Summit attendee count: ' . $e->getMessage());
-    ngs_eb_reply(null, 503);
+    if (!headers_sent()) {
+        ngs_eb_reply(null, 503);
+    }
 }

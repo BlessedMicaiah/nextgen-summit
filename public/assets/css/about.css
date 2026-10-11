@@ -15,7 +15,12 @@
 .ab__p + .ab__p{margin-top:clamp(14px,2vh,20px);color:var(--ink-2)}
 
 /* the one moment the page raises its voice */
-.ab--quote{padding-block:clamp(70px,14vh,190px)}
+.ab--quote{max-width:none;padding-block:clamp(60px,11vh,150px)}
+.ab--quote > *{max-width:var(--maxw);margin-inline:auto}
+/* the photograph runs to both edges: the page's only picture, and its only moment of people.
+   It steps back out through the gutter the section pads it in by. */
+.ab--quote > .ab__shot{max-width:none;margin:0 calc(var(--gutter) * -1) clamp(34px,5.5vh,66px)}
+.ab__shot img{display:block;width:100%;height:clamp(240px,42vh,480px);object-fit:cover;object-position:42% 45%}
 .ab__quote{max-width:17ch;font-size:clamp(38px,6.6vw,104px);line-height:1.02;letter-spacing:-.035em}
 
 .road{list-style:none;margin:clamp(26px,4vh,44px) 0 0;padding:0;border-top:1px solid var(--rule);max-width:70ch}
@@ -24,10 +29,9 @@
 .road__v{font:500 clamp(15px,1.2vw,17.5px)/1.55 var(--f-sans);color:var(--ink-2)}
 @media (max-width:640px){.road li{grid-template-columns:1fr;gap:5px}}
 
-.forwho{list-style:none;margin:clamp(24px,3.6vh,36px) 0 0;padding:0;display:grid;gap:clamp(12px,1.8vh,16px);max-width:60ch}
-.forwho li{padding-left:22px;position:relative;font:500 clamp(15px,1.2vw,17.5px)/1.55 var(--f-sans);color:var(--ink-2)}
-.forwho li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:2px;background:var(--accent)}
-.forwho b{font-weight:800;color:var(--ink)}
+.forwho{list-style:none;margin:clamp(24px,3.6vh,36px) 0 0;padding:0;display:grid;gap:clamp(10px,1.5vh,14px);max-width:60ch}
+.forwho li{padding-left:26px;position:relative;font:700 clamp(17px,1.5vw,23px)/1.45 var(--f-sans);color:var(--ink)}
+.forwho li::before{content:"";position:absolute;left:0;top:.6em;width:12px;height:2px;background:var(--accent)}
 
 /* the invitation, on ink */
 .ab--end{max-width:none;background:var(--ink);color:#fff;padding-block:clamp(80px,15vh,180px)}

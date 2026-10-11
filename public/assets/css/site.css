@@ -396,71 +396,11 @@ h1,h2,h3,p{margin:0}
   .invite__date{font-size:clamp(96px,30vw,128px)}
 }
 
-/* ---------- 05 who's in the room ---------- */
-.room{max-width:var(--maxw);margin:0 auto;padding:clamp(40px,8vh,90px) var(--gutter) clamp(110px,18vh,200px)}
-.room__head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:22px 40px;margin-bottom:clamp(34px,6vh,64px)}
-.room__head .label{grid-column:1/-1}
-.room__title{font-size:clamp(54px,8.4vw,136px);line-height:.94}
-.room__note{justify-self:end;text-align:right;padding-bottom:.9em}
-.room__note p{margin-top:8px;font:600 13px/1.45 var(--f-sans);color:var(--ink-2);max-width:30ch;margin-left:auto}
-.room__note .draft-note{margin-top:0;max-width:none;white-space:nowrap;font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;color:var(--accent-ink)}
-/* the runway: one row of editorial portraits running edge to edge, looping without a seam.
-   site.js clones the row as many times as the screen needs and drives one transform. */
-.run{position:relative;margin:clamp(30px,5vh,52px) calc(50% - 50vw) 0;overflow:hidden;overflow:clip}
-.run::before,.run::after{content:"";position:absolute;top:0;bottom:0;z-index:2;width:clamp(24px,6vw,110px);pointer-events:none}
-.run::before{left:0;background:linear-gradient(90deg,var(--paper) 10%,rgba(250,250,248,0))}
-.run::after{right:0;background:linear-gradient(270deg,var(--paper) 10%,rgba(250,250,248,0))}
-.run__track{display:flex;align-items:flex-start;gap:clamp(16px,2.2vw,34px);list-style:none;margin:0;padding:0;will-change:transform}
-.spk{flex:0 0 auto;width:clamp(176px,46vw,284px)}
-/* one card in every three sits lower: editorial rhythm that repeats exactly with the loop */
-.spk--drop{margin-top:clamp(14px,2.4vw,42px)}
-.spk__card{display:block;outline-offset:6px}
-.spk__img{position:relative;margin:0;aspect-ratio:3/4;overflow:hidden;background:var(--paper-2)}
-.spk__img img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.14) brightness(.94);transition:transform 1.1s var(--ease),filter .6s var(--ease),opacity .6s var(--ease)}
-.spk__chip{position:absolute;left:10px;bottom:10px;padding:7px 9px;border-radius:4px;background:rgba(17,17,17,.82);color:#fff;font:700 10px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase}
-.spk__name{margin-top:14px;font:800 clamp(14px,1.05vw,17px)/1.25 var(--f-sans);letter-spacing:.02em;text-transform:uppercase;transition:color .4s var(--ease),opacity .5s var(--ease)}
-.spk__role{margin-top:7px;font:600 13px/1.45 var(--f-sans);color:var(--ink-2);transition:opacity .5s var(--ease)}
-/* the note keeps its space whether or not it is showing, so revealing it never moves the row */
-.spk__note{margin-top:9px;min-height:3em;font:500 13px/1.5 var(--f-sans);color:var(--ink-2);opacity:0;transform:translate3d(0,6px,0);transition:opacity .5s var(--ease),transform .6s var(--ease)}
-/* the speaker being looked at: the picture sharpens inside a card that never changes size */
-.spk.is-active .spk__img img{transform:scale(1.045);filter:grayscale(.8) contrast(1.2) saturate(1.15) brightness(1)}
-.spk.is-active .spk__name{color:var(--accent-ink-hover)}
-.spk.is-active .spk__note{opacity:1;transform:none}
-.run.has-active .spk:not(.is-active) .spk__img img{opacity:.5}
-.run.has-active .spk:not(.is-active) .spk__name,.run.has-active .spk:not(.is-active) .spk__role{opacity:.45}
-.room__credit{margin-top:clamp(26px,4vh,40px);font:500 12px/1.5 var(--f-sans);color:var(--ink-3)}
-.room__credit .linkish{font-size:12px}
-
-@media (max-width:760px){
-  .room__head{grid-template-columns:1fr}
-  .room__note{justify-self:start;text-align:left;padding-bottom:0}
-  .room__note p{margin-left:0}
-  .room__note .draft-note{white-space:normal}
-}
-
-/* ---------- the pitch competition, teased between the invitation and the lineup ---------- */
-.pcta{--seam:clamp(80px,14vh,160px);position:relative;display:flex;align-items:center;min-height:clamp(560px,86vh,860px);color:#fff;overflow:hidden;background:transparent}
-/* one story, not separate slabs: the photo sections rise out of the paper and dissolve back into it.
-   --seam is how far each edge fades; site.js reads the same value, so the nav only turns white
-   where the photograph is solid. */
-/* defined on each section, where its own --seam lives (a :root definition would resolve --seam too early) */
-/* eased, like light falling off, so a fade has no visible start or end */
-.pcta,.finale,.xp{--dissolve:linear-gradient(to bottom,transparent 0,rgba(0,0,0,0.07) calc(var(--seam) * 0.2),rgba(0,0,0,0.26) calc(var(--seam) * 0.4),rgba(0,0,0,0.55) calc(var(--seam) * 0.6),rgba(0,0,0,0.84) calc(var(--seam) * 0.8),#000 var(--seam),#000 calc(100% - var(--seam)),rgba(0,0,0,0.84) calc(100% - var(--seam) * 0.8),rgba(0,0,0,0.55) calc(100% - var(--seam) * 0.6),rgba(0,0,0,0.26) calc(100% - var(--seam) * 0.4),rgba(0,0,0,0.07) calc(100% - var(--seam) * 0.2),transparent 100%)}
-.pcta__media,.pcta__shade,.finale__media,.finale__shade{-webkit-mask-image:var(--dissolve);mask-image:var(--dissolve)}
-.pcta__media{position:absolute;inset:0;margin:0}
-.pcta__media img{width:100%;height:100%;object-fit:cover;object-position:56% 50%;filter:grayscale(1) contrast(1.04)}
-.pcta__shade{position:absolute;inset:0;background:
-  linear-gradient(90deg,rgba(6,6,9,.72) 0%,rgba(6,6,9,.42) 44%,rgba(6,6,9,.08) 78%,rgba(6,6,9,0) 100%),
-  linear-gradient(180deg,rgba(6,6,9,.52) 0%,rgba(6,6,9,.2) 30%,rgba(6,6,9,.28) 62%,rgba(6,6,9,.7) 92%,rgba(6,6,9,.82) 100%)}
-.pcta__inner{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:clamp(70px,12vh,130px) var(--gutter)}
-.pcta__title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(44px,7.6vw,128px);line-height:.9;text-shadow:0 2px 40px rgba(6,6,9,.5)}
-.pcta__copy{margin-top:clamp(18px,2.8vh,30px);max-width:48ch;font:500 clamp(15px,1.2vw,18px)/1.6 var(--f-sans);color:rgba(255,255,255,.92);text-shadow:0 1px 12px rgba(6,6,9,.7)}
-.pcta__cta{margin-top:clamp(26px,4vh,44px)}
-@media (max-width:560px){.pcta__cta .btn{width:100%;justify-content:center}}
-
 /* ---------- 05 who's in the room ----------
-   A row of speaker cards that never stops moving, and one dialog that enlarges the chosen card
-   and turns it over. The card is the collectible: a portrait, a name, a rule of turquoise. */
+   A collection of NextGen speaker cards: a portrait-led card on a slow runway, which opens
+   into the collectible proper and turns over to the credentials. Built to the approved
+   references: black stock inside a bevelled metallic edge with a turquoise rim light, the
+   wordmark top left, the date block top right, the name split white over turquoise. */
 .room{max-width:var(--maxw);margin:0 auto;padding:clamp(40px,8vh,90px) var(--gutter) clamp(90px,15vh,170px)}
 .room__head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:22px 40px;margin-bottom:clamp(34px,6vh,64px)}
 .room__head .label{grid-column:1/-1}
@@ -468,42 +408,41 @@ h1,h2,h3,p{margin:0}
 .room__note{justify-self:end;text-align:right;padding-bottom:.9em}
 .room__note p{margin-top:8px;font:600 13px/1.45 var(--f-sans);color:var(--ink-2);max-width:30ch;margin-left:auto}
 .room__note .draft-note{margin-top:0;max-width:none;white-space:nowrap}
+.room__credit{margin-top:clamp(22px,3.4vh,34px);font:600 12px/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 .room__photo{margin-top:12px;max-width:62ch;font:500 11.5px/1.6 var(--f-sans);color:var(--ink-3)}
 .room__photo .linkish{font-size:11.5px}
-.room__credit{margin-top:clamp(22px,3.4vh,34px);font:600 12px/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 @media (max-width:760px){
   .room__head{grid-template-columns:1fr}
   .room__note{justify-self:start;text-align:left;padding-bottom:0}
   .room__note p{margin-left:0}
 }
 
-/* the runway. One row sliding left to right for ever; speakers.js measures a set and clones it */
+/* ---------- the runway: state one, the portrait leads ---------- */
 .run{position:relative;margin:clamp(30px,5vh,52px) calc(50% - 50vw) 0;overflow:hidden;overflow:clip}
 .run::before,.run::after{content:"";position:absolute;top:0;bottom:0;z-index:2;width:clamp(24px,6vw,110px);pointer-events:none}
 .run::before{left:0;background:linear-gradient(90deg,var(--paper) 10%,rgba(250,250,248,0))}
 .run::after{right:0;background:linear-gradient(270deg,var(--paper) 10%,rgba(250,250,248,0))}
 .run__track{display:flex;align-items:flex-start;gap:clamp(16px,2.2vw,34px);list-style:none;margin:0;padding:0 clamp(20px,4.2vw,72px);will-change:transform}
-.spk{flex:0 0 auto;width:clamp(186px,48vw,286px)}
+.spk{flex:0 0 auto;width:clamp(186px,48vw,268px)}
 .spk--drop{margin-top:clamp(14px,2.4vw,42px)}
-
-/* the card itself */
 .spk__card{display:block;width:100%;padding:0;border:0;background:none;text-align:left;cursor:pointer;
-  outline-offset:6px;-webkit-tap-highlight-color:transparent}
-.spk__face{position:relative;display:grid;place-items:center;aspect-ratio:3/4;overflow:hidden;border-radius:3px;
-  background:var(--ink);isolation:isolate}
-.spk__face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%;
-  filter:grayscale(1) contrast(1.08);transition:transform 1.2s var(--ease),filter .6s var(--ease)}
-@media (hover:hover){.spk__card:hover .spk__face img{transform:scale(1.04);filter:grayscale(.55) contrast(1.1)}}
-/* the one piece of brand furniture on the card */
-.spk__mark{position:absolute;left:11px;top:9px;z-index:2;font-size:13px;color:#fff;opacity:.5;pointer-events:none}
-/* a speaker with no verified portrait yet: the name set, not a stand-in picture */
-.spk__face--type{background:
-  radial-gradient(120% 90% at 50% 10%,rgba(31,199,190,.14) 0%,rgba(31,199,190,0) 62%),
-  linear-gradient(180deg,#0E1618 0%,#0B0B0F 100%)}
-.spk__set{display:block;padding:0 14px;font-size:clamp(23px,2.5vw,32px);line-height:.98;letter-spacing:-.03em;
-  color:#fff;text-align:center}
-.spk__await{position:absolute;left:0;right:0;bottom:14px;font:700 9.5px/1 var(--f-sans);letter-spacing:.2em;
-  text-transform:uppercase;color:var(--accent);text-align:center}
+  outline-offset:8px;-webkit-tap-highlight-color:transparent}
+/* the stock: a thin bevel of light around black */
+.spk__face{position:relative;display:block;aspect-ratio:5/7;overflow:hidden;border-radius:9px;background:#07090A;
+  padding:3px;background-image:linear-gradient(150deg,rgba(255,255,255,.34),rgba(255,255,255,.04) 28%,rgba(31,199,190,.3) 58%,rgba(255,255,255,.05) 78%,rgba(255,255,255,.26));
+  transition:box-shadow .5s var(--ease)}
+.spk__face::after{content:"";position:absolute;inset:3px;border-radius:7px;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 -70px 60px -40px rgba(4,9,10,.9)}
+.spk__shot{position:relative;display:block;height:100%;border-radius:7px;overflow:hidden;background:#0B0B0F}
+.spk__shot img{width:100%;height:100%;object-fit:cover;object-position:50% 16%;
+  filter:grayscale(1) contrast(1.06);transition:transform 1.2s var(--ease),filter .6s var(--ease)}
+@media (hover:hover){
+  .spk__card:hover .spk__shot img{transform:scale(1.035);filter:grayscale(.3) contrast(1.08)}
+  .spk__card:hover .spk__face{box-shadow:0 0 0 1px rgba(31,199,190,.4),0 18px 44px -18px rgba(31,199,190,.5)}
+}
+.spk__mark{position:absolute;left:13px;top:11px;z-index:2;font-size:13px;color:#fff;opacity:.72;pointer-events:none}
+.spk__chip{position:absolute;left:13px;bottom:13px;z-index:2;padding:5px 9px;border-radius:3px;background:var(--accent);
+  color:#06161A;font:800 8.5px/1 var(--f-sans);letter-spacing:.18em;text-transform:uppercase}
 .spk__foot{display:block;padding-top:13px;border-top:1.5px solid var(--accent);margin-top:12px}
 .spk__name{display:block;font:800 clamp(14px,1.05vw,17px)/1.25 var(--f-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--ink)}
 .spk__role{display:block;margin-top:6px;font:600 12.5px/1.45 var(--f-sans);color:var(--ink-2)}
@@ -512,54 +451,99 @@ h1,h2,h3,p{margin:0}
   .spk--drop{margin-top:0}
 }
 
-/* ---------- the chosen card ---------- */
-.sp{width:min(430px,92vw);max-width:none;max-height:none;padding:0;border:0;background:none;color:#fff;overflow:visible}
-.sp::backdrop{background:rgba(6,9,10,.74);backdrop-filter:blur(3px)}
-.sp__in{position:relative;perspective:1600px}
-.sp__close{position:absolute;right:-6px;top:-46px;z-index:3;display:inline-grid;place-items:center;width:40px;height:40px;
-  border-radius:999px;color:#fff;background:rgba(255,255,255,.1);transition:background-color .3s var(--ease)}
-.sp__close:hover{background:rgba(255,255,255,.2)}
-.sp__close svg{width:15px;height:15px}
-.sp__flip{position:relative;transform-style:preserve-3d;transition:transform .78s cubic-bezier(.3,0,.2,1)}
+/* ---------- states two and three: the collectible ---------- */
+.sp{width:min(430px,94vw);max-width:none;max-height:none;padding:0;border:0;background:none;color:#fff;overflow:visible}
+.sp::backdrop{background:rgba(5,8,9,.82);backdrop-filter:blur(4px)}
+.sp__in{position:relative;perspective:1900px}
+/* the way out: outside the panel that turns, in reach on both sides, above everything */
+.sp__close{position:fixed;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:10;
+  display:inline-grid;place-items:center;width:46px;height:46px;border-radius:999px;color:#fff;
+  background:rgba(12,18,20,.82);box-shadow:0 0 0 1px rgba(255,255,255,.18),0 10px 30px rgba(0,0,0,.5);
+  backdrop-filter:blur(6px);transition:background-color .3s var(--ease),transform .3s var(--ease)}
+@media (hover:hover){.sp__close:hover{background:var(--accent);color:#06161A;transform:scale(1.05)}}
+.sp__close svg{width:16px;height:16px}
+
+.sp__flip{position:relative;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.32,0,.18,1)}
 .sp.is-back .sp__flip{transform:rotateY(180deg)}
-.sp__front,.sp__back{border-radius:6px;overflow:hidden;-webkit-backface-visibility:hidden;backface-visibility:hidden;
-  background:var(--ink);box-shadow:0 30px 70px rgba(4,9,10,.6)}
-.sp__back{position:absolute;inset:0;transform:rotateY(180deg);display:flex;flex-direction:column;
-  padding:clamp(24px,5vw,34px);overflow-y:auto;
-  background:linear-gradient(180deg,#101A1C 0%,#0B0B0F 70%)}
-.sp__shot{position:relative;display:grid;place-items:center;aspect-ratio:3/4;background:#0B0B0F;overflow:hidden}
-.sp__shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1) contrast(1.06)}
-.sp__shot.is-await{background:
-  radial-gradient(120% 90% at 50% 10%,rgba(31,199,190,.16) 0%,rgba(31,199,190,0) 62%),
-  linear-gradient(180deg,#0E1618 0%,#0B0B0F 100%)}
-.sp__shot .sp__set{display:block;padding:0 20px;font-size:clamp(34px,8vw,48px);line-height:.96;letter-spacing:-.035em;text-align:center}
-.sp__id{padding:clamp(18px,4vw,24px) clamp(20px,4.5vw,28px) clamp(22px,5vw,28px);border-top:1.5px solid var(--accent)}
-.sp__name{font-size:clamp(28px,6vw,40px);line-height:.98;letter-spacing:-.03em}
-.sp__role{margin-top:10px;font:700 11px/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.72)}
-.sp__k{font:800 10px/1 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
-.sp__bio + .sp__k,.sp__wins + .sp__k{margin-top:clamp(22px,4.4vw,30px)}
-.sp__bio{margin-top:12px;font:500 14.5px/1.6 var(--f-sans);color:rgba(255,255,255,.86)}
-.sp__wins{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:9px}
-.sp__wins li{position:relative;padding-left:20px;font:600 13.5px/1.5 var(--f-sans);color:#fff}
-.sp__wins li::before{content:"";position:absolute;left:0;top:.62em;width:10px;height:1.5px;background:var(--accent)}
-.sp__link{margin-top:auto;padding-top:clamp(20px,4vw,26px)}
-.sp__link a{color:#fff;font:800 11px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;
-  border-bottom:1.5px solid var(--accent);padding-bottom:5px}
-@media (hover:hover){.sp__link a:hover{color:var(--accent)}}
-.sp__turn{display:block;margin:clamp(16px,3vh,22px) auto 0;min-height:44px;padding:0 22px;border-radius:999px;
-  background:rgba(255,255,255,.12);color:#fff;font:800 11px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;
-  transition:background-color .3s var(--ease)}
-@media (hover:hover){.sp__turn:hover{background:var(--accent);color:#0B0B0F}}
+.sp__front,.sp__back{-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:14px;padding:3px;
+  background-image:linear-gradient(150deg,rgba(255,255,255,.4),rgba(255,255,255,.05) 26%,rgba(31,199,190,.42) 56%,rgba(255,255,255,.06) 76%,rgba(255,255,255,.3));
+  box-shadow:0 0 0 1px rgba(31,199,190,.14),0 34px 80px rgba(2,8,10,.72),0 0 70px -18px rgba(31,199,190,.3)}
+.sp__back{position:absolute;inset:0;transform:rotateY(180deg)}
+.sp__pane{position:relative;border-radius:11px;overflow:hidden;background:#07090A;
+  background-image:radial-gradient(120% 80% at 82% 6%,rgba(31,199,190,.12) 0%,rgba(31,199,190,0) 54%)}
+
+/* --- the front --- */
+.sp__top{position:absolute;left:0;right:0;top:0;z-index:3;display:flex;align-items:flex-start;justify-content:space-between;
+  gap:16px;padding:clamp(14px,3.4vw,19px) clamp(15px,3.6vw,20px)}
+.sp__wm{font-size:clamp(21px,4.6vw,26px);color:#fff;line-height:.86}
+.sp__wm small{display:block;margin-top:3px;font:800 7px/1 var(--f-sans);letter-spacing:.42em;text-transform:uppercase;color:#fff}
+.sp__when{padding-left:12px;border-left:1px solid rgba(255,255,255,.26);text-align:right;
+  font:800 9px/1.5 var(--f-sans);letter-spacing:.17em;text-transform:uppercase;color:rgba(255,255,255,.82)}
+.sp__when b{display:block;font-size:13.5px;letter-spacing:.1em;color:var(--accent)}
+.sp__shot{position:relative;display:block;aspect-ratio:5/7}
+.sp__shot img{width:100%;height:100%;object-fit:cover;object-position:50% 14%}
+.sp__shot::after{content:"";position:absolute;inset:0;background:
+  linear-gradient(180deg,rgba(5,9,10,.72) 0%,rgba(5,9,10,0) 26%,rgba(5,9,10,.1) 46%,rgba(5,9,10,.82) 74%,rgba(5,9,10,.97) 100%)}
+.sp__say{position:absolute;left:clamp(15px,3.6vw,20px);top:clamp(86px,20vw,110px);z-index:3;max-width:7.5em}
+.sp__say i{display:block;width:22px;height:2px;background:var(--accent);margin-bottom:9px}
+.sp__say span{font:700 9.5px/1.75 var(--f-sans);letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.88)}
+.sp__id{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:0 clamp(15px,3.6vw,20px) clamp(13px,3.2vw,17px)}
+.sp__tag{display:inline-block;padding:5px 11px;border-radius:3px;background:var(--accent);color:#06161A;
+  font:800 9px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase}
+.sp__name{margin-top:11px;font:800 clamp(33px,8.4vw,46px)/.92 var(--f-sans);letter-spacing:-.025em;text-transform:uppercase;color:#fff}
+.sp__name b{display:block;font-weight:800;color:var(--accent)}
+.sp__role{margin-top:10px;font:700 9.5px/1.5 var(--f-sans);letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.9)}
+.sp__bar{margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sp__bar small{font:700 8px/1 var(--f-sans);letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.sp__turn{display:inline-flex;align-items:center;gap:10px;min-height:40px;padding:0;background:none;color:#fff;
+  font:800 9px/1.25 var(--f-sans);letter-spacing:.13em;text-transform:uppercase;text-align:right}
+.sp__turn i{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:999px;flex:0 0 auto;
+  border:1.5px solid var(--accent);transition:background-color .3s var(--ease),color .3s var(--ease)}
+.sp__turn i svg{width:13px;height:13px}
+@media (hover:hover){.sp__turn:hover i{background:var(--accent);color:#06161A}}
+
+/* --- the back --- */
+.sp__bpane{display:flex;flex-direction:column;min-height:100%;padding:clamp(15px,3.6vw,20px)}
+.sp__bhead{display:grid;grid-template-columns:minmax(0,1fr) clamp(76px,20vw,96px);gap:14px;align-items:start}
+.sp__bname{margin-top:clamp(12px,3vw,18px);font:800 clamp(27px,6.6vw,36px)/.94 var(--f-sans);letter-spacing:-.025em;text-transform:uppercase;color:#fff}
+.sp__bname b{display:block;color:var(--accent)}
+.sp__brole{margin-top:9px;font:700 8.5px/1.6 var(--f-sans);letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.76)}
+.sp__rule{width:46px;height:2.5px;background:var(--accent);margin-top:11px}
+.sp__thumb{position:relative;aspect-ratio:3/4;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1.5px var(--accent)}
+.sp__thumb img{width:100%;height:100%;object-fit:cover;object-position:50% 14%}
+.sp__wins{list-style:none;margin:clamp(14px,3.4vw,20px) 0 0;padding:0;flex:1 1 auto;min-height:0;overflow-y:auto;
+  -webkit-overflow-scrolling:touch}
+.sp__wins li{display:grid;grid-template-columns:38px minmax(0,1fr);gap:13px;align-items:center;
+  padding:clamp(10px,2.4vw,13px) 0;border-top:1px solid rgba(255,255,255,.12)}
+.sp__wins li:first-child{border-top:0}
+.sp__ico{display:grid;place-items:center;width:38px;height:38px;border-radius:999px;border:1.5px solid var(--accent);color:var(--accent)}
+.sp__ico svg{width:17px;height:17px}
+.sp__wk{display:block;font:800 10px/1 var(--f-sans);letter-spacing:.17em;text-transform:uppercase;color:var(--accent)}
+.sp__wv{display:block;margin-top:5px;font:600 12.5px/1.4 var(--f-sans);color:rgba(255,255,255,.94)}
+.sp__act{display:flex;align-items:center;gap:clamp(10px,2.6vw,16px);margin-top:clamp(13px,3vw,18px);
+  padding-top:clamp(12px,2.8vw,16px);border-top:1px solid rgba(255,255,255,.12)}
+.sp__li{display:inline-flex;align-items:center;gap:10px;min-height:42px;padding:0 16px;border-radius:999px;
+  background:var(--accent);color:#06161A;font:800 10px/1 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;
+  text-decoration:none;transition:background-color .3s var(--ease)}
+.sp__li svg{width:15px;height:15px}
+@media (hover:hover){.sp__li:hover{background:#45E0D7}}
+.sp__act .sp__turn{margin-left:auto}
+
 @media (max-width:560px){
-  .sp{width:92vw}
-  .sp__close{top:-44px;right:0}
-  .sp__back{padding:22px}
+  .sp{width:94vw}
+  .sp__wins li{grid-template-columns:32px minmax(0,1fr);gap:11px}
+  .sp__ico{width:32px;height:32px}
+  .sp__ico svg{width:15px;height:15px}
+  .sp__li{padding:0 13px;font-size:9.5px}
+}
+/* a short viewport: the card fits, and the credentials scroll inside it */
+@media (max-height:760px){
+  .sp{width:min(380px,92vw)}
 }
 @media (prefers-reduced-motion:reduce){
-  .sp__flip,.sp.is-back .sp__flip{transition:none;transform:none}
-  .sp__back{position:static;transform:none;margin-top:14px}
-  .sp__front,.sp__back{backface-visibility:visible}
-  .sp{width:min(430px,92vw);max-height:88vh;overflow-y:auto}
+  .sp__flip,.sp.is-back .sp__flip{transition:none}
+  .spk__shot img{transition:none}
 }
 
 /* ---------- 06 who nextgen is for ---------- */

@@ -1,6 +1,6 @@
 /* NextGen Summit — who's in the room.
-   A row of speaker cards sliding left to right for ever, and one dialog that enlarges whichever
-   card is chosen and turns it over.
+   Three states. A portrait-led card on a slow runway; the collectible, enlarged, when one is
+   chosen; and its reverse, with the credentials, when it is turned over.
 
    The runway is the one this section had before it was taken down: measure one set of cards,
    clone the set until the row is wider than the screen plus one whole set, then drive a single
@@ -8,9 +8,8 @@
    is invisible; there is no reset to see. Position lives in `pos`, so pausing is simply "stop
    adding to pos" and resuming carries on from the same place.
 
-   Everything a card says comes from the data below, which comes from an authoritative source for
-   that person. A speaker with no verified portrait has none here, and the card says so rather
-   than standing something in. */
+   Every line a card says is written here, as text, so it can be corrected without touching a
+   picture. Each line comes from an authoritative source for that person. */
 (function () {
   'use strict';
 
@@ -26,41 +25,57 @@
 
   var reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 
-  /* ---------- the people ---------- */
+  /* ---------- the people ----------
+     `wins` is the credential list on the back: a label and the thing itself. `icon` picks one
+     of the outlines below. `link` is only ever a profile we have actually seen. */
   var PEOPLE = {
     tunde: {
-      name: 'Tunde Onakoya',
-      role: 'Founder, Chess in Slums Africa',
-      bio: 'Teaches chess to children in Nigeria’s slum communities and uses the game to get them into school. He founded Chess in Slums Africa in 2018.',
-      shot: { src: 'assets/img/speakers/tunde-onakoya-820.jpg',
-              srcset: 'assets/img/speakers/tunde-onakoya-560.jpg 560w, assets/img/speakers/tunde-onakoya-820.jpg 820w' },
-      wins: ['Guinness World Record, longest chess marathon',
-             'Founded Chess in Slums Africa (2018)',
-             'Board member, The Gift of Chess'],
-      link: { href: 'https://en.wikipedia.org/wiki/Tunde_Onakoya', label: 'Wikipedia' }
-    },
-    kennedy: {
-      name: 'Kennedy Ekezie',
-      role: 'Co-founder and CEO, Kippa',
-      bio: 'Builds financial tools for small businesses. Before Kippa he led TikTok’s expansion into Africa. Born in Lagos; has lived in Beijing, San Francisco and London.',
-      shot: { src: 'assets/img/speakers/kennedy-ekezie-820.jpg',
-              srcset: 'assets/img/speakers/kennedy-ekezie-560.jpg 560w, assets/img/speakers/kennedy-ekezie-820.jpg 820w' },
-      wins: ['Forbes 30 Under 30, North America',
-             'Queen’s Young Leader Award (2018)',
-             'Led TikTok’s expansion into Africa'],
-      link: { href: 'https://www.linkedin.com/in/kennedyekezie/', label: 'LinkedIn' }
+      first: 'Tunde', last: 'Onakoya',
+      role: 'National Master <span aria-hidden="true">&middot;</span> Founder, Chess in Slums Africa',
+      roleFlat: 'National Master, Founder of Chess in Slums Africa',
+      shot: 'tunde-onakoya',
+      wins: [
+        { k: '2018', v: 'Founded Chess in Slums Africa', icon: 'people' },
+        { k: 'Chess', v: 'Nigerian National Master', icon: 'board' },
+        { k: 'April 2025', v: 'Guinness World Record, longest chess marathon: 64 hours with Shawn Martinez', icon: 'cup' },
+        { k: 'Impact', v: 'Education and youth empowerment through chess', icon: 'book' }
+      ],
+      link: 'https://www.linkedin.com/in/tunde-onakoya'
     },
     tisha: {
-      name: 'Tisha Edwards',
-      role: 'President & CEO, Maryland Bankers Association',
-      shot: { src: 'assets/img/speakers/tisha-edwards-820.jpg',
-              srcset: 'assets/img/speakers/tisha-edwards-560.jpg 560w, assets/img/speakers/tisha-edwards-820.jpg 820w' },
-      bio: 'Two decades across public service and the private sector. Previously interim chief executive of Baltimore City Public Schools, chief of staff to the Mayor of Baltimore, and Secretary of Appointments in the Moore–Miller administration.',
-      wins: ['First Black woman to lead a state banking association (2025)',
-             'Influential Marylander, The Daily Record (2025)',
-             'Top 100 Women, The Daily Record (2024)'],
-      link: { href: 'https://www.mdbankers.com/about-mba/meet-the-ceo/', label: 'Maryland Bankers Association' }
+      first: 'Tisha', last: 'Edwards',
+      role: 'President &amp; CEO <span aria-hidden="true">&middot;</span> Maryland Bankers Association',
+      roleFlat: 'President and CEO, Maryland Bankers Association',
+      suffix: 'Tisha Edwards, MSW, JD',
+      shot: 'tisha-edwards',
+      wins: [
+        { k: '2025', v: 'President &amp; CEO, Maryland Bankers Association', icon: 'case' },
+        { k: '2025', v: 'Joined the University System of Maryland Board of Regents', icon: 'cap' },
+        { k: 'Public service', v: 'Former Maryland Secretary of Appointments', icon: 'people' },
+        { k: 'Education', v: 'Former Interim CEO, Baltimore City Public Schools', icon: 'book' }
+      ],
+      link: 'https://www.linkedin.com/in/tisha-edwards'
+    },
+    kennedy: {
+      first: 'Kennedy', last: 'Ekezie',
+      role: 'Technology entrepreneur',
+      roleFlat: 'Technology entrepreneur',
+      shot: 'kennedy-ekezie',
+      wins: [
+        { k: 'Recognition', v: 'Forbes 30 Under 30', icon: 'cup' },
+        { k: 'Building', v: 'Technology entrepreneur', icon: 'case' }
+      ],
+      pending: 'Fuller credentials are being confirmed and will be added here.'
     }
+  };
+
+  var ICON = {
+    people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.1"/><path d="M3.2 19a5.8 5.8 0 0 1 11.6 0"/><path d="M16.5 8.2a2.6 2.6 0 1 0 0-.2M17 13.4A4.9 4.9 0 0 1 20.8 18"/></svg>',
+    board: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.6" y="3.6" width="16.8" height="16.8" rx="1.6"/><path d="M3.6 9.2h16.8M3.6 14.8h16.8M9.2 3.6v16.8M14.8 3.6v16.8"/></svg>',
+    cup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.5H5A2.2 2.2 0 0 0 7.5 9M16.5 5.5H19A2.2 2.2 0 0 1 16.5 9"/><path d="M12 13.5V17M9 20h6"/></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.6S10.4 4.8 4.8 4.8v12.6c5.6 0 7.2 1.8 7.2 1.8s1.6-1.8 7.2-1.8V4.8C13.6 4.8 12 6.6 12 6.6z"/><path d="M12 6.6v12.6"/></svg>',
+    case: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.2" y="7.2" width="17.6" height="12.4" rx="1.8"/><path d="M8.8 7.2V5.6a1.6 1.6 0 0 1 1.6-1.6h3.2a1.6 1.6 0 0 1 1.6 1.6v1.6M3.2 12.4h17.6"/></svg>',
+    cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.4 21.2 9 12 13.6 2.8 9z"/><path d="M6.4 11v4.6c0 1.4 2.5 2.6 5.6 2.6s5.6-1.2 5.6-2.6V11"/></svg>'
   };
 
   /* ---------- the runway ---------- */
@@ -69,7 +84,7 @@
   var SPEED = 30;                                    // px a second: slow enough to read a name
   var hoverMQ = matchMedia('(hover:hover) and (pointer:fine)');
   var smallMQ = matchMedia('(max-width:760px)');
-  var pos = 0, setW = 0, last = 0, raf = null, onScreen = false, held = 0;
+  var pos = 0, setW = 0, last = 0, raf = null, onScreen = false;
 
   function speed() { return smallMQ.matches ? SPEED * 0.72 : SPEED; }
   function place() { if (setW) track.style.transform = 'translate3d(' + (-setW + pos).toFixed(2) + 'px,0,0)'; }
@@ -89,7 +104,7 @@
     var gap = parseFloat(getComputedStyle(track).columnGap) || 0;
     var w = 0;
     originals.forEach(function (li) { w += li.getBoundingClientRect().width + gap; });
-    if (!w) return;
+    if (!w || originals[0].parentNode !== track) return;
     setW = w;
     // one copy of the last card goes in front, so the originals start a card in from the left
     // edge and every one of them can be slid into view when it takes keyboard focus
@@ -112,10 +127,12 @@
     place();
     tick();
   }
-  function tick() { if (raf === null && onScreen && !held && !reduce.matches) raf = requestAnimationFrame(frame); }
+  var why = { pointer: false, focus: false, dialog: false };
+  function stopped() { return why.pointer || why.focus || why.dialog; }
+  function tick() { if (raf === null && onScreen && !stopped() && !reduce.matches) raf = requestAnimationFrame(frame); }
   function stop() { if (raf !== null) { cancelAnimationFrame(raf); raf = null; } last = 0; }
-  function hold() { held++; stop(); }
-  function release() { held = Math.max(0, held - 1); if (!held) { last = 0; tick(); } }
+  function hold(k) { why[k] = true; stop(); }
+  function release(k) { why[k] = false; if (!stopped()) { last = 0; tick(); } }
 
   // a card reached by keyboard may be off to one side, so slide the row to it rather than let
   // the browser scroll a clipped box, which would put the row out of step with its transform
@@ -128,16 +145,16 @@
     place();
   }
 
-  run.addEventListener('pointerenter', function () { if (hoverMQ.matches) hold(); });
-  run.addEventListener('pointerleave', function () { if (hoverMQ.matches) release(); });
+  run.addEventListener('pointerenter', function () { if (hoverMQ.matches) hold('pointer'); });
+  run.addEventListener('pointerleave', function () { if (hoverMQ.matches) release('pointer'); });
   run.addEventListener('focusin', function (e) {
     var li = e.target.closest ? e.target.closest('.spk') : null;
-    hold();
+    hold('focus');
     if (li) reveal(li);
   });
-  run.addEventListener('focusout', function () { release(); });
-  run.addEventListener('touchstart', function () { hold(); }, { passive: true });
-  run.addEventListener('touchend', function () { setTimeout(release, 1800); }, { passive: true });
+  run.addEventListener('focusout', function () { release('focus'); });
+  run.addEventListener('touchstart', function () { hold('pointer'); }, { passive: true });
+  run.addEventListener('touchend', function () { setTimeout(function () { release('pointer'); }, 1800); }, { passive: true });
 
   new IntersectionObserver(function (es) {
     onScreen = es[0].isIntersecting;
@@ -146,105 +163,118 @@
 
   var rt = null;
   addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(build, 180); });
-  reduce.addEventListener && reduce.addEventListener('change', function () { build(); tick(); });
-  if (document.readyState === 'complete') build();
-  else addEventListener('load', build, { once: true });
+  if (reduce.addEventListener) reduce.addEventListener('change', function () { build(); tick(); });
+  addEventListener('load', build, { once: true });
   build();
 
-  /* ---------- the chosen card ---------- */
-  var flip = $('[data-sp-flip]', dlg);
-  var turn = $('[data-sp-turn]', dlg);
-  var turnT = $('[data-sp-turn-t]', dlg);
+  /* ---------- the collectible ---------- */
+  var front = $('[data-sp-front]', dlg);
+  var back = $('[data-sp-back]', dlg);
   var opener = null;
 
-  function fill(key) {
+  function shotTag(key, cls, alt) {
+    var p = PEOPLE[key];
+    return '<img class="' + cls + '" src="assets/img/speakers/' + p.shot + '-620.jpg"' +
+      ' srcset="assets/img/speakers/' + p.shot + '-620.jpg 620w, assets/img/speakers/' + p.shot + '-900.jpg 900w"' +
+      ' sizes="(max-width:560px) 94vw, 430px" width="900" height="1260" decoding="async" alt="' + alt + '">';
+  }
+
+  function paint(key) {
     var p = PEOPLE[key];
     if (!p) return false;
-    $('[data-sp-name]', dlg).textContent = p.name;
-    $('[data-sp-role]', dlg).textContent = p.role;
-    $('[data-sp-bio]', dlg).textContent = p.bio;
+    var full = p.suffix || (p.first + ' ' + p.last);
 
-    var shot = $('[data-sp-shot]', dlg);
-    shot.textContent = '';
-    if (p.shot) {
-      var img = document.createElement('img');
-      img.src = p.shot.src;
-      if (p.shot.srcset) { img.srcset = p.shot.srcset; img.sizes = '(max-width:760px) 86vw, 420px'; }
-      img.alt = p.name;
-      img.decoding = 'async';
-      shot.appendChild(img);
-      shot.classList.remove('is-await');
-    } else {
-      var set = document.createElement('span');
-      set.className = 'sp__set wm';
-      set.textContent = p.name;
-      shot.appendChild(set);
-      var note = document.createElement('span');
-      note.className = 'spk__await';
-      note.textContent = 'Portrait to come';
-      shot.appendChild(note);
-      shot.classList.add('is-await');
-    }
+    front.innerHTML =
+      '<div class="sp__pane">' +
+        '<div class="sp__top">' +
+          '<p class="sp__wm wm">nextgen<small>Summit</small></p>' +
+          '<p class="sp__when">Friday<b>Oct 30</b>Maryland</p>' +
+        '</div>' +
+        '<p class="sp__say" aria-hidden="true"><i></i><span>See what&rsquo;s possible.</span></p>' +
+        '<span class="sp__shot">' + shotTag(key, '', full) + '</span>' +
+        '<div class="sp__id">' +
+          '<p class="sp__tag">Speaker</p>' +
+          '<h3 class="sp__name" id="sp-name">' + p.first + '<b>' + p.last + '</b></h3>' +
+          '<p class="sp__role">' + p.role + '</p>' +
+          '<p class="sp__bar"><small>NextGen Summit</small>' +
+            '<button class="sp__turn" type="button" data-sp-turn>Flip for<br>highlights' +
+              '<i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></i>' +
+            '</button>' +
+          '</p>' +
+        '</div>' +
+      '</div>';
 
-    var wins = $('[data-sp-wins]', dlg);
-    wins.textContent = '';
-    p.wins.forEach(function (w) {
-      var li = document.createElement('li');
-      li.textContent = w;
-      wins.appendChild(li);
-    });
+    var rows = p.wins.map(function (w) {
+      return '<li><span class="sp__ico" aria-hidden="true">' + (ICON[w.icon] || ICON.cup) + '</span>' +
+        '<span><span class="sp__wk">' + w.k + '</span><span class="sp__wv">' + w.v + '</span></span></li>';
+    }).join('');
 
-    var link = $('[data-sp-link]', dlg);
-    link.textContent = '';
+    var act = '<p class="sp__act">';
     if (p.link) {
-      var a = document.createElement('a');
-      a.href = p.link.href;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.textContent = p.link.label;
-      var sr = document.createElement('span');
-      sr.className = 'sr';
-      sr.textContent = ' (opens in a new tab)';
-      a.appendChild(sr);
-      link.appendChild(a);
-      link.hidden = false;
-    } else {
-      link.hidden = true;
+      act += '<a class="sp__li" href="' + p.link + '" target="_blank" rel="noopener noreferrer">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3zM9.5 9h3.8v1.7h.05c.53-.95 1.83-1.95 3.76-1.95 4.02 0 4.76 2.5 4.76 5.76V21h-4v-5.5c0-1.31-.02-3-1.9-3-1.9 0-2.19 1.42-2.19 2.9V21h-4z"/></svg>' +
+        'View LinkedIn</a>';
     }
+    act += '<button class="sp__turn" type="button" data-sp-turn>Back to<br>front' +
+      '<i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></i></button></p>';
+
+    back.innerHTML =
+      '<div class="sp__pane sp__bpane">' +
+        '<div class="sp__bhead">' +
+          '<div>' +
+            '<p class="sp__wm wm">nextgen<small>Summit</small></p>' +
+            '<h3 class="sp__bname">' + p.first + '<b>' + p.last + '</b></h3>' +
+            '<p class="sp__brole">' + p.role + '</p>' +
+            '<span class="sp__rule" aria-hidden="true"></span>' +
+          '</div>' +
+          '<span class="sp__thumb">' + shotTag(key, '', '') + '</span>' +
+        '</div>' +
+        '<ul class="sp__wins">' + rows + '</ul>' +
+        (p.pending ? '<p class="sp__brole" style="margin-top:12px">' + p.pending + '</p>' : '') +
+        act +
+      '</div>';
+
+    dlg.setAttribute('aria-label', full + ', speaker');
     return true;
   }
 
-  function face(back) {
-    dlg.classList.toggle('is-back', back);
-    turn.setAttribute('aria-pressed', String(back));
-    turnT.textContent = back ? 'Back to the front' : 'Turn the card';
+  function face(isBack) {
+    dlg.classList.toggle('is-back', isBack);
+    front.setAttribute('aria-hidden', String(isBack));
+    back.setAttribute('aria-hidden', String(!isBack));
+    $$('a,button', isBack ? front : back).forEach(function (n) { n.setAttribute('tabindex', '-1'); });
+    $$('a,button', isBack ? back : front).forEach(function (n) { n.removeAttribute('tabindex'); });
   }
 
   function open(btn) {
-    if (!fill(btn.getAttribute('data-spk'))) return;
+    if (!paint(btn.getAttribute('data-spk'))) return;
     opener = btn;
-    face(false);
-    hold();
+    face(false);                                     // every opening starts on the front
+    hold('dialog');
     if (typeof dlg.showModal === 'function') dlg.showModal();
     else dlg.setAttribute('open', '');
   }
 
-  function close() {
-    if (dlg.open) dlg.close();
-  }
+  function close() { if (dlg.open) dlg.close(); }
 
   run.addEventListener('click', function (e) {
     var btn = e.target.closest ? e.target.closest('[data-spk]') : null;
     if (btn) open(btn);
   });
 
-  turn.addEventListener('click', function () { face(!dlg.classList.contains('is-back')); });
-  $('[data-sp-close]', dlg).addEventListener('click', close);
-  dlg.addEventListener('click', function (e) { if (e.target === dlg) close(); });
+  dlg.addEventListener('click', function (e) {
+    if (e.target.closest('[data-sp-turn]')) { face(!dlg.classList.contains('is-back')); return; }
+    if (e.target.closest('[data-sp-close]')) { close(); return; }
+    // the backdrop is anything outside the card itself
+    if (!e.target.closest('.sp__in')) close();
+  });
+
   dlg.addEventListener('close', function () {
-    face(false);
-    release();
-    if (opener && opener.isConnected) opener.focus();
+    face(false);                                     // reset for the next one
+    if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     opener = null;
+    // the focus we just restored is ours, not the visitor tabbing in, so it does not hold the row
+    why.focus = false;
+    release('dialog');
   });
 })();

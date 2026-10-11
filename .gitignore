@@ -17,3 +17,4 @@ source-images/
 
 # release zips built by tools/release.py
 release/
+public/api/resume.php

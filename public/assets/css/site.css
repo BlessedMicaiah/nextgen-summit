@@ -283,6 +283,63 @@ h1,h2,h3,p{margin:0}
   .xp__item.is-active .xp__phrase{transform:none}
 }
 
+/* ============================================================================
+   The curtain — the way into the Experience
+   Two leaves a side: a back leaf with wide, soft folds and a front leaf with finer ones,
+   travelling a beat apart so the cloth reads as having weight. Transform and opacity only.
+   ========================================================================= */
+.curt{position:fixed;inset:0;z-index:400;pointer-events:none;display:none;contain:strict}
+html.is-curtained .curt{display:block}
+.curt__s{position:absolute;top:-2px;bottom:-2px;width:52vw}      /* the overlap closes the seam */
+.curt__s--l{left:0}
+.curt__s--r{right:0}
+.curt__b,.curt__f{position:absolute;inset:0;display:block;transform:translate3d(0,0,0);
+  transition:transform var(--curt-t,520ms) var(--curt-e,cubic-bezier(.66,0,.2,1));will-change:transform}
+
+/* the body of the cloth: NextGen's ink, deepened towards the accent's own dark teal */
+.curt__b{background:
+  linear-gradient(90deg,rgba(255,255,255,.05) 0 2%,rgba(0,0,0,.26) 9%,rgba(255,255,255,.035) 17%,rgba(0,0,0,.3) 26%,rgba(255,255,255,.05) 36%,rgba(0,0,0,.24) 47%,rgba(255,255,255,.03) 58%,rgba(0,0,0,.3) 70%,rgba(255,255,255,.045) 83%,rgba(0,0,0,.26) 100%),
+  linear-gradient(180deg,#071417 0%,#06231F 46%,#050C0D 100%)}
+/* the front leaf: finer folds, and it carries the lit edge */
+.curt__f{background:
+  repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,rgba(255,255,255,0) 1px 2.6%,rgba(0,0,0,.2) 2.6% 3.1%,rgba(255,255,255,0) 3.1% 5.4%),
+  linear-gradient(180deg,rgba(11,11,15,.52) 0%,rgba(0,122,116,.2) 50%,rgba(11,11,15,.6) 100%)}
+/* the leading edge: a thin highlight, and the shadow it throws on the page behind */
+.curt__f::after{content:"";position:absolute;top:0;bottom:0;width:clamp(26px,4vw,64px)}
+.curt__s--l .curt__f::after{right:0;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.42) 72%,rgba(31,199,190,.16) 97%,rgba(166,255,244,.3) 100%);box-shadow:34px 0 60px -10px rgba(0,0,0,.6)}
+.curt__s--r .curt__f::after{left:0;background:linear-gradient(270deg,rgba(0,0,0,0),rgba(0,0,0,.42) 72%,rgba(31,199,190,.16) 97%,rgba(166,255,244,.3) 100%);box-shadow:-34px 0 60px -10px rgba(0,0,0,.6)}
+
+/* parked, closed, and parted. The back leaf trails the front on the way in and leads on the
+   way out, which is what stops two rectangles from reading as two rectangles. */
+.curt__s--l .curt__b,.curt__s--l .curt__f{transform:translate3d(-101%,0,0)}
+.curt__s--r .curt__b,.curt__s--r .curt__f{transform:translate3d(101%,0,0)}
+html.is-closing .curt__b,html.is-closing .curt__f{transform:translate3d(0,0,0)}
+html.is-closing .curt__s--l .curt__b{transition-delay:70ms}
+html.is-closing .curt__s--r .curt__f{transition-delay:45ms}
+html.is-closing .curt__s--r .curt__b{transition-delay:110ms}
+html.is-opening .curt__b,html.is-opening .curt__f{--curt-t:680ms;--curt-e:cubic-bezier(.3,0,.1,1)}
+html.is-opening .curt__s--l .curt__b,html.is-opening .curt__s--l .curt__f{transform:translate3d(-101%,0,0)}
+html.is-opening .curt__s--r .curt__b,html.is-opening .curt__s--r .curt__f{transform:translate3d(101%,0,0)}
+html.is-opening .curt__s--l .curt__f{transition-delay:80ms}
+html.is-opening .curt__s--r .curt__f{transition-delay:125ms}
+html.is-opening .curt__s--r .curt__b{transition-delay:45ms}
+@media (max-width:760px){
+  .curt__s{width:54vw}
+  .curt__f{background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 1px,rgba(255,255,255,0) 1px 4.4%,rgba(0,0,0,.2) 4.4% 5.2%,rgba(255,255,255,0) 5.2% 9%),
+    linear-gradient(180deg,rgba(11,11,15,.52) 0%,rgba(0,122,116,.2) 50%,rgba(11,11,15,.6) 100%)}
+}
+@media (prefers-reduced-motion:reduce){.curt{display:none!important}}
+
+/* the invitation at the end of the experience sequence: secondary to Get tickets, and it
+   reads on paper and on the photograph alike because it is drawn in whatever colour the
+   section is currently using */
+.xp__cta{margin-top:clamp(30px,5.5vh,60px)}
+.xp__go{display:inline-flex;align-items:center;min-height:52px;padding:0 clamp(22px,2.4vw,34px);border:1.5px solid currentColor;border-radius:999px;font:800 12px/1 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:inherit;text-decoration:none;transition:background-color .45s var(--ease),color .45s var(--ease),border-color .45s var(--ease),transform .45s var(--ease)}
+@media (hover:hover){.xp__go:hover{background:var(--accent);border-color:var(--accent);color:#0B0B0F}}
+.xp__go:active{transform:translateY(1px)}
+@media (max-width:560px){.xp__go{width:100%;justify-content:center}}
+
 /* ---------- 04 the invitation ---------- */
 .invite{position:relative;background:var(--paper)}
 .invite__liquid{position:relative;height:clamp(250px,48vh,520px);overflow:hidden;background:var(--paper)}

@@ -21,40 +21,46 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 <title>The Experience · NextGen Summit · Oct 30</title>
 <meta name="description" content="Explore the NextGen Summit experience on October 30. Pitch competition, networking and exhibition from 2–4 PM. Talks, live conversations and performances from 4–7 PM.">
-<meta name="theme-color" content="#FAFAF8">
+<meta name="theme-color" content="#0B0B0F">
 <link rel="canonical" href="https://nextgensummit.us/experience/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Come curious. Leave inspired. · NextGen Summit">
 <meta property="og:description" content="Pitch competition, networking and exhibition from 2–4 PM. Talks, live conversations and performances from 4–7 PM. Friday, October 30.">
 <meta property="og:url" content="https://nextgensummit.us/experience/">
-<meta property="og:image" content="https://nextgensummit.us/assets/img/hero-1200.jpg">
+<meta property="og:image" content="https://nextgensummit.us/assets/img/xp-share-1200.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='28' cy='34' r='21' fill='%2300A3E6'/%3E%3Ccircle cx='36' cy='35' r='21' fill='%23EC008C'/%3E%3Ccircle cx='32' cy='28' r='21' fill='%23FFE500'/%3E%3Ccircle cx='32' cy='32' r='19' fill='%230B0B0F'/%3E%3C/svg%3E">
 <script>(function(d){d.classList.add('js');setTimeout(function(){if(!d.classList.contains('js-ready'))d.classList.remove('js')},4000)})(document.documentElement)</script>
-<!-- arrived through the curtain: the leaves are already shut when this page first paints, so nothing of it shows before they part (curtain.js) -->
-<script>(function(d){try{if(sessionStorage.getItem('ngs:curtain')){sessionStorage.removeItem('ngs:curtain');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)d.className+=' is-curtained'}}catch(e){}})(document.documentElement)</script>
+<!-- the entrance: the page opens on the wordmark, not on the photograph. Armed before the
+     first paint so the hero is never seen before it is revealed (assets/js/experience.js) -->
+<script>(function(d){d.className+=' is-intro'})(document.documentElement)</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="image" href="/assets/img/hero-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
-<link rel="preload" as="image" href="/assets/img/hero-1600.jpg" imagesrcset="/assets/img/hero-1200.jpg 1200w, /assets/img/hero-1600.jpg 1600w, /assets/img/hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
+<link rel="preload" as="image" href="/assets/img/gordon-hero-m-1040.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
+<link rel="preload" as="image" href="/assets/img/gordon-hero-1800.jpg" imagesrcset="/assets/img/gordon-hero-1200.jpg 1200w, /assets/img/gordon-hero-1800.jpg 1800w, /assets/img/gordon-hero-2400.jpg 2400w" imagesizes="100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261011-13">
-<link rel="stylesheet" href="/assets/css/experience.css?v=20261011-13">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261011-14">
+<link rel="stylesheet" href="/assets/css/experience.css?v=20261011-14">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261011-13" defer></script>
-<script src="/assets/js/curtain.js?v=20261011-13" defer></script>
+<script src="/assets/js/site.js?v=20261011-14" defer></script>
+<script src="/assets/js/experience.js?v=20261011-14" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PRVSWFBN"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-
-<div class="curt" aria-hidden="true">
-  <div class="curt__s curt__s--l"><i class="curt__b"></i><i class="curt__f"></i></div>
-  <div class="curt__s curt__s--r"><i class="curt__b"></i><i class="curt__f"></i></div>
-</div>
 <!-- End Google Tag Manager (noscript) -->
+
+<!-- the entrance. Two copies of the wordmark: the white one, and the accent one wiped in
+     over it. Then both open and the theatre is behind them. -->
+<div class="intro" aria-hidden="true">
+  <p class="intro__wm wm">
+    <span class="intro__off">nextgen</span>
+    <span class="intro__on">nextgen</span>
+  </p>
+</div>
 
 <a class="skip" href="#exh-title">Skip to content</a>
 <div class="grain" aria-hidden="true"></div>
@@ -82,193 +88,179 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </header>
 
 <main>
-
-  <!-- ==================== hero ==================== -->
-  <!-- the last line turns over through the words in data-rotator (site.js, the same rotator as the
-       homepage's "nextgen thinkers"); the Pause toggle and reduced motion hold it on the first word -->
+  <!-- 01 the hero: the room the summit happens in -->
   <section class="exh" id="top" data-nav="photo" aria-labelledby="exh-title">
     <picture class="exh__media">
-      <source media="(max-aspect-ratio: 3/4)" srcset="/assets/img/hero-m-864.jpg" width="864" height="1152">
-      <img class="exh__img" src="/assets/img/hero-1600.jpg"
-        srcset="/assets/img/hero-800.jpg 800w, /assets/img/hero-1200.jpg 1200w, /assets/img/hero-1600.jpg 1600w, /assets/img/hero-2048.jpg 2048w"
-        sizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" width="2048" height="1152" fetchpriority="high" decoding="async"
-        alt="Young people walking together in late afternoon light, looking ahead.">
+      <source media="(max-aspect-ratio: 3/4)" srcset="/assets/img/gordon-hero-m-760.jpg 760w, /assets/img/gordon-hero-m-1040.jpg 1040w" sizes="100vw" width="1040" height="1300">
+      <img src="/assets/img/gordon-hero-1800.jpg"
+        srcset="/assets/img/gordon-hero-1200.jpg 1200w, /assets/img/gordon-hero-1800.jpg 1800w, /assets/img/gordon-hero-2400.jpg 2400w"
+        sizes="100vw" width="2400" height="1600" fetchpriority="high" decoding="async"
+        alt="The auditorium of the Gordon Center for Performing Arts: rows of seats facing a wide stage, the curtain lit blue.">
     </picture>
-    <div class="exh__shade" aria-hidden="true"></div>
-    <div class="exh__inner">
-      <p class="exh__eyebrow rv">NextGen Summit <span aria-hidden="true">·</span> The Experience</p>
-      <h1 class="exh__title" id="exh-title">
-        <span class="sr">Come curious. Leave inspired, connected, thinking bigger.</span>
-        <span class="exh__l wm rv" style="--d:.12s" aria-hidden="true">come curious.</span>
-        <span class="exh__l wm rv" style="--d:.3s" aria-hidden="true">leave</span>
-        <span class="exh__rotline rv" style="--d:.42s" aria-hidden="true"><span class="what__rot wm exh__rot" data-rotator='["inspired","connected","thinking bigger"]'><span class="what__word is-current">inspired<span class="what__dot">.</span></span></span></span>
-      </h1>
-      <div class="exh__foot">
-        <div class="exh__text rv" style="--d:.6s">
-          <p class="exh__lede">Big ideas. Real conversations. People who see what&rsquo;s possible. Here&rsquo;s what&rsquo;s waiting for you at NextGen.</p>
-          <p class="exh__meta"><time datetime="2026-10-30">Friday, October 30</time> <span aria-hidden="true">·</span> 2&ndash;7 PM ET<br>Gordon Center for Performing Arts <span aria-hidden="true">·</span> Maryland</p>
-        </div>
-        <div class="exh__cta rv" style="--d:.76s">
-          <a class="btn btn--lg" href="/tickets/">Get tickets</a>
-          <a class="textlink" href="#day" data-scroll>Explore the day <span class="arr" aria-hidden="true">↓</span></a>
-          <button class="toggle exh__toggle" type="button" aria-pressed="false" data-rotator-toggle aria-label="Pause the rotating words"><span class="toggle__i" aria-hidden="true"></span><span class="toggle__t" aria-hidden="true">Pause</span></button>
-        </div>
-      </div>
+    <div class="exh__veil" aria-hidden="true"></div>
+    <div class="exh__in">
+      <p class="label label--light">NextGen Summit <span aria-hidden="true">&middot;</span> The Experience</p>
+      <h1 class="exh__t wm" id="exh-title">come curious.<br> leave inspired<span class="ex-dot">.</span></h1>
+      <p class="exh__meta"><time datetime="2026-10-30">Friday, October 30</time> <span aria-hidden="true">&middot;</span> 2&ndash;7 PM ET<br>Gordon Center for Performing Arts <span aria-hidden="true">&middot;</span> Maryland</p>
+      <p class="exh__cue" aria-hidden="true">The day, one moment at a time</p>
     </div>
   </section>
 
-  <!-- ==================== the day at a glance ==================== -->
-  <section class="exd" id="day" data-nav="paper" aria-labelledby="exd-title">
-    <p class="label rv">One day. Room for possibility.</p>
-    <div class="exd__intro">
-      <h2 class="exd__title wm rv" style="--d:.1s" id="exd-title">your next<br> starts here<span class="ex-dot">.</span></h2>
-      <p class="exd__lede rv" style="--d:.2s">Come early to explore, connect and see ideas take the stage. Stay for the talks, conversations and live moments that get you thinking bigger.</p>
-    </div>
-    <div class="exd__blocks">
-      <a class="exd__block rv" style="--d:.26s" href="#explore" data-scroll>
-        <p class="exd__time wm">2&ndash;4<small>PM</small></p>
-        <p class="exd__k">Explore &amp; connect</p>
-        <p class="exd__v">Pitch competition. Networking. Exhibition. More to discover.</p>
-        <span class="textlink">See what&rsquo;s happening <span class="arr" aria-hidden="true">↓</span></span>
-      </a>
-      <a class="exd__block rv" style="--d:.34s" href="#main-event" data-scroll>
-        <p class="exd__time wm">4&ndash;7<small>PM</small></p>
-        <p class="exd__k">The main event</p>
-        <p class="exd__v">Speaker talks. Live conversations. Performances. Audience interactions.</p>
-        <span class="textlink">Explore the main event <span class="arr" aria-hidden="true">↓</span></span>
-      </a>
-    </div>
-    <p class="exd__note rv">All times are Eastern Time. Individual session timings will be announced.</p>
+  <!-- 02 the shape of the day, before any of the detail -->
+  <section class="exo" id="day" data-nav="paper" aria-labelledby="exo-title">
+    <p class="label rv">Five hours. Two halves.</p>
+    <h2 class="exo__t wm rv" style="--d:.1s" id="exo-title">your next<br> starts here<span class="ex-dot">.</span></h2>
+    <p class="exo__p rv" style="--d:.18s">Come early to explore, connect and see ideas take the stage. Stay for the talks, conversations and live moments that get you thinking bigger.</p>
+    <ol class="exo__two rv" style="--d:.26s">
+      <li>
+        <span class="exo__k">2&ndash;4 PM</span>
+        <span class="exo__n">Explore &amp; connect</span>
+        <span class="exo__v">Pitch competition. Networking. Exhibition.</span>
+      </li>
+      <li>
+        <span class="exo__k">4&ndash;7 PM</span>
+        <span class="exo__n">The main event</span>
+        <span class="exo__v">Speaker talks. Live conversations. Performances. Audience interactions.</span>
+      </li>
+    </ol>
+    <p class="exo__fine rv" style="--d:.32s">All times are Eastern. Individual session timings have not been announced yet.</p>
   </section>
 
-  <!-- ==================== 2–4 PM: explore & connect ==================== -->
-  <!-- the activities are formats within each block, not a running order -->
-  <section class="exp" id="explore" data-nav="paper" aria-labelledby="explore-title">
-    <div class="exp__head">
-      <p class="exp__time wm rv">2&ndash;4<span class="ex-dot">.</span><small>PM</small></p>
-      <div>
-        <p class="label rv">Explore &amp; connect</p>
-        <h2 class="exp__title wm rv" style="--d:.1s" id="explore-title">meet people.<br> find possibility<span class="ex-dot">.</span></h2>
-        <p class="exp__lede rv" style="--d:.2s">Start the afternoon in the middle of what&rsquo;s next. New ideas, new businesses and people worth getting to know.</p>
-      </div>
+  <!-- 03 chapter one. The photograph is held while the three scenes pass over it -->
+  <section class="ch" id="explore" data-nav="photo" aria-labelledby="ch1-title">
+    <div class="ch__stage" aria-hidden="true">
+      <picture data-scene="pitch">
+        <img alt="" decoding="async" style="--pos:50% 42%"
+          data-src="/assets/img/pitch-stage-1600.jpg"
+          data-srcset="/assets/img/pitch-stage-1200.jpg 1200w, /assets/img/pitch-stage-1600.jpg 1600w, /assets/img/pitch-stage-2048.jpg 2048w" sizes="100vw">
+      </picture>
+      <picture data-scene="meet">
+        <img alt="" decoding="async" style="--pos:44% 46%"
+          data-src="/assets/img/closing-1600.jpg"
+          data-srcset="/assets/img/closing-1200.jpg 1200w, /assets/img/closing-1600.jpg 1600w, /assets/img/closing-2048.jpg 2048w" sizes="100vw">
+      </picture>
+      <picture data-scene="show">
+        <img alt="" decoding="async" style="--pos:52% 50%"
+          data-src="/assets/img/pitch-team-1400.jpg"
+          data-srcset="/assets/img/pitch-team-700.jpg 700w, /assets/img/pitch-team-1000.jpg 1000w, /assets/img/pitch-team-1400.jpg 1400w" sizes="100vw">
+      </picture>
+      <div class="ch__veil"></div>
     </div>
-    <div class="exp__list">
-      <article class="exa rv">
-        <p class="exa__k">The pitch competition</p>
-        <h3 class="exa__t wm">ideas on stage<span class="ex-dot">.</span></h3>
-        <p class="exa__v">Watch ten finalists pitch live for a share of $10,000 in cash prizes. See what they&rsquo;re building and what could come next.</p>
-        <a class="textlink" href="/pitch/">Explore the competition <span class="arr exa__arr" aria-hidden="true">&#8594;</span></a>
+    <div class="ch__flow">
+      <header class="ch__head">
+        <p class="ch__k rv">2 PM <span aria-hidden="true">&middot;</span> the first half</p>
+        <h2 class="ch__t wm rv" style="--d:.1s" id="ch1-title">explore<br> &amp; connect<span class="ex-dot">.</span></h2>
+      </header>
+
+      <article class="sc" data-scene="pitch" aria-labelledby="sc-pitch">
+        <p class="sc__k">The pitch competition</p>
+        <h3 class="sc__t wm" id="sc-pitch">ideas on stage<span class="ex-dot">.</span></h3>
+        <p class="sc__p">Ten finalists pitch live for a share of $10,000 in cash prizes. See what they are building, and what could come next.</p>
+        <p class="sc__go"><a href="/pitch/">Explore the competition</a></p>
       </article>
-      <article class="exa rv" style="--d:.08s">
-        <p class="exa__k">Networking</p>
-        <h3 class="exa__t wm">your kind<br> of people<span class="ex-dot">.</span></h3>
-        <p class="exa__v">Meet students, creators, founders and young professionals. Come with your crew or make a few new connections.</p>
+
+      <article class="sc" data-scene="meet" aria-labelledby="sc-meet">
+        <p class="sc__k">Networking</p>
+        <h3 class="sc__t wm" id="sc-meet">your kind<br> of people<span class="ex-dot">.</span></h3>
+        <p class="sc__p">Students, creators, founders and young professionals in one room. Come with your crew, or make a few new connections.</p>
       </article>
-      <article class="exa rv" style="--d:.16s">
-        <p class="exa__k">The exhibition</p>
-        <h3 class="exa__t wm">discover<br> what&rsquo;s next<span class="ex-dot">.</span></h3>
-        <p class="exa__v">Explore the exhibition, meet the businesses behind the booths and discover what they&rsquo;re bringing to the room.</p>
+
+      <article class="sc" data-scene="show" aria-labelledby="sc-show">
+        <p class="sc__k">The exhibition</p>
+        <h3 class="sc__t wm" id="sc-show">discover<br> what&rsquo;s next<span class="ex-dot">.</span></h3>
+        <p class="sc__p">Meet the businesses behind the booths and find out what they are bringing to the room.</p>
       </article>
+
+      <p class="ch__fine">More activities to be announced.</p>
     </div>
-    <p class="exp__note rv">More activities to be announced. Come ready to explore.</p>
   </section>
 
-  <div class="exb" data-nav="photo">
-    <img src="/assets/img/gen-college-900.jpg"
-      srcset="/assets/img/gen-college-600.jpg 600w, /assets/img/gen-college-900.jpg 900w, /assets/img/gen-college-1200.jpg 1200w"
-      sizes="100vw" loading="lazy" decoding="async"
-      alt="Three friends talking and exchanging ideas outdoors.">
-  </div>
+  <!-- 04 chapter two -->
+  <section class="ch" id="main-event" data-nav="photo" aria-labelledby="ch2-title">
+    <div class="ch__stage" aria-hidden="true">
+      <picture data-scene="talks">
+        <img alt="" decoding="async" style="--pos:50% 40%"
+          data-src="/assets/img/stage-1-900.jpg"
+          data-srcset="/assets/img/stage-1-480.jpg 480w, /assets/img/stage-1-700.jpg 700w, /assets/img/stage-1-900.jpg 900w" sizes="100vw">
+      </picture>
+      <picture data-scene="real">
+        <img alt="" decoding="async" style="--pos:48% 52%"
+          data-src="/assets/img/pitch-judges-1400.jpg"
+          data-srcset="/assets/img/pitch-judges-700.jpg 700w, /assets/img/pitch-judges-1000.jpg 1000w, /assets/img/pitch-judges-1400.jpg 1400w" sizes="100vw">
+      </picture>
+      <picture data-scene="room">
+        <img alt="" decoding="async" style="--pos:50% 56%"
+          data-src="/assets/img/pitch-crowd-1600.jpg"
+          data-srcset="/assets/img/pitch-crowd-1200.jpg 1200w, /assets/img/pitch-crowd-1600.jpg 1600w, /assets/img/pitch-crowd-2048.jpg 2048w" sizes="100vw">
+      </picture>
+      <div class="ch__veil"></div>
+    </div>
+    <div class="ch__flow">
+      <header class="ch__head">
+        <p class="ch__k rv">4 PM <span aria-hidden="true">&middot;</span> the main event</p>
+        <h2 class="ch__t wm rv" style="--d:.1s" id="ch2-title">think bigger<span class="ex-dot">.</span><br> feel the energy<span class="ex-dot">.</span></h2>
+      </header>
 
-  <!-- ==================== 4–7 PM: the main event ==================== -->
-  <section class="exp exp--dark" id="main-event" data-nav="photo" aria-labelledby="main-title">
-    <picture class="exp__media" aria-hidden="true">
-      <img src="/assets/img/pitchband-1600.jpg"
-        srcset="/assets/img/pitchband-1200.jpg 1200w, /assets/img/pitchband-1600.jpg 1600w, /assets/img/pitchband-2048.jpg 2048w"
-        sizes="100vw" loading="lazy" decoding="async" alt="">
+      <article class="sc" data-scene="talks" aria-labelledby="sc-talks">
+        <p class="sc__k">Speakers &amp; talks</p>
+        <h3 class="sc__t wm" id="sc-talks">a new<br> perspective<span class="ex-dot">.</span></h3>
+        <p class="sc__p">Focused talks from people doing the work. Stories and ideas that expand what you see as possible.</p>
+      </article>
+
+      <article class="sc" data-scene="real" aria-labelledby="sc-real">
+        <p class="sc__k">Live conversations</p>
+        <h3 class="sc__t wm" id="sc-real">real talk.<br> right here<span class="ex-dot">.</span></h3>
+        <p class="sc__p">Podcast-style conversations that go past the highlight reel, into the decisions and the lessons behind the journey.</p>
+      </article>
+
+      <article class="sc" data-scene="room" aria-labelledby="sc-room">
+        <p class="sc__k">Performances &amp; interactions</p>
+        <h3 class="sc__t wm" id="sc-room">more than<br> a seat<span class="ex-dot">.</span></h3>
+        <p class="sc__p">Live performances and audience moments that bring the room together. You are part of it, not watching it.</p>
+      </article>
+
+      <p class="ch__fine">More speakers, performances and experiences to be announced.</p>
+    </div>
+  </section>
+
+  <!-- 05 what is not settled yet, said plainly -->
+  <section class="exs" id="questions" data-nav="paper" aria-labelledby="exs-title">
+    <p class="label rv">The full agenda</p>
+    <h2 class="exs__t wm rv" style="--d:.1s" id="exs-title">more is<br> on the way<span class="ex-dot">.</span></h2>
+    <p class="exs__p rv" style="--d:.18s">Individual session times, speaker names and the rest of the line-up are still being finalised. They will be added here as they are confirmed.</p>
+    <ul class="exs__list rv" style="--d:.26s">
+      <li>
+        <span class="exs__q">What time should I arrive?</span>
+        <span class="exs__a">Doors are at 2 PM for the pitch competition, networking and the exhibition. The main event runs 4&ndash;7 PM. Come early to get the whole afternoon.</span>
+      </li>
+      <li>
+        <span class="exs__q">Where is it?</span>
+        <span class="exs__a">Gordon Center for Performing Arts, Owings Mills, Maryland, on Friday, October 30, 2026.</span>
+      </li>
+      <li>
+        <span class="exs__q">When will the detailed agenda be here?</span>
+        <span class="exs__a">As soon as individual sessions and timings are finalised. Nothing on this page is a placeholder for something already decided.</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- 06 the seat -->
+  <section class="exe" data-nav="photo" aria-labelledby="exe-title">
+    <picture class="exe__media">
+      <source media="(max-aspect-ratio: 3/4)" srcset="/assets/img/gordon-seats-m-760.jpg" width="760" height="950">
+      <img src="/assets/img/gordon-seats-1200.jpg"
+        srcset="/assets/img/gordon-seats-1200.jpg 1200w, /assets/img/gordon-seats-1800.jpg 1800w"
+        sizes="100vw" width="1800" height="1200" loading="lazy" decoding="async"
+        alt="Rows of empty seats in the Gordon Center curving towards the lit stage.">
     </picture>
-    <div class="exp__shade" aria-hidden="true"></div>
-    <div class="exp__in">
-      <div class="exp__head">
-        <p class="exp__time wm rv">4&ndash;7<span class="ex-dot">.</span><small>PM</small></p>
-        <div>
-          <p class="label label--light exp__label rv">The main event</p>
-          <h2 class="exp__title wm rv" style="--d:.1s" id="main-title">think bigger.<br> feel the energy<span class="ex-dot">.</span></h2>
-          <p class="exp__lede rv" style="--d:.2s">Take your seat for ideas that shift your perspective, honest conversations and live moments you get to be part of.</p>
-        </div>
-      </div>
-      <div class="exp__list">
-        <article class="exa rv">
-          <p class="exa__k">Speakers &amp; talks</p>
-          <h3 class="exa__t wm">a new<br> perspective<span class="ex-dot">.</span></h3>
-          <p class="exa__v">Focused talks and speaker sessions from people doing the work. Stories and ideas that expand what you see as possible.</p>
-        </article>
-        <article class="exa rv" style="--d:.08s">
-          <p class="exa__k">Live conversations</p>
-          <h3 class="exa__t wm">real talk.<br> right here<span class="ex-dot">.</span></h3>
-          <p class="exa__v">Podcast-style conversations that go beyond the highlight reel. Get into the stories, decisions and lessons behind the journey.</p>
-        </article>
-        <article class="exa rv" style="--d:.16s">
-          <p class="exa__k">Performances &amp; interactions</p>
-          <h3 class="exa__t wm">more than<br> a seat<span class="ex-dot">.</span></h3>
-          <p class="exa__v">Live performances and audience interactions that bring the room together. Feel the energy and be part of the moment.</p>
-        </article>
-      </div>
-      <p class="exp__note rv">More speakers, performances and experiences to be announced.</p>
+    <div class="exe__veil" aria-hidden="true"></div>
+    <div class="exe__in">
+      <p class="label label--light rv">See what&rsquo;s possible</p>
+      <h2 class="exe__t wm rv" style="--d:.1s" id="exe-title">there&rsquo;s a seat<br> waiting for you<span class="ex-dot">.</span></h2>
+      <p class="exe__m rv" style="--d:.18s"><time datetime="2026-10-30">Friday, October 30</time> <span aria-hidden="true">&middot;</span> 2&ndash;7 PM ET <span aria-hidden="true">&middot;</span> Owings Mills, Maryland</p>
+      <p class="exe__cta rv" style="--d:.26s"><a class="btn btn--lg" href="/tickets/">Get tickets</a></p>
     </div>
   </section>
-
-  <!-- ==================== the full agenda ==================== -->
-  <!-- replace this announcement with the approved session details when they are available -->
-  <section class="exg" data-nav="paper" aria-labelledby="exg-title">
-    <div>
-      <p class="label rv">The full agenda</p>
-      <h2 class="exg__title wm rv" style="--d:.1s" id="exg-title">more is<br> on the way<span class="ex-dot">.</span></h2>
-    </div>
-    <div class="exg__body">
-      <p class="exg__lede rv" style="--d:.16s">We&rsquo;re putting the finishing touches on the day. Check back for individual session times, speaker details and more of what&rsquo;s coming.</p>
-      <p class="exg__soon rv" style="--d:.22s">Full agenda coming soon</p>
-    </div>
-  </section>
-
-  <!-- ==================== a few things to know ==================== -->
-  <!-- plain <details>; not .faq, which site.js animates on the homepage -->
-  <section class="exq" id="questions" data-nav="paper" aria-labelledby="exq-title">
-    <h2 class="exq__title wm rv" id="exq-title">a few things to know<span class="ex-dot">.</span></h2>
-    <div class="exq__list rv" style="--d:.1s">
-      <details class="exq__i">
-        <summary>What time should I arrive?<span class="exq__plus" aria-hidden="true"></span></summary>
-        <p>The experience begins at 2 PM with the pitch competition, networking and exhibition. The main event runs from 4&ndash;7 PM. Come early to make the most of the afternoon.</p>
-      </details>
-      <details class="exq__i">
-        <summary>Where is NextGen happening?<span class="exq__plus" aria-hidden="true"></span></summary>
-        <p>Gordon Center for Performing Arts in Maryland, on Friday, October 30, 2026. All times on this page are Eastern Time.</p>
-      </details>
-      <details class="exq__i">
-        <summary>When will the detailed agenda be available?<span class="exq__plus" aria-hidden="true"></span></summary>
-        <p>The full agenda will be added here once individual sessions and timings are finalized.</p>
-      </details>
-    </div>
-  </section>
-
-  <!-- ==================== closing ==================== -->
-  <section class="exc" data-nav="photo" aria-labelledby="exc-title">
-    <picture class="exc__media">
-      <source media="(max-aspect-ratio: 3/4)" srcset="/assets/img/closing-m-864.jpg">
-      <img src="/assets/img/closing-1600.jpg"
-        srcset="/assets/img/closing-800.jpg 800w, /assets/img/closing-1200.jpg 1200w, /assets/img/closing-1600.jpg 1600w, /assets/img/closing-2048.jpg 2048w"
-        sizes="100vw" loading="lazy" decoding="async"
-        alt="Young people sharing a conversation on wide steps.">
-    </picture>
-    <div class="exc__shade" aria-hidden="true"></div>
-    <div class="exc__in">
-      <p class="exh__eyebrow rv">See what&rsquo;s possible.</p>
-      <h2 class="exc__title wm rv" style="--d:.1s" id="exc-title">see you<br> on the 30th<span class="ex-dot">.</span></h2>
-      <p class="exc__lede rv" style="--d:.2s">Bring your curiosity. Bring your crew. Find your next move.</p>
-      <div class="exc__cta rv" style="--d:.28s"><a class="btn btn--lg" href="/tickets/">Get tickets</a></div>
-    </div>
-  </section>
-
 </main>
 
 <footer class="foot">

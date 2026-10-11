@@ -1,140 +1,127 @@
 /* ============================================================================
    NextGen Summit — The Experience
-   Rides on site.css: same tokens, type, buttons, drawers, reveal system.
-   Nothing here redefines a token; this file is composition only.
+   A sequence of scenes rather than a stack of sections. Composition only: every
+   colour, face and easing comes from site.css.
    ========================================================================= */
 
-.nav__link.is-here{color:var(--accent-ink);cursor:default}
-.on-photo .nav__link.is-here{color:var(--accent)}
+/* ---------- the entrance: the wordmark, the accent, then the theatre ---------- */
+.intro{display:none}
+html.is-intro .intro{display:grid;position:fixed;inset:0;z-index:500;place-items:center;
+  background:#04090A;pointer-events:none;transition:opacity .72s var(--ease),visibility .72s}
+.intro__wm{position:relative;font-size:clamp(54px,11vw,180px);line-height:.9;white-space:nowrap;
+  opacity:0;transform:scale(.965);transition:opacity .5s var(--ease),transform .62s var(--ease)}
+/* the accent copy sits exactly over the white one and is wiped in from the left */
+.intro__off{display:block;color:#fff}
+.intro__on{position:absolute;inset:0;color:var(--accent);clip-path:inset(0 100% 0 0);
+  transition:clip-path .62s cubic-bezier(.62,0,.2,1)}
+html.in-1 .intro__wm{opacity:1;transform:none}
+html.in-2 .intro__on{clip-path:inset(0 0 0 0)}
+/* and it opens: the wordmark passes the viewer, the theatre arrives behind it */
+html.in-3 .intro{opacity:0;visibility:hidden}
+html.in-3 .intro__wm{opacity:0;transform:scale(17);
+  transition:transform 1.02s cubic-bezier(.5,0,.22,1),opacity .72s .22s var(--ease)}
+html.is-intro .exh__media img{transform:scale(1.14)}
+html.in-3 .exh__media img{transform:none;transition:transform 1.5s cubic-bezier(.3,0,.1,1)}
+html.is-intro .exh__in{opacity:0}
+html.in-3 .exh__in{opacity:1;transition:opacity .8s .42s var(--ease)}
 
-/* the turquoise full stop that ends every display line */
-.ex-dot{color:var(--accent)}
-
-/* ---------- hero: photograph, three lines, the last one turning over ---------- */
-.exh{position:relative;z-index:71;min-height:100vh;min-height:100svh;display:flex;align-items:flex-end;color:#fff;overflow:hidden;background:var(--ink)}
-.exh__media{position:absolute;inset:0;margin:0}
-.exh__img{width:100%;height:100%;object-fit:cover;object-position:50% 42%;filter:grayscale(1) contrast(1.06)}
-.exh__shade{position:absolute;inset:0;background:
-  linear-gradient(90deg,rgba(6,6,9,.84) 0%,rgba(6,6,9,.52) 44%,rgba(6,6,9,.14) 74%,rgba(6,6,9,0) 100%),
-  linear-gradient(180deg,rgba(6,6,9,.6) 0%,rgba(6,6,9,.12) 22%,rgba(6,6,9,.24) 50%,rgba(6,6,9,.8) 84%,rgba(6,6,9,.94) 100%)}
-.exh__inner{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:calc(var(--nav-h) + 24px) var(--gutter) clamp(30px,6vh,64px)}
-.exh__eyebrow{font:700 clamp(10px,.82vw,12px)/1.4 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
-/* sized so the longest turn, "thinking bigger.", still fits one line at every width */
-.exh__title{margin:clamp(14px,2.4vh,26px) 0 0;font-size:clamp(44px,12vw,160px);line-height:.9;text-shadow:0 2px 40px rgba(6,6,9,.4)}
-.exh__l{display:block}
-.exh__rotline{display:block}
-.exh__rot{color:var(--accent)}
-.exh__rot .what__dot{color:#fff}
-/* on the dark photo the print plates add light instead of ink, as .reg--light does */
-.exh__rot .reg__p{mix-blend-mode:screen}
-.exh__rot .reg__p--c{color:var(--red-l)}
-.exh__rot .reg__p--m{color:var(--green-l)}
-.exh__rot .reg__p--y{color:var(--blue-l)}
-.exh__foot{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:18px clamp(28px,4vw,72px);margin-top:clamp(22px,3.6vh,40px);padding-top:clamp(18px,2.6vh,28px);border-top:1px solid rgba(255,255,255,.28)}
-.exh__lede{max-width:52ch;font:500 clamp(15px,1.15vw,18px)/1.55 var(--f-sans);color:rgba(255,255,255,.92);text-shadow:0 1px 12px rgba(6,6,9,.6)}
-.exh__meta{margin-top:14px;font:700 clamp(11px,.85vw,12.5px)/1.8 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:#fff;text-shadow:0 1px 10px rgba(6,6,9,.7)}
-.exh__cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px clamp(18px,2.4vw,34px);flex:none}
-.exh__toggle{color:rgba(255,255,255,.7)}
-.exh__toggle:hover{color:#fff}
-@media (max-width:860px){
-  .exh__foot{grid-template-columns:1fr;align-items:start}
-  .exh__cta{width:100%}
-  .exh__cta .btn{flex:1 1 auto;justify-content:center}
-}
-
-/* ---------- the day at a glance: two blocks ---------- */
-.exd{max-width:var(--maxw);margin:0 auto;padding:clamp(90px,15vh,160px) var(--gutter) clamp(70px,11vh,120px)}
-.exd__intro{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:28px clamp(40px,6vw,96px);margin:clamp(18px,3vh,30px) 0 clamp(36px,6vh,60px)}
-.exd__title{font-size:clamp(46px,6.4vw,104px)}
-.exd__lede{max-width:44ch;font:500 clamp(16px,1.2vw,18px)/1.6 var(--f-sans);color:var(--ink-2)}
-.exd__blocks{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule-strong)}
-.exd__block{display:block;padding:clamp(26px,4vh,40px) clamp(24px,3vw,44px) clamp(26px,4vh,36px) 0;text-decoration:none;color:inherit}
-.exd__block + .exd__block{padding-left:clamp(24px,3vw,44px);border-left:1px solid var(--rule-strong)}
-.exd__time{font-size:clamp(56px,6.6vw,104px);line-height:.95;letter-spacing:-.03em;transition:color .5s var(--ease)}
-.exd__time small{margin-left:.35em;font:800 clamp(14px,1.1vw,18px)/1 var(--f-sans);letter-spacing:.04em}
-.exd__k{margin-top:18px;font:800 12px/1.4 var(--f-sans);letter-spacing:.2em;text-transform:uppercase}
-.exd__v{margin-top:8px;max-width:40ch;font:500 15px/1.6 var(--f-sans);color:var(--ink-2)}
-.exd__block .textlink{margin-top:10px}
-.exd__block:hover .exd__time{color:var(--accent-ink)}
-.exd__block:hover .textlink .arr{transform:translateY(4px)}
-.exd__note{margin-top:16px;font:500 13px/1.5 var(--f-sans);color:var(--ink-3)}
-
-/* ---------- a block in detail: the time, then three formats ---------- */
-.exp{max-width:var(--maxw);margin:0 auto;padding:clamp(80px,13vh,140px) var(--gutter)}
-.exp__head{display:grid;grid-template-columns:.7fr 1.3fr;align-items:start;gap:24px clamp(40px,6vw,96px);margin-bottom:clamp(40px,7vh,64px)}
-.exp__time{font-size:clamp(72px,8.6vw,140px);line-height:.9;letter-spacing:-.03em;white-space:nowrap}
-.exp__time small{margin-left:.2em;font:800 clamp(14px,1.1vw,18px)/1 var(--f-sans);letter-spacing:.04em}
-.exp__title{margin:clamp(14px,2.4vh,22px) 0 clamp(16px,2.6vh,24px);font-size:clamp(44px,5.6vw,92px)}
-.exp__lede{max-width:52ch;font:500 clamp(16px,1.2vw,18px)/1.6 var(--f-sans);color:var(--ink-2)}
-.exp__list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(28px,3vw,44px)}
-.exa{padding-top:clamp(20px,3vh,28px);border-top:1px solid var(--rule-strong)}
-.exa__k{font:700 11px/1.4 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
-.exa__t{margin:16px 0 14px;font-size:clamp(32px,3vw,46px)}
-.exa__v{max-width:40ch;font:500 15.5px/1.6 var(--f-sans);color:var(--ink-2)}
-.exa .textlink{margin-top:10px}
-.exa .textlink:hover{color:var(--accent-ink)}
-.exa .textlink:hover .exa__arr{transform:translateX(5px)}
-.exp__note{margin-top:clamp(30px,5vh,44px);font:500 14px/1.5 var(--f-sans);color:var(--ink-2)}
-
-/* the 4–7 block sits on the stage photograph, full bleed */
-.exp--dark{position:relative;max-width:none;padding:0;color:#fff;background:var(--ink);overflow:hidden;overflow:clip}
-.exp__media{position:absolute;inset:0;margin:0}
-.exp__media img{width:100%;height:100%;object-fit:cover;filter:grayscale(1);opacity:.3}
-.exp__shade{position:absolute;inset:0;background:linear-gradient(0deg,var(--ink) 0%,rgba(11,11,15,.62) 100%)}
-.exp__in{position:relative;max-width:var(--maxw);margin:0 auto;padding:clamp(90px,15vh,160px) var(--gutter)}
-.exp__label{color:var(--accent)}
-.exp--dark .exp__lede,.exp--dark .exa__v,.exp--dark .exp__note{color:rgba(255,255,255,.84)}
-.exp--dark .exa{border-color:rgba(255,255,255,.3)}
-.exp--dark .exa__k{color:rgba(255,255,255,.66)}
-
-/* between the blocks: a band of the room */
-.exb{height:clamp(240px,38vh,380px);background:var(--ink);overflow:hidden}
-.exb img{width:100%;height:100%;object-fit:cover;object-position:50% 42%;filter:grayscale(1)}
-
-/* ---------- the full agenda, still to come ---------- */
-.exg{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:26px clamp(40px,6vw,96px);max-width:var(--maxw);margin:0 auto;padding:clamp(90px,15vh,150px) var(--gutter) clamp(60px,10vh,100px)}
-.exg__title{margin-top:clamp(14px,2.4vh,22px);font-size:clamp(44px,5.6vw,92px)}
-.exg__body{padding-top:clamp(0px,3vh,40px)}
-.exg__lede{max-width:46ch;font:500 clamp(16px,1.2vw,18px)/1.6 var(--f-sans);color:var(--ink-2)}
-.exg__soon{display:inline-block;margin-top:24px;padding-top:14px;border-top:3px solid var(--accent);font:800 12px/1.4 var(--f-sans);letter-spacing:.18em;text-transform:uppercase}
-
-/* ---------- a few things to know ---------- */
-.exq{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter) clamp(90px,15vh,150px)}
-.exq__title{margin-bottom:clamp(24px,4vh,36px);font-size:clamp(34px,3.6vw,56px)}
-.exq__i{border-top:1px solid var(--rule-strong)}
-.exq__i:last-child{border-bottom:1px solid var(--rule-strong)}
-.exq__i summary{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:64px;padding:16px 0;font:700 clamp(15px,1.15vw,17px)/1.4 var(--f-sans);cursor:pointer;list-style:none}
-.exq__i summary::-webkit-details-marker{display:none}
-.exq__i summary:hover{color:var(--accent-ink)}
-.exq__plus{position:relative;flex:none;width:14px;height:14px}
-.exq__plus::before,.exq__plus::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:currentColor;transition:transform .5s var(--ease)}
-.exq__plus::after{transform:rotate(90deg)}
-.exq__i[open] .exq__plus::after{transform:rotate(0deg)}
-.exq__i p{max-width:68ch;padding:0 0 22px;font:500 15.5px/1.65 var(--f-sans);color:var(--ink-2)}
-
-/* ---------- closing ---------- */
-.exc{position:relative;display:flex;align-items:center;min-height:clamp(520px,80vh,820px);color:#fff;overflow:hidden;background:var(--ink)}
-.exc__media{position:absolute;inset:0;margin:0}
-.exc__media img{width:100%;height:100%;object-fit:cover;filter:grayscale(1)}
-.exc__shade{position:absolute;inset:0;background:rgba(11,11,15,.78)}
-.exc__in{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:clamp(80px,13vh,140px) var(--gutter)}
-.exc__title{margin:clamp(16px,2.6vh,26px) 0;font-size:clamp(56px,8.6vw,148px);line-height:.9}
-.exc__lede{max-width:40ch;font:500 clamp(16px,1.25vw,19px)/1.6 var(--f-sans);color:rgba(255,255,255,.9)}
-.exc__cta{margin-top:clamp(26px,4vh,40px)}
-
-@media (max-width:860px){
-  .exd__intro,.exp__head,.exg{grid-template-columns:1fr}
-  .exp__list{grid-template-columns:1fr}
-  .exa__v{max-width:52ch}
-}
-@media (max-width:640px){
-  .exd__blocks{grid-template-columns:1fr}
-  .exd__block,.exd__block + .exd__block{padding:28px 0;border-left:0}
-  .exd__block + .exd__block{border-top:1px solid var(--rule-strong)}
-  .exc__cta .btn{width:100%}
-}
-
-/* ---------- reduced motion: everything already arrived ---------- */
+/* reduced motion keeps the brand moment and loses the movement: the wordmark is simply
+   there in the accent, and the theatre fades up behind it */
 @media (prefers-reduced-motion:reduce){
-  .exq__plus::before,.exq__plus::after,.exd__time{transition:none}
+  .intro__wm,html.in-3 .intro__wm{opacity:1;transform:none;transition:none}
+  .intro__on{clip-path:inset(0 0 0 0);transition:none}
+  html.is-intro .exh__media img,html.in-3 .exh__media img{transform:none;transition:none}
+  html.in-3 .intro{transition:opacity .5s linear,visibility .5s}
+  html.in-3 .exh__in{transition:opacity .45s .1s linear}
 }
+
+/* ---------- 01 the hero: the Gordon Center ---------- */
+.exh{position:relative;min-height:100svh;display:grid;align-items:end;overflow:clip;background:#0B0B0F;color:#fff}
+.exh__media{position:absolute;inset:0;margin:0}
+.exh__media img{width:100%;height:100%;object-fit:cover;object-position:50% 48%}
+.exh__veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,9,10,.58) 0%,rgba(4,9,10,.12) 34%,rgba(4,9,10,.5) 72%,rgba(4,9,10,.9) 100%)}
+.exh__in{position:relative;z-index:1;width:100%;max-width:var(--maxw);margin:0 auto;
+  padding:calc(var(--nav-h) + 40px) var(--gutter) clamp(42px,7vh,84px)}
+.exh__t{margin-top:clamp(16px,2.6vh,26px);font-size:clamp(52px,9vw,148px);line-height:.95;letter-spacing:-.04em;
+  text-shadow:0 2px 40px rgba(4,9,10,.5)}
+.exh__meta{margin-top:clamp(20px,3vh,32px);font:700 clamp(11px,1vw,13px)/1.7 var(--f-sans);
+  letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.82)}
+.exh__cue{margin-top:clamp(22px,3.4vh,34px);font:700 11px/1 var(--f-sans);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent)}
+
+/* ---------- 02 the shape of the day ---------- */
+.exo{max-width:var(--maxw);margin:0 auto;padding:clamp(66px,12vh,150px) var(--gutter)}
+.exo__t{margin-top:clamp(14px,2.2vh,22px);font-size:clamp(46px,7.4vw,118px);line-height:.95;letter-spacing:-.04em}
+.exo__p{margin-top:clamp(22px,3.2vh,34px);max-width:44ch;font:500 clamp(17px,1.5vw,23px)/1.5 var(--f-sans);color:var(--ink-2)}
+.exo__two{list-style:none;margin:clamp(34px,5.5vh,66px) 0 0;padding:0;border-top:1px solid var(--rule)}
+.exo__two li{display:grid;grid-template-columns:minmax(6.5rem,8rem) minmax(0,1fr);gap:4px clamp(22px,3.4vw,54px);
+  padding:clamp(20px,3vh,30px) 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.exo__k{font:800 clamp(14px,1.3vw,18px)/1.2 var(--f-sans);letter-spacing:.1em;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.exo__n{font:800 clamp(19px,2vw,30px)/1.2 var(--f-sans);letter-spacing:-.01em}
+.exo__v{grid-column:2;font:500 clamp(15px,1.2vw,17.5px)/1.55 var(--f-sans);color:var(--ink-2)}
+.exo__fine{margin-top:clamp(20px,3vh,28px);font:600 13px/1.5 var(--f-sans);color:var(--ink-3)}
+@media (max-width:620px){.exo__two li{grid-template-columns:1fr;gap:3px}.exo__v{grid-column:1}}
+
+/* ---------- 03 and 04 the chapters ----------
+   The photograph is held still while the scenes scroll over it, and it changes as each
+   scene reaches the middle of the screen. No scroll is intercepted anywhere. */
+.ch{position:relative;background:#0B0B0F}
+.ch__stage{position:sticky;top:0;height:100svh;overflow:clip;background:#0B0B0F}
+.ch__stage picture{position:absolute;inset:0;margin:0;opacity:0;transition:opacity 1s var(--ease)}
+.ch__stage picture.is-on{opacity:1}
+.ch__stage img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);
+  transform:scale(1.05);transition:transform 2.4s var(--ease)}
+.ch__stage picture.is-on img{transform:none}
+.ch__veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,9,10,.74) 0%,rgba(4,9,10,.32) 40%,rgba(4,9,10,.84) 100%)}
+.ch__flow{position:relative;z-index:1;margin-top:-100svh;max-width:var(--maxw);
+  margin-inline:auto;padding:0 var(--gutter);color:#fff}
+.ch__head{min-height:88svh;display:flex;flex-direction:column;justify-content:center}
+.ch__k{font:800 clamp(12px,1.1vw,14px)/1 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+.ch__t{margin-top:clamp(16px,2.4vh,26px);font-size:clamp(50px,8.6vw,140px);line-height:.95;letter-spacing:-.04em;
+  text-shadow:0 2px 40px rgba(4,9,10,.45)}
+.sc{min-height:86svh;display:flex;flex-direction:column;justify-content:center;max-width:34rem;
+  opacity:.32;transition:opacity .7s var(--ease)}
+.sc.is-on{opacity:1}
+.sc__k{font:800 11px/1.3 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+.sc__t{margin-top:clamp(12px,1.8vh,18px);font-size:clamp(38px,5.6vw,86px);line-height:1;letter-spacing:-.035em;
+  text-shadow:0 2px 36px rgba(4,9,10,.5)}
+.sc__p{margin-top:clamp(16px,2.4vh,24px);font:500 clamp(16px,1.35vw,20px)/1.55 var(--f-sans);color:rgba(255,255,255,.9)}
+.sc__go{margin-top:clamp(16px,2.2vh,22px)}
+.sc__go a{color:#fff;font:800 12px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;
+  text-decoration:none;border-bottom:1.5px solid var(--accent);padding-bottom:6px;transition:color .4s var(--ease)}
+@media (hover:hover){.sc__go a:hover{color:var(--accent)}}
+.ch__fine{padding-bottom:clamp(70px,12vh,140px);font:600 13px/1.5 var(--f-sans);color:rgba(255,255,255,.62)}
+@media (max-width:760px){
+  .sc{max-width:none}
+  .ch__stage img{transform:none}
+  .ch__stage picture.is-on img{transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .sc{opacity:1}
+  .ch__stage img{transform:none}
+}
+
+/* ---------- 05 what is still to come ---------- */
+.exs{max-width:var(--maxw);margin:0 auto;padding:clamp(66px,12vh,150px) var(--gutter)}
+.exs__t{margin-top:clamp(14px,2.2vh,22px);font-size:clamp(42px,6.6vw,104px);line-height:.96;letter-spacing:-.04em}
+.exs__p{margin-top:clamp(20px,3vh,30px);max-width:46ch;font:500 clamp(16px,1.4vw,21px)/1.55 var(--f-sans);color:var(--ink-2)}
+.exs__list{list-style:none;margin:clamp(34px,5.5vh,64px) 0 0;padding:0;border-top:1px solid var(--rule);max-width:70ch}
+.exs__list > li{display:grid;grid-template-columns:minmax(10rem,16rem) minmax(0,1fr);gap:6px clamp(20px,3vw,48px);
+  padding:clamp(16px,2.4vh,24px) 0;border-bottom:1px solid var(--rule)}
+.exs__q{font:800 clamp(13px,1.1vw,15px)/1.35 var(--f-sans);letter-spacing:.04em}
+.exs__a{font:500 clamp(15px,1.2vw,17.5px)/1.55 var(--f-sans);color:var(--ink-2)}
+@media (max-width:640px){.exs__list > li{grid-template-columns:1fr;gap:5px}}
+
+/* ---------- 06 the seat ---------- */
+.exe{position:relative;min-height:100svh;display:grid;align-items:end;overflow:clip;background:#0B0B0F;color:#fff}
+.exe__media{position:absolute;inset:0;margin:0}
+.exe__media img{width:100%;height:100%;object-fit:cover;object-position:54% 58%}
+.exe__veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,9,10,.3) 0%,rgba(4,9,10,.46) 46%,rgba(4,9,10,.92) 100%)}
+.exe__in{position:relative;z-index:1;width:100%;max-width:var(--maxw);margin:0 auto;
+  padding:clamp(80px,16vh,190px) var(--gutter) clamp(50px,9vh,110px)}
+.exe__t{margin-top:clamp(14px,2.2vh,24px);font-size:clamp(46px,7.6vw,124px);line-height:.95;letter-spacing:-.04em;
+  text-shadow:0 2px 44px rgba(4,9,10,.56)}
+.exe__m{margin-top:clamp(20px,3vh,30px);font:700 clamp(11px,1vw,13px)/1.7 var(--f-sans);letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(255,255,255,.8)}
+.exe__cta{margin-top:clamp(26px,4vh,42px)}
+@media (max-width:560px){.exe__cta .btn{width:100%;justify-content:center}}

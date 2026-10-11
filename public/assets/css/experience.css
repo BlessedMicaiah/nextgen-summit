@@ -4,6 +4,17 @@
    colour, face and easing comes from site.css.
    ========================================================================= */
 
+/* The film. Grey noise at full alpha, blended over the picture rather than laid on top of
+   the page: at overlay, mid grey is neutral, so only the deviation shows and the grain lands
+   in the midtones the way it does on 35mm. Nothing animates it. */
+:root{--film:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23f)'/%3E%3C/svg%3E")}
+.exh__media::after,.exe__media::after,.stg__shots picture::after,.sn > picture::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background-image:var(--film);background-size:140px 140px;opacity:.19;mix-blend-mode:overlay}
+@media (max-width:860px){
+  .exh__media::after,.exe__media::after,.sn > picture::after{background-size:104px 104px;opacity:.22}
+}
+
 /* ---------- the entrance: the wordmark, the accent, then the theatre ---------- */
 .intro{display:none}
 html.is-intro .intro{display:grid;position:fixed;inset:0;z-index:500;place-items:center;
@@ -39,7 +50,7 @@ html.in-3 .exh__in{opacity:1;transition:opacity .8s .42s var(--ease)}
 .exh{position:relative;min-height:100svh;display:grid;align-items:end;overflow:clip;background:#0B0B0F;color:#fff}
 .exh__media{position:absolute;inset:0;margin:0}
 .exh__media img{width:100%;height:100%;object-fit:cover;object-position:50% 48%}
-.exh__veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,9,10,.58) 0%,rgba(4,9,10,.12) 34%,rgba(4,9,10,.5) 72%,rgba(4,9,10,.9) 100%)}
+.exh__veil{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(4,9,10,.5) 0%,rgba(4,9,10,.06) 32%,rgba(4,9,10,.4) 70%,rgba(4,9,10,.88) 100%)}
 .exh__in{position:relative;z-index:1;width:100%;max-width:var(--maxw);margin:0 auto;
   padding:calc(var(--nav-h) + 40px) var(--gutter) clamp(42px,7vh,84px)}
 .exh__t{margin-top:clamp(16px,2.6vh,26px);font-size:clamp(52px,9vw,148px);line-height:.95;letter-spacing:-.04em;
@@ -72,11 +83,13 @@ html.in-3 .exh__in{opacity:1;transition:opacity .8s .42s var(--ease)}
 .stg__shots picture{position:absolute;inset:0;margin:0;opacity:0;transition:opacity .85s var(--ease)}
 .stg__shots picture.is-on{opacity:1}
 .stg__shots img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);
-  filter:grayscale(1) contrast(1.06);transform:scale(1.06);transition:transform 3.4s var(--ease)}
+  filter:grayscale(1) contrast(1.02) brightness(1.08);transform:scale(1.06);transition:transform 3.4s var(--ease)}
 .stg__shots picture.is-on img{transform:none}
-.stg__veil{position:absolute;inset:0;background:
-  linear-gradient(180deg,rgba(6,9,10,.74) 0%,rgba(6,9,10,.26) 38%,rgba(6,9,10,.86) 100%),
-  radial-gradient(130% 92% at 50% 46%,rgba(6,9,10,0) 38%,rgba(6,9,10,.6) 100%)}
+/* dark at the edges, open in the middle: the seam between one scene and the next is then
+   black meeting black, and the people are visible in between */
+.stg__veil{position:absolute;inset:0;z-index:1;background:
+  linear-gradient(180deg,rgba(6,9,10,.9) 0%,rgba(6,9,10,.16) 24%,rgba(6,9,10,.14) 58%,rgba(6,9,10,.84) 100%),
+  radial-gradient(142% 100% at 50% 46%,rgba(6,9,10,0) 44%,rgba(6,9,10,.5) 100%)}
 /* the house lights, taken down for the change and brought back up */
 .stg__dim{position:absolute;inset:0;background:#04080A;opacity:0;transition:opacity .34s var(--ease)}
 .stg.is-cueing .stg__dim{opacity:.62;transition-duration:.22s}
@@ -108,7 +121,11 @@ html.in-3 .exh__in{opacity:1;transition:opacity .8s .42s var(--ease)}
 /* the words, over the held frame */
 .stg__flow{position:relative;z-index:1;margin-top:-100svh;max-width:var(--maxw);margin-inline:auto;
   padding:0 var(--gutter);color:#fff}
-.act{min-height:76svh;display:flex;flex-direction:column;justify-content:center}
+.act{position:relative;min-height:76svh;display:flex;flex-direction:column;justify-content:center}
+/* the act titles get the same pool of shade the scenes do, since the picture runs behind them */
+.act::before{content:"";position:absolute;inset:-8vh -7vw;z-index:-1;pointer-events:none;
+  background:radial-gradient(60% 56% at 30% 50%,rgba(5,8,9,.82) 0%,rgba(5,8,9,.46) 56%,rgba(5,8,9,0) 100%)}
+.act > *{position:relative}
 .act__k{font:800 clamp(12px,1.1vw,14px)/1 var(--f-sans);letter-spacing:.26em;text-transform:uppercase;color:var(--accent)}
 .act__t{margin-top:clamp(16px,2.4vh,26px);font-size:clamp(46px,8vw,132px);line-height:.95;letter-spacing:-.04em;
   text-shadow:0 2px 40px rgba(4,9,10,.5)}
@@ -140,27 +157,22 @@ html.in-3 .exh__in{opacity:1;transition:opacity .8s .42s var(--ease)}
 .stg__note{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter) clamp(44px,7vh,80px);
   font:600 12px/1.6 var(--f-sans);color:rgba(255,255,255,.42)}
 
-/* phones get the same story told straight down: each scene carries its own picture, and the
-   light cue becomes the reveal of the next one. Nothing sticks, nothing is pinned. */
+/* Phones keep the held frame. It is the only way the scenes genuinely dissolve into one
+   another: one picture surface that crossfades, rather than a stack of photographs each
+   ending in its own black. Only the proportions change. */
 @media (max-width:860px){
-  .stg__frame{position:absolute;inset:0 0 auto;height:100svh;opacity:0;pointer-events:none}
-  .stg__flow{margin-top:0}
-  .act{min-height:62svh}
-  .sn{position:relative;min-height:64svh;max-width:none;margin:0 calc(var(--gutter) * -1);
-    padding:clamp(26px,5vw,34px);justify-content:flex-end;text-align:left;opacity:1;transform:none}
-  .sn::before{display:none}
-  .sn--right{margin-left:calc(var(--gutter) * -1);text-align:left}
-  .sn + .sn{margin-top:clamp(18px,3.5vh,30px)}
-  /* each scene takes its own photograph: experience.js moves it here on narrow screens, so
-     there is one copy of every picture and the same lazy loading as the stage */
-  .sn > picture{position:absolute;inset:0;z-index:-2;margin:0;opacity:1;transition:none}
-  .sn > picture img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);
-    filter:grayscale(1) contrast(1.06);transform:none;transition:none}
-  .sn::after{content:"";position:absolute;inset:0;z-index:-1;
-    background:linear-gradient(180deg,rgba(6,9,10,.46) 0%,rgba(6,9,10,.76) 60%,rgba(6,9,10,.92) 100%)}
-  .sn{isolation:isolate;overflow:hidden;border-radius:2px}
+  .act{min-height:58svh}
+  .act::before{inset:-6vh -12vw;background:radial-gradient(70% 50% at 36% 50%,rgba(5,8,9,.84) 0%,rgba(5,8,9,.5) 56%,rgba(5,8,9,0) 100%)}
+  .act__t{font-size:clamp(40px,11.5vw,62px)}
+  .sn{min-height:84svh;max-width:none;text-align:left}
+  .sn--right{margin-left:0;text-align:left}
+  .sn--big{max-width:none}
+  .sn::before{inset:-6vh -12vw;background:radial-gradient(70% 50% at 36% 62%,rgba(5,8,9,.82) 0%,rgba(5,8,9,.46) 56%,rgba(5,8,9,0) 100%)}
   .sn__t{font-size:clamp(34px,10vw,52px)}
   .sn__p{font-size:16px}
+  .stg__shots img{transform:none}
+  .stg__shots picture.is-on img{transform:none}
+  .stg__meta{font-size:9.5px;letter-spacing:.2em;gap:10px}
   .stg__fine{margin-top:clamp(26px,5vh,40px)}
 }
 
@@ -195,3 +207,10 @@ html.in-3 .exh__in{opacity:1;transition:opacity .8s .42s var(--ease)}
   text-transform:uppercase;color:rgba(255,255,255,.8)}
 .exe__cta{margin-top:clamp(26px,4vh,42px)}
 @media (max-width:560px){.exe__cta .btn{width:100%;justify-content:center}}
+
+/* the header sits over photography for most of this page, so it carries its own shade here
+   and headlines passing beneath it read as behind glass instead of colliding with it */
+html:has(.stg) .nav::after{content:"";position:absolute;left:0;right:0;top:-1px;z-index:-1;pointer-events:none;
+  height:calc(var(--nav-h) + 30px);opacity:0;transition:opacity .5s var(--ease);
+  background:linear-gradient(180deg,rgba(5,8,9,.8) 0%,rgba(5,8,9,.45) 52%,rgba(5,8,9,0) 100%)}
+html:has(.stg) .nav.on-photo::after{opacity:1}

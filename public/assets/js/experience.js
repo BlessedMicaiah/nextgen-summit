@@ -66,7 +66,6 @@
     var actEl = $('[data-stg-act]', stage);
     var numEl = $('[data-stg-n]', stage);
     var ruleEl = $('[data-stg-rule]', stage);
-    var narrow = matchMedia('(max-width:860px)');
     var at = null, cueTimer = null;
 
     function wake(scope) {
@@ -75,17 +74,6 @@
         if (n.dataset.src) { n.src = n.dataset.src; delete n.dataset.src; }
       });
     }
-
-    // narrow screens: every scene carries its own picture, so nothing sticks
-    function unstick() {
-      scenes.forEach(function (sn) {
-        var key = sn.getAttribute('data-scene');
-        var shot = shots.filter(function (p) { return p.getAttribute('data-scene') === key; })[0];
-        if (shot && shot.parentNode !== sn) sn.insertBefore(shot, sn.firstChild);
-      });
-    }
-    if (narrow.matches) unstick();
-    narrow.addEventListener('change', function () { if (narrow.matches) unstick(); else location.reload(); });
 
     function light(key, n, act) {
       if (key === at) return;
@@ -96,7 +84,7 @@
       if (actEl) actEl.textContent = act;
       if (numEl) numEl.textContent = 'Scene ' + n;
       if (ruleEl) ruleEl.style.setProperty('--p', (parseInt(n, 10) / scenes.length).toFixed(3));
-      if (first || narrow.matches || reduce.matches) return;
+      if (first || reduce.matches) return;
       stage.classList.add('is-cueing');                 // light cue, scene change, reveal
       clearTimeout(cueTimer);
       cueTimer = setTimeout(function () { stage.classList.remove('is-cueing'); }, 800);

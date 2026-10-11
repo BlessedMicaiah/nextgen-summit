@@ -345,8 +345,18 @@ h1,h2,h3,p{margin:0}
 .ticket__back{position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(18px,1.8vw,22px);border-radius:16px;background:var(--ink);color:#fff;transform:rotateY(180deg)}
 .ticket__back:focus{outline:none}
 .ticket__back:focus-visible{outline:2px solid var(--accent);outline-offset:-6px}
-.ticket__map{margin-top:14px;border-radius:10px;overflow:hidden;background:#06121A;min-width:0}
+.ticket__map{position:relative;margin-top:14px;border-radius:10px;overflow:hidden;background:#06121A;min-width:0}
 .ticket__map img{display:block;width:100%;height:auto}
+/* light running in along the routes. Each path is one bead long, so one light travels each
+   road and reappears at its far end; the gap is the rest of the road. The picture already
+   draws the dashes, so this only adds the thing that moves. */
+.mp-flow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mp-flow path{fill:none;stroke-linecap:round;stroke-linejoin:round;animation:mp-flow linear infinite;animation-play-state:paused}
+.mp-flow__halo{stroke:#2DE6D6;stroke-width:13;opacity:.2}
+.mp-flow__core{stroke:#A6FFF4;stroke-width:5;opacity:.9}
+@keyframes mp-flow{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+/* it only runs while the map is showing */
+.ticket.is-flipped .mp-flow path{animation-play-state:running}
 .ticket__foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:6px}
 .ticket__foot .ticket__turn{margin:0}
 .ticket__dir{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;background:var(--accent);color:#0B0B0F;font:800 11px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;transition:background-color .3s var(--ease),transform .3s var(--ease)}
@@ -726,6 +736,7 @@ main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the fi
   .hero__img{transform:none}
   .reg.is-armed .reg__p{opacity:0}
   .tally__new.is-pop{animation:none}
+  .mp-flow{display:none}   /* a light frozen mid-road is worse than no light */
   .xp__bg img{transform:none}
   /* the static version: no frame ever grows, recolours or yields; the numerals and the rail simply sit there */
   .gen__title{opacity:1;transform:none}

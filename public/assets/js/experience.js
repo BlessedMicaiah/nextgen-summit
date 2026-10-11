@@ -53,39 +53,71 @@
     if (reduce.addEventListener) reduce.addEventListener('change', function () { if (reduce.matches) done(); });
   }
 
-  /* ---------- the chapters ---------- */
-  $$('.ch').forEach(function (ch) {
-    var scenes = $$('.sc', ch);
-    var shots = $$('[data-scene]', $('.ch__stage', ch));
-    if (!scenes.length || !shots.length) return;
-    var active = null;
+  /* ---------- the stage ----------
+     One frame, six scenes. The scene crossing the middle of the screen owns the picture; on
+     each change the house lights dip, one turquoise cue crosses the frame, and they come back
+     up on the next picture. Narrow screens get the same scenes told straight down instead:
+     each one keeps its own picture and nothing is held or pinned. */
+  var stage = $('.stg');
+  if (stage) {
+    var frame = $('.stg__frame', stage);
+    var scenes = $$('.sn', stage);
+    var shots = $$('picture[data-scene]', frame);
+    var actEl = $('[data-stg-act]', stage);
+    var numEl = $('[data-stg-n]', stage);
+    var ruleEl = $('[data-stg-rule]', stage);
+    var narrow = matchMedia('(max-width:860px)');
+    var at = null, cueTimer = null;
 
-    function show(key) {
-      if (key === active) return;
-      active = key;
-      shots.forEach(function (s) { s.classList.toggle('is-on', s.getAttribute('data-scene') === key); });
-      scenes.forEach(function (s) { s.classList.toggle('is-on', s.getAttribute('data-scene') === key); });
+    function wake(scope) {
+      $$('picture[data-scene] img', scope).forEach(function (n) {
+        if (n.dataset.srcset) { n.srcset = n.dataset.srcset; delete n.dataset.srcset; }
+        if (n.dataset.src) { n.src = n.dataset.src; delete n.dataset.src; }
+      });
     }
 
-    show(scenes[0].getAttribute('data-scene'));
-
-    // the scene crossing the middle band of the screen owns the photograph
-    var io = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (e.isIntersecting) show(e.target.getAttribute('data-scene')); });
-    }, { rootMargin: '-45% 0px -45% 0px' });
-    scenes.forEach(function (s) { io.observe(s); });
-
-    // the photographs are only worth fetching once the chapter is near
-    var once = new IntersectionObserver(function (es) {
-      if (!es[0].isIntersecting) return;
-      once.disconnect();
-      shots.forEach(function (p) {
-        $$('source, img', p).forEach(function (n) {
-          if (n.dataset.srcset) { n.srcset = n.dataset.srcset; delete n.dataset.srcset; }
-          if (n.dataset.src) { n.src = n.dataset.src; delete n.dataset.src; }
-        });
+    // narrow screens: every scene carries its own picture, so nothing sticks
+    function unstick() {
+      scenes.forEach(function (sn) {
+        var key = sn.getAttribute('data-scene');
+        var shot = shots.filter(function (p) { return p.getAttribute('data-scene') === key; })[0];
+        if (shot && shot.parentNode !== sn) sn.insertBefore(shot, sn.firstChild);
       });
-    }, { rootMargin: '60% 0px' });
-    once.observe(ch);
-  });
+    }
+    if (narrow.matches) unstick();
+    narrow.addEventListener('change', function () { if (narrow.matches) unstick(); else location.reload(); });
+
+    function light(key, n, act) {
+      if (key === at) return;
+      var first = at === null;
+      at = key;
+      shots.forEach(function (p) { p.classList.toggle('is-on', p.getAttribute('data-scene') === key); });
+      scenes.forEach(function (sn) { sn.classList.toggle('is-on', sn.getAttribute('data-scene') === key); });
+      if (actEl) actEl.textContent = act;
+      if (numEl) numEl.textContent = 'Scene ' + n;
+      if (ruleEl) ruleEl.style.setProperty('--p', (parseInt(n, 10) / scenes.length).toFixed(3));
+      if (first || narrow.matches || reduce.matches) return;
+      stage.classList.add('is-cueing');                 // light cue, scene change, reveal
+      clearTimeout(cueTimer);
+      cueTimer = setTimeout(function () { stage.classList.remove('is-cueing'); }, 800);
+    }
+
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var sn = e.target;
+        light(sn.getAttribute('data-scene'), sn.getAttribute('data-n'), sn.getAttribute('data-act'));
+      });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    scenes.forEach(function (sn) { io.observe(sn); });
+
+    var near = new IntersectionObserver(function (es) {
+      if (!es[0].isIntersecting) return;
+      near.disconnect();
+      wake(stage);
+    }, { rootMargin: '70% 0px' });
+    near.observe(stage);
+
+    if (scenes.length) light(scenes[0].getAttribute('data-scene'), scenes[0].getAttribute('data-n'), scenes[0].getAttribute('data-act'));
+  }
 })();

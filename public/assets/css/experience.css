@@ -62,43 +62,113 @@ html.in-3 .exh__in{opacity:1;transition:opacity .8s .42s var(--ease)}
 .exo__fine{margin-top:clamp(20px,3vh,28px);font:600 13px/1.5 var(--f-sans);color:var(--ink-3)}
 @media (max-width:620px){.exo__two li{grid-template-columns:1fr;gap:3px}.exo__v{grid-column:1}}
 
-/* ---------- 03 and 04 the chapters ----------
-   The photograph is held still while the scenes scroll over it, and it changes as each
-   scene reaches the middle of the screen. No scroll is intercepted anywhere. */
-.ch{position:relative;background:#0B0B0F}
-.ch__stage{position:sticky;top:0;height:100svh;overflow:clip;background:#0B0B0F}
-.ch__stage picture{position:absolute;inset:0;margin:0;opacity:0;transition:opacity 1s var(--ease)}
-.ch__stage picture.is-on{opacity:1}
-.ch__stage img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);
-  transform:scale(1.05);transition:transform 2.4s var(--ease)}
-.ch__stage picture.is-on img{transform:none}
-.ch__veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,9,10,.74) 0%,rgba(4,9,10,.32) 40%,rgba(4,9,10,.84) 100%)}
-.ch__flow{position:relative;z-index:1;margin-top:-100svh;max-width:var(--maxw);
-  margin-inline:auto;padding:0 var(--gutter);color:#fff}
-.ch__head{min-height:88svh;display:flex;flex-direction:column;justify-content:center}
-.ch__k{font:800 clamp(12px,1.1vw,14px)/1 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
-.ch__t{margin-top:clamp(16px,2.4vh,26px);font-size:clamp(50px,8.6vw,140px);line-height:.95;letter-spacing:-.04em;
-  text-shadow:0 2px 40px rgba(4,9,10,.45)}
-.sc{min-height:86svh;display:flex;flex-direction:column;justify-content:center;max-width:34rem;
-  opacity:.32;transition:opacity .7s var(--ease)}
-.sc.is-on{opacity:1}
-.sc__k{font:800 11px/1.3 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
-.sc__t{margin-top:clamp(12px,1.8vh,18px);font-size:clamp(38px,5.6vw,86px);line-height:1;letter-spacing:-.035em;
-  text-shadow:0 2px 36px rgba(4,9,10,.5)}
-.sc__p{margin-top:clamp(16px,2.4vh,24px);font:500 clamp(16px,1.35vw,20px)/1.55 var(--f-sans);color:rgba(255,255,255,.9)}
-.sc__go{margin-top:clamp(16px,2.2vh,22px)}
-.sc__go a{color:#fff;font:800 12px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;
-  text-decoration:none;border-bottom:1.5px solid var(--accent);padding-bottom:6px;transition:color .4s var(--ease)}
-@media (hover:hover){.sc__go a:hover{color:var(--accent)}}
-.ch__fine{padding-bottom:clamp(70px,12vh,140px);font:600 13px/1.5 var(--f-sans);color:rgba(255,255,255,.62)}
-@media (max-width:760px){
-  .sc{max-width:none}
-  .ch__stage img{transform:none}
-  .ch__stage picture.is-on img{transform:none}
+/* ---------- 03 the living agenda ----------
+   One stage. The photograph is held while the scenes pass over it, and between scenes the
+   lights go down, a turquoise cue crosses, and they come back up on the next one. Every
+   part of that is opacity and transform on four elements that already exist. */
+.stg{position:relative;background:#06090A}
+.stg__frame{position:sticky;top:0;height:100svh;overflow:clip;background:#06090A}
+.stg__shots{position:absolute;inset:0}
+.stg__shots picture{position:absolute;inset:0;margin:0;opacity:0;transition:opacity .85s var(--ease)}
+.stg__shots picture.is-on{opacity:1}
+.stg__shots img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);
+  filter:grayscale(1) contrast(1.06);transform:scale(1.06);transition:transform 3.4s var(--ease)}
+.stg__shots picture.is-on img{transform:none}
+.stg__veil{position:absolute;inset:0;background:
+  linear-gradient(180deg,rgba(6,9,10,.74) 0%,rgba(6,9,10,.26) 38%,rgba(6,9,10,.86) 100%),
+  radial-gradient(130% 92% at 50% 46%,rgba(6,9,10,0) 38%,rgba(6,9,10,.6) 100%)}
+/* the house lights, taken down for the change and brought back up */
+.stg__dim{position:absolute;inset:0;background:#04080A;opacity:0;transition:opacity .34s var(--ease)}
+.stg.is-cueing .stg__dim{opacity:.62;transition-duration:.22s}
+/* the cue itself: one narrow turquoise light crossing the frame, once per change */
+.stg__cue{position:absolute;top:0;bottom:0;left:0;width:34vw;opacity:0;transform:translate3d(-60%,0,0);
+  background:linear-gradient(90deg,rgba(31,199,190,0) 0%,rgba(31,199,190,.16) 46%,rgba(166,255,244,.5) 72%,rgba(31,199,190,.1) 86%,rgba(31,199,190,0) 100%);
+  mix-blend-mode:screen}
+.stg.is-cueing .stg__cue{animation:stg-cue .78s cubic-bezier(.4,0,.2,1)}
+@keyframes stg-cue{
+  0%{opacity:0;transform:translate3d(-60%,0,0)}
+  22%{opacity:1}
+  78%{opacity:1}
+  100%{opacity:0;transform:translate3d(280%,0,0)}
 }
+/* a finer film grain than the page carries, for the dark scenes only */
+.stg__grain{position:absolute;inset:0;opacity:.13;background-size:160px 160px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.4 1.4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E")}
+
+/* the playbill: where you are, at the edge of the frame */
+.stg__meta{position:absolute;left:var(--gutter);bottom:clamp(22px,4vh,38px);display:flex;align-items:baseline;gap:14px;
+  font:800 10.5px/1 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+.stg__act{color:var(--accent)}
+.stg__n{font-variant-numeric:tabular-nums}
+.stg__rule{position:absolute;left:var(--gutter);right:var(--gutter);bottom:clamp(14px,2.4vh,22px);height:1px;
+  background:rgba(255,255,255,.16);overflow:hidden}
+.stg__rule i{display:block;height:100%;background:var(--accent);transform:scaleX(var(--p,0));transform-origin:0 50%;
+  transition:transform .6s var(--ease)}
+
+/* the words, over the held frame */
+.stg__flow{position:relative;z-index:1;margin-top:-100svh;max-width:var(--maxw);margin-inline:auto;
+  padding:0 var(--gutter);color:#fff}
+.act{min-height:76svh;display:flex;flex-direction:column;justify-content:center}
+.act__k{font:800 clamp(12px,1.1vw,14px)/1 var(--f-sans);letter-spacing:.26em;text-transform:uppercase;color:var(--accent)}
+.act__t{margin-top:clamp(16px,2.4vh,26px);font-size:clamp(46px,8vw,132px);line-height:.95;letter-spacing:-.04em;
+  text-shadow:0 2px 40px rgba(4,9,10,.5)}
+
+.sn{position:relative;min-height:88svh;display:flex;flex-direction:column;justify-content:center;max-width:32rem;
+  --sx:30%;opacity:.26;transform:translate3d(0,14px,0);
+  transition:opacity .7s var(--ease),transform .9s var(--ease)}
+.sn.is-on{opacity:1;transform:none}
+/* a pool of shade under the lit scene, so the words hold against whatever the picture is
+   doing behind them. It arrives with the scene and leaves with it. */
+.sn::before{content:"";position:absolute;inset:-8vh -7vw;z-index:-1;pointer-events:none;opacity:0;
+  background:radial-gradient(58% 58% at var(--sx) 50%,rgba(5,8,9,.78) 0%,rgba(5,8,9,.42) 54%,rgba(5,8,9,0) 100%);
+  transition:opacity .7s var(--ease)}
+.sn.is-on::before{opacity:1}
+.sn--right{--sx:70%;margin-left:auto;text-align:right}
+.sn--big{max-width:40rem}
+.sn__k{font:800 10.5px/1.4 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+.sn__t{margin-top:clamp(12px,1.8vh,18px);font-size:clamp(38px,5.4vw,84px);line-height:1;letter-spacing:-.035em;
+  text-shadow:0 2px 36px rgba(4,9,10,.52)}
+.sn--big .sn__t{font-size:clamp(42px,6.4vw,104px)}
+.sn__when{margin-top:clamp(14px,2vh,20px);font:800 clamp(13px,1.15vw,16px)/1 var(--f-sans);letter-spacing:.14em;
+  text-transform:uppercase;color:rgba(255,255,255,.8);font-variant-numeric:tabular-nums}
+.sn__p{margin-top:clamp(12px,1.8vh,18px);font:500 clamp(16px,1.3vw,19px)/1.55 var(--f-sans);color:rgba(255,255,255,.88)}
+.sn__go{margin-top:clamp(16px,2.2vh,22px)}
+.sn__go a{color:#fff;font:800 12px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;
+  text-decoration:none;border-bottom:1.5px solid var(--accent);padding-bottom:6px;transition:color .4s var(--ease)}
+@media (hover:hover){.sn__go a:hover{color:var(--accent)}}
+.stg__fine{padding-bottom:clamp(70px,12vh,140px);max-width:44ch;font:600 13px/1.6 var(--f-sans);color:rgba(255,255,255,.62)}
+.stg__note{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter) clamp(44px,7vh,80px);
+  font:600 12px/1.6 var(--f-sans);color:rgba(255,255,255,.42)}
+
+/* phones get the same story told straight down: each scene carries its own picture, and the
+   light cue becomes the reveal of the next one. Nothing sticks, nothing is pinned. */
+@media (max-width:860px){
+  .stg__frame{position:absolute;inset:0 0 auto;height:100svh;opacity:0;pointer-events:none}
+  .stg__flow{margin-top:0}
+  .act{min-height:62svh}
+  .sn{position:relative;min-height:64svh;max-width:none;margin:0 calc(var(--gutter) * -1);
+    padding:clamp(26px,5vw,34px);justify-content:flex-end;text-align:left;opacity:1;transform:none}
+  .sn::before{display:none}
+  .sn--right{margin-left:calc(var(--gutter) * -1);text-align:left}
+  .sn + .sn{margin-top:clamp(18px,3.5vh,30px)}
+  /* each scene takes its own photograph: experience.js moves it here on narrow screens, so
+     there is one copy of every picture and the same lazy loading as the stage */
+  .sn > picture{position:absolute;inset:0;z-index:-2;margin:0;opacity:1;transition:none}
+  .sn > picture img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);
+    filter:grayscale(1) contrast(1.06);transform:none;transition:none}
+  .sn::after{content:"";position:absolute;inset:0;z-index:-1;
+    background:linear-gradient(180deg,rgba(6,9,10,.46) 0%,rgba(6,9,10,.76) 60%,rgba(6,9,10,.92) 100%)}
+  .sn{isolation:isolate;overflow:hidden;border-radius:2px}
+  .sn__t{font-size:clamp(34px,10vw,52px)}
+  .sn__p{font-size:16px}
+  .stg__fine{margin-top:clamp(26px,5vh,40px)}
+}
+
 @media (prefers-reduced-motion:reduce){
-  .sc{opacity:1}
-  .ch__stage img{transform:none}
+  .sn{opacity:1;transform:none}
+  .stg__shots img,.stg__shots picture.is-on img{transform:none;transition:none}
+  .stg.is-cueing .stg__cue{animation:none}
+  .stg__dim,.stg.is-cueing .stg__dim{opacity:0}
 }
 
 /* ---------- 05 what is still to come ---------- */

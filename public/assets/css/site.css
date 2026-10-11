@@ -283,6 +283,13 @@ h1,h2,h3,p{margin:0}
   .xp__item.is-active .xp__phrase{transform:none}
 }
 
+/* leaving for the Experience: the page darkens and the next one opens on the same black.
+   No panel travels anywhere; this is a change in light. */
+.depart{position:fixed;inset:0;z-index:400;pointer-events:none;background:#04090A;opacity:0;
+  transition:opacity .52s cubic-bezier(.4,0,.6,1)}
+.depart.is-on{opacity:1}
+@media (prefers-reduced-motion:reduce){.depart{display:none}}
+
 /* the invitation at the end of the experience sequence: secondary to Get tickets, and it
    reads on paper and on the photograph alike because it is drawn in whatever colour the
    section is currently using */

@@ -30,17 +30,17 @@
     if (!intro) return;
     if (reduce.matches) {                              // the brand, then a fade. Nothing moves.
       root.classList.add('in-1', 'in-2');
-      timers.push(setTimeout(function () { root.classList.add('in-3'); }, 420));
-      timers.push(setTimeout(done, 1180));
+      timers.push(setTimeout(function () { root.classList.add('in-3'); }, 460));
+      timers.push(setTimeout(done, 1500));
       return;
     }
     var at = function (ms, cls) { timers.push(setTimeout(function () { root.classList.add(cls); }, ms)); };
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        root.classList.add('in-1');                    // the wordmark arrives
-        at(520, 'in-2');                               // and takes the accent
-        at(1010, 'in-3');                              // then opens on the theatre
-        timers.push(setTimeout(done, 2000));
+        root.classList.add('in-1');                    // the wordmark arrives out of the black
+        at(560, 'in-2');                               // the light comes up on it
+        at(1180, 'in-3');                              // and it dissolves into the room
+        timers.push(setTimeout(done, 2560));
       });
     });
   }
@@ -54,10 +54,9 @@
   }
 
   /* ---------- the stage ----------
-     One frame, six scenes. The scene crossing the middle of the screen owns the picture; on
-     each change the house lights dip, one turquoise cue crosses the frame, and they come back
-     up on the next picture. Narrow screens get the same scenes told straight down instead:
-     each one keeps its own picture and nothing is held or pinned. */
+     One frame, six scenes. The scene crossing the middle of the screen owns the picture, and
+     the change is a dissolve: the two overlap while one fades out and the other fades in.
+     Nothing travels across the frame. */
   var stage = $('.stg');
   if (stage) {
     var frame = $('.stg__frame', stage);
@@ -66,7 +65,7 @@
     var actEl = $('[data-stg-act]', stage);
     var numEl = $('[data-stg-n]', stage);
     var ruleEl = $('[data-stg-rule]', stage);
-    var at = null, cueTimer = null;
+    var at = null;
 
     function wake(scope) {
       $$('picture[data-scene] img', scope).forEach(function (n) {
@@ -77,17 +76,12 @@
 
     function light(key, n, act) {
       if (key === at) return;
-      var first = at === null;
       at = key;
       shots.forEach(function (p) { p.classList.toggle('is-on', p.getAttribute('data-scene') === key); });
       scenes.forEach(function (sn) { sn.classList.toggle('is-on', sn.getAttribute('data-scene') === key); });
       if (actEl) actEl.textContent = act;
       if (numEl) numEl.textContent = 'Scene ' + n;
       if (ruleEl) ruleEl.style.setProperty('--p', (parseInt(n, 10) / scenes.length).toFixed(3));
-      if (first || reduce.matches) return;
-      stage.classList.add('is-cueing');                 // light cue, scene change, reveal
-      clearTimeout(cueTimer);
-      cueTimer = setTimeout(function () { stage.classList.remove('is-cueing'); }, 800);
     }
 
     var io = new IntersectionObserver(function (es) {

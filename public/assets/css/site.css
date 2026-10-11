@@ -661,12 +661,20 @@ main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the fi
 .path[aria-expanded="true"] .path__plus::after{transform:rotate(0)}
 
 /* the volunteer panel: a short brief, the quick note, then applying for a role as the main move */
-/* a framed Typeform (the vendor application on /exhibitors/), tall enough for a question and
-   its buttons on a phone, with the plain link to the same form under it */
-.tf{padding:2px 0 30px}
-.tf__frame{display:block;width:100%;height:560px;height:clamp(460px,calc(100dvh - 190px),660px);border:1.5px solid var(--rule);border-radius:8px;background:var(--paper)}
-.tf__alt{margin-top:12px;font:600 13px/1.45 var(--f-sans);color:var(--ink-2)}
-.tf__alt .linkish{font-size:13px}
+/* an application panel: the drawer, widened, with the provider's own page filling it. Google
+   Forms and Typeform draw their own interface inside the frame; ours is the bar above it and a
+   hairline, nothing more. */
+.drawer--form{width:min(720px,100%)}
+.drawer__in--form{padding-bottom:clamp(14px,2vh,20px)}
+.fm{flex:1;display:flex;flex-direction:column;min-height:0;margin-top:clamp(14px,2.2vh,22px)}
+.fm__frame{flex:1;width:100%;min-height:clamp(420px,62vh,760px);border:1px solid var(--rule);border-radius:10px;background:#fff}
+.fm__alt{margin-top:12px;font:600 13px/1.45 var(--f-sans);color:var(--ink-2)}
+.fm__alt .linkish{font-size:13px}
+@media (max-width:560px){
+  .fm{margin-top:12px}
+  .fm__alt{margin-top:10px;font-size:12.5px}
+  .fm__alt .linkish{font-size:12.5px}
+}
 .vol{padding:4px 0 30px}
 .vol[hidden]{display:none}
 .vol__t{font:800 clamp(17px,1.4vw,20px)/1.3 var(--f-sans);letter-spacing:.01em}

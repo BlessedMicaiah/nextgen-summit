@@ -32,15 +32,21 @@
       name: 'Tunde Onakoya',
       role: 'Founder, Chess in Slums Africa',
       bio: 'Teaches chess to children in Nigeria’s slum communities and uses the game to get them into school. He founded Chess in Slums Africa in 2018.',
-      wins: ['Guinness World Record, longest chess marathon (2025)',
-             'Founded Chess in Slums Africa (2018)']
+      shot: { src: 'assets/img/speakers/tunde-onakoya-820.jpg',
+              srcset: 'assets/img/speakers/tunde-onakoya-560.jpg 560w, assets/img/speakers/tunde-onakoya-820.jpg 820w' },
+      wins: ['Guinness World Record, longest chess marathon',
+             'Founded Chess in Slums Africa (2018)',
+             'Board member, The Gift of Chess'],
+      link: { href: 'https://en.wikipedia.org/wiki/Tunde_Onakoya', label: 'Wikipedia' }
     },
     kennedy: {
       name: 'Kennedy Ekezie',
       role: 'Co-founder and CEO, Kippa',
       bio: 'Builds financial tools for small businesses. Before Kippa he led TikTok’s expansion into Africa. Born in Lagos; has lived in Beijing, San Francisco and London.',
-      wins: ['Forbes 30 Under 30 (2024)',
-             'Co-founder and CEO of Kippa',
+      shot: { src: 'assets/img/speakers/kennedy-ekezie-820.jpg',
+              srcset: 'assets/img/speakers/kennedy-ekezie-560.jpg 560w, assets/img/speakers/kennedy-ekezie-820.jpg 820w' },
+      wins: ['Forbes 30 Under 30, North America',
+             'Queen’s Young Leader Award (2018)',
              'Led TikTok’s expansion into Africa'],
       link: { href: 'https://www.linkedin.com/in/kennedyekezie/', label: 'LinkedIn' }
     },

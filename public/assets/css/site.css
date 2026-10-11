@@ -458,6 +458,108 @@ h1,h2,h3,p{margin:0}
 .pcta__cta{margin-top:clamp(26px,4vh,44px)}
 @media (max-width:560px){.pcta__cta .btn{width:100%;justify-content:center}}
 
+/* ---------- 05 who's in the room ----------
+   A row of speaker cards that never stops moving, and one dialog that enlarges the chosen card
+   and turns it over. The card is the collectible: a portrait, a name, a rule of turquoise. */
+.room{max-width:var(--maxw);margin:0 auto;padding:clamp(40px,8vh,90px) var(--gutter) clamp(90px,15vh,170px)}
+.room__head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:22px 40px;margin-bottom:clamp(34px,6vh,64px)}
+.room__head .label{grid-column:1/-1}
+.room__title{font-size:clamp(54px,8.4vw,136px);line-height:.94}
+.room__note{justify-self:end;text-align:right;padding-bottom:.9em}
+.room__note p{margin-top:8px;font:600 13px/1.45 var(--f-sans);color:var(--ink-2);max-width:30ch;margin-left:auto}
+.room__note .draft-note{margin-top:0;max-width:none;white-space:nowrap}
+.room__credit{margin-top:clamp(22px,3.4vh,34px);font:600 12px/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+@media (max-width:760px){
+  .room__head{grid-template-columns:1fr}
+  .room__note{justify-self:start;text-align:left;padding-bottom:0}
+  .room__note p{margin-left:0}
+}
+
+/* the runway. One row sliding left to right for ever; speakers.js measures a set and clones it */
+.run{position:relative;margin:clamp(30px,5vh,52px) calc(50% - 50vw) 0;overflow:hidden;overflow:clip}
+.run::before,.run::after{content:"";position:absolute;top:0;bottom:0;z-index:2;width:clamp(24px,6vw,110px);pointer-events:none}
+.run::before{left:0;background:linear-gradient(90deg,var(--paper) 10%,rgba(250,250,248,0))}
+.run::after{right:0;background:linear-gradient(270deg,var(--paper) 10%,rgba(250,250,248,0))}
+.run__track{display:flex;align-items:flex-start;gap:clamp(16px,2.2vw,34px);list-style:none;margin:0;padding:0 clamp(20px,4.2vw,72px);will-change:transform}
+.spk{flex:0 0 auto;width:clamp(186px,48vw,286px)}
+.spk--drop{margin-top:clamp(14px,2.4vw,42px)}
+
+/* the card itself */
+.spk__card{display:block;width:100%;padding:0;border:0;background:none;text-align:left;cursor:pointer;
+  outline-offset:6px;-webkit-tap-highlight-color:transparent}
+.spk__face{position:relative;display:grid;place-items:center;aspect-ratio:3/4;overflow:hidden;border-radius:3px;
+  background:var(--ink);isolation:isolate}
+.spk__face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%;
+  filter:grayscale(1) contrast(1.08);transition:transform 1.2s var(--ease),filter .6s var(--ease)}
+@media (hover:hover){.spk__card:hover .spk__face img{transform:scale(1.04);filter:grayscale(.55) contrast(1.1)}}
+/* the one piece of brand furniture on the card */
+.spk__mark{position:absolute;left:11px;top:9px;z-index:2;font-size:13px;color:#fff;opacity:.5;pointer-events:none}
+/* a speaker with no verified portrait yet: the name set, not a stand-in picture */
+.spk__face--type{background:
+  radial-gradient(120% 90% at 50% 10%,rgba(31,199,190,.14) 0%,rgba(31,199,190,0) 62%),
+  linear-gradient(180deg,#0E1618 0%,#0B0B0F 100%)}
+.spk__set{display:block;padding:0 14px;font-size:clamp(23px,2.5vw,32px);line-height:.98;letter-spacing:-.03em;
+  color:#fff;text-align:center}
+.spk__await{position:absolute;left:0;right:0;bottom:14px;font:700 9.5px/1 var(--f-sans);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent);text-align:center}
+.spk__foot{display:block;padding-top:13px;border-top:1.5px solid var(--accent);margin-top:12px}
+.spk__name{display:block;font:800 clamp(14px,1.05vw,17px)/1.25 var(--f-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--ink)}
+.spk__role{display:block;margin-top:6px;font:600 12.5px/1.45 var(--f-sans);color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){
+  .run__track{transform:none!important;flex-wrap:wrap;row-gap:clamp(24px,4vh,44px);justify-content:center}
+  .spk--drop{margin-top:0}
+}
+
+/* ---------- the chosen card ---------- */
+.sp{width:min(430px,92vw);max-width:none;max-height:none;padding:0;border:0;background:none;color:#fff;overflow:visible}
+.sp::backdrop{background:rgba(6,9,10,.74);backdrop-filter:blur(3px)}
+.sp__in{position:relative;perspective:1600px}
+.sp__close{position:absolute;right:-6px;top:-46px;z-index:3;display:inline-grid;place-items:center;width:40px;height:40px;
+  border-radius:999px;color:#fff;background:rgba(255,255,255,.1);transition:background-color .3s var(--ease)}
+.sp__close:hover{background:rgba(255,255,255,.2)}
+.sp__close svg{width:15px;height:15px}
+.sp__flip{position:relative;transform-style:preserve-3d;transition:transform .78s cubic-bezier(.3,0,.2,1)}
+.sp.is-back .sp__flip{transform:rotateY(180deg)}
+.sp__front,.sp__back{border-radius:6px;overflow:hidden;-webkit-backface-visibility:hidden;backface-visibility:hidden;
+  background:var(--ink);box-shadow:0 30px 70px rgba(4,9,10,.6)}
+.sp__back{position:absolute;inset:0;transform:rotateY(180deg);display:flex;flex-direction:column;
+  padding:clamp(24px,5vw,34px);overflow-y:auto;
+  background:linear-gradient(180deg,#101A1C 0%,#0B0B0F 70%)}
+.sp__shot{position:relative;display:grid;place-items:center;aspect-ratio:3/4;background:#0B0B0F;overflow:hidden}
+.sp__shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1) contrast(1.06)}
+.sp__shot.is-await{background:
+  radial-gradient(120% 90% at 50% 10%,rgba(31,199,190,.16) 0%,rgba(31,199,190,0) 62%),
+  linear-gradient(180deg,#0E1618 0%,#0B0B0F 100%)}
+.sp__shot .sp__set{display:block;padding:0 20px;font-size:clamp(34px,8vw,48px);line-height:.96;letter-spacing:-.035em;text-align:center}
+.sp__id{padding:clamp(18px,4vw,24px) clamp(20px,4.5vw,28px) clamp(22px,5vw,28px);border-top:1.5px solid var(--accent)}
+.sp__name{font-size:clamp(28px,6vw,40px);line-height:.98;letter-spacing:-.03em}
+.sp__role{margin-top:10px;font:700 11px/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.sp__k{font:800 10px/1 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+.sp__bio + .sp__k,.sp__wins + .sp__k{margin-top:clamp(22px,4.4vw,30px)}
+.sp__bio{margin-top:12px;font:500 14.5px/1.6 var(--f-sans);color:rgba(255,255,255,.86)}
+.sp__wins{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:9px}
+.sp__wins li{position:relative;padding-left:20px;font:600 13.5px/1.5 var(--f-sans);color:#fff}
+.sp__wins li::before{content:"";position:absolute;left:0;top:.62em;width:10px;height:1.5px;background:var(--accent)}
+.sp__link{margin-top:auto;padding-top:clamp(20px,4vw,26px)}
+.sp__link a{color:#fff;font:800 11px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;
+  border-bottom:1.5px solid var(--accent);padding-bottom:5px}
+@media (hover:hover){.sp__link a:hover{color:var(--accent)}}
+.sp__turn{display:block;margin:clamp(16px,3vh,22px) auto 0;min-height:44px;padding:0 22px;border-radius:999px;
+  background:rgba(255,255,255,.12);color:#fff;font:800 11px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;
+  transition:background-color .3s var(--ease)}
+@media (hover:hover){.sp__turn:hover{background:var(--accent);color:#0B0B0F}}
+@media (max-width:560px){
+  .sp{width:92vw}
+  .sp__close{top:-44px;right:0}
+  .sp__back{padding:22px}
+}
+@media (prefers-reduced-motion:reduce){
+  .sp__flip,.sp.is-back .sp__flip{transition:none;transform:none}
+  .sp__back{position:static;transform:none;margin-top:14px}
+  .sp__front,.sp__back{backface-visibility:visible}
+  .sp{width:min(430px,92vw);max-height:88vh;overflow-y:auto}
+}
+
 /* ---------- 06 who nextgen is for ---------- */
 /* One composition: three editorial panels that rise into place as the section arrives, sharing one
    turquoise hairline, and whichever panel is being looked at shows its phrase while the other two

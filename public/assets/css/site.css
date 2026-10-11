@@ -396,6 +396,42 @@ h1,h2,h3,p{margin:0}
   .invite__date{font-size:clamp(96px,30vw,128px)}
 }
 
+/* ---------- 04b the pitch competition, teased between the invitation and the lineup ----------
+   Numbered, because this block once sat under a second "05" heading and a range edit on the
+   speakers section swallowed it whole: the teaser lost its photograph, and --dissolve, which
+   the finale and the experience also read, went with it. */
+.pcta{--seam:clamp(80px,14vh,160px);position:relative;display:flex;align-items:center;min-height:clamp(560px,86vh,860px);color:#fff;overflow:hidden;background:transparent}
+/* one story, not separate slabs: the photo sections rise out of the paper and dissolve back into it.
+   --seam is how far each edge fades; site.js reads the same value, so the nav only turns white
+   where the photograph is solid. */
+/* defined on each section, where its own --seam lives (a :root definition would resolve --seam too early) */
+/* eased, like light falling off, so a fade has no visible start or end */
+.pcta,.finale,.xp{--dissolve:linear-gradient(to bottom,transparent 0,rgba(0,0,0,0.07) calc(var(--seam) * 0.2),rgba(0,0,0,0.26) calc(var(--seam) * 0.4),rgba(0,0,0,0.55) calc(var(--seam) * 0.6),rgba(0,0,0,0.84) calc(var(--seam) * 0.8),#000 var(--seam),#000 calc(100% - var(--seam)),rgba(0,0,0,0.84) calc(100% - var(--seam) * 0.8),rgba(0,0,0,0.55) calc(100% - var(--seam) * 0.6),rgba(0,0,0,0.26) calc(100% - var(--seam) * 0.4),rgba(0,0,0,0.07) calc(100% - var(--seam) * 0.2),transparent 100%)}
+.pcta__media,.pcta__shade,.finale__media,.finale__shade{-webkit-mask-image:var(--dissolve);mask-image:var(--dissolve)}
+.pcta__media{position:absolute;inset:0;margin:0}
+.pcta__media img{width:100%;height:100%;object-fit:cover;object-position:56% 50%;filter:grayscale(1) contrast(1.04)}
+.pcta__shade{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(6,6,9,.72) 0%,rgba(6,6,9,.42) 44%,rgba(6,6,9,.08) 78%,rgba(6,6,9,0) 100%),
+  linear-gradient(180deg,rgba(6,6,9,.52) 0%,rgba(6,6,9,.2) 30%,rgba(6,6,9,.28) 62%,rgba(6,6,9,.7) 92%,rgba(6,6,9,.82) 100%)}
+.pcta__inner{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:clamp(70px,12vh,130px) var(--gutter)}
+.pcta__title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(44px,7.6vw,128px);line-height:.9;text-shadow:0 2px 40px rgba(6,6,9,.5)}
+.pcta__copy{margin-top:clamp(18px,2.8vh,30px);max-width:48ch;font:500 clamp(15px,1.2vw,18px)/1.6 var(--f-sans);color:rgba(255,255,255,.92);text-shadow:0 1px 12px rgba(6,6,9,.7)}
+.pcta__cta{margin-top:clamp(26px,4vh,44px)}
+@media (max-width:560px){.pcta__cta .btn{width:100%;justify-content:center}}
+/* Where the stage follows, the teaser does not fade back to paper on its way out: a sheet of
+   white between two dark sections reads as a gap, not a transition. Its lower edge stays solid
+   and the photograph is taken down to the stage's own black instead, so the two meet on the same
+   colour and the join cannot be seen. --seam-bottom tells the nav the same thing, so the bar
+   stays light the whole way across rather than turning dark over a dark picture. */
+.pcta:has(+ .room){--seam-bottom:0px;
+  --dissolve:linear-gradient(to bottom,transparent 0,
+    rgba(0,0,0,0.07) calc(var(--seam) * 0.2),rgba(0,0,0,0.26) calc(var(--seam) * 0.4),
+    rgba(0,0,0,0.55) calc(var(--seam) * 0.6),rgba(0,0,0,0.84) calc(var(--seam) * 0.8),
+    #000 var(--seam),#000 100%)}
+.pcta:has(+ .room) .pcta__shade::after{content:"";position:absolute;left:0;right:0;bottom:0;
+  height:clamp(110px,19vh,230px);pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,8,10,0) 0%,rgba(4,8,10,.5) 52%,rgba(4,8,10,.92) 86%,#04080A 100%)}
+
 /* ---------- 05 featured speakers ----------
    A nearly dark theatre, and on it a deck of four collectible cards. The stage is drawn, not
    photographed: one blurred microphone in SVG, a few gradients for the lights and the wet floor.
@@ -404,17 +440,22 @@ h1,h2,h3,p{margin:0}
    The deck opens once, when the section arrives. Where each card lands is --x/--y/--r; where it
    starts is --sx/--sy/--sr, a tight stack with the NextGen card on top. Only those three numbers
    change between the wide fan and the phone's two-by-two. Nothing moves afterwards. */
-.room{--seam:clamp(56px,9vh,112px);position:relative;isolation:isolate;overflow:hidden;color:#fff;background:#04080A}
+.room{--seam:clamp(56px,9vh,112px);--seam-top:0px;
+  position:relative;isolation:isolate;overflow:hidden;color:#fff;background:#04080A}
 .room__in{position:relative;z-index:2;max-width:var(--maxw);margin:0 auto;
   padding:clamp(78px,13vh,152px) var(--gutter) clamp(74px,12vh,140px)}
-/* the section dissolves into the paper above and below it, the same way the photo sections do;
-   --seam is how far, and the nav reads it to know when to turn white */
-.room::before,.room::after{content:"";position:absolute;left:0;right:0;height:var(--seam);z-index:1;pointer-events:none}
-.room::before{top:0;background:linear-gradient(180deg,var(--paper) 0%,rgba(250,250,248,.55) 34%,rgba(250,250,248,0) 100%)}
-.room::after{bottom:0;background:linear-gradient(0deg,var(--paper) 0%,rgba(250,250,248,.55) 34%,rgba(250,250,248,0) 100%)}
+/* only the lower edge dissolves, into the paper of the section below. The upper edge has
+   nothing to dissolve into: the pitch teaser above already arrived at this same black. */
+.room::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--seam);z-index:1;pointer-events:none;
+  background:linear-gradient(0deg,var(--paper) 0%,rgba(250,250,248,.55) 34%,rgba(250,250,248,0) 100%)}
 
 /* ---------- the stage ---------- */
 .room__stage{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+/* The first stretch of the stage is the same black the teaser arrived at, and the rig comes up
+   out of it. Without this the key light from the left wing is at full strength on the very first
+   pixel, which puts a teal line across the join. */
+.room__stage::after{content:"";position:absolute;left:0;right:0;top:0;height:clamp(140px,23vh,280px);
+  background:linear-gradient(180deg,#04080A 0%,rgba(4,8,10,.8) 32%,rgba(4,8,10,.42) 62%,rgba(4,8,10,0) 100%)}
 /* one teal wash from the left wing, a little warm bokeh from the rig, and the room falling away */
 .room__lights{position:absolute;inset:0;background:
   radial-gradient(42% 34% at 9% 4%,rgba(31,199,190,.2) 0%,rgba(31,199,190,0) 72%),

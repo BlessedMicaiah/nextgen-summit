@@ -421,8 +421,13 @@
     // --seam (site.css) is how far a photo section dissolves into the paper at each edge. It is
     // registered as a length so its computed value comes back in px, from the one definition in CSS.
     try { CSS.registerProperty({ name: '--seam', syntax: '<length>', inherits: true, initialValue: '0px' }); } catch (e) {}
-    function seamOf(s) {
-      var v = parseFloat(getComputedStyle(s).getPropertyValue('--seam'));
+    // A section may fade by a different amount at each end: where two dark sections meet there
+    // is no fade at all on that side, and the bar must stay light straight across the join.
+    // --seam-top / --seam-bottom override --seam for that edge only.
+    function seamOf(s, edge) {
+      var cs = getComputedStyle(s);
+      var v = parseFloat(cs.getPropertyValue('--seam-' + edge));
+      if (isNaN(v)) v = parseFloat(cs.getPropertyValue('--seam'));
       return isNaN(v) ? 0 : v;
     }
 
@@ -437,8 +442,8 @@
           var mode = s.getAttribute('data-nav');
           var photo = mode === 'photo' || (mode === 'xp' && s.classList.contains('is-lit'));
           // inside a fade the bar is still over paper; it turns white only where the photo is solid
-          var seam = photo ? seamOf(s) : 0;
-          theme = photo && y - r.top >= seam && r.bottom - y > seam ? 'photo' : 'paper';
+          theme = photo && y - r.top >= (photo ? seamOf(s, 'top') : 0)
+                        && r.bottom - y > (photo ? seamOf(s, 'bottom') : 0) ? 'photo' : 'paper';
           break;
         }
       }

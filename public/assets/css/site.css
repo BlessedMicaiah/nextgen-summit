@@ -125,17 +125,16 @@ h1,h2,h3,p{margin:0}
   :root{--nav-h:64px}
   .nav__link{display:none}
   .nav__menu{display:inline-flex}
-  /* The wordmark is the way home, and on a phone it is the only one: the text links are inside
-     Menu. So it keeps the left of the bar and the countdown moves over to sit beside it. */
-  .nav__mark{flex:none;padding-top:4px}
-  .nav__mark .wm{font-size:23px}
+  /* On a phone the bar carries two things: the way home and the way to a ticket. The countdown
+     comes off it entirely -- it was never going to sit beside the wordmark without fighting it
+     for baseline and space -- and keeps its place on the ticket further down, where it has room
+     to say "doors in 17 days" properly. */
+  .count{display:none}
+  .nav__mark{flex:none;padding-top:0;align-items:center;margin-right:auto}
+  .nav__mark .wm{font-size:24px}
   .nav__summit{display:none}
-  .count{padding-left:clamp(9px,2.6vw,16px)}
-  .count__u--hms,.count__to{display:none}
-  .count__word{display:inline}
-  .count__u{gap:4px}          /* "33 days" reads as two words once the unit is spelled out */
-  .count__n{font-size:14px}
-  .count__l{font-size:10px;letter-spacing:.12em}
+  /* and the way home never goes away, not even over the hero */
+  .nav.at-hero .nav__mark{opacity:1;transform:none;visibility:visible;transition:none}
   .nav__links{gap:10px}
 }
 /* tablets and small laptops: the text links move into Menu, as on phones, so the bar never runs
@@ -147,9 +146,7 @@ h1,h2,h3,p{margin:0}
 }
 /* small phones: the CTA keeps its full wording by tightening, so it never crowds MENU */
 @media (max-width:440px){
-  .nav__mark .wm{font-size:21px}
-  .count__word{display:none}          /* "18 d", not "18 days": the way home is worth more than the word */
-  .count{padding-left:8px}
+  .nav__mark .wm{font-size:22px}
   .nav .btn--sm{--h:40px;font-size:10.5px;letter-spacing:.07em;padding:0 .85em;gap:.5em}
   .nav__menu{font-size:11px;letter-spacing:.1em}
   .nav__links{gap:8px}

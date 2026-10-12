@@ -40,10 +40,3 @@ Options -Indexes
   ExpiresByType text/html "access plus 0 seconds"
 </IfModule>
 
-# Partners page: finished design, content still placeholder. Archived until it is ready --
-# the files stay in the repo and in this folder, but nothing serves them.
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteCond %{REQUEST_URI} ^/partners(/|$) [NC]
-  RewriteRule ^ - [R=404,L]
-</IfModule>

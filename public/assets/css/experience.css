@@ -91,8 +91,18 @@ html.in-3 .exh__in{opacity:1;transform:none;
   radial-gradient(142% 100% at 50% 46%,rgba(6,9,10,0) 44%,rgba(6,9,10,.5) 100%)}
 /* No cue crosses the frame any more. The change is the two pictures overlapping while one
    fades out and the other fades in, which is what a dissolve is. */
+/* The house lights. Between the acts the picture goes out entirely and the act stands on a
+   field of its own: black for the first, paper for the second. It sits above the pictures and
+   the playbill, and below .stg__flow, so the act title reads on top of it. */
+.stg__curtain{position:absolute;inset:0;z-index:2;opacity:0;background-color:#06090A;
+  transition:opacity .85s var(--ease),background-color .85s var(--ease)}
+.stg.is-card .stg__curtain{opacity:1}
+.stg.is-card--paper .stg__curtain{background-color:var(--paper)}
+/* grain over the card too, the way a title card carries it; less of it on paper, where dark
+   noise would read as dirt rather than film */
+.stg.is-card--paper .stg__grain{opacity:.05}
 /* a finer film grain than the page carries, for the dark scenes only */
-.stg__grain{position:absolute;inset:0;opacity:.13;background-size:160px 160px;
+.stg__grain{position:absolute;inset:0;z-index:3;opacity:.13;background-size:160px 160px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.4 1.4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E")}
 
 /* the playbill: where you are, at the edge of the frame */
@@ -108,14 +118,23 @@ html.in-3 .exh__in{opacity:1;transform:none;
 /* the words, over the held frame */
 .stg__flow{position:relative;z-index:1;margin-top:-100svh;max-width:var(--maxw);margin-inline:auto;
   padding:0 var(--gutter);color:#fff}
-.act{position:relative;min-height:76svh;display:flex;flex-direction:column;justify-content:center}
-/* the act titles get the same pool of shade the scenes do, since the picture runs behind them */
-.act::before{content:"";position:absolute;inset:-8vh -7vw;z-index:-1;pointer-events:none;
-  background:radial-gradient(60% 56% at 30% 50%,rgba(5,8,9,.82) 0%,rgba(5,8,9,.46) 56%,rgba(5,8,9,0) 100%)}
-.act > *{position:relative}
-.act__k{font:800 clamp(12px,1.1vw,14px)/1 var(--f-sans);letter-spacing:.26em;text-transform:uppercase;color:var(--accent)}
-.act__t{margin-top:clamp(16px,2.4vh,26px);font-size:clamp(46px,8vw,132px);line-height:.95;letter-spacing:-.04em;
-  text-shadow:0 2px 40px rgba(4,9,10,.5)}
+/* The act no longer shares the frame with a photograph, so it needs no pool of shade. It is
+   taller than the screen and its contents stick, which is what holds the title still in the
+   middle while the field is up: the card is read, not scrolled past. */
+.act{position:relative;min-height:126svh}
+.act__in{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center}
+/* the title arrives after the field has gone out, and opens as it comes */
+.act__k,.act__t{opacity:0;transform:scale(.84);transition:opacity .85s var(--ease),transform 1.5s var(--ease)}
+.act.is-on .act__k{opacity:1;transform:none;transition-delay:.42s}
+.act.is-on .act__t{opacity:1;transform:none;transition-delay:.54s}
+.act__k{font:800 clamp(12px,1.25vw,16px)/1 var(--f-sans);letter-spacing:.34em;text-transform:uppercase;color:var(--accent)}
+.act__t{margin-top:clamp(18px,3vh,32px);font-size:clamp(46px,8vw,132px);line-height:.95;letter-spacing:-.04em}
+/* the second act is announced in ink on paper, so the accent takes its readable tone */
+.act[data-card="paper"] .act__k{color:var(--accent-ink)}
+.act[data-card="paper"] .act__t{color:var(--ink)}
+/* nothing of the scenes shows through a card */
+.stg.is-card .sn{opacity:0}
 
 .sn{position:relative;min-height:88svh;display:flex;flex-direction:column;justify-content:center;max-width:32rem;
   --sx:30%;opacity:.26;transform:translate3d(0,14px,0);
@@ -148,8 +167,9 @@ html.in-3 .exh__in{opacity:1;transform:none;
    another: one picture surface that crossfades, rather than a stack of photographs each
    ending in its own black. Only the proportions change. */
 @media (max-width:860px){
-  .act{min-height:58svh}
-  .act::before{inset:-6vh -12vw;background:radial-gradient(70% 50% at 36% 50%,rgba(5,8,9,.84) 0%,rgba(5,8,9,.5) 56%,rgba(5,8,9,0) 100%)}
+  .act{min-height:116svh}
+  .act__in{padding:0 4vw}
+  .act__k{letter-spacing:.3em}
   .act__t{font-size:clamp(40px,11.5vw,62px)}
   .sn{min-height:84svh;max-width:none;text-align:left}
   .sn--right{margin-left:0;text-align:left}
@@ -165,7 +185,13 @@ html.in-3 .exh__in{opacity:1;transform:none;
 
 @media (prefers-reduced-motion:reduce){
   .sn{opacity:1;transform:none}
+  .stg.is-card .sn{opacity:0}
   .stg__shots img,.stg__shots picture.is-on img{transform:none;transition:none}
+  /* the card still appears, because it is the structure of the section and not an effect;
+     it simply does not travel or open */
+  .act__k,.act__t{transform:none;transition:opacity .2s linear}
+  .act.is-on .act__k,.act.is-on .act__t{transition-delay:.1s}
+  .stg__curtain{transition:opacity .25s linear,background-color .25s linear}
 }
 
 /* ---------- 05 what is still to come ---------- */

@@ -440,7 +440,10 @@
         if (r.top <= y && r.bottom > y) {
           var s = sections[i];
           var mode = s.getAttribute('data-nav');
-          var photo = mode === 'photo' || (mode === 'xp' && s.classList.contains('is-lit'));
+          // a photo section can momentarily show a light field of its own, such as the paper
+          // title card between the acts on the Experience. A white bar would vanish into it.
+          var photo = (mode === 'photo' || (mode === 'xp' && s.classList.contains('is-lit')))
+            && !s.classList.contains('is-paper');
           // inside a fade the bar is still over paper; it turns white only where the photo is solid
           theme = photo && y - r.top >= (photo ? seamOf(s, 'top') : 0)
                         && r.bottom - y > (photo ? seamOf(s, 'bottom') : 0) ? 'photo' : 'paper';
@@ -457,6 +460,7 @@
     }
 
     requestNav = function () { if (raf === null) raf = requestAnimationFrame(update); };
+    window.__ngsNav = requestNav;                    // for a section that changes its own field
     addEventListener('scroll', requestNav, { passive: true });
     addEventListener('resize', requestNav);
     update();

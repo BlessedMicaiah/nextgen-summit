@@ -62,6 +62,7 @@
     var frame = $('.stg__frame', stage);
     var scenes = $$('.sn', stage);
     var shots = $$('picture[data-scene]', frame);
+    var acts = $$('.act', stage);
     var actEl = $('[data-stg-act]', stage);
     var numEl = $('[data-stg-n]', stage);
     var ruleEl = $('[data-stg-rule]', stage);
@@ -92,6 +93,25 @@
       });
     }, { rootMargin: '-45% 0px -45% 0px' });
     scenes.forEach(function (sn) { io.observe(sn); });
+
+    /* The title cards. Reaching an act takes the picture out altogether and puts the act on a
+       field of its own, dark for the first and paper for the second; leaving it brings the
+       picture back and the scenes carry on. The nav bar is told, because over the paper card a
+       white bar would be invisible. */
+    function cards() {
+      var lit = acts.filter(function (a) { return a.classList.contains('is-on'); });
+      var paper = lit.some(function (a) { return a.getAttribute('data-card') === 'paper'; });
+      stage.classList.toggle('is-card', lit.length > 0);
+      stage.classList.toggle('is-card--paper', paper);
+      stage.classList.toggle('is-paper', paper);
+      if (window.__ngsNav) window.__ngsNav();
+    }
+
+    var actIO = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { e.target.classList.toggle('is-on', e.isIntersecting); });
+      cards();
+    }, { rootMargin: '-30% 0px -30% 0px' });
+    acts.forEach(function (a) { actIO.observe(a); });
 
     var near = new IntersectionObserver(function (es) {
       if (!es[0].isIntersecting) return;

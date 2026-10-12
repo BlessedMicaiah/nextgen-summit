@@ -421,8 +421,13 @@
     // --seam (site.css) is how far a photo section dissolves into the paper at each edge. It is
     // registered as a length so its computed value comes back in px, from the one definition in CSS.
     try { CSS.registerProperty({ name: '--seam', syntax: '<length>', inherits: true, initialValue: '0px' }); } catch (e) {}
-    function seamOf(s) {
-      var v = parseFloat(getComputedStyle(s).getPropertyValue('--seam'));
+    // A section may fade by a different amount at each end: where two dark sections meet there
+    // is no fade at all on that side, and the bar must stay light straight across the join.
+    // --seam-top / --seam-bottom override --seam for that edge only.
+    function seamOf(s, edge) {
+      var cs = getComputedStyle(s);
+      var v = parseFloat(cs.getPropertyValue('--seam-' + edge));
+      if (isNaN(v)) v = parseFloat(cs.getPropertyValue('--seam'));
       return isNaN(v) ? 0 : v;
     }
 
@@ -435,10 +440,13 @@
         if (r.top <= y && r.bottom > y) {
           var s = sections[i];
           var mode = s.getAttribute('data-nav');
-          var photo = mode === 'photo' || (mode === 'xp' && s.classList.contains('is-lit'));
+          // a photo section can momentarily show a light field of its own, such as the paper
+          // title card between the acts on the Experience. A white bar would vanish into it.
+          var photo = (mode === 'photo' || (mode === 'xp' && s.classList.contains('is-lit')))
+            && !s.classList.contains('is-paper');
           // inside a fade the bar is still over paper; it turns white only where the photo is solid
-          var seam = photo ? seamOf(s) : 0;
-          theme = photo && y - r.top >= seam && r.bottom - y > seam ? 'photo' : 'paper';
+          theme = photo && y - r.top >= (photo ? seamOf(s, 'top') : 0)
+                        && r.bottom - y > (photo ? seamOf(s, 'bottom') : 0) ? 'photo' : 'paper';
           break;
         }
       }
@@ -452,18 +460,24 @@
     }
 
     requestNav = function () { if (raf === null) raf = requestAnimationFrame(update); };
+    window.__ngsNav = requestNav;                    // for a section that changes its own field
     addEventListener('scroll', requestNav, { passive: true });
     addEventListener('resize', requestNav);
     update();
   }
 
-  /* ---------- 02 rotating identity ---------- */
+  /* ---------- 02 rotating identity ----------
+     The last word of the "what is next gen" sentence changes every HOLD ms while it is on screen.
+     The toggle pauses it (and then reads Play); hovering the sentence also holds the word. An
+     optional [data-rotator-index] list mirrors the words as buttons. */
   function initRotator() {
     var box = $('[data-rotator]');
     if (!box) return;
     var words;
     try { words = JSON.parse(box.getAttribute('data-rotator')); } catch (e) { return; }
+    var HOLD = 2200;   // long enough to read the sentence through to the word
     var toggle = $('[data-rotator-toggle]');
+    var list = $('[data-rotator-index]');
     var title = box.closest('h2') || box;
     box.textContent = '';
     var nodes = words.map(function (w, i) {
@@ -474,24 +488,60 @@
       box.appendChild(wrap);
       return wrap;
     });
+    var picks = !list ? [] : words.map(function (w, i) {
+      var li = el('li');
+      var b = el('button', 'what__w' + (i === 0 ? ' is-current' : ''));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(i === 0));
+      b.appendChild(el('span', 'what__wn', (i < 9 ? '0' : '') + (i + 1), true));
+      b.appendChild(el('span', 'what__wt', w));
+      b.appendChild(el('span', 'what__bar', null, true));
+      b.addEventListener('click', function () { go(i); setPaused(true); });
+      li.appendChild(b);
+      list.appendChild(li);
+      return b;
+    });
+    if (list) list.style.setProperty('--hold', HOLD + 'ms');
 
     var idx = 0, timer = null, visible = false, userPaused = false, hovering = false;
 
     function canRun() { return visible && !userPaused && !hovering && !reduced && !document.hidden; }
-    function step() {
-      var cur = nodes[idx];
-      idx = (idx + 1) % nodes.length;
-      var nxt = nodes[idx];
+    function go(next) {
+      if (next === idx) return;
+      var cur = nodes[idx], nxt = nodes[next];
       cur.classList.remove('is-current');
-      cur.classList.add('is-leaving');
-      setTimeout(function () { cur.classList.remove('is-leaving'); }, 650);
+      if (reduced) cur.classList.remove('is-leaving');
+      else {
+        cur.classList.add('is-leaving');
+        setTimeout(function () { cur.classList.remove('is-leaving'); }, 650);
+      }
       nxt.classList.add('is-current');
       regPlay($('.reg', nxt), 60);
+      picks.forEach(function (b, i) { b.classList.toggle('is-current', i === next); b.setAttribute('aria-pressed', String(i === next)); });
+      idx = next;
+    }
+    // the current word's line fills while it holds; it restarts with each hold and stands full while held
+    function bar(running) {
+      var b = picks[idx];
+      picks.forEach(function (p) { p.classList.remove('is-running'); });
+      if (!b || !running) return;
+      void b.offsetWidth;
+      b.classList.add('is-running');
     }
     function schedule() {
       clearTimeout(timer);
       timer = null;
-      if (canRun()) timer = setTimeout(function () { step(); schedule(); }, 1500);   // time each word holds
+      if (canRun()) timer = setTimeout(function () { go((idx + 1) % nodes.length); schedule(); }, HOLD);
+      bar(!!timer);
+    }
+    function setPaused(on) {
+      userPaused = on;
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', String(on));
+        toggle.setAttribute('aria-label', on ? 'Play the rotating words' : 'Pause the rotating words');
+        $('.toggle__t', toggle).textContent = on ? 'Play' : 'Pause';
+      }
+      schedule();
     }
     function showFirst() {
       nodes.forEach(function (n, i) {
@@ -499,6 +549,7 @@
         n.classList.remove('is-leaving');
         regReset($('.reg', n));
       });
+      picks.forEach(function (b, i) { b.classList.toggle('is-current', i === 0); b.setAttribute('aria-pressed', String(i === 0)); });
       idx = 0;
     }
 
@@ -506,20 +557,11 @@
     title.addEventListener('pointerenter', function () { hovering = true; schedule(); });
     title.addEventListener('pointerleave', function () { hovering = false; schedule(); });
     document.addEventListener('visibilitychange', schedule);
+    if (toggle) toggle.addEventListener('click', function () { setPaused(!userPaused); });
 
-    if (toggle) {
-      toggle.addEventListener('click', function () {
-        userPaused = !userPaused;
-        toggle.setAttribute('aria-pressed', String(userPaused));
-        var label = userPaused ? 'Play the rotating words' : 'Pause the rotating words';
-        $('.toggle__t', toggle).textContent = userPaused ? 'Play words' : 'Pause words';
-        toggle.setAttribute('aria-label', label);
-        schedule();
-      });
-    }
-
+    // with reduced motion nothing turns by itself, but the index still picks a word
     onMotionChange(function () {
-      if (reduced) showFirst();
+      if (reduced && !picks.length) showFirst();
       if (toggle) toggle.hidden = reduced;
       schedule();
     });
@@ -625,6 +667,89 @@
       if (reduced) { liquid.pause(); liquid.setSep(SEP_REST, true); }
       else liquid.play();
       if (reduced) dates.forEach(regReset);
+    });
+
+    initTicket(sec);
+  }
+
+  /* ---------- 04 the ticket ----------
+     The notches are punched where the perforation actually falls (--tear), "Doors in" counts the
+     same date as the countdown in the bar, and on a fine pointer the stock tilts toward it with a
+     light that follows. The seat number comes from the live count (counter.js). A click anywhere on
+     the card (or its button) turns it over to the map on the back; the face turned away is inert. */
+  function initTicket(sec) {
+    var ticket = $('[data-ticket]', sec);
+    if (!ticket) return;
+    var flip = $('.ticket__flip', ticket);
+    var card = $('.ticket__card', ticket);
+    var back = $('.ticket__back', ticket);
+    var tear = $('.ticket__tear', ticket);
+    var turns = $$('[data-ticket-turn]', ticket);
+
+    // the notches sit on the flipper so both faces are punched in the same place
+    function punch() { flip.style.setProperty('--tear', (tear.offsetTop + tear.offsetHeight / 2) + 'px'); }
+    punch();
+    fontsReady.then(punch);
+    addEventListener('resize', punch);
+
+    var until = $('.count') && new Date($('.count').getAttribute('data-until')).getTime();
+    var doors = $('[data-ticket-doors]', ticket), days = $('[data-ticket-days]', ticket);
+    if (until && doors && days) {
+      var left = until - Date.now();
+      var d = Math.floor(left / 86400000);
+      if (left > 0) {
+        days.textContent = d > 1 ? d + ' days' : d === 1 ? '1 day' : 'Today';
+        doors.hidden = false;
+        punch();
+      }
+    }
+
+    var turning = null;
+    function turn(over) {
+      var from = over ? card : back, to = over ? back : card;
+      var hadFocus = from.contains(document.activeElement);
+      ticket.classList.toggle('is-flipped', over);
+      if (!reduced) {
+        ticket.classList.add('is-turning');
+        clearTimeout(turning);
+        turning = setTimeout(function () { ticket.classList.remove('is-turning'); }, 1000);
+      }
+      from.inert = true;
+      to.inert = false;
+      turns.forEach(function (b) { b.setAttribute('aria-expanded', String(over)); });
+      // focus lands at the top of the side now showing, so the directions are read before the button
+      if (hadFocus) (over ? back : $('[data-ticket-turn]', card)).focus({ preventScroll: true });
+    }
+    flip.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;   // the directions link opens the map app, it does not turn the card
+      turn(!ticket.classList.contains('is-flipped'));
+    });
+
+    if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    var raf = null, last = null;
+    // the tilt holds still while the card turns: a new tilt mid-turn would restart the turn's transition
+    function apply() {
+      raf = null;
+      if (!last || reduced || ticket.classList.contains('is-turning')) return;
+      var r = card.getBoundingClientRect();
+      var x = clamp((last.x - r.left) / r.width, 0, 1), y = clamp((last.y - r.top) / r.height, 0, 1);
+      flip.style.setProperty('--ry', ((x - 0.5) * 12).toFixed(2) + 'deg');
+      flip.style.setProperty('--rx', ((0.5 - y) * 10).toFixed(2) + 'deg');
+      card.style.setProperty('--gx', (x * 100).toFixed(1) + '%');
+      card.style.setProperty('--gy', (y * 100).toFixed(1) + '%');
+    }
+    ticket.addEventListener('pointermove', function (e) {
+      if (reduced) return;
+      last = { x: e.clientX, y: e.clientY };
+      ticket.classList.add('is-tilting');
+      if (raf === null) raf = requestAnimationFrame(apply);
+    });
+    ticket.addEventListener('pointerleave', function () {
+      last = null;
+      ticket.classList.remove('is-tilting');
+      if (ticket.classList.contains('is-turning')) return;
+      flip.style.setProperty('--rx', '0deg');
+      flip.style.setProperty('--ry', '0deg');
     });
   }
 
@@ -754,161 +879,8 @@
      clones the set until the row is wider than the screen plus one whole set, then drives a single
      transform: x = -setW + (pos mod setW). Because the content repeats exactly every setW, the wrap
      is invisible -- there is no reset to see. Position lives in `pos` (pixels travelled), so pausing
-     is simply "stop adding to pos" and resuming carries on from the very same place. */
-  function initRunway() {
-    var run = $('[data-run]');
-    if (!run) return;
-    var track = $('[data-run-track]', run);
-    var originals = track ? $$('.spk', track) : [];
-    if (!originals.length) return;
-
-    var SPEED = 34;                                    // px per second: slow enough to read a name
-    var hoverMQ = matchMedia('(hover:hover) and (pointer:fine)');
-    var smallMQ = matchMedia('(max-width:760px)');
-    var pos = 0, setW = 0, last = 0, raf = null, onScreen = false, paused = false, active = null;
-
-    function speed() { return smallMQ.matches ? SPEED * 0.7 : SPEED; }
-
-    function place() {
-      if (!setW) return;
-      track.style.transform = 'translate3d(' + (-setW + pos).toFixed(2) + 'px,0,0)';
-    }
-
-    function copyOf(li) {
-      var c = li.cloneNode(true);
-      c.classList.add('spk--copy');
-      c.classList.remove('is-active');
-      c.setAttribute('aria-hidden', 'true');          // the copies are decoration, announced once only
-      $$('[id]', c).forEach(function (n) { n.removeAttribute('id'); });
-      $$('[tabindex],a,button', c).forEach(function (n) { n.setAttribute('tabindex', '-1'); });
-      return c;
-    }
-
-    function build() {
-      $$('.spk--copy', track).forEach(function (n) { n.remove(); });
-      if (reduced) { track.style.transform = ''; return; }   // static row: no copies, no transform
-      var gap = parseFloat(getComputedStyle(track).columnGap) || 0;
-      var w = 0;
-      originals.forEach(function (li) { w += li.getBoundingClientRect().width + gap; });
-      if (!w) return;
-      setW = w;
-      // One copy of the LAST speaker goes in front of the real ones. The row still repeats exactly
-      // every setW, but the originals now start a card in from the left edge, which is what lets
-      // every one of them be slid into view when it takes keyboard focus.
-      track.insertBefore(copyOf(originals[originals.length - 1]), originals[0]);
-      var guard = 0;
-      while (track.scrollWidth < run.clientWidth + setW * 2 && guard++ < 12) {
-        originals.forEach(function (li) { track.appendChild(copyOf(li)); });
-      }
-      if (pos > setW) pos = pos % setW;
-      place();
-    }
-
-    function frame(t) {
-      raf = null;
-      if (!last) last = t;
-      var dt = Math.min(64, t - last);                 // a hidden tab must not jump on return
-      last = t;
-      pos += speed() * dt / 1000;
-      if (pos >= setW) pos -= setW;                    // same picture, smaller number: no visible reset
-      place();
-      tick();
-    }
-    function tick() { if (raf === null && onScreen && !paused && !reduced) raf = requestAnimationFrame(frame); }
-    function stop() { if (raf !== null) { cancelAnimationFrame(raf); raf = null; } last = 0; }
-    function pause() { paused = true; stop(); }
-    function resume() { if (!paused) return; paused = false; last = 0; tick(); }
-
-    function setActive(card) {
-      if (card === active) return;
-      active = card;
-      $$('.spk', track).forEach(function (s) { s.classList.toggle('is-active', s === card); });
-      run.classList.toggle('has-active', !!card);
-    }
-
-    // a card reached by keyboard may be off to one side, so slide the row to it rather than let the
-    // browser scroll a clipped box, which would put the row out of step with its own transform
-    function reveal(card) {
-      if (!setW) return;
-      var L = card.offsetLeft, cw = card.offsetWidth, runW = run.clientWidth;
-      var pad = Math.max(24, Math.min(96, runW * 0.07));
-      var want = pad - L;                              // this card, pad in from the left edge
-      var rightMost = runW - pad - cw - L;             // no further right than the far edge allows
-      if (want > rightMost) want = rightMost;
-      if (want > 0) want = 0;
-      if (want < -setW) want = -setW;
-      pos = want + setW;
-      place();
-    }
-
-    run.addEventListener('pointerover', function (e) {
-      if (!hoverMQ.matches) return;
-      var card = e.target.closest('.spk');
-      if (!card) return;
-      pause();
-      setActive(card);
-    });
-    run.addEventListener('pointerleave', function () {
-      if (!hoverMQ.matches) return;
-      setActive(null);
-      resume();
-    });
-    run.addEventListener('focusin', function (e) {
-      var card = e.target.closest('.spk');
-      if (!card) return;
-      pause();
-      setActive(card);
-      reveal(card);
-    });
-    run.addEventListener('focusout', function (e) {
-      if (run.contains(e.relatedTarget)) return;
-      setActive(null);
-      resume();
-    });
-    // touch: tap a speaker to hold the row on them, tap them again or tap away to let it go.
-    // A tap is a pointerup that did not travel, so swiping the page past the row never grabs it.
-    var tapX = 0, tapY = 0, tapT = 0;
-    run.addEventListener('pointerdown', function (e) {
-      tapX = e.clientX; tapY = e.clientY; tapT = e.timeStamp;
-    });
-    run.addEventListener('pointerup', function (e) {
-      if (hoverMQ.matches) return;
-      if (Math.abs(e.clientX - tapX) > 10 || Math.abs(e.clientY - tapY) > 10 || e.timeStamp - tapT > 700) return;
-      var card = e.target.closest('.spk');
-      if (card && card !== active) { pause(); setActive(card); }
-      else { setActive(null); resume(); }
-    });
-    document.addEventListener('pointerup', function (e) {
-      if (hoverMQ.matches || !active || run.contains(e.target)) return;
-      setActive(null);
-      resume();
-    });
-    // a clipped box can still be scrolled programmatically; keep it pinned so the loop stays true
-    run.addEventListener('scroll', function () { run.scrollLeft = 0; });
-
-    new IntersectionObserver(function (es) {
-      onScreen = es[0].isIntersecting;
-      if (!onScreen) { stop(); return; }
-      // the row slides pictures in from the side rather than scrolling them in, which lazy loading
-      // cannot anticipate, so once the section is near, let every copy fetch (same three cached files)
-      $$('img[loading="lazy"]', track).forEach(function (im) { im.loading = 'eager'; });
-      last = 0;
-      tick();
-    }, { rootMargin: '15% 0px' }).observe(run);
-    var rebuildRaf = null;                            // build() touches the DOM: never inside the callback
-    function rebuild() {
-      if (rebuildRaf !== null) return;
-      rebuildRaf = requestAnimationFrame(function () { rebuildRaf = null; build(); });
-    }
-    new ResizeObserver(rebuild).observe(run);
-    fontsReady.then(build);
-    onMotionChange(function () {
-      if (reduced) { stop(); setActive(null); }
-      build();
-      if (!reduced) { last = 0; tick(); }
-    });
-    build();
-  }
+  /* The speaker runway moved out to assets/js/speakers.js when the lineup came back, so the
+     cards could carry real people and open a card rather than only slide past. */
 
   /* ---------- 07 finale ---------- */
   function initFinale() {
@@ -1169,97 +1141,139 @@
     onMotionChange(sync);
   }
 
-  /* ---------- FAQ: questions that roll from ink to turquoise ----------
-     Every letter of a question sits in its own little window with a turquoise twin waiting just
-     below it. On hover the letters roll up, ink out of the top and turquoise in from below, one
-     after another, rippling out from the letter the pointer came in on and landing with a small
-     spring; leaving rolls them back down, rippling from the letter it left from. Keyboard focus
-     rolls the question the same way, from its first letter.
-     A question is split into letters the first time it is reached, with the font's kerning
-     measured and given back to each letter, so at rest the text sits exactly where it did. The
-     roll itself is a CSS transition: site.js only sets each letter's delay and the class. */
-  function initFaqText() {
-    var sums = $$('.faq summary');
-    if (!sums.length) return;
+  /* ---------- text that rolls from ink to turquoise ----------
+     Used by the FAQ questions and the Get Involved list. Every letter sits in its own little window
+     with a turquoise twin waiting just below it. On hover the letters roll up, ink out of the top
+     and turquoise in from below, one after another, rippling out from the letter the pointer came
+     in on and landing with a small spring; leaving rolls them back down, rippling from where it
+     left. Keyboard focus rolls the text the same way, from its first letter.
+     Text is split into letters the first time it is reached, with the font's kerning measured and
+     given back to each letter, so at rest it sits exactly where it did. The roll itself is a CSS
+     transition: site.js only sets each letter's delay and the class. */
+  function initRolls() {
     var fineMQ = matchMedia('(hover:hover) and (pointer:fine)');
     var STAGGER = 16;                                   // ms between neighbouring letters
+    var triggers = [];
 
-    function split(sum) {
-      if (sum.__q) return sum.__q;
-      var text = sum.firstChild;
-      if (!text || text.nodeType !== 3 || !text.textContent.trim()) return null;
-      var q = el('span', 'faq__q');
-      sum.insertBefore(q, text);
-      sum.removeChild(text);
+    function split(host) {
+      var text = host.textContent.trim();
+      if (!text) return null;
+      host.textContent = '';
+      host.classList.add('roll');
       var letters = [];
-      text.textContent.trim().split(/(\s+)/).forEach(function (part) {
+      text.split(/(\s+)/).forEach(function (part) {
         if (!part) return;
-        if (/^\s+$/.test(part)) { q.appendChild(document.createTextNode(' ')); return; }
-        var w = el('span', 'faq__w');                   // a word never breaks inside
-        q.appendChild(w);
+        if (/^\s+$/.test(part)) { host.appendChild(document.createTextNode(' ')); return; }
+        var w = el('span', 'roll__w');                  // a word never breaks inside
+        host.appendChild(w);
         Array.prototype.forEach.call(part, function (ch) {
-          var s = el('span', 'faq__l', ch);
+          var s = el('span', 'roll__l', ch);
           w.appendChild(s);
           letters.push(s);
         });
       });
-      var fs = parseFloat(getComputedStyle(q).fontSize) || 16;
+      var fs = parseFloat(getComputedStyle(host).fontSize) || 16;
       var kerned = letters.map(function (s) { return s.getBoundingClientRect().left; });
-      q.classList.add('is-split');                      // each letter is its own box now: give the kerning back
+      host.classList.add('is-split');                   // each letter is its own box now: give the kerning back
       letters.forEach(function (s, i) {
         var shift = kerned[i] - s.getBoundingClientRect().left;
         if (Math.abs(shift) > 0.01) s.style.marginLeft = (shift / fs).toFixed(4) + 'em';
         // the window's contents: the letter, and its turquoise twin underneath (hidden from
-        // screen readers and from copying, so the question still reads and copies once)
+        // screen readers and from copying, so the text still reads and copies once)
         var ch = s.textContent;
         s.textContent = '';
-        var roll = el('span', 'faq__r', ch);
-        var twin = el('span', 'faq__t', ch, true);
-        roll.appendChild(twin);
+        var roll = el('span', 'roll__r', ch);
+        roll.appendChild(el('span', 'roll__t', ch, true));
         s.appendChild(roll);
       });
-      sum.__q = letters;
       return letters;
     }
     // the ripple: each letter waits in proportion to how far it is from where the pointer crossed
     function stagger(letters, x, y) {
       var near = 0, best = Infinity;
-      var boxes = letters.map(function (s) { return s.getBoundingClientRect(); });
-      boxes.forEach(function (r, i) {
+      letters.forEach(function (s, i) {
+        var r = s.getBoundingClientRect();
         var d = Math.hypot(r.left + r.width / 2 - x, (r.top + r.height / 2 - y) * 2);
         if (d < best) { best = d; near = i; }
       });
       letters.forEach(function (s, i) { s.style.setProperty('--d', Math.abs(i - near) * STAGGER + 'ms'); });
     }
-    function roll(sum, on, x, y) {
-      if (!motionOn()) return;
-      var letters = split(sum);
-      if (!letters) return;
-      stagger(letters, x, y);
-      sum.classList.toggle('is-rolled', on);
+
+    // trigger: the element that is hovered or focused; host(): the element whose text rolls
+    function bind(trigger, host) {
+      var letters = null;
+      function roll(on, x, y) {
+        if (!motionOn()) return;
+        if (!letters) { var h = host(); letters = h && split(h); }
+        if (!letters) return;
+        stagger(letters, x, y);
+        trigger.classList.toggle('is-rolled', on);
+      }
+      function start() { var r = trigger.getBoundingClientRect(); return [r.left, r.top + r.height / 2]; }
+      trigger.addEventListener('pointerenter', function (e) {
+        if (e.pointerType === 'mouse' && fineMQ.matches) roll(true, e.clientX, e.clientY);
+      });
+      trigger.addEventListener('pointerleave', function (e) {
+        if (trigger.classList.contains('is-rolled') && trigger !== document.activeElement) roll(false, e.clientX, e.clientY);
+      });
+      trigger.addEventListener('focus', function () {
+        if (trigger.matches(':focus-visible')) roll.apply(null, [true].concat(start()));
+      });
+      trigger.addEventListener('blur', function () {
+        if (trigger.classList.contains('is-rolled') && !trigger.matches(':hover')) roll.apply(null, [false].concat(start()));
+      });
+      triggers.push(trigger);
     }
 
-    sums.forEach(function (sum) {
-      sum.addEventListener('pointerenter', function (e) {
-        if (e.pointerType === 'mouse' && fineMQ.matches) roll(sum, true, e.clientX, e.clientY);
+    // FAQ: the question is the summary's own text, ahead of the plus
+    $$('.faq summary').forEach(function (sum) {
+      bind(sum, function () {
+        var text = sum.firstChild;
+        if (!text || text.nodeType !== 3 || !text.textContent.trim()) return null;
+        var q = el('span', 'faq__q');
+        sum.insertBefore(q, text);
+        q.appendChild(text);
+        return q;
       });
-      sum.addEventListener('pointerleave', function (e) {
-        if (sum.classList.contains('is-rolled') && sum !== document.activeElement) roll(sum, false, e.clientX, e.clientY);
-      });
-      sum.addEventListener('focus', function () {
-        if (!sum.matches(':focus-visible')) return;
-        var r = sum.getBoundingClientRect();
-        roll(sum, true, r.left, r.top + r.height / 2);
-      });
-      sum.addEventListener('blur', function () {
-        if (!sum.classList.contains('is-rolled') || sum.matches(':hover')) return;
-        var r = sum.getBoundingClientRect();
-        roll(sum, false, r.left, r.top + r.height / 2);
-      });
+    });
+    // Get Involved: Attend, Volunteer, Partner, Vendor
+    $$('.paths .path').forEach(function (path) {
+      bind(path, function () { return $('.path__name', path); });
     });
 
     onMotionChange(function () {
-      if (!motionOn()) sums.forEach(function (sum) { sum.classList.remove('is-rolled'); });
+      if (!motionOn()) triggers.forEach(function (t) { t.classList.remove('is-rolled'); });
+    });
+  }
+
+  /* ---------- close buttons: the X as a print mark ----------
+     Each drawer's X is rebuilt as two strokes, plus a cyan, magenta and yellow copy behind them,
+     the same plates as the big headings. The CSS then draws the strokes in, one after the other,
+     whenever a drawer opens; on hover the X twists a quarter turn on a spring while the plates
+     slip out of register behind it; a press squeezes it in. Reduced motion keeps a still X. */
+  function initCloseButtons() {
+    var NS = 'http://www.w3.org/2000/svg';
+    $$('.drawer__close svg').forEach(function (svg) {
+      var path = svg.querySelector('path');
+      if (!path || svg.__mark) return;
+      svg.__mark = true;
+      var strokes = (path.getAttribute('d') || '').split(/(?=M)/).filter(Boolean);
+      function layer(cls) {
+        var g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', cls);
+        strokes.forEach(function (d, i) {
+          var s = document.createElementNS(NS, 'path');
+          s.setAttribute('d', d);
+          s.setAttribute('pathLength', '1');            // so the draw-in is the same for every stroke
+          s.setAttribute('class', 'x__s x__s' + (i + 1));
+          g.appendChild(s);
+        });
+        return g;
+      }
+      ['c', 'm', 'y'].forEach(function (p) { svg.insertBefore(layer('x__p x__p--' + p), path); });
+      svg.insertBefore(layer('x__k'), path);
+      svg.removeChild(path);
+      svg.setAttribute('class', 'x');
     });
   }
 
@@ -1299,9 +1313,12 @@
       });
     });
 
-    function open(id) {
+    // a drawer opened from the small-screen menu (or from a drawer that was) shows a way back to it
+    function open(id, fromMenu) {
       var d = dialogs[id];
       if (!d) return;
+      d.__fromMenu = !!fromMenu && id !== 'menu';
+      $$('[data-back]', d).forEach(function (b) { b.hidden = !d.__fromMenu; });
       // switching from one drawer to another: the old one goes at once, the new one slides in
       Object.keys(dialogs).forEach(function (k) { if (k !== id && dialogs[k].open) dialogs[k].close(); });
       if (d.__closing) { d.__closing = false; d.close(); }   // reopened mid-exit: the exit must not close it again
@@ -1321,7 +1338,8 @@
       var opener = e.target.closest('[data-open]');
       if (opener) {
         e.preventDefault();
-        open(opener.getAttribute('data-open'));
+        var host = opener.closest('dialog');
+        open(opener.getAttribute('data-open'), host && (host.id === 'menu' || host.__fromMenu));
         return;
       }
       var closer = e.target.closest('[data-close]');
@@ -1584,12 +1602,12 @@
   initRotator();
   initExperience();
   initInvite();
-  initRunway();
   initGen();
   initFinale();
   initButtonMorph();
   initFaq();
-  initFaqText();
+  initRolls();
+  initCloseButtons();
   initDialogs();
   initForms();
 })();

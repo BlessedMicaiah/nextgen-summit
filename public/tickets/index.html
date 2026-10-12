@@ -35,14 +35,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://www.eventbrite.com">
 <link rel="preload" as="image" href="/assets/img/closing-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261001-20">
-<link rel="stylesheet" href="/assets/css/tickets.css?v=20260928-01">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261012-01">
+<link rel="stylesheet" href="/assets/css/tickets.css?v=20261012-01">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261001-20" defer></script>
+<script src="/assets/js/site.js?v=20261012-01" defer></script>
+<script src="/assets/js/depart.js?v=20261012-01" defer></script>
 <!-- tickets.js loads Eventbrite's widget script itself, once, after the page has rendered -->
-<script src="/assets/js/tickets.js?v=20260930-01" defer></script>
+<script src="/assets/js/tickets.js?v=20261012-01" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -68,7 +69,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </p>
   </div>
   <nav class="nav__links" aria-label="Utilities">
+    <a class="nav__link" href="/about/">About</a>
     <a class="nav__link" href="/">The Summit</a>
+    <a class="nav__link" href="/experience/" data-depart>The Experience</a>
     <a class="nav__link" href="/pitch/">Pitch Competition</a>
     <span class="nav__link is-here" aria-current="page">Tickets</span>
     <button class="nav__link nav__menu" type="button" data-open="menu">Menu</button>
@@ -166,18 +169,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <dialog class="drawer" id="menu" aria-label="Menu">
   <div class="drawer__in">
     <div class="drawer__top">
-      <span class="wm" style="font-size:26px" aria-hidden="true">nextgen</span>
+      <span class="wm drawer__mark" aria-hidden="true">nextgen</span>
       <button class="drawer__close" type="button" data-close aria-label="Close menu">
         <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
       </button>
     </div>
     <ul class="menu__list">
+      <li><a href="/about/">About</a></li>
       <li><a href="/">The Summit</a></li>
       <li><a href="/tickets/" aria-current="page">Get tickets</a></li>
+      <li><a href="/experience/" data-depart>The Experience</a></li>
       <li><a href="/pitch/">Pitch Competition</a></li>
       <li><a href="/#involved">Get Involved</a></li>
       <li><a href="/#faq">FAQ</a></li>
     </ul>
+    <a class="menu__home" href="/"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to home</a>
   </div>
 </dialog>
 

@@ -37,14 +37,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://images.unsplash.com">
 <link rel="preload" as="image" href="assets/img/hero-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="assets/img/hero-1600.jpg" imagesrcset="assets/img/hero-800.jpg 800w, assets/img/hero-1200.jpg 1200w, assets/img/hero-1600.jpg 1600w, assets/img/hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=20261001-20">
-<script src="assets/js/liquid.js?v=20260928-01" defer></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;family=Caveat:wght@700&amp;display=swap">
+<link rel="stylesheet" href="assets/css/site.css?v=20261012-01">
+<link rel="stylesheet" href="assets/css/names.css?v=20261012-01">
+<script src="assets/js/liquid.js?v=20261012-01" defer></script>
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="assets/js/site.js?v=20261001-20" defer></script>
-<script src="assets/js/counter.js?v=20261001-01" defer></script>
+<script src="assets/js/site.js?v=20261012-01" defer></script>
+<script src="assets/js/depart.js?v=20261012-01" defer></script>
+<script src="assets/js/forms.js?v=20261012-01" defer></script>
+<script src="assets/js/names.js?v=20261012-01" defer></script>
+<script src="assets/js/counter.js?v=20261012-01" defer></script>
+<script src="assets/js/speakers.js?v=20261012-01" defer></script>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -75,6 +80,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </p>
   </div>
   <nav class="nav__links" aria-label="Utilities">
+    <a class="nav__link" href="/about/">About</a>
+    <a class="nav__link" href="/experience/" data-depart>The Experience</a>
     <a class="nav__link" href="/pitch/">Pitch Competition</a>
     <button class="nav__link" type="button" data-open="involved">Get Involved</button>
     <button class="nav__link" type="button" data-open="faq">FAQ</button>
@@ -117,29 +124,62 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- live ticket count from Eventbrite (counter.js). Hidden until a real count arrives. -->
+  <!-- live ticket count from Eventbrite (counter.js). Hidden until a real count arrives.
+       Set as a press proof: crop marks, a slug line, the count in CMY plates that settle into black,
+       and one halftone dot per person holding a ticket, until opted-in names arrive and take their place. -->
+  <!-- Live from Eventbrite (counter.js) and who is coming (names.js). The count leads; the
+       credential hanging from the hero carries one registered person at a time, their name
+       written on by hand. Both are hidden until real data arrives. -->
   <section class="tally" data-tally data-nav="paper" aria-labelledby="tally-title" hidden>
-    <p class="tally__n" aria-hidden="true" data-tally-n></p>
-    <div class="tally__txt">
-      <h2 class="tally__k" id="tally-title"><span class="sr" data-tally-sr></span>Registered for NextGen</h2>
-      <p class="tally__x">Join them on Friday, October 30.</p>
+    <div class="tally__main">
+      <p class="tally__n" aria-hidden="true" data-tally-n></p>
+      <h2 class="tally__k" id="tally-title"><span class="sr" data-tally-sr></span>People registered for NextGen</h2>
+      <p class="tally__x nm-demo" data-tally-sample hidden>Sample count</p>
+    </div>
+
+    <div class="tally__crowd">
+      <div class="lan" data-names-box hidden>
+        <div class="nm-view" data-names="badge">
+          <div class="nb__stage">
+            <div class="nb__hang">
+              <!-- the real lanyard, cut from a photograph and hung from the hero edge -->
+              <img class="nb__strap" src="assets/img/lanyard-strap.png" width="228" height="960" alt="" decoding="async">
+
+              <div class="nb__badge">
+                <span class="nb__slot" aria-hidden="true"></span>
+                <div class="nb__head">
+                  <span class="nb__mark"><span class="wm">nextgen</span><span>Summit</span></span>
+                  <span class="nb__date">Oct 30<span class="nb__yr"> &middot; 2026</span></span>
+                </div>
+                <div class="nb__body">
+                  <p class="nb__hello">Hello, I&rsquo;m</p>
+                  <div class="nb__names"></div>
+                  <p class="nb__ready">Ready for NextGen.</p>
+                  <div class="nb__foot"><span>Fri 10.30<span class="nb__where"> &middot; Gordon Center, MD</span></span><span class="nb__tag">Attendee</span></div>
+                </div>
+              </div>
+              <span class="nb__shadow" aria-hidden="true"></span>
+            </div>
+          </div>
+          <p class="sr" data-names-sr></p>
+          <p class="nm-demo nb__demo" data-names-demo hidden>Sample names</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- 02 what is next gen -->
+  <!-- 02 what is next gen: the lede on its own, then "nextgen" and the word that turns over (site.js), then the facts -->
   <section class="what" id="what" data-nav="paper" aria-labelledby="what-title">
-    <p class="label rv">What is Next Gen</p>
-    <h2 class="what__title rv" id="what-title" style="--d:.12s">
+    <div class="what__top rv">
+      <p class="label">What is Next Gen</p>
+      <button class="toggle what__toggle" type="button" aria-pressed="false" data-rotator-toggle aria-label="Pause the rotating words"><span class="toggle__i" aria-hidden="true"></span><span class="toggle__t" aria-hidden="true">Pause</span></button>
+    </div>
+    <p class="what__lede rv" style="--d:.1s">A one-day experience for students and young adults to grow, connect, and see what&#8217;s possible for their future.</p>
+    <h2 class="what__title rv" id="what-title" style="--d:.2s">
       <span class="sr">Nextgen thinkers, builders, leaders, creators, changemakers.</span>
       <span class="wm" aria-hidden="true">nextgen</span>
       <span class="what__rot wm" aria-hidden="true" data-rotator='["thinkers","builders","leaders","creators","changemakers"]'><span class="what__word is-current">thinkers<span class="what__dot">.</span></span></span>
     </h2>
-    <div class="what__foot">
-      <p class="what__lede rv" style="--d:.2s">A one-day experience for students and young adults to grow, connect, and see what's possible for their future.</p>
-      <div class="what__tools rv" style="--d:.3s">
-        <button class="toggle" type="button" aria-pressed="false" data-rotator-toggle aria-label="Pause the rotating words"><span class="toggle__i" aria-hidden="true"></span><span class="toggle__t sr">Pause words</span></button>
-      </div>
-    </div>
   </section>
 
   <!-- 03 the experience -->
@@ -185,6 +225,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <p class="xp__note">Leave with a clearer next move, and people to take it with.</p>
         </li>
       </ol>
+      <p class="xp__cta rv" style="--d:.34s">
+        <!-- the way through: the Experience page plays its own entrance on arrival -->
+        <a class="xp__go" href="/experience/" data-depart>Explore the experience</a>
+      </p>
     </div>
   </section>
 
@@ -195,25 +239,76 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <img class="invite__fallback" src="assets/img/liquid-fallback.jpg" alt="" loading="lazy" decoding="async">
     </div>
     <div class="invite__body">
-      <p class="label invite__head rv">The Invitation</p>
-      <h2 class="invite__date" id="invite-title">
-        <span class="sr">You in?</span>
-        <span class="reg" aria-hidden="true">You</span>
-        <span class="reg" aria-hidden="true">in?</span>
-      </h2>
-      <div class="invite__card">
-        <dl class="invite__details rv" style="--d:.15s">
-          <div><dt>Event</dt><dd>NextGen Summit</dd></div>
-          <div><dt>Date</dt><dd>Friday, October 30</dd></div>
-          <div><dt>Venue</dt><dd>Gordon Center for Performing Arts</dd></div>
-          <div><dt>Where</dt><dd>Maryland</dd></div>
-          <div><dt>For</dt><dd>Students and young adults</dd></div>
-        </dl>
-        <div class="invite__cta rv" style="--d:.3s">
-          <a class="btn btn--lg" href="/tickets/">Get tickets</a>
-          <p class="invite__small">Groups of 3+ save 50%. Scholarship tickets are available.</p>
+      <div class="invite__ask">
+        <p class="label invite__head rv">Friday, October 30 <span aria-hidden="true">—</span> Maryland</p>
+        <h2 class="invite__date" id="invite-title">
+          <span class="sr">You in?</span>
+          <span class="reg" aria-hidden="true">You</span>
+          <span class="invite__line" aria-hidden="true"><span class="reg">in</span><span class="invite__q">?</span></span>
+        </h2>
+      </div>
+
+      <!-- the ticket: real details, the next seat number from the live count (counter.js), days to doors (site.js).
+           Click it and it turns over: the back is a map of the way in from the nearest airport and Amtrak stations. -->
+      <div class="ticket rv" style="--d:.2s" data-ticket>
+        <div class="ticket__flip">
+        <div class="ticket__card">
+          <div class="ticket__top">
+            <p class="ticket__row" aria-hidden="true"><span class="ticket__admit">Admit one</span><span class="ticket__no" data-ticket-no hidden></span></p>
+            <p class="ticket__when"><span class="ticket__day wm" aria-hidden="true">30</span><span class="ticket__month"><span class="sr">Friday, </span>October<span class="sr"> 30</span><span class="ticket__dow" aria-hidden="true">Friday</span></span></p>
+            <p class="ticket__name">NextGen Summit</p>
+          </div>
+          <div class="ticket__tear" aria-hidden="true"></div>
+          <dl class="ticket__details">
+            <div class="ticket__wide"><dt>Venue</dt><dd>Gordon Center for Performing Arts</dd></div>
+            <div><dt>Where</dt><dd>Maryland</dd></div>
+            <div><dt>For</dt><dd>Students &amp; young adults</dd></div>
+            <div class="ticket__doors" data-ticket-doors hidden><dt>Doors in</dt><dd data-ticket-days></dd></div>
+          </dl>
+          <button class="ticket__turn" type="button" aria-controls="ticket-map" aria-expanded="false" data-ticket-turn>How to get here <span class="ticket__turn-i" aria-hidden="true">&#8635;</span></button>
+          <span class="ticket__sheen" aria-hidden="true"></span>
+        </div>
+
+        <!-- the back: a drawn map from OpenStreetMap routes; distances and drive times (no traffic) from OSRM -->
+        <div class="ticket__back" id="ticket-map" tabindex="-1" aria-label="Getting here" inert>
+          <p class="ticket__row"><span class="ticket__admit">Getting here</span><span class="ticket__no">Owings Mills, MD</span></p>
+          <div class="ticket__map">
+              <img class="mp" src="assets/img/map-dmv-700.jpg"
+                srcset="assets/img/map-dmv-700.jpg 700w, assets/img/map-dmv-1200.jpg 1200w"
+                sizes="(max-width:900px) 92vw, 360px" width="1122" height="1402"
+                loading="lazy" decoding="async"
+                alt="Map of central Maryland. The Gordon Center is in Owings Mills, north-west of Baltimore: 25 to 35 minutes from Baltimore, 23 to 40 from BWI Airport and 65 to 90 from Washington, DC.">
+
+              <!-- the light that runs in along the three routes. The lines are traced from
+                   the picture itself, so they sit exactly on its dashes. -->
+              <svg class="mp-flow" viewBox="0 0 1122 1402" aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid meet">
+                <path class="mp-flow__halo" d="M700.0 502.0L684.2 486.2L673.1 475.3L661.1 465.4L648.4 456.1L635.1 447.4L622.4 439.4L609.1 431.7L596.5 424.6L583.1 417.5L570.5 410.5L557.6 403.6L545.0 396.2L531.8 388.5L520.7 381.2L510.6 374.1L499.8 365.9L480.5 357.0" stroke-dasharray="38 226" style="--len:264;animation-duration:3.1s;animation-delay:0.0s"/>
+                <path class="mp-flow__halo" d="M592.0 665.0L586.5 657.2L577.6 644.1L569.2 630.5L560.5 616.3L550.8 599.6L545.5 590.0L540.4 580.0L533.8 566.0L527.6 552.3L521.1 537.4L515.0 522.0L509.7 506.7L504.5 491.3L500.0 476.1L495.9 460.9L492.0 445.3L488.9 429.7L486.1 413.6L483.7 396.3L481.8 379.3L480.5 357.0" stroke-dasharray="38 294" style="--len:332;animation-duration:3.9s;animation-delay:-1.3s"/>
+                <path class="mp-flow__halo" d="M285.0 908.0L281.5 884.0L278.9 867.4L276.8 851.1L274.9 834.5L273.5 818.5L272.4 802.4L271.6 786.6L271.5 771.5L271.5 756.0L271.9 741.1L272.1 725.5L273.3 710.1L274.6 695.1L275.6 679.7L277.6 664.4L279.9 648.6L282.5 632.5L286.0 616.3L290.0 599.3L293.9 583.0L298.2 567.3L303.1 551.5L308.5 535.8L314.5 520.5L320.8 505.6L327.3 491.3L334.4 477.0L342.4 463.6L350.5 450.5L359.4 438.0L368.3 426.5L377.5 415.6L387.3 405.8L397.9 396.3L409.7 386.9L421.4 379.0L432.7 372.3L444.3 366.4L458.5 360.0L480.5 357.0" stroke-dasharray="38 600" style="--len:638;animation-duration:7.5s;animation-delay:-2.9s"/>
+                <path class="mp-flow__core" d="M700.0 502.0L684.2 486.2L673.1 475.3L661.1 465.4L648.4 456.1L635.1 447.4L622.4 439.4L609.1 431.7L596.5 424.6L583.1 417.5L570.5 410.5L557.6 403.6L545.0 396.2L531.8 388.5L520.7 381.2L510.6 374.1L499.8 365.9L480.5 357.0" stroke-dasharray="38 226" style="--len:264;animation-duration:3.1s;animation-delay:0.0s"/>
+                <path class="mp-flow__core" d="M592.0 665.0L586.5 657.2L577.6 644.1L569.2 630.5L560.5 616.3L550.8 599.6L545.5 590.0L540.4 580.0L533.8 566.0L527.6 552.3L521.1 537.4L515.0 522.0L509.7 506.7L504.5 491.3L500.0 476.1L495.9 460.9L492.0 445.3L488.9 429.7L486.1 413.6L483.7 396.3L481.8 379.3L480.5 357.0" stroke-dasharray="38 294" style="--len:332;animation-duration:3.9s;animation-delay:-1.3s"/>
+                <path class="mp-flow__core" d="M285.0 908.0L281.5 884.0L278.9 867.4L276.8 851.1L274.9 834.5L273.5 818.5L272.4 802.4L271.6 786.6L271.5 771.5L271.5 756.0L271.9 741.1L272.1 725.5L273.3 710.1L274.6 695.1L275.6 679.7L277.6 664.4L279.9 648.6L282.5 632.5L286.0 616.3L290.0 599.3L293.9 583.0L298.2 567.3L303.1 551.5L308.5 535.8L314.5 520.5L320.8 505.6L327.3 491.3L334.4 477.0L342.4 463.6L350.5 450.5L359.4 438.0L368.3 426.5L377.5 415.6L387.3 405.8L397.9 396.3L409.7 386.9L421.4 379.0L432.7 372.3L444.3 366.4L458.5 360.0L480.5 357.0" stroke-dasharray="38 600" style="--len:638;animation-duration:7.5s;animation-delay:-2.9s"/>
+              </svg>
+          </div>
+          <ul class="sr">
+            <li>Gordon Center for Performing Arts, 3506 Gwynnbrook Ave, Owings Mills, MD 21117.</li>
+            <li>From Baltimore: 25 to 35 minutes by car.</li>
+            <li>From BWI Airport: 23 to 40 minutes by car.</li>
+            <li>From Washington, DC: 65 to 90 minutes by car.</li>
+            <li>Drive times are without traffic.</li>
+          </ul>
+          <div class="ticket__foot">
+            <a class="ticket__dir" href="https://www.google.com/maps/dir/?api=1&amp;destination=Gordon+Center+for+Performing+Arts%2C+3506+Gwynnbrook+Ave%2C+Owings+Mills%2C+MD+21117" target="_blank" rel="noopener">Directions<span class="sr"> (opens Google Maps)</span></a>
+            <button class="ticket__turn" type="button" aria-controls="ticket-map" aria-expanded="true" data-ticket-turn>Back to ticket <span class="ticket__turn-i" aria-hidden="true">&#8635;</span></button>
+          </div>
+          <p class="ticket__note">Drive times without traffic</p>
+        </div>
         </div>
       </div>
+        <div class="invite__cta rv" style="--d:.3s">
+          <a class="btn btn--lg" href="/tickets/">Get tickets</a>
+          <p class="invite__small"><strong>Groups of 3 save 50%.</strong> Scholarship tickets are available.</p>
+        </div>
     </div>
   </section>
 
@@ -232,6 +327,159 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p class="pcta__copy rv" style="--d:.2s">Step into the NextGen Pitch Competition and put your idea in front of an audience ready to see what you can create. Build your pitch, take the stage, and compete.</p>
       <p class="pcta__cta rv" style="--d:.3s"><a class="btn btn--lg" href="/pitch/">Explore the pitch competition</a></p>
     </div>
+  </section>
+
+  <!-- 05 featured speakers
+       A deck of four collectible cards on a nearly dark stage. The stage is drawn rather than
+       photographed: one blurred microphone, a few lights and a wet floor, so a phone and a
+       desktop carry the identical scene at any width for about a kilobyte and no extra request.
+
+       The deck arrives stacked with the NextGen card on top and opens once, when the section
+       comes into view: a fan on a wide screen, a staggered two-by-two on a phone. Every card is
+       the same component; only where it comes to rest changes, in --x/--y/--r. Nothing shuffles
+       afterwards. Without JavaScript the cards are already open. -->
+  <section class="room" id="room" data-nav="photo" aria-labelledby="room-title">
+    <div class="room__stage" aria-hidden="true">
+      <span class="room__lights"></span>
+      <svg class="room__mic" viewBox="0 0 200 470" fill="none" aria-hidden="true" focusable="false">
+        <defs>
+          <filter id="room-blur" x="-30%" y="-12%" width="160%" height="130%">
+            <feGaussianBlur stdDeviation="4.4"/>
+          </filter>
+          <linearGradient id="room-steel" x1="0" y1="0" x2="1" y2=".7">
+            <stop offset="0" stop-color="#435F66"/>
+            <stop offset=".42" stop-color="#101A1E"/>
+            <stop offset="1" stop-color="#05090B"/>
+          </linearGradient>
+        </defs>
+        <g filter="url(#room-blur)">
+          <g fill="url(#room-steel)">
+            <g transform="rotate(-25 104 84)">
+              <rect x="76" y="16" width="56" height="116" rx="28"/>
+              <rect x="93" y="124" width="22" height="30" rx="7"/>
+            </g>
+            <path d="M74 150l28-24 13 15-27 25z"/>
+            <rect x="84" y="156" width="12" height="272" rx="6"/>
+            <path d="M38 440l52-38 7 13-47 41z"/>
+            <path d="M152 444l-56-42-7 13 50 44z"/>
+          </g>
+          <g stroke="#1FC7BE" stroke-opacity=".55" stroke-width="3.2" stroke-linecap="round">
+            <g transform="rotate(-25 104 84)"><path d="M80 42a25 25 0 0 1 25-24"/></g>
+            <path d="M86 198v158"/>
+          </g>
+        </g>
+      </svg>
+      <span class="room__floor"></span>
+      <span class="room__grain"></span>
+    </div>
+
+    <div class="room__in">
+      <div class="room__head">
+        <p class="label label--light rv">The lineup</p>
+        <h2 class="room__title wm rv" id="room-title" style="--d:.1s">featured speakers</h2>
+        <div class="room__note rv" style="--d:.2s">
+          <p class="draft-note">More announcing soon</p>
+          <p>Meet the people behind the perspectives.</p>
+        </div>
+      </div>
+
+      <ul class="deck" data-deck>
+
+        <!-- the anchor card. It carries the brand, not a profile, so it is not a control and
+             offers nothing to open. -->
+        <li class="card card--mark" style="--i:0">
+          <span class="card__face">
+            <span class="card__stock card__stock--mark">
+              <span class="card__eyebrow">The next generation</span>
+              <span class="card__lockup">
+                <span class="wm" aria-hidden="true">nextgen</span>
+                <span class="card__summit" aria-hidden="true">Summit</span>
+                <span class="sr">NextGen Summit</span>
+              </span>
+              <span class="card__hr" aria-hidden="true"></span>
+              <span class="card__said">The stage<br>is set.</span>
+              <span class="card__foot">Speaker collection <span aria-hidden="true">&middot;</span> 2026</span>
+            </span>
+          </span>
+        </li>
+
+        <li class="card" style="--i:1">
+          <button class="card__face" type="button" data-spk="tisha" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/tisha-edwards-620.jpg"
+                  srcset="assets/img/speakers/tisha-edwards-620.jpg 620w, assets/img/speakers/tisha-edwards-900.jpg 900w"
+                  sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Tisha Edwards">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Tisha<b>Edwards</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+        <li class="card" style="--i:2">
+          <button class="card__face" type="button" data-spk="tunde" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/tunde-onakoya-620.jpg"
+                  srcset="assets/img/speakers/tunde-onakoya-620.jpg 620w, assets/img/speakers/tunde-onakoya-900.jpg 900w"
+                  sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Tunde Onakoya">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Tunde<b>Onakoya</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+        <li class="card" style="--i:3">
+          <button class="card__face" type="button" data-spk="kennedy" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/kennedy-ekezie-620.jpg"
+                  srcset="assets/img/speakers/kennedy-ekezie-620.jpg 620w, assets/img/speakers/kennedy-ekezie-900.jpg 900w"
+                  sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Kennedy Ekezie">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Kennedy<b>Ekezie</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+      </ul>
+
+      <p class="room__hint">Select a card to explore</p>
+      <p class="room__photo">Portraits supplied by NextGen Summit and used as provided. Tisha Edwards&rsquo; headshot is courtesy of the Maryland Bankers Association.</p>
+    </div>
+
+    <!-- the collectible. The script paints both faces from its own data, so every line is
+         editable text rather than something baked into a picture. The close control sits
+         outside the panel that turns, so it is reachable from either side. -->
+    <dialog class="sp" id="speaker" aria-label="Speaker">
+      <button class="sp__close" type="button" data-sp-close aria-label="Close">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <div class="sp__in">
+        <div class="sp__flip" data-sp-flip>
+          <div class="sp__front" data-sp-front></div>
+          <div class="sp__back" data-sp-back aria-hidden="true"></div>
+        </div>
+      </div>
+    </dialog>
   </section>
 
   <!-- 06 who nextgen is for: different generations, one stage -->
@@ -354,10 +602,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </footer>
 
 <!-- utility: get involved -->
+
+<dialog class="drawer drawer--form" id="apply-volunteer" aria-labelledby="apply-volunteer-t">
+  <div class="drawer__in drawer__in--form">
+    <div class="drawer__top">
+      <div class="drawer__lead"><p class="label" id="apply-volunteer-t">Join the team</p></div>
+      <button class="drawer__close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </button>
+    </div>
+    <div class="fm">
+      <iframe class="fm__frame" data-src="https://docs.google.com/forms/d/e/1FAIpQLSccALYSEv3dRT2qAzKLVLlVIxGQlWSG-2Btk6_XM2OgRlkCDQ/viewform?embedded=true" title="Volunteer with NextGen Summit" allow="camera; microphone; autoplay; encrypted-media; fullscreen"></iframe>
+      <p class="fm__alt">Asked to sign in, or the form will not load? <a class="linkish" href="https://forms.gle/PeXXFp8gs6UwdAoTA" target="_blank" rel="noopener noreferrer">Open it in a new tab</a>.</p>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="drawer drawer--form" id="apply-vendor" aria-labelledby="apply-vendor-t">
+  <div class="drawer__in drawer__in--form">
+    <div class="drawer__top">
+      <div class="drawer__lead"><p class="label" id="apply-vendor-t">Showcase your business</p></div>
+      <button class="drawer__close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </button>
+    </div>
+    <div class="fm">
+      <iframe class="fm__frame" data-src="https://form.typeform.com/to/kMboIe7w?typeform-embed=embed-widget&amp;typeform-source=nextgensummit.us&amp;typeform-embed-no-heading=true" title="Next Gen Vendor Application Form" allow="camera; microphone; autoplay; encrypted-media; fullscreen"></iframe>
+      <p class="fm__alt">Form not loading? <a class="linkish" href="https://form.typeform.com/to/kMboIe7w" target="_blank" rel="noopener noreferrer">Open it in a new tab</a>.</p>
+    </div>
+  </div>
+</dialog>
+
 <dialog class="drawer" id="involved" aria-labelledby="involved-title">
   <div class="drawer__in">
     <div class="drawer__top">
-      <p class="label">Get Involved</p>
+      <div class="drawer__lead">
+        <button class="drawer__back" type="button" data-open="menu" data-back hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Menu<span class="sr"> (back to the menu)</span></button>
+        <p class="label">Get Involved</p>
+      </div>
       <button class="drawer__close" type="button" data-close aria-label="Close">
         <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
       </button>
@@ -384,7 +666,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <p>Whether you enjoy organizing, welcoming people, solving problems, or helping things run smoothly, there may be a role for you.</p>
           <p class="vol__roles">Roles include opportunities such as Logistics Officer, VIP Specialist, and other event support positions.</p>
           <p class="vol__cta">
-            <a class="btn btn--lg" href="https://forms.gle/PeXXFp8gs6UwdAoTA" target="_blank" rel="noopener noreferrer">Volunteer now<span class="sr"> (opens in a new tab)</span></a>
+            <a class="btn btn--lg" href="https://forms.gle/PeXXFp8gs6UwdAoTA" data-open="apply-volunteer" target="_blank" rel="noopener noreferrer">Volunteer now<span class="sr" data-form-sr> (opens in a new tab)</span></a>
           </p>
         </div>
       </li>
@@ -407,10 +689,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </form>
       </li>
       <li>
-        <!-- vendors apply on the official Typeform; a new tab keeps the visitor's place here -->
-        <a class="path" href="https://form.typeform.com/to/kMboIe7w" target="_blank" rel="noopener noreferrer">
+        <a class="path" href="https://form.typeform.com/to/kMboIe7w" data-open="apply-vendor" target="_blank" rel="noopener noreferrer">
           <span class="path__name">Vendor</span>
-          <span class="path__note">Display Your Business<span class="sr"> (opens in a new tab)</span></span>
+          <span class="path__note">Display your business<span class="sr" data-form-sr> (opens in a new tab)</span></span>
         </a>
       </li>
     </ul>
@@ -422,7 +703,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <dialog class="drawer" id="faq" aria-labelledby="faq-title">
   <div class="drawer__in">
     <div class="drawer__top">
-      <p class="label">FAQ</p>
+      <div class="drawer__lead">
+        <button class="drawer__back" type="button" data-open="menu" data-back hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Menu<span class="sr"> (back to the menu)</span></button>
+        <p class="label">FAQ</p>
+      </div>
       <button class="drawer__close" type="button" data-close aria-label="Close">
         <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
       </button>
@@ -439,7 +723,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </details>
       <details name="faq">
         <summary>How much does it cost?<span class="faq__plus" aria-hidden="true"></span></summary>
-        <div class="faq__a"><p>General admission is $20. Coming with your crew? Groups of 3+ save 50%, at $10 per person. We&rsquo;ve also set aside 40 scholarship tickets for young people who may not be able to cover the cost. <a class="linkish" href="/tickets/">See tickets</a>.</p></div>
+        <div class="faq__a"><p>General admission is $20. Coming with your crew? Groups of 3 save 50%, at $10 per person. We&rsquo;ve also set aside 40 scholarship tickets for young people who may not be able to cover the cost. <a class="linkish" href="/tickets/">See tickets</a>.</p></div>
       </details>
       <details name="faq">
         <summary>Do I need to register?<span class="faq__plus" aria-hidden="true"></span></summary>
@@ -506,17 +790,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <dialog class="drawer" id="menu" aria-label="Menu">
   <div class="drawer__in">
     <div class="drawer__top">
-      <span class="wm" style="font-size:26px" aria-hidden="true">nextgen</span>
+      <span class="wm drawer__mark" aria-hidden="true">nextgen</span>
       <button class="drawer__close" type="button" data-close aria-label="Close menu">
         <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
       </button>
     </div>
     <ul class="menu__list">
+      <li><a href="/about/">About</a></li>
+      <li><a href="/" aria-current="page">The Summit</a></li>
       <li><a href="/tickets/">Get tickets</a></li>
+      <li><a href="/experience/" data-depart>The Experience</a></li>
       <li><a href="/pitch/">Pitch Competition</a></li>
       <li><button type="button" data-open="involved">Get Involved</button></li>
       <li><button type="button" data-open="faq">FAQ</button></li>
     </ul>
+    <button class="menu__home" type="button" data-close><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to home<span class="sr"> (close the menu)</span></button>
   </div>
 </dialog>
 

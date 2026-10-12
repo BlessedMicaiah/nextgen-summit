@@ -56,17 +56,22 @@
       ],
       link: 'https://www.linkedin.com/in/tisha-edwards'
     },
-    // only what has been confirmed. No link: an unverified button would be a button that lies
+    // From his own site, kennedyekezie.com, which also gives the LinkedIn address. The Forbes
+    // listing is not on his site; it is the 2024 list, per Wikipedia, BellaNaija and BusinessDay,
+    // which disagree on the regional edition, so the card does not name one. Kippa is in the
+    // past tense because his site puts it there: "Previously, founder and CEO at Kippa".
     kennedy: {
       first: 'Kennedy', last: 'Ekezie',
-      role: 'Technology entrepreneur',
-      roleFlat: 'Technology entrepreneur',
+      role: 'Technology entrepreneur <span aria-hidden="true">&middot;</span> Founder, Kippa',
+      roleFlat: 'Technology entrepreneur, Founder of Kippa',
       shot: 'kennedy-ekezie',
       wins: [
-        { k: 'Recognition', v: 'Forbes 30 Under 30', icon: 'cup' },
-        { k: 'Building', v: 'Technology entrepreneur', icon: 'case' }
+        { k: 'Kippa', v: 'Founder and former CEO of a financial management platform used by 1 million businesses', icon: 'case' },
+        { k: 'TikTok', v: 'Led TikTok&rsquo;s international expansion into Africa', icon: 'people' },
+        { k: '2024', v: 'Forbes 30 Under 30', icon: 'cup' },
+        { k: 'Global', v: 'Born in Lagos; has lived in Beijing, San Francisco and London', icon: 'globe' }
       ],
-      pending: 'Fuller credentials are being confirmed and will be added here.'
+      link: 'https://www.linkedin.com/in/kennedyekezie/'
     }
   };
 
@@ -76,7 +81,8 @@
     cup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.5H5A2.2 2.2 0 0 0 7.5 9M16.5 5.5H19A2.2 2.2 0 0 1 16.5 9"/><path d="M12 13.5V17M9 20h6"/></svg>',
     book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.6S10.4 4.8 4.8 4.8v12.6c5.6 0 7.2 1.8 7.2 1.8s1.6-1.8 7.2-1.8V4.8C13.6 4.8 12 6.6 12 6.6z"/><path d="M12 6.6v12.6"/></svg>',
     case: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.2" y="7.2" width="17.6" height="12.4" rx="1.8"/><path d="M8.8 7.2V5.6a1.6 1.6 0 0 1 1.6-1.6h3.2a1.6 1.6 0 0 1 1.6 1.6v1.6M3.2 12.4h17.6"/></svg>',
-    cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.4 21.2 9 12 13.6 2.8 9z"/><path d="M6.4 11v4.6c0 1.4 2.5 2.6 5.6 2.6s5.6-1.2 5.6-2.6V11"/></svg>'
+    cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.4 21.2 9 12 13.6 2.8 9z"/><path d="M6.4 11v4.6c0 1.4 2.5 2.6 5.6 2.6s5.6-1.2 5.6-2.6V11"/></svg>',
+    globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c2.3 2.4 3.4 5.2 3.4 8.4s-1.1 6-3.4 8.4c-2.3-2.4-3.4-5.2-3.4-8.4s1.1-6 3.4-8.4z"/></svg>'
   };
 
   /* ---------- state one: the deck opens, once ---------- */

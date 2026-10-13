@@ -44,14 +44,14 @@
     },
     tisha: {
       first: 'Tisha', last: 'Edwards',
-      role: 'President &amp; CEO <span aria-hidden="true">&middot;</span> Maryland Bankers Association',
-      roleFlat: 'President and CEO, Maryland Bankers Association',
+      role: 'President &amp; CEO, Maryland Bankers Association <span aria-hidden="true">&middot;</span> Former Secretary of Appointments, State of Maryland',
+      roleFlat: 'President and CEO, Maryland Bankers Association; Former Secretary of Appointments, State of Maryland',
       suffix: 'Tisha Edwards, MSW, JD',
       shot: 'tisha-edwards',
       wins: [
         { k: '2025', v: 'President &amp; CEO, Maryland Bankers Association', icon: 'case' },
         { k: '2025', v: 'Joined the University System of Maryland Board of Regents', icon: 'cap' },
-        { k: 'Public service', v: 'Former Maryland Secretary of Appointments', icon: 'people' },
+        { k: 'Public service', v: 'Former Secretary of Appointments, State of Maryland', icon: 'people' },
         { k: 'Education', v: 'Former Interim CEO, Baltimore City Public Schools', icon: 'book' }
       ],
       link: 'https://www.linkedin.com/in/tisha-edwards'

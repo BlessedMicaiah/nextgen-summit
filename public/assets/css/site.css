@@ -665,7 +665,10 @@ button.card__face{cursor:pointer}
 @media (hover:hover){.sp__turn:hover i{background:var(--accent);color:#06161A}}
 
 /* --- the back --- */
-.sp__bpane{display:flex;flex-direction:column;min-height:100%;padding:clamp(15px,3.6vw,20px)}
+/* height, not min-height: the pane has to be bound to the card so the credentials scroll inside
+   it. With min-height the pane simply grew past the card and took the LinkedIn button with it,
+   which is what a long enough title did on a narrow phone. */
+.sp__bpane{display:flex;flex-direction:column;height:100%;padding:clamp(15px,3.6vw,20px)}
 .sp__bhead{display:grid;grid-template-columns:minmax(0,1fr) clamp(76px,20vw,96px);gap:14px;align-items:start}
 .sp__bname{margin-top:clamp(12px,3vw,18px);font:800 clamp(27px,6.6vw,36px)/.94 var(--f-sans);letter-spacing:-.025em;text-transform:uppercase;color:#fff}
 .sp__bname b{display:block;color:var(--accent)}

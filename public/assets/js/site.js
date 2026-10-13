@@ -145,6 +145,7 @@
     var img = $('.hero__img', hero);
     var mark = $('.hero__title .reg', hero);
     if (mark) buildReg(mark);
+    initHeroFilm(hero);
     initHeroParallax(hero);
     if (mark) initHeroMorph(hero, mark);
     var imgReady = new Promise(function (res) {
@@ -158,6 +159,45 @@
       $$('.rv', hero).forEach(function (n) { n.classList.add('in'); settle(n); });
       if (mark) regPlay(mark, 280);
     });
+  }
+
+  // The hero film: loaded only when it can play (no reduced motion, no Data Saver), muted and looping,
+  // and shown only once frames are actually coming, over the photograph that stands in until then.
+  // It rests while the hero is off screen or the tab is hidden, so it costs nothing out of sight.
+  function initHeroFilm(hero) {
+    var v = $('.hero__video', hero);
+    if (!v) return;
+    var saver = navigator.connection && navigator.connection.saveData;
+    var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (saver || still || typeof v.play !== 'function') { v.remove(); return; }
+    var inView = true;
+    v.muted = true;                                  // set as a property too: some browsers ignore the attribute
+    v.addEventListener('playing', function () { v.classList.add('is-playing'); });
+    v.addEventListener('error', function () { v.remove(); });
+    function sync() {
+      if (inView && !document.hidden) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+      else v.pause();
+    }
+    // The photograph is the page's largest paint; the film waits until the page has loaded and the
+    // browser is idle, so its megabytes never compete with the first view.
+    function begin() {
+      v.preload = 'auto';
+      v.src = v.getAttribute('data-src');
+      sync();
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (es) { inView = es[0].isIntersecting; sync(); }).observe(hero);
+      }
+      document.addEventListener('visibilitychange', sync);
+    }
+    // A slow third-party request can hold `load` back for a long time, so 3.5 s is the longest it waits.
+    var started = false;
+    function whenIdle() {
+      if (started) return;
+      started = true;
+      (window.requestIdleCallback || function (f) { setTimeout(f, 200); })(begin, { timeout: 1500 });
+    }
+    if (document.readyState === 'complete') whenIdle();
+    else { addEventListener('load', whenIdle, { once: true }); setTimeout(whenIdle, 3500); }
   }
 
   // As the hero scrolls away the photograph drifts down at a slower pace than the page and the
@@ -451,12 +491,14 @@
         }
       }
       var atHero = !!hero && hero.getBoundingClientRect().bottom > window.innerHeight * 0.42;
-      var next = theme + (atHero ? ':hero' : '');
+      var scrolled = (window.scrollY || window.pageYOffset) > 8;
+      var next = theme + (atHero ? ':hero' : '') + (scrolled ? ':moved' : '');
       if (next === state) return;
       state = next;
       nav.classList.toggle('on-photo', theme === 'photo');
       nav.classList.toggle('on-paper', theme === 'paper');
       nav.classList.toggle('at-hero', atHero);
+      nav.classList.toggle('is-scrolled', scrolled);
     }
 
     requestNav = function () { if (raf === null) raf = requestAnimationFrame(update); };
@@ -1306,12 +1348,21 @@
       d.addEventListener('close', function () {
         if (d.open) return;                 // already opened again before this event arrived
         d.__closing = false;
+        mark(d.id, false);
         d.style.removeProperty('transform');
         d.style.removeProperty('--bd');
         if (lenis && !document.querySelector('dialog[open]')) lenis.start();
         if (location.hash === '#' + d.id) history.replaceState(null, '', location.pathname + location.search);
       });
     });
+
+    // the bar's own control for a drawer stays lit while that drawer is open
+    function mark(id, on) {
+      $$('.nav [data-open="' + id + '"]').forEach(function (b) {
+        b.classList.toggle('is-open', on);
+        b.setAttribute('aria-expanded', String(on));
+      });
+    }
 
     // a drawer opened from the small-screen menu (or from a drawer that was) shows a way back to it
     function open(id, fromMenu) {
@@ -1331,6 +1382,7 @@
           Motion.animate(d, { '--bd': [0, 1] }, { duration: 0.45, ease: 'easeOut' });
         }
       }
+      mark(id, true);
       if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
     }
 

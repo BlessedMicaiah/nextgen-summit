@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Every page that should appear in search, and nothing that is noindex: the scholarship form,
+     confirmation pages, admin and api stay out. Update lastmod when a page's content changes. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://nextgensummit.us/</loc><lastmod>2026-09-25</lastmod></url>
-  <url><loc>https://nextgensummit.us/tickets/</loc><lastmod>2026-09-26</lastmod></url>
-  <url><loc>https://nextgensummit.us/pitch/</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://nextgensummit.us/</loc><lastmod>2026-10-12</lastmod></url>
+  <url><loc>https://nextgensummit.us/tickets/</loc><lastmod>2026-10-12</lastmod></url>
+  <url><loc>https://nextgensummit.us/experience/</loc><lastmod>2026-10-12</lastmod></url>
+  <url><loc>https://nextgensummit.us/pitch/</loc><lastmod>2026-10-12</lastmod></url>
+  <url><loc>https://nextgensummit.us/about/</loc><lastmod>2026-10-12</lastmod></url>
 </urlset>

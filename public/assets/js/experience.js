@@ -35,14 +35,19 @@
       return;
     }
     var at = function (ms, cls) { timers.push(setTimeout(function () { root.classList.add(cls); }, ms)); };
-    requestAnimationFrame(function () {
+    var go = function () {
       requestAnimationFrame(function () {
-        root.classList.add('in-1');                    // the wordmark arrives out of the black
-        at(560, 'in-2');                               // the light comes up on it
-        at(1180, 'in-3');                              // and it dissolves into the room
-        timers.push(setTimeout(done, 2560));
+        root.classList.add('in-1');                    // the letters are written out of the black
+        at(780, 'in-2');                               // SUMMIT settles and the colour flows in
+        at(2050, 'in-3');                              // and it dissolves into the room
+        timers.push(setTimeout(done, 3400));
       });
-    });
+    };
+    // the letters are drawn in the wordmark's own face, so wait for it (briefly): animating the
+    // fallback and then swapping it would make every letter jump
+    var face = document.fonts && document.fonts.load ? document.fonts.load('900 1em Fraunces') : null;
+    if (face) Promise.race([face, new Promise(function (r) { setTimeout(r, 700); })]).then(go, go);
+    else go();
   }
 
   if (intro) {

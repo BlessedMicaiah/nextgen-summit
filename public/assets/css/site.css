@@ -100,8 +100,11 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- nav ---------- */
 .nav{position:fixed;left:0;right:0;top:0;z-index:80;height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 var(--gutter);color:var(--ink);transition:color .5s var(--ease)}
-.nav::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(250,250,248,.94);box-shadow:0 1px 0 var(--rule);opacity:0;transition:opacity .5s var(--ease)}
+.nav::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(250,250,248,.94);box-shadow:0 1px 0 var(--rule);opacity:0;transition:opacity .5s var(--ease),background-color .5s var(--ease)}
 .nav.on-paper::before{opacity:1}
+/* over a photo the bar is clear while the page is at rest, but once anything has scrolled up under
+   it the bar takes a dark glass of its own, so headlines never run through the links */
+.nav.on-photo.is-scrolled:not(.at-hero)::before{opacity:1;background:rgba(11,11,15,.72);box-shadow:0 1px 0 rgba(255,255,255,.08);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .nav.on-photo{color:#fff}
 .nav__mark{display:inline-flex;align-items:baseline;gap:.55em;text-decoration:none;min-height:44px;padding-top:6px;transition:opacity .6s var(--ease),transform .6s var(--ease),visibility 0s linear 0s}
 .nav__mark .wm{font-size:30px;line-height:1}
@@ -117,9 +120,19 @@ h1,h2,h3,p{margin:0}
 .nav.on-paper .count__l{color:var(--accent-ink)}
 .count__to{font:700 9.5px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
 .count__word{display:none}
-.nav__link{position:relative;display:inline-flex;align-items:center;min-height:44px;font:700 12px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase}
-.nav__link::after{content:"";position:absolute;left:0;right:0;bottom:11px;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:100% 50%;transition:transform .55s var(--ease)}
+/* text-decoration:none: the <a> items (About, The Experience, Pitch Competition) otherwise keep the
+   browser's underline, which sits under the drawn hover line and doubles it against the text */
+.nav__link{position:relative;display:inline-flex;align-items:center;min-height:44px;font:700 12px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+/* right:.16em: the label's letter-spacing also trails its last letter, so the line stops where the
+   text does instead of running on into that space */
+.nav__link::after{content:"";position:absolute;left:0;right:.16em;bottom:8px;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:100% 50%;transition:transform .55s var(--ease)}
 .nav__link:hover::after,.nav__link:focus-visible::after{transform:scaleX(1);transform-origin:0 50%}
+/* where you are: the page you are on (.is-here, a span with aria-current) and the drawer that is
+   open (.is-open, set by site.js) take the turquoise; the deeper tone on paper, the bright one on photo */
+.nav__link{transition:color .3s var(--ease)}
+.nav__link.is-here,.nav__link.is-open{color:var(--accent-ink)}
+.nav__link.is-here{cursor:default}
+.on-photo .nav__link.is-here,.on-photo .nav__link.is-open{color:var(--accent)}
 .nav__menu{display:none}
 @media (max-width:760px){
   :root{--nav-h:64px}
@@ -144,6 +157,12 @@ h1,h2,h3,p{margin:0}
   .nav__menu{display:inline-flex}
   .count__to{display:none}
 }
+/* small laptops: every link stays on one line (white-space:nowrap above), so the bar makes the room
+   instead: the countdown drops its seconds and "to NextGen", and the links sit a little closer */
+@media (min-width:1201px) and (max-width:1439px){
+  .count__to,.count__u:nth-child(4){display:none}
+  .nav__links{gap:clamp(16px,1.9vw,26px)}
+}
 /* small phones: the CTA keeps its full wording by tightening, so it never crowds MENU */
 @media (max-width:440px){
   .nav__mark .wm{font-size:22px}
@@ -154,7 +173,15 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- 01 hero ---------- */
 .hero{position:relative;z-index:71;min-height:100vh;min-height:100svh;display:flex;align-items:flex-end;color:#fff;overflow:hidden;background:#231a14}
-.hero__media{position:absolute;inset:0;margin:0}
+/* top: the scroll-linked drift (site.js) counts from the page's scroll-padding, the nav's height, so at
+   the very top it has already moved the layer down 22% of that; the layer starts that much higher */
+.hero__media{position:absolute;inset:0;top:calc(var(--nav-h) * -.22);margin:0}
+.hero__pic{position:absolute;inset:0;display:block}
+/* the film over the photograph: hidden until it is really playing, so a slow start shows the photo,
+   never a black box. Six people across a 16:9 frame; a portrait screen keeps the centre and the faces. */
+.hero__video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%;opacity:0;transform:scale(1.06);transition:opacity 1.1s var(--ease),transform 3.2s var(--ease)}
+.is-ready .hero__video{transform:none}
+.hero__video.is-playing{opacity:1}
 .hero__img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 40%);transform:scale(1.06);transition:transform 3.2s var(--ease)}
 .is-ready .hero__img{transform:none}
 .hero__shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(var(--shade),.3) 0%,rgba(var(--shade),.06) 45%,rgba(var(--shade),0) 100%),linear-gradient(180deg,rgba(var(--shade),.32) 0%,rgba(var(--shade),0) 16%,rgba(var(--shade),0) 48%,rgba(var(--shade),.5) 74%,rgba(var(--shade),.84) 100%)}
@@ -174,6 +201,7 @@ h1,h2,h3,p{margin:0}
 .hero__actions{display:flex;align-items:center;gap:clamp(18px,2.4vw,36px);flex:none}
 @media (max-width:760px){
   .hero__img{object-position:var(--pos-m,50% 40%)}
+  .hero__video{object-position:46% 30%}
   .hero__shade{background:linear-gradient(180deg,rgba(var(--shade),.36) 0%,rgba(var(--shade),0) 14%,rgba(var(--shade),0) 44%,rgba(var(--shade),.55) 66%,rgba(var(--shade),.86) 100%)}
   .hero__row{flex-direction:column;align-items:flex-start}
   .hero__copy{max-width:none}
@@ -383,7 +411,7 @@ h1,h2,h3,p{margin:0}
 @media (hover:hover){.ticket__dir:hover{background:#45E0D7}}
 .ticket__dir:active{transform:translateY(1px)}
 .ticket__dir:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.ticket__note{font:600 10px/1.3 var(--f-sans);letter-spacing:.06em;color:rgba(255,255,255,.5)}
+.ticket__note{margin-top:12px;font:600 10px/1.3 var(--f-sans);letter-spacing:.06em;color:rgba(255,255,255,.5)}
 
 /* the map on the back of the ticket is a picture; the dark fill under it is the image's own
    deep navy, so there is no white flash before it arrives */
@@ -418,7 +446,7 @@ h1,h2,h3,p{margin:0}
   linear-gradient(90deg,rgba(6,6,9,.72) 0%,rgba(6,6,9,.42) 44%,rgba(6,6,9,.08) 78%,rgba(6,6,9,0) 100%),
   linear-gradient(180deg,rgba(6,6,9,.52) 0%,rgba(6,6,9,.2) 30%,rgba(6,6,9,.28) 62%,rgba(6,6,9,.7) 92%,rgba(6,6,9,.82) 100%)}
 .pcta__inner{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:clamp(70px,12vh,130px) var(--gutter)}
-.pcta__title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(44px,7.6vw,128px);line-height:.9;text-shadow:0 2px 40px rgba(6,6,9,.5)}
+.pcta__title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(44px,7.6vw,128px);line-height:1.06;text-shadow:0 2px 40px rgba(6,6,9,.5)}
 .pcta__copy{margin-top:clamp(18px,2.8vh,30px);max-width:48ch;font:500 clamp(15px,1.2vw,18px)/1.6 var(--f-sans);color:rgba(255,255,255,.92);text-shadow:0 1px 12px rgba(6,6,9,.7)}
 .pcta__cta{margin-top:clamp(26px,4vh,44px)}
 @media (max-width:560px){.pcta__cta .btn{width:100%;justify-content:center}}
@@ -482,7 +510,7 @@ h1,h2,h3,p{margin:0}
 /* ---------- the words above the deck ---------- */
 .room__head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:20px 40px}
 .room__head .label{grid-column:1/-1}
-.room__title{font-size:clamp(50px,7.6vw,124px);line-height:.94;text-shadow:0 2px 44px rgba(4,9,10,.6)}
+.room__title{font-size:clamp(50px,7.6vw,124px);line-height:1.06;text-shadow:0 2px 44px rgba(4,9,10,.6)}
 .room__note{justify-self:end;text-align:right;padding-bottom:.9em}
 .room__note p{margin-top:8px;font:600 13px/1.45 var(--f-sans);color:rgba(255,255,255,.76);max-width:30ch;margin-left:auto}
 .room__note .draft-note{margin-top:0;max-width:none;white-space:nowrap;color:var(--accent)}
@@ -603,17 +631,39 @@ button.card__face{cursor:pointer}
    visible, and the easing is symmetric so half-way in time is half-way in rotation. */
 .sp{--flip:.66s;--half:.33s;
   width:min(430px,94vw);max-width:none;max-height:none;padding:0;border:0;background:none;color:#fff;overflow:visible}
-.sp::backdrop{background:rgba(4,8,10,.86);backdrop-filter:blur(5px);transition:background-color .32s var(--ease)}
+.sp::backdrop{background:rgba(4,8,10,.86);backdrop-filter:blur(5px);transition:background-color .32s var(--ease),backdrop-filter .32s var(--ease)}
 @starting-style{.sp::backdrop{background-color:rgba(4,8,10,0)}}
 /* the card arrives; it leaves at once, because being let out should never be a wait */
 .sp__in{position:relative;opacity:1;transform:none;transition:opacity .3s var(--ease),transform .46s var(--ease)}
 @starting-style{.sp[open] .sp__in{opacity:0;transform:scale(.955) translateY(10px)}}
+/* when the card grows out of the deck instead (speakers.js), the script moves it and the fade
+   above stands down; the deck card it came from waits, hidden, until it is put back */
+.sp.is-morph .sp__in{transition:none}
+.card.is-lifted{visibility:hidden}
+/* the details arrive once the card has nearly landed: the masthead, then the line, then the
+   name plate from the tag down, while the portrait settles from a slight zoom */
+@keyframes sp-rise{from{opacity:0;transform:translate3d(0,16px,0)}}
+@keyframes sp-settle{from{transform:scale(1.1)}}
+.sp.is-reveal .sp__front .sp__top,.sp.is-reveal .sp__front .sp__say,.sp.is-reveal .sp__front .sp__id > *{animation:sp-rise .6s var(--ease) both}
+.sp.is-reveal .sp__front .sp__top{animation-delay:.36s}
+.sp.is-reveal .sp__front .sp__say{animation-delay:.44s}
+.sp.is-reveal .sp__front .sp__id > :nth-child(1){animation-delay:.42s}
+.sp.is-reveal .sp__front .sp__id > :nth-child(2){animation-delay:.5s}
+.sp.is-reveal .sp__front .sp__id > :nth-child(3){animation-delay:.58s}
+.sp.is-reveal .sp__front .sp__id > :nth-child(4){animation-delay:.66s}
+.sp.is-reveal .sp__front .sp__shot img{animation:sp-settle 1.2s var(--ease) both}
+/* going back: the room comes back up and the close control steps aside as the card returns */
+.sp.is-closing::backdrop{background-color:rgba(4,8,10,0);backdrop-filter:blur(0)}
+/* the close control answers its own press: it turns a quarter and shrinks away as the card goes
+   back, and on the way in it turns the other way into place */
+.sp.is-closing .sp__close{opacity:0;transform:rotate(90deg) scale(.55);transition:opacity .24s var(--ease) .2s,transform .44s cubic-bezier(.65,0,.35,1)}
+@starting-style{.sp[open] .sp__close{opacity:0;transform:rotate(-90deg) scale(.6)}}
 /* the way out: outside the panel that turns, in reach on both sides, above everything.
    It is fixed to the viewport, so nothing between here and the dialog may carry a transform. */
 .sp__close{position:fixed;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:10;
   display:inline-grid;place-items:center;width:46px;height:46px;border-radius:999px;color:#fff;
   background:rgba(12,18,20,.86);box-shadow:0 0 0 1px rgba(255,255,255,.2),0 10px 30px rgba(0,0,0,.55);
-  backdrop-filter:blur(6px);transition:background-color .3s var(--ease),transform .3s var(--ease)}
+  backdrop-filter:blur(6px);transition:background-color .3s var(--ease),transform .3s var(--ease),opacity .25s var(--ease)}
 @media (hover:hover){.sp__close:hover{background:var(--accent);color:#06161A;transform:scale(1.05)}}
 .sp__close svg{width:16px;height:16px}
 
@@ -709,7 +759,7 @@ button.card__face{cursor:pointer}
 }
 @media (prefers-reduced-motion:reduce){
   /* no rotation at all, just the one face that is wanted */
-  .sp__front,.sp__back,.sp__in{transition:none}
+  .sp__front,.sp__back,.sp__in,.sp__close{transition:none}
   .sp__front,.sp.is-back .sp__front,.sp__back,.sp.is-back .sp__back{transform:none}
 }
 
@@ -721,7 +771,7 @@ button.card__face{cursor:pointer}
 .gen{position:relative;max-width:var(--maxw);margin:0 auto;padding:clamp(110px,18vh,210px) var(--gutter) clamp(100px,16vh,190px)}
 .gen__head,.gen__art,.gen__end{position:relative;z-index:1}
 .gen__intro{margin-top:clamp(26px,4.5vh,54px)}
-.gen__title{font-size:clamp(46px,7.4vw,124px);line-height:.92;opacity:calc(1 - var(--p,0) * .55);transform:translate3d(0,calc(var(--p,0) * -3vh),0)}
+.gen__title{font-size:clamp(46px,7.4vw,124px);line-height:1.06;opacity:calc(1 - var(--p,0) * .55);transform:translate3d(0,calc(var(--p,0) * -3vh),0)}
 .gen__lede{margin:clamp(22px,3.4vh,40px) 0 0 auto;font:500 clamp(17px,1.4vw,21px)/1.5 var(--f-sans);color:var(--ink-2);max-width:32ch}
 
 /* the headline's numerals, reborn as the ground behind the portraits */
@@ -773,7 +823,7 @@ button.card__face{cursor:pointer}
 /* the payoff: where the run of stages lands */
 .gen__end{margin:clamp(64px,10vh,130px) 0 0 auto;max-width:36rem;text-align:right}
 .gen__end-kicker{width:fit-content;margin-left:auto;font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink)}
-.gen__end-title{margin-top:14px;font-size:clamp(40px,5.2vw,84px);line-height:.95}
+.gen__end-title{margin-top:14px;font-size:clamp(40px,5.2vw,84px);line-height:1.06}
 .gen__close{margin:clamp(18px,2.6vh,26px) 0 0 auto;max-width:34ch;font:500 clamp(16px,1.3vw,19px)/1.55 var(--f-sans);color:var(--ink-2)}
 /* below the single row the frames break apart, so the rail turns vertical and threads the stack
    down the margin instead, where it can never reach a label */
@@ -1098,7 +1148,7 @@ html.lenis{scroll-behavior:auto}
 .done{display:flex;flex-direction:column;outline:none}
 .done[hidden]{display:none}
 .done__kicker{margin-top:clamp(26px,6vh,64px)}
-.done__title{margin:14px 0 30px;font-size:clamp(60px,8vw,104px);line-height:.9;padding-bottom:.04em}
+.done__title{margin:14px 0 30px;font-size:clamp(60px,8vw,104px);line-height:1.06;padding-bottom:.04em}
 .done__text{font:600 18px/1.5 var(--f-sans);max-width:34ch}
 .done__text + .done__text{margin-top:10px}
 .done__text--muted{font-weight:500;font-size:16px;color:var(--ink-2)}

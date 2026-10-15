@@ -15,8 +15,6 @@
   var track = box && box.querySelector('.spon__track');
   if (!track) return;
   var motion = matchMedia('(prefers-reduced-motion: reduce)');
-  var pause = document.querySelector('.spon__pause');
-  var paused = false;
 
   box.classList.add('is-live');                     // the stylesheet stands its animation down
   box.querySelectorAll('img').forEach(function (i) { i.draggable = false; });
@@ -32,7 +30,7 @@
     half = track.scrollWidth / 2;
     // Match the slower CSS drift, giving each mark time to be read.
     cruise = half / (innerWidth <= 760 ? 78 : 90);
-    if (!held && !hovered && !focused) v = paused ? 0 : cruise;
+    if (!held && !hovered && !focused) v = cruise;
   }
   function wrap() { if (half > 0) x = ((x % half) + half) % half; }
   function paint() { track.style.transform = 'translate3d(' + (-x).toFixed(2) + 'px,0,0)'; }
@@ -42,7 +40,7 @@
     var dt = Math.min(0.05, (t - last) / 1000 || 0.016);
     last = t;
     if (!held) {
-      var target = paused || hovered || focused ? 0 : cruise;
+      var target = hovered || focused ? 0 : cruise;
       // a fling slows like a coasting wheel; the drift picks itself back up more gently
       v += (target - v) * (1 - Math.exp(-dt * (Math.abs(v) > cruise ? 2.4 : 1.6)));
       x += v * dt;
@@ -128,20 +126,10 @@
   });
   box.addEventListener('focusout', function () { focused = false; });
 
-  if (pause) {
-    pause.hidden = motion.matches;
-    pause.addEventListener('click', function () {
-      paused = !paused;
-      v = 0;
-      pause.setAttribute('aria-pressed', String(paused));
-      pause.textContent = paused ? 'Resume motion' : 'Pause motion';
-    });
-  }
   function syncMotion() {
     held = false; pid = null; v = 0;
     box.classList.remove('is-held');
     box.classList.toggle('is-live', !motion.matches);
-    if (pause) pause.hidden = motion.matches;
     if (motion.matches) {
       cancelAnimationFrame(raf); raf = null; x = 0;
       track.style.transform = '';

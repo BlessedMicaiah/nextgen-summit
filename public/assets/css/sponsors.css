@@ -55,13 +55,6 @@
 .spon__foot{display:flex;align-items:center;justify-content:space-between;gap:16px;font:500 13px/1.6 var(--f-sans);color:var(--ink-2)}
 .spon__foot p{display:flex;align-items:center;gap:12px}
 .spon__foot p::before{content:"";width:22px;height:2px;background:var(--accent);flex:none}
-.spon__pause{flex:none;display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:0 15px;border-radius:999px;
-  border:1px solid var(--rule);font:700 10px/1.3 var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);
-  transition:border-color .3s var(--ease),color .3s var(--ease)}
-.spon__pause::before{content:"";width:8px;height:10px;border-inline:2.5px solid currentColor;box-sizing:border-box}
-.spon__pause[aria-pressed="true"]::before{width:0;height:0;border:0;border-left:8px solid currentColor;border-block:5px solid transparent}
-.spon__pause:hover{border-color:var(--accent);color:var(--ink)}
-.spon__pause[hidden]{display:none}
 
 /* ---------- About page: the directory ---------- */
 .ab--spon .spon__directory-title{margin-top:clamp(16px,2.4vh,24px);max-width:15ch;font-size:clamp(40px,5.4vw,84px);line-height:1.06;letter-spacing:-.035em}
@@ -112,5 +105,4 @@
   .spon__run{flex-wrap:wrap;justify-content:center;gap:14px;padding:0 var(--gutter)}
   .spon__run + .spon__run{display:none}
   .spon__card,.spon__card img,.spon__go{transition:none;transform:none!important}
-  .spon__pause{display:none}
 }

@@ -150,7 +150,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" href="assets/css/site.css?v=20261015-04">
 <link rel="stylesheet" href="assets/css/announce.css?v=20261015-03">
 <link rel="stylesheet" href="assets/css/names.css?v=20261015-03">
-<link rel="stylesheet" href="assets/css/sponsors.css?v=20261015-05">
+<link rel="stylesheet" href="assets/css/sponsors.css?v=20261015-06">
 <script src="assets/js/liquid.js?v=20261015-03" defer></script>
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="assets/vendor/lenis-1.3.26.min.js" defer></script>
@@ -162,7 +162,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="assets/js/names.js?v=20261015-03" defer></script>
 <script src="assets/js/counter.js?v=20261015-03" defer></script>
 <script src="assets/js/speakers.js?v=20261015-04" defer></script>
-<script src="assets/js/sponsors.js?v=20261015-04" defer></script>
+<script src="assets/js/sponsors.js?v=20261015-05" defer></script>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -535,6 +535,64 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </dialog>
   </section>
 
+  <!-- Sponsors: six equal runs keep the draggable marquee seamless at wide viewports.
+       Only the first run is announced and keyboard reachable. Keep the About directory in sync. -->
+  <section class="spon" id="sponsors" data-nav="paper" aria-labelledby="spon-title">
+    <div class="spon__head rv">
+      <div>
+        <p class="spon__eyebrow">Our sponsors</p>
+        <h2 class="spon__title wm" id="spon-title">Backing the<br>next generation.</h2>
+      </div>
+      <div class="spon__ctas">
+        <a class="btn spon__cta" href="/about/#sponsors">Meet our sponsors <span class="arr" aria-hidden="true">&rarr;</span></a>
+        <button class="spon__join" type="button" data-open="involved">Become a sponsor</button>
+      </div>
+    </div>
+    <div class="spon__marquee" id="sponsor-marquee" aria-label="Our sponsors">
+      <div class="spon__track">
+        <ul class="spon__run">
+          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="KingsPay (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="Maryland Bank PAC (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="Haptol Labs (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="Perissmos Healthcare Services Inc (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+        </ul>
+        <ul class="spon__run" aria-hidden="true">
+          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+        </ul>
+        <ul class="spon__run" aria-hidden="true">
+          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+        </ul>
+        <ul class="spon__run" aria-hidden="true">
+          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+        </ul>
+        <ul class="spon__run" aria-hidden="true">
+          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+        </ul>
+        <ul class="spon__run" aria-hidden="true">
+          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="spon__foot">
+      <p>Together, making NextGen possible.</p>
+    </div>
+  </section>
+
   <!-- 05 the invitation -->
   <section class="invite" id="details" data-nav="paper" aria-labelledby="invite-title">
     <div class="invite__liquid" aria-hidden="true">
@@ -705,65 +763,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p class="gen__end-kicker rv">One room</p>
       <p class="gen__end-title wm rv" style="--d:.1s">many paths.<br> one future.</p>
       <p class="gen__close rv" style="--d:.2s">From high school to college to the start of your career, NextGen brings young people ages 17–29 into one room.</p>
-    </div>
-  </section>
-
-  <!-- Sponsors: six equal runs keep the draggable marquee seamless at wide viewports.
-       Only the first run is announced and keyboard reachable. Keep the About directory in sync. -->
-  <section class="spon" id="sponsors" data-nav="paper" aria-labelledby="spon-title">
-    <div class="spon__head rv">
-      <div>
-        <p class="spon__eyebrow">Our sponsors</p>
-        <h2 class="spon__title wm" id="spon-title">Backing the<br>next generation.</h2>
-      </div>
-      <div class="spon__ctas">
-        <a class="btn spon__cta" href="/about/#sponsors">Meet our sponsors <span class="arr" aria-hidden="true">&rarr;</span></a>
-        <button class="spon__join" type="button" data-open="involved">Become a sponsor</button>
-      </div>
-    </div>
-    <div class="spon__marquee" id="sponsor-marquee" aria-label="Our sponsors">
-      <div class="spon__track">
-        <ul class="spon__run">
-          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="KingsPay (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="Maryland Bank PAC (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="Haptol Labs (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="Perissmos Healthcare Services Inc (opens in a new tab)" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-        </ul>
-        <ul class="spon__run" aria-hidden="true">
-          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-        </ul>
-        <ul class="spon__run" aria-hidden="true">
-          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-        </ul>
-        <ul class="spon__run" aria-hidden="true">
-          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-        </ul>
-        <ul class="spon__run" aria-hidden="true">
-          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-        </ul>
-        <ul class="spon__run" aria-hidden="true">
-          <li class="spon__logo" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:70px"><a class="spon__card" href="https://www.mdbankers.com" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/maryland-bank-pac.png" width="323" height="143" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:22px"><a class="spon__card" href="https://www.haptollabs.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/haptol-labs.png" width="396" height="52" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-          <li class="spon__logo" style="--h:92px"><a class="spon__card" href="https://www.perissmoshealthcare.com/" target="_blank" rel="noopener" tabindex="-1"><img src="/assets/img/sponsors/perissmos-healthcare.png" width="155" height="200" alt="" loading="eager" decoding="async"><span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="spon__foot">
-      <p>Together, making NextGen possible.</p>
-      <button class="spon__pause" type="button" aria-controls="sponsor-marquee" aria-pressed="false" hidden>Pause motion</button>
     </div>
   </section>
 

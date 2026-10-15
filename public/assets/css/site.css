@@ -488,7 +488,6 @@ h1,h2,h3,p{margin:0}
 .room__title{font-size:clamp(50px,7.6vw,124px);line-height:.94;text-shadow:0 2px 44px rgba(4,9,10,.6)}
 .room__note{justify-self:end;text-align:right;padding-bottom:.9em}
 .room__note p{margin-top:8px;font:600 13px/1.45 var(--f-sans);color:rgba(255,255,255,.76);max-width:30ch;margin-left:auto}
-.room__note .draft-note{margin-top:0;max-width:none;white-space:nowrap;color:var(--accent)}
 .room__hint{margin:clamp(26px,4vh,42px) auto 0;width:max-content;max-width:100%;padding:13px clamp(20px,4vw,30px);
   border:1px solid rgba(31,199,190,.42);border-radius:999px;
   font:700 11px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.82);text-align:center}
@@ -759,16 +758,30 @@ button.card__face{cursor:pointer}
 .exp--one{position:relative}
 /* the base deck only honours --x/--y/--r once it is "open"; inside an experience the cards are
    always placed by them, and the experience decides what they are */
-.exp .card{transform:translate(-50%,-50%) translate(var(--x),var(--y)) rotate(var(--r))}
+/* --o is set on the deck by the scroll and must reach the cards by inheritance, so the
+   fallback lives on the wrapper. Declaring it on .card itself would beat the inherited value
+   and pin every card at full spread. */
+.exp{--o:1}
+.exp .card{
+  transform:translate(-50%,-50%)
+    translate(calc(var(--x) * var(--o)), calc(var(--y) * var(--o) + (1 - var(--o)) * 30px))
+    rotate(calc(var(--sr) * (1 - var(--o)) + var(--r) * var(--o)))}
+/* while the scroll is driving the deal, easing would only make the cards lag the finger */
+.exp--one .deck.is-live .card{transition:opacity .35s var(--ease)}
+/* the NextGen card holds the top of the pile until the deal is under way */
+.exp--one .deck.is-lid .card[data-grp="mark"]{z-index:20}
 .exp .card::after{display:none}
 /* the deck and everything that belongs under it travel together while the section scrolls */
 .exp--one .exp__hold{position:sticky;top:calc(var(--nav-h) + clamp(6px,1.6vh,18px))}
 .exp--one .deck{--sp:calc(var(--cw) * .98);height:calc(var(--ch) + clamp(52px,8vw,96px))}
-.exp--one .deck .card{transition:transform .9s cubic-bezier(.2,.9,.25,1),opacity .5s var(--ease)}
+.exp--one .deck .card{transition:transform .66s cubic-bezier(0,.78,.22,1),opacity .45s var(--ease)}
 /* stacked: every card on the pile, the NextGen card facing out */
 .exp--one .card{--x:0px;--y:0px;--r:calc(var(--i) * 1.6deg);z-index:calc(10 - var(--i))}
 .exp--one .card[data-grp="mark"]{z-index:20}
 /* a group that is not being shown waits on the pile and takes no clicks */
+/* a group that is not being dealt waits face down on the pile and takes no clicks. The
+   entrance spread happens inside is-a, which lights group A again below, so hiding both
+   here costs the first three nothing and keeps them from showing through the second three. */
 .exp--one .card[data-grp="a"],.exp--one .card[data-grp="b"]{opacity:0;pointer-events:none}
 /* --- the first three --- */
 .exp--one .deck.is-a .card[data-grp="mark"]{z-index:1;--r:-2deg}
@@ -850,6 +863,10 @@ button.card__face{cursor:pointer}
 @media (max-width:760px){
   /* three across a phone means a hand of cards, overlapping, rather than a row */
   .exp--one .deck{--sp:calc(var(--cw) * .74);height:calc(var(--ch) + clamp(74px,16vw,110px))}
+  /* fanned on a phone the hands overlap the pile card and leave only its footer showing, which
+     reads as a stray line of type rather than as a card. The pile keeps its edge; the line goes. */
+  .exp--one .deck.is-a .card[data-grp="mark"] .card__foot,
+  .exp--one .deck.is-b .card[data-grp="mark"] .card__foot{opacity:0}
   .exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(2),
   .exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(5){--y:34px;--r:-8.5deg}
   .exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(3),

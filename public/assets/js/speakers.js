@@ -88,7 +88,8 @@
         { k: 'Education', v: 'Stevenson University, Business Communication', icon: 'cap' },
         { k: 'Initiative', v: 'The Bloom Initiative: healthy relationships education', icon: 'heart' },
         { k: 'Talent', v: 'Baton twirling', icon: 'star' }
-      ]
+      ],
+      link: 'https://www.linkedin.com/in/gianna-romero-26b855361'
     },
 
     /* SUPPLIED, NOT YET VERIFIED. Nothing found connecting this name to Revival Financial,
@@ -169,7 +170,7 @@
     /* --- option one --- */
     var STATES = ['is-stack', 'is-a', 'is-shut', 'is-b'];
     var SET_TEXT = ['', 'First three of six', 'The NextGen collection', 'Second three of six'];
-    var stateAt = -1, oneRaf = null;
+    var stateAt = -1, oneRaf = null, openAt = -1;
 
     function setState(i) {
       if (i === stateAt) return;
@@ -185,15 +186,38 @@
       });
     }
 
+    /* The opening is tied to the scroll rather than fired by it. --o runs 0 to 1 as the deck
+       comes up the screen and the cards read it directly, so they start separating on the first
+       pixel of scroll instead of waiting for a threshold. Measured before this: the deck sat
+       still for 1075px -- more than a whole screen -- because progress only began once the
+       section's top had passed the top of the viewport, and then a dead band ate 14% more. */
+    var LEAD = 0.92;        // progress starts while the deck is still almost a screen down
+    var SPREAD = 0.16;      // and the cards are fully dealt this far into the run
+
     function readScroll() {
       oneRaf = null;
       if (mode !== 'one') return;
+      var vh = window.innerHeight;
       var r = exp.getBoundingClientRect();
-      var travel = r.height - window.innerHeight;
-      if (travel <= 0) { setState(1); return; }
-      var p = Math.min(1, Math.max(0, -r.top / travel));
-      // four states across the section: pile, first three, the deck closed, second three
-      setState(p < 0.14 ? 0 : p < 0.46 ? 1 : p < 0.60 ? 2 : 3);
+      var head = vh * LEAD;
+      var span = head + r.height - vh;
+      if (span <= 0) { deckEl.style.setProperty('--o', '1'); setState(1); return; }
+      var p = Math.min(1, Math.max(0, (head - r.top) / span));
+
+      var o = Math.min(1, p / SPREAD);
+      if (o !== openAt) {
+        openAt = o;
+        deckEl.style.setProperty('--o', o.toFixed(4));
+        // while the scroll is driving it the cards must not also be easing, or they lag behind
+        deckEl.classList.toggle('is-live', o < 1);
+        // the NextGen card faces out until the deal is properly under way
+        deckEl.classList.toggle('is-lid', o < 0.4);
+      }
+      /* The lead-in means p is already part-spent by the time the deck settles, so the bands
+         sit later than they would without it: the first three are dealt by 0.16 and then hold
+         while the deck is stuck, the deck closes on the NextGen card, and the second three are
+         dealt. */
+      setState(p < 0.56 ? 1 : p < 0.72 ? 2 : 3);
     }
     function onScroll() { if (oneRaf === null) oneRaf = requestAnimationFrame(readScroll); }
 

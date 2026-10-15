@@ -518,8 +518,9 @@ h1,h2,h3,p{margin:0}
 .room__grain{position:absolute;inset:0;opacity:.14;background-size:150px 150px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.5 1.45'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23g)'/%3E%3C/svg%3E")}
 
-/* ---------- the words above the gallery ---------- */
+/* ---------- the words above the collection ---------- */
 .room__head{display:grid;gap:20px}
+/* 1.06, not .94: Fraunces hangs its descenders well below the baseline and .94 clipped them */
 .room__title{font-size:clamp(50px,7.6vw,124px);line-height:1.06;text-shadow:0 2px 44px rgba(4,9,10,.6)}
 .room__hint{margin:clamp(26px,4vh,42px) auto 0;width:max-content;max-width:100%;padding:13px clamp(20px,4vw,30px);
   border:1px solid rgba(31,199,190,.42);border-radius:999px;
@@ -531,27 +532,58 @@ h1,h2,h3,p{margin:0}
   .room__photo{text-align:left}
 }
 
-/* ---------- the gallery ----------
-   Six cards, all of them on screen: three and three on a desktop, two and three on a phone.
-   The card is the same component it has always been -- the grid only decides where it sits, so
-   nothing about the stock, the glow or the name plate is written twice. Each card is a control
-   and opens the collectible; the gallery itself never moves. */
-.gal{list-style:none;margin:clamp(38px,6vh,70px) auto 0;padding:0;
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:clamp(30px,4.6vh,54px) clamp(18px,2.6vw,38px);
-  max-width:calc(306px * 3 + 38px * 2)}
-.card{position:relative;margin:0}
-/* the light the card leaves on the floor of the stage */
+/* ---------- the collection ----------
+   Six cards set out the way someone would set out a collection on a table: each at its own
+   --x/--y/--r, leaning a little, overlapping a little at the edges. Four over two on a desktop,
+   three over three on a phone. Nothing deals, shuffles or cycles -- all six are simply there,
+   and each one opens the collectible.
+
+   The positions are the only thing that changes between the two layouts, which is why they are
+   three numbers per card and nothing else. Every card carries its own z-index: one value across
+   a row flattens the stacking and lets a neighbour cover a name.
+
+   --sp is the step between card centres, and it is set from measurement rather than taste. The
+   widest line a card says -- the SPEAKER label, or a long surname -- runs to 87% of the card,
+   so there is only about 6% clear each side, and a lean of 5 degrees spends most of that before
+   the boxes even touch. Sweeping --sp against the rendered glyphs put the limit just above one
+   card width: below it a neighbour starts eating the name. So the cards are stepped a whisker
+   over their own width and it is the lean that makes them overlap, at the corners, the way a
+   spread of real cards does. */
+.gal{position:relative;list-style:none;margin:clamp(32px,5.2vh,62px) auto 0;padding:0;
+  --cw:clamp(144px,16.2vw,242px);
+  --ch:calc(var(--cw) * 1.4);
+  --sp:calc(var(--cw) * 1.02);
+  height:calc(var(--ch) * 2.16);
+  max-width:calc(var(--cw) * 4.28)}
+.gal .card{position:absolute;left:50%;top:50%;width:var(--cw);
+  transform:translate(-50%,-50%) translate(var(--x,0px),var(--y,0px)) rotate(var(--r,0deg))}
+/* four across the top */
+.gal .card:nth-child(1){--x:calc(var(--sp) * -1.5);--y:calc(var(--ch) * -.54);--r:-5.6deg;z-index:11}
+.gal .card:nth-child(2){--x:calc(var(--sp) * -.5);--y:calc(var(--ch) * -.57);--r:-1.9deg;z-index:12}
+.gal .card:nth-child(3){--x:calc(var(--sp) * .5);--y:calc(var(--ch) * -.56);--r:2.1deg;z-index:13}
+.gal .card:nth-child(4){--x:calc(var(--sp) * 1.5);--y:calc(var(--ch) * -.52);--r:5.8deg;z-index:14}
+/* two set down below, centred under the four */
+.gal .card:nth-child(5){--x:calc(var(--sp) * -.52);--y:calc(var(--ch) * .55);--r:-3.4deg;z-index:15}
+.gal .card:nth-child(6){--x:calc(var(--sp) * .52);--y:calc(var(--ch) * .58);--r:3.5deg;z-index:16}
+/* the light each card leaves on the floor of the stage */
 .card::after{content:"";position:absolute;left:14%;right:14%;bottom:-12px;height:26px;border-radius:50%;
   pointer-events:none;background:radial-gradient(50% 50% at 50% 50%,rgba(31,199,190,.5) 0%,rgba(31,199,190,0) 70%)}
 
-
-@media (max-width:1100px){.gal{gap:clamp(26px,4vh,46px) clamp(15px,2.2vw,30px)}}
+@media (max-width:1100px){.gal{--cw:clamp(132px,19.6vw,210px)}}
 @media (max-width:760px){
-  /* two across and three down. Three columns on a phone would put the names below the size they
-     can be read at, so the gallery drops a column rather than shrinking the portraits. */
-  .gal{grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:clamp(26px,5.4vw,40px) clamp(14px,3.6vw,24px);max-width:440px}
+  /* Three and three on a phone. The collection takes the full width rather than sitting inside
+     the gutter -- three cards across a 375px screen need every pixel, and a spread that reaches
+     the edges reads as a collection rather than a shrunken grid. --cw is solved from the width
+     a row actually occupies: two steps, one card, and the sideways bleed the lean adds. */
+  .gal{--cw:min(calc((100vw - 8px) / 3.19),160px);--sp:calc(var(--cw) * 1.01);
+    height:calc(var(--ch) * 2.2);max-width:none;
+    margin-inline:calc(var(--gutter) * -1);width:calc(100% + var(--gutter) * 2)}
+  .gal .card:nth-child(1){--x:calc(var(--sp) * -1);--y:calc(var(--ch) * -.54);--r:-5.2deg;z-index:11}
+  .gal .card:nth-child(2){--x:0px;--y:calc(var(--ch) * -.58);--r:1.2deg;z-index:13}
+  .gal .card:nth-child(3){--x:calc(var(--sp) * 1);--y:calc(var(--ch) * -.53);--r:5.4deg;z-index:12}
+  .gal .card:nth-child(4){--x:calc(var(--sp) * -1);--y:calc(var(--ch) * .55);--r:-4.8deg;z-index:14}
+  .gal .card:nth-child(5){--x:0px;--y:calc(var(--ch) * .59);--r:-1deg;z-index:16}
+  .gal .card:nth-child(6){--x:calc(var(--sp) * 1);--y:calc(var(--ch) * .54);--r:5deg;z-index:15}
 }
 
 .card__face{position:relative;display:block;width:100%;padding:0;border:0;background:none;text-align:left;

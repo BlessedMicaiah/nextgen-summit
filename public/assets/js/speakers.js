@@ -17,6 +17,8 @@
   var gal = $('[data-gal]');
   var dlg = $('#speaker');
   if (!gal || !dlg) return;
+
+  // the card-into-collectible morph below asks whether motion is wanted before it runs
   var reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 
   /* ---------- the people ----------

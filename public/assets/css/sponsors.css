@@ -48,3 +48,24 @@
   .spon__run{flex-wrap:wrap;justify-content:center;row-gap:28px;padding:0 var(--gutter)}
   .spon__run + .spon__run{display:none}
 }
+
+/* ---------- the homepage section ----------
+   The About page shows the marquee on its own under a heading; the homepage wraps it in a
+   section with its own title, a link through to /about/#sponsors and a line of thanks.
+   Only the section furniture lives here -- the marquee itself is shared, above. */
+.spon{padding:clamp(64px,9vw,128px) 0;background:var(--paper)}
+.spon__head,.spon__foot{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gutter)}
+.spon__head{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:clamp(32px,4vw,56px)}
+.spon__eyebrow{margin-bottom:18px;font:800 11px/1.3 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
+.spon__title{font-size:clamp(38px,4.6vw,70px);line-height:1.03}
+.spon__cta{flex:none;margin-bottom:4px}
+.spon__foot{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;font:500 12px/1.6 var(--f-sans);color:var(--ink-2)}
+.spon__pause{flex:none;min-height:44px;font:700 10px/1.3 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink)}
+.spon__pause:hover{text-decoration:underline;text-underline-offset:4px}
+@media (max-width:760px){
+  .spon__head{align-items:flex-start;flex-direction:column;gap:26px}
+  .spon__foot{align-items:center;font-size:11px;gap:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  .spon__pause{display:none}
+}

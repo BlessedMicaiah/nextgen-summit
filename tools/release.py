@@ -50,13 +50,16 @@ def main():
     parser.add_argument('target', choices=BRANCH)
     parser.add_argument('--overlay', action='store_true')
     parser.add_argument('--remote', default='origin', help='Git remote to verify (default: origin)')
+    parser.add_argument('--remote-branch', help='Remote release branch (defaults to the local release branch)')
     args = parser.parse_args()
     target = args.target
     branch = BRANCH[target]
     overlay = args.overlay
     remote = args.remote
+    remote_branch = args.remote_branch or branch
     if remote not in git('remote').splitlines():
         stop('choose a configured Git remote.')
+    git('check-ref-format', 'refs/heads/' + remote_branch)
     if overlay and target != 'staging':
         stop('--overlay is only supported for staging.')
 
@@ -64,8 +67,8 @@ def main():
         stop(f'{target} is built from {branch}; check it out first.')
     if git('status', '--porcelain', '--untracked-files=no' if overlay else '--untracked-files=all', '--', 'public', 'tools'):
         stop('uncommitted changes. Commit them and push to GitHub first.')
-    git('fetch', '--quiet', remote, branch)
-    head, remote_head = git('rev-parse', 'HEAD'), git('rev-parse', f'{remote}/{branch}')
+    git('fetch', '--quiet', remote, remote_branch)
+    head, remote_head = git('rev-parse', 'HEAD'), git('rev-parse', f'{remote}/{remote_branch}')
     if head != remote_head:
         stop(f'{branch} is not identical to GitHub ({head[:7]} here, {remote_head[:7]} on {remote}). Push first.')
     if not overlay and not os.path.isfile(os.path.join(PUBLIC, 'api', 'config.php')):

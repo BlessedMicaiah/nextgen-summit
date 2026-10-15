@@ -96,6 +96,8 @@ archive is for individual file uploads only: do not use a deployment operation t
 the document root. Verify staging's noindex headers and the updated pages after uploading.
 Use `--remote upstream` when releasing from the shared `oasislifesprings-cloud` repository;
 the default `origin` remote is the separate `BlessedMicaiah` fork in this checkout.
+If shared-repository write access is unavailable, push a dedicated release branch to the
+fork and pass `--remote origin --remote-branch <release-branch>` to verify that exact commit.
 
 The speaker-switch regression check runs with Playwright installed:
 `node tools/verify-speaker-switch.cjs http://127.0.0.1:4173/` (or the staging URL).

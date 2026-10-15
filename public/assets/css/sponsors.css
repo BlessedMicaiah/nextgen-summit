@@ -1,0 +1,50 @@
+/* ============================================================================
+   NextGen Summit — sponsors, on the About page
+   One strip of logos sliding left on a loop. The track holds six identical runs
+   and moves by exactly half its width, so the second half lands where the first
+   began and the loop has no seam. Composition only: every colour and face comes
+   from site.css; the section itself is an About section (.ab, about.css).
+   ========================================================================= */
+
+/* the heading keeps the page's measure; the strip runs to both edges, stepping out through the
+   gutter the section pads it in by */
+.ab--spon{max-width:none}
+.ab--spon > .ab__k{max-width:var(--maxw);margin-inline:auto}
+.ab--spon > .spon__marquee{margin-inline:calc(var(--gutter) * -1)}
+
+/* the edges fade into the paper, so logos arrive and leave rather than being cut off */
+.spon__marquee{--gap:clamp(56px,6.5vw,104px);margin-top:clamp(30px,5vh,52px);overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent 100%)}
+.spon__track{display:flex;width:max-content;animation:spon-slide 62s linear infinite}
+/* it stops while a logo is pointed at or has keyboard focus, so it can be read and clicked */
+.spon__marquee:hover .spon__track,.spon__marquee:focus-within .spon__track{animation-play-state:paused}
+.spon__run{display:flex;align-items:center;gap:var(--gap);list-style:none;margin:0;padding:0 calc(var(--gap) / 2)}
+.spon__logo{flex:none;display:flex;align-items:center;height:100px}
+.spon__logo img{width:auto;height:var(--h,40px)}
+.spon__logo a{display:block;border-radius:4px;transition:opacity .3s var(--ease)}
+@media (hover:hover){.spon__logo a:hover{opacity:.72}}
+
+@keyframes spon-slide{to{transform:translate3d(-50%,0,0)}}
+/* once sponsors.js has taken over, it moves the strip and the visitor can take hold of it: drag
+   with a mouse, swipe on a touch screen (an upright swipe still scrolls the page), or scroll
+   sideways on a trackpad */
+.spon__marquee.is-live .spon__track{animation:none;will-change:transform}
+.spon__marquee.is-live{cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.spon__marquee.is-live.is-held{cursor:grabbing}
+.spon__marquee.is-live img{-webkit-user-drag:none;pointer-events:none}
+
+@media (max-width:760px){
+  .spon__marquee{--gap:44px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%)}
+  .spon__track{animation-duration:46s}
+  .spon__logo{height:76px}
+  .spon__logo img{height:calc(var(--h,40px) * .76)}
+}
+
+/* no motion: the first run stands still, centred, and wraps if the screen is narrow */
+@media (prefers-reduced-motion:reduce){
+  .spon__marquee{-webkit-mask-image:none;mask-image:none}
+  .spon__track{animation:none;width:auto;justify-content:center}
+  .spon__run{flex-wrap:wrap;justify-content:center;row-gap:28px;padding:0 var(--gutter)}
+  .spon__run + .spon__run{display:none}
+}

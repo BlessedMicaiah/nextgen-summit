@@ -1,12 +1,7 @@
 /* NextGen Summit — featured speakers.
-   Three states. A deck of four collectible cards on a dark stage; the chosen card, enlarged;
-   and its reverse, with the credentials, when it is turned over.
-
-   The deck does one thing: it opens. The cards sit stacked, NextGen on top, until the section
-   comes into view, and then each slides and turns to the place CSS has already given it. It is
-   observed once and then forgotten, so a small scroll cannot make it open and close again, and
-   nothing animates afterwards. Where the cards land is in the stylesheet, because that is where
-   the difference between a wide fan and a phone's two-by-two belongs.
+   The lineup is a plain grid of collectible cards, laid out by the stylesheet and never moved
+   from here. This file does two things: it holds what each card says, and it opens the chosen
+   card -- enlarged, and turning over to its reverse for the credentials.
 
    Every line a card says is written here, as text, so it can be corrected without touching a
    picture. Each line comes from an authoritative source for that person. */
@@ -19,10 +14,11 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
-  var deck = $('[data-deck]');
+  var gal = $('[data-gal]');
   var dlg = $('#speaker');
-  if (!deck || !dlg) return;
+  if (!gal || !dlg) return;
 
+  // the card-into-collectible morph below asks whether motion is wanted before it runs
   var reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 
   /* ---------- the people ----------
@@ -44,14 +40,14 @@
     },
     tisha: {
       first: 'Tisha', last: 'Edwards',
-      role: 'President &amp; CEO <span aria-hidden="true">&middot;</span> Maryland Bankers Association',
-      roleFlat: 'President and CEO, Maryland Bankers Association',
+      role: 'President &amp; CEO, Maryland Bankers Association <span aria-hidden="true">&middot;</span> Former Secretary of Appointments, State of Maryland',
+      roleFlat: 'President and CEO, Maryland Bankers Association; Former Secretary of Appointments, State of Maryland',
       suffix: 'Tisha Edwards, MSW, JD',
       shot: 'tisha-edwards',
       wins: [
         { k: '2025', v: 'President &amp; CEO, Maryland Bankers Association', icon: 'case' },
         { k: '2025', v: 'Joined the University System of Maryland Board of Regents', icon: 'cap' },
-        { k: 'Public service', v: 'Former Maryland Secretary of Appointments', icon: 'people' },
+        { k: 'Public service', v: 'Former Secretary of Appointments, State of Maryland', icon: 'people' },
         { k: 'Education', v: 'Former Interim CEO, Baltimore City Public Schools', icon: 'book' }
       ],
       link: 'https://www.linkedin.com/in/tisha-edwards'
@@ -72,6 +68,58 @@
         { k: 'Global', v: 'Born in Lagos; has lived in Beijing, San Francisco and London', icon: 'globe' }
       ],
       link: 'https://www.linkedin.com/in/kennedyekezie/'
+    },
+
+    /* Verified against local reporting and her university: crowned Miss Maryland in June 2026,
+       a business communication major at Stevenson in Owings Mills, the Bloom Initiative is her
+       own platform on healthy relationships, and the baton twirling won the talent segment. */
+    gianna: {
+      first: 'Gianna', last: 'Romero',
+      role: 'Miss Maryland 2026',
+      roleFlat: 'Miss Maryland 2026',
+      shot: 'gianna-romero',                                    // portrait still to come
+      wins: [
+        { k: '2026', v: 'Crowned Miss Maryland', icon: 'crown' },
+        { k: 'Education', v: 'Stevenson University, Business Communication', icon: 'cap' },
+        { k: 'Initiative', v: 'The Bloom Initiative: healthy relationships education', icon: 'heart' },
+        { k: 'Talent', v: 'Baton twirling', icon: 'star' }
+      ],
+      link: 'https://www.linkedin.com/in/gianna-romero-26b855361'
+    },
+
+    /* SUPPLIED, NOT YET VERIFIED. Nothing found connecting this name to Revival Financial,
+       Towson, or the Araminta board; Araminta's own board announcement does not list him.
+       Do not publish until someone confirms it. */
+    michael: {
+      first: 'Michael', last: 'Ley',
+      role: 'Entrepreneur and investor <span aria-hidden="true">&middot;</span> Founder, Revival Financial',
+      roleFlat: 'Entrepreneur and investor, Founder of Revival Financial',
+      shot: 'michael-ley',
+      unverified: true,
+      wins: [
+        { k: 'Founder', v: 'Revival Financial', icon: 'people' },
+        { k: 'Education', v: 'Towson University', icon: 'cap' },
+        { k: 'Experience', v: 'Background in marketing and management', icon: 'case' },
+        { k: 'Community', v: 'Board member, Araminta Freedom Initiative', icon: 'heart' }
+      ],
+      link: 'https://www.linkedin.com/in/michael-ley-004ba631'
+    },
+
+    /* The Mindful Project, the conversation-card game and the mental-health work are confirmed
+       from his own podcast interview. The platform handles are not, so the card names the
+       platforms without claiming an audience on them. */
+    jack: {
+      first: 'Jack', last: 'Scalise',
+      role: 'Content creator <span aria-hidden="true">&middot;</span> Social media influencer',
+      roleFlat: 'Content creator and social media influencer',
+      shot: 'jack-scalise',
+      wins: [
+        { k: 'Content', v: 'Positive, motivational videos', icon: 'play' },
+        { k: 'Platforms', v: 'Instagram and TikTok', icon: 'people' },
+        { k: 'Impact', v: 'Mental health advocacy and human connection', icon: 'heart' },
+        { k: 'Project', v: 'The Mindful Project, a conversation-card concept', icon: 'bulb' }
+      ],
+      link: 'https://www.linkedin.com/in/jack-scalise'
     }
   };
 
@@ -82,29 +130,31 @@
     book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.6S10.4 4.8 4.8 4.8v12.6c5.6 0 7.2 1.8 7.2 1.8s1.6-1.8 7.2-1.8V4.8C13.6 4.8 12 6.6 12 6.6z"/><path d="M12 6.6v12.6"/></svg>',
     case: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.2" y="7.2" width="17.6" height="12.4" rx="1.8"/><path d="M8.8 7.2V5.6a1.6 1.6 0 0 1 1.6-1.6h3.2a1.6 1.6 0 0 1 1.6 1.6v1.6M3.2 12.4h17.6"/></svg>',
     cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.4 21.2 9 12 13.6 2.8 9z"/><path d="M6.4 11v4.6c0 1.4 2.5 2.6 5.6 2.6s5.6-1.2 5.6-2.6V11"/></svg>',
+    crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 7.6l3.3 3.1L12 5.2l5.3 5.5 3.3-3.1-1.5 10.2H4.9z"/><path d="M4.9 17.8h14.2"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.6S3.9 14.9 3.9 9.6A4.1 4.1 0 0 1 12 7.9a4.1 4.1 0 0 1 8.1 1.7c0 5.3-8.1 10-8.1 10z"/></svg>',
+    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="5.2" width="17.2" height="13.6" rx="2.6"/><path d="M10.4 9.6l4.6 2.6-4.6 2.6z"/></svg>',
+    bulb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.3 17.2a6 6 0 1 1 5.4 0"/><path d="M9.6 17.4h4.8M10.4 20.2h3.2"/></svg>',
     globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c2.3 2.4 3.4 5.2 3.4 8.4s-1.1 6-3.4 8.4c-2.3-2.4-3.4-5.2-3.4-8.4s1.1-6 3.4-8.4z"/></svg>'
   };
 
-  /* ---------- state one: the deck opens, once ---------- */
-  function openDeck() { deck.classList.add('is-open'); }
-
-  if (reduce.matches || !('IntersectionObserver' in window)) {
-    openDeck();                                      // already laid out: nothing to sit through
-  } else {
-    new IntersectionObserver(function (es, self) {
-      if (!es[0].isIntersecting) return;
-      self.disconnect();                             // opened once; there is nothing left to watch
-      openDeck();
-    }, { threshold: 0.22, rootMargin: '0px 0px -8% 0px' }).observe(deck);
-  }
-
-  /* ---------- states two and three: the collectible ---------- */
+  /* ---------- the collectible ---------- */
   var front = $('[data-sp-front]', dlg);
   var back = $('[data-sp-back]', dlg);
   var opener = null;
 
+  function hasShot(key) { return !!(PEOPLE[key] && PEOPLE[key].shot); }
+
+  /* A speaker with no portrait yet shows their name set in the house face rather than a
+     stand-in picture. Give the card a `shot` and it becomes a photograph with no other
+     change. */
   function shotTag(key, cls, alt) {
     var p = PEOPLE[key];
+    if (!p.shot) {
+      return '<span class="sp__await' + (cls ? ' ' + cls : '') + '">' +
+        '<span class="sp__await-n wm">' + p.first + '<br>' + p.last + '</span>' +
+        '<span class="sp__await-k">Portrait to come</span></span>';
+    }
     return '<img class="' + cls + '" src="assets/img/speakers/' + p.shot + '-620.jpg"' +
       ' srcset="assets/img/speakers/' + p.shot + '-620.jpg 620w, assets/img/speakers/' + p.shot + '-900.jpg 900w"' +
       ' sizes="(max-width:560px) 94vw, 430px" width="900" height="1260" decoding="async" alt="' + alt + '">';
@@ -179,17 +229,57 @@
     $$('a,button', isBack ? back : front).forEach(function (n) { n.removeAttribute('tabindex'); });
   }
 
+  /* The card you choose lifts out of the deck and grows into the collectible; on the way out it
+     shrinks back into its place. The deck card is hidden meanwhile, so there is only ever one of
+     it. Its centre is read from the screen (rotation does not move a centre) and its width from
+     layout (rotation would inflate a measured box); both faces are 5:7, so one scale fits. The
+     details then rise in from the stylesheet (.sp.is-reveal). Reduced motion keeps the plain fade. */
+  var inner = $('.sp__in', dlg);
+  var canMorph = !reduce.matches && typeof inner.animate === 'function';
+  var leaving = false;
+
+  function slot(btn) {
+    var stock = $('.card__stock', btn) || btn;
+    var li = btn.closest('.card');
+    var a = stock.getBoundingClientRect(), b = inner.getBoundingClientRect();
+    return 'translate(' + ((a.left + a.width / 2) - (b.left + b.width / 2)) + 'px,' +
+      ((a.top + a.height / 2) - (b.top + b.height / 2)) + 'px) rotate(' +
+      ((li && getComputedStyle(li).getPropertyValue('--r').trim()) || '0deg') + ') scale(' +
+      (stock.offsetWidth / (inner.offsetWidth || 1)) + ')';
+  }
+
+  function lift(btn, on) {
+    var li = btn && btn.closest('.card');
+    if (li) li.classList.toggle('is-lifted', on);
+  }
+
   function open(btn) {
     if (!paint(btn.getAttribute('data-spk'))) return;
     opener = btn;
+    leaving = false;
     face(false);                                     // every opening starts on the front
+    dlg.classList.toggle('is-morph', canMorph);
+    dlg.classList.toggle('is-reveal', canMorph);
     if (typeof dlg.showModal === 'function') dlg.showModal();
     else dlg.setAttribute('open', '');
+    if (!canMorph) return;
+    inner.animate([{ transform: slot(btn) }, { transform: 'none' }],
+      { duration: 680, easing: 'cubic-bezier(.16,1,.3,1)' });
+    lift(btn, true);
   }
 
-  function close() { if (dlg.open) dlg.close(); }
+  function close() {
+    if (!dlg.open || leaving) return;
+    if (!canMorph || !opener || !opener.isConnected) { dlg.close(); return; }
+    leaving = true;
+    dlg.classList.add('is-closing');
+    var to = slot(opener);
+    var run = inner.animate([{ transform: 'none' }, { transform: to }],
+      { duration: 440, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+    run.onfinish = run.oncancel = function () { if (dlg.open) dlg.close(); };
+  }
 
-  deck.addEventListener('click', function (e) {
+  gal.addEventListener('click', function (e) {
     var btn = e.target.closest ? e.target.closest('[data-spk]') : null;
     if (btn) open(btn);
   });
@@ -201,8 +291,19 @@
     if (!e.target.closest('.sp__in')) close();
   });
 
+  // Escape goes the same way out as the close button, so the card still returns to the deck
+  dlg.addEventListener('cancel', function (e) {
+    if (!canMorph) return;
+    e.preventDefault();
+    close();
+  });
+
   dlg.addEventListener('close', function () {
     face(false);                                     // reset for the next one
+    if (inner.getAnimations) inner.getAnimations().forEach(function (a) { a.cancel(); });
+    dlg.classList.remove('is-closing', 'is-reveal', 'is-morph');
+    leaving = false;
+    lift(opener, false);                             // back in the deck before it takes focus
     if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     opener = null;
   });

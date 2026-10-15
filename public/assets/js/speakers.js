@@ -24,6 +24,7 @@
   if (!deck || !dlg) return;
 
   var reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var hoverMQ = window.matchMedia ? matchMedia('(hover:hover) and (pointer:fine)') : { matches: false };
 
   /* ---------- the people ----------
      `wins` is the credential list on the back: a label and the thing itself. `icon` picks one
@@ -72,6 +73,57 @@
         { k: 'Global', v: 'Born in Lagos; has lived in Beijing, San Francisco and London', icon: 'globe' }
       ],
       link: 'https://www.linkedin.com/in/kennedyekezie/'
+    },
+
+    /* Verified against local reporting and her university: crowned Miss Maryland in June 2026,
+       a business communication major at Stevenson in Owings Mills, the Bloom Initiative is her
+       own platform on healthy relationships, and the baton twirling won the talent segment. */
+    gianna: {
+      first: 'Gianna', last: 'Romero',
+      role: 'Miss Maryland 2026',
+      roleFlat: 'Miss Maryland 2026',
+      shot: 'gianna-romero',                                    // portrait still to come
+      wins: [
+        { k: '2026', v: 'Crowned Miss Maryland', icon: 'crown' },
+        { k: 'Education', v: 'Stevenson University, Business Communication', icon: 'cap' },
+        { k: 'Initiative', v: 'The Bloom Initiative: healthy relationships education', icon: 'heart' },
+        { k: 'Talent', v: 'Baton twirling', icon: 'star' }
+      ]
+    },
+
+    /* SUPPLIED, NOT YET VERIFIED. Nothing found connecting this name to Revival Financial,
+       Towson, or the Araminta board; Araminta's own board announcement does not list him.
+       Do not publish until someone confirms it. */
+    michael: {
+      first: 'Michael', last: 'Ley',
+      role: 'Entrepreneur and investor <span aria-hidden="true">&middot;</span> Founder, Revival Financial',
+      roleFlat: 'Entrepreneur and investor, Founder of Revival Financial',
+      shot: 'michael-ley',
+      unverified: true,
+      wins: [
+        { k: 'Founder', v: 'Revival Financial', icon: 'people' },
+        { k: 'Education', v: 'Towson University', icon: 'cap' },
+        { k: 'Experience', v: 'Background in marketing and management', icon: 'case' },
+        { k: 'Community', v: 'Board member, Araminta Freedom Initiative', icon: 'heart' }
+      ],
+      link: 'https://www.linkedin.com/in/michael-ley-004ba631'
+    },
+
+    /* The Mindful Project, the conversation-card game and the mental-health work are confirmed
+       from his own podcast interview. The platform handles are not, so the card names the
+       platforms without claiming an audience on them. */
+    jack: {
+      first: 'Jack', last: 'Scalise',
+      role: 'Content creator <span aria-hidden="true">&middot;</span> Social media influencer',
+      roleFlat: 'Content creator and social media influencer',
+      shot: 'jack-scalise',
+      wins: [
+        { k: 'Content', v: 'Positive, motivational videos', icon: 'play' },
+        { k: 'Platforms', v: 'Instagram and TikTok', icon: 'people' },
+        { k: 'Impact', v: 'Mental health advocacy and human connection', icon: 'heart' },
+        { k: 'Project', v: 'The Mindful Project, a conversation-card concept', icon: 'bulb' }
+      ],
+      link: 'https://www.linkedin.com/in/jack-scalise'
     }
   };
 
@@ -82,20 +134,192 @@
     book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.6S10.4 4.8 4.8 4.8v12.6c5.6 0 7.2 1.8 7.2 1.8s1.6-1.8 7.2-1.8V4.8C13.6 4.8 12 6.6 12 6.6z"/><path d="M12 6.6v12.6"/></svg>',
     case: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.2" y="7.2" width="17.6" height="12.4" rx="1.8"/><path d="M8.8 7.2V5.6a1.6 1.6 0 0 1 1.6-1.6h3.2a1.6 1.6 0 0 1 1.6 1.6v1.6M3.2 12.4h17.6"/></svg>',
     cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.4 21.2 9 12 13.6 2.8 9z"/><path d="M6.4 11v4.6c0 1.4 2.5 2.6 5.6 2.6s5.6-1.2 5.6-2.6V11"/></svg>',
+    crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 7.6l3.3 3.1L12 5.2l5.3 5.5 3.3-3.1-1.5 10.2H4.9z"/><path d="M4.9 17.8h14.2"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.6S3.9 14.9 3.9 9.6A4.1 4.1 0 0 1 12 7.9a4.1 4.1 0 0 1 8.1 1.7c0 5.3-8.1 10-8.1 10z"/></svg>',
+    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="5.2" width="17.2" height="13.6" rx="2.6"/><path d="M10.4 9.6l4.6 2.6-4.6 2.6z"/></svg>',
+    bulb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.3 17.2a6 6 0 1 1 5.4 0"/><path d="M9.6 17.4h4.8M10.4 20.2h3.2"/></svg>',
     globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c2.3 2.4 3.4 5.2 3.4 8.4s-1.1 6-3.4 8.4c-2.3-2.4-3.4-5.2-3.4-8.4s1.1-6 3.4-8.4z"/></svg>'
   };
 
-  /* ---------- state one: the deck opens, once ---------- */
-  function openDeck() { deck.classList.add('is-open'); }
+  /* ---------- the two experiences ----------
+     One deck of cards in the markup and two ways of dealing it. Neither experience owns a card:
+     they move the same elements, and both open the same dialog from the same data.
 
-  if (reduce.matches || !('IntersectionObserver' in window)) {
-    openDeck();                                      // already laid out: nothing to sit through
-  } else {
-    new IntersectionObserver(function (es, self) {
-      if (!es[0].isIntersecting) return;
-      self.disconnect();                             // opened once; there is nothing left to watch
-      openDeck();
-    }, { threshold: 0.22, rootMargin: '0px 0px -8% 0px' }).observe(deck);
+     Option one is scroll driven. The section is tall and the deck sticks inside it, so where you
+     are in the section decides which of four states the deck is in. The state is a class, so the
+     movement between states is an ordinary CSS transition -- nothing is positioned frame by
+     frame, and scrolling back up simply runs it in reverse.
+
+     Option two deals the top card off the pile every few seconds, and stops the moment anyone
+     shows an interest in reading rather than watching. */
+  var expHold = null;          // option two's pause switch, once that experience is set up
+  var swiped = false;          // a swipe ends in a pointerup over a card; it is not a tap
+  var exp = $('.exp');
+  var deckEl = $('[data-deck]');
+  if (exp && deckEl) {
+    var cards = $$('.card', deckEl);
+    var speakerCards = cards.filter(function (c) { return !!$('[data-spk]', c); });
+    var moreEl = $('[data-exp-more]');
+    var setEl = $('[data-exp-set]');
+    var barEl = $('[data-exp-bar]');
+    var nEl = $('[data-exp-n]');
+    var mode = 'one';
+
+    /* --- option one --- */
+    var STATES = ['is-stack', 'is-a', 'is-shut', 'is-b'];
+    var SET_TEXT = ['', 'First three of six', 'The NextGen collection', 'Second three of six'];
+    var stateAt = -1, oneRaf = null;
+
+    function setState(i) {
+      if (i === stateAt) return;
+      stateAt = i;
+      STATES.forEach(function (c, n) { deckEl.classList.toggle(c, n === i); });
+      if (setEl) setEl.textContent = SET_TEXT[i] || '';
+      // a card that is not being shown must not be reachable by keyboard either
+      cards.forEach(function (c) {
+        var grp = c.getAttribute('data-grp');
+        var on = grp === 'mark' ? false : (grp === 'a' ? i === 1 : i === 3);
+        var btn = $('[data-spk]', c);
+        if (btn) btn.tabIndex = on ? 0 : -1;
+      });
+    }
+
+    function readScroll() {
+      oneRaf = null;
+      if (mode !== 'one') return;
+      var r = exp.getBoundingClientRect();
+      var travel = r.height - window.innerHeight;
+      if (travel <= 0) { setState(1); return; }
+      var p = Math.min(1, Math.max(0, -r.top / travel));
+      // four states across the section: pile, first three, the deck closed, second three
+      setState(p < 0.14 ? 0 : p < 0.46 ? 1 : p < 0.60 ? 2 : 3);
+    }
+    function onScroll() { if (oneRaf === null) oneRaf = requestAnimationFrame(readScroll); }
+
+    /* --- option two --- */
+    var TURN = 4500;
+    var at = 0, timer = null, held = { hover: false, drag: false, dialog: false, away: false, hidden: false };
+
+    function arrange() {
+      var n = speakerCards.length;
+      speakerCards.forEach(function (c, i) {
+        var d = (i - at + n) % n;
+        c.classList.remove('is-front', 'is-next', 'is-after');
+        if (d === 0) c.classList.add('is-front');
+        else if (d === 1) c.classList.add('is-next');
+        else if (d === 2) c.classList.add('is-after');
+        var btn = $('[data-spk]', c);
+        if (btn) btn.tabIndex = d === 0 ? 0 : -1;
+      });
+      if (nEl) nEl.textContent = ('0' + (at + 1)).slice(-2);
+    }
+
+    function go(step) {
+      var n = speakerCards.length;
+      var leaving = speakerCards[at];
+      at = (at + step + n) % n;
+      if (step > 0 && leaving) {
+        leaving.classList.add('is-out');
+        setTimeout(function () { leaving.classList.remove('is-out'); arrange(); }, 340);
+      }
+      arrange();
+    }
+
+    expHold = function (k, v) { hold(k, v); };
+    function stopped() { return held.hover || held.drag || held.dialog || held.away || held.hidden; }
+    function tick() { clearInterval(timer); timer = null; if (mode === 'two' && !stopped() && !reduce.matches) timer = setInterval(function () { go(1); }, TURN); }
+    function hold(k, v) { held[k] = v; if (v) { clearInterval(timer); timer = null; } else tick(); }
+
+    // dragging and swiping, on one set of pointer handlers for mouse and touch alike
+    var down = null;
+    deckEl.addEventListener('pointerdown', function (e) {
+      if (mode !== 'two' || e.button) return;
+      down = { x: e.clientX, y: e.clientY, t: Date.now(), moved: false };
+      hold('drag', true);
+    });
+    deckEl.addEventListener('pointermove', function (e) {
+      if (!down) return;
+      var dx = e.clientX - down.x, dy = e.clientY - down.y;
+      // a vertical gesture is the page scrolling, and is left alone
+      if (!down.moved && Math.abs(dy) > Math.abs(dx)) { down = null; hold('drag', false); return; }
+      if (Math.abs(dx) > 8) down.moved = true;
+    });
+    function endDrag(e) {
+      if (!down) return;
+      var dx = (e.clientX || 0) - down.x;
+      var quick = Date.now() - down.t < 500;
+      if (down.moved && (Math.abs(dx) > 56 || (quick && Math.abs(dx) > 28))) go(dx < 0 ? 1 : -1);
+      var wasDrag = down.moved;
+      down = null;
+      hold('drag', false);
+      if (wasDrag) { swiped = true; setTimeout(function () { swiped = false; }, 0); }
+    }
+    deckEl.addEventListener('pointerup', endDrag);
+    deckEl.addEventListener('pointercancel', function () { down = null; hold('drag', false); });
+
+    if (barEl) {
+      $('[data-exp-prev]', barEl).addEventListener('click', function () { go(-1); tick(); });
+      $('[data-exp-next]', barEl).addEventListener('click', function () { go(1); tick(); });
+    }
+    deckEl.addEventListener('keydown', function (e) {
+      if (mode !== 'two') return;
+      if (e.key === 'ArrowRight') { go(1); tick(); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { go(-1); tick(); e.preventDefault(); }
+    });
+    deckEl.addEventListener('pointerenter', function () { if (hoverMQ.matches) hold('hover', true); });
+    deckEl.addEventListener('pointerleave', function () { if (hoverMQ.matches) hold('hover', false); });
+    deckEl.addEventListener('focusin', function () { hold('hover', true); });
+    deckEl.addEventListener('focusout', function () { hold('hover', false); });
+    document.addEventListener('visibilitychange', function () { hold('hidden', document.hidden); });
+
+    new IntersectionObserver(function (es) {
+      held.away = !es[0].isIntersecting;
+      if (held.away) { clearInterval(timer); timer = null; } else tick();
+    }, { rootMargin: '0px' }).observe(exp);
+
+    /* --- switching between them --- */
+    function setMode(m) {
+      mode = m;
+      exp.setAttribute('data-exp', m);
+      exp.classList.toggle('exp--one', m === 'one');
+      exp.classList.toggle('exp--two', m === 'two');
+      if (barEl) barEl.hidden = m !== 'two';
+      if (moreEl) moreEl.hidden = m !== 'one';
+      if (setEl) setEl.hidden = m !== 'one';
+      $$('[data-exp-pick]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.getAttribute('data-exp-pick') === m));
+      });
+      clearInterval(timer); timer = null;
+      cards.forEach(function (c) { c.classList.remove('is-front', 'is-next', 'is-after', 'is-out'); });
+      if (m === 'one') {
+        STATES.forEach(function (c) { deckEl.classList.remove(c); });
+        stateAt = -1;
+        readScroll();
+        addEventListener('scroll', onScroll, { passive: true });
+      } else {
+        removeEventListener('scroll', onScroll);
+        STATES.forEach(function (c) { deckEl.classList.remove(c); });
+        at = 0; arrange(); tick();
+      }
+      try { sessionStorage.setItem('ngsExp', m); } catch (e) {}
+    }
+
+    // the switch is for review, so it only exists where review happens
+    var host = location.hostname;
+    var review = host.indexOf('staging.') === 0 || host === 'localhost' || host === '127.0.0.1' ||
+      /[?&]exp=/.test(location.search);
+    var sel = $('[data-expsel]');
+    if (review && sel) {
+      sel.hidden = false;
+      $$('[data-exp-pick]').forEach(function (b) {
+        b.addEventListener('click', function () { setMode(b.getAttribute('data-exp-pick')); });
+      });
+    }
+    var want = (location.search.match(/[?&]exp=(one|two)/) || [])[1];
+    if (!want && review) { try { want = sessionStorage.getItem('ngsExp'); } catch (e) {} }
+    setMode(want === 'two' ? 'two' : 'one');
+    addEventListener('resize', onScroll, { passive: true });
   }
 
   /* ---------- states two and three: the collectible ---------- */
@@ -103,8 +327,18 @@
   var back = $('[data-sp-back]', dlg);
   var opener = null;
 
+  function hasShot(key) { return !!(PEOPLE[key] && PEOPLE[key].shot); }
+
+  /* A speaker with no portrait yet shows their name set in the house face rather than a
+     stand-in picture. Give the card a `shot` and it becomes a photograph with no other
+     change. */
   function shotTag(key, cls, alt) {
     var p = PEOPLE[key];
+    if (!p.shot) {
+      return '<span class="sp__await' + (cls ? ' ' + cls : '') + '">' +
+        '<span class="sp__await-n wm">' + p.first + '<br>' + p.last + '</span>' +
+        '<span class="sp__await-k">Portrait to come</span></span>';
+    }
     return '<img class="' + cls + '" src="assets/img/speakers/' + p.shot + '-620.jpg"' +
       ' srcset="assets/img/speakers/' + p.shot + '-620.jpg 620w, assets/img/speakers/' + p.shot + '-900.jpg 900w"' +
       ' sizes="(max-width:560px) 94vw, 430px" width="900" height="1260" decoding="async" alt="' + alt + '">';
@@ -181,6 +415,7 @@
 
   function open(btn) {
     if (!paint(btn.getAttribute('data-spk'))) return;
+    if (expHold) expHold('dialog', true);            // the deck waits while this is being read
     opener = btn;
     face(false);                                     // every opening starts on the front
     if (typeof dlg.showModal === 'function') dlg.showModal();
@@ -190,6 +425,7 @@
   function close() { if (dlg.open) dlg.close(); }
 
   deck.addEventListener('click', function (e) {
+    if (swiped) return;                              // that was a swipe, not a choice
     var btn = e.target.closest ? e.target.closest('[data-spk]') : null;
     if (btn) open(btn);
   });
@@ -202,6 +438,7 @@
   });
 
   dlg.addEventListener('close', function () {
+    if (expHold) expHold('dialog', false);           // and carries on from where it was
     face(false);                                     // reset for the next one
     if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     opener = null;

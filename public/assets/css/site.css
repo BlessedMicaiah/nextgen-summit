@@ -444,8 +444,11 @@ h1,h2,h3,p{margin:0}
    The deck opens once, when the section arrives. Where each card lands is --x/--y/--r; where it
    starts is --sx/--sy/--sr, a tight stack with the NextGen card on top. Only those three numbers
    change between the wide fan and the phone's two-by-two. Nothing moves afterwards. */
+/* no overflow:hidden here: it would make this the scrollport for anything sticky inside, and
+   option one's deck has to stick to the viewport. .room__stage already clips its own contents,
+   which is all that rule was doing. */
 .room{--seam:clamp(56px,9vh,112px);--seam-top:0px;
-  position:relative;isolation:isolate;overflow:hidden;color:#fff;background:#04080A}
+  position:relative;isolation:isolate;color:#fff;background:#04080A}
 .room__in{position:relative;z-index:2;max-width:var(--maxw);margin:0 auto;
   padding:clamp(78px,13vh,152px) var(--gutter) clamp(74px,12vh,140px)}
 /* only the lower edge dissolves, into the paper of the section below. The upper edge has
@@ -712,6 +715,172 @@ button.card__face{cursor:pointer}
   .sp__front,.sp__back,.sp__in{transition:none}
   .sp__front,.sp.is-back .sp__front,.sp__back,.sp.is-back .sp__back{transform:none}
 }
+
+
+/* ---------- 05b the two speaker experiences ----------
+   One deck of seven cards in the markup -- the NextGen card and six speakers -- and two ways of
+   dealing them. Nothing here duplicates a card: both experiences move the same elements, open
+   the same dialog and read the same data. [data-exp] on the wrapper decides which is running.
+
+   A speaker whose photograph has not arrived shows the name set instead. Give that speaker a
+   `shot` in speakers.js and the card becomes a photograph with no other change. */
+.card__shot--await{display:grid;place-items:center;background:
+  radial-gradient(120% 90% at 50% 8%,rgba(31,199,190,.16) 0%,rgba(31,199,190,0) 62%),
+  linear-gradient(180deg,#0C1719 0%,#06090B 100%)}
+.card__awaitk{font:800 clamp(7px,3.2%,9px)/1.5 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(255,255,255,.44);text-align:center}
+.sp__await{position:relative;display:grid;place-items:center;align-content:center;gap:14px;aspect-ratio:5/7;
+  background:radial-gradient(120% 80% at 50% 10%,rgba(31,199,190,.18) 0%,rgba(31,199,190,0) 60%),
+  linear-gradient(180deg,#0C1719 0%,#06090B 100%)}
+.sp__await-n{font-size:clamp(30px,7.4vw,44px);line-height:.94;color:#fff;text-align:center}
+.sp__await-k{font:800 9px/1 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+.sp__thumb .sp__await{aspect-ratio:3/4;gap:6px}
+.sp__thumb .sp__await-n{font-size:13px}
+.sp__thumb .sp__await-k{font-size:6.5px;letter-spacing:.16em}
+
+/* the review-only switch. It never ships to the public site: speakers.js shows it on staging,
+   on localhost, or when ?exp= is in the address, and nowhere else. */
+.expsel{margin:clamp(22px,3.6vh,34px) 0 0;display:grid;gap:12px;justify-items:center}
+.expsel[hidden]{display:none}
+.expsel__k{font:800 10px/1 var(--f-sans);letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.expsel__row{display:inline-flex;gap:6px;padding:5px;border-radius:999px;background:rgba(255,255,255,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.expsel__row button{min-height:40px;padding:0 clamp(12px,3vw,20px);border-radius:999px;color:rgba(255,255,255,.76);
+  font:800 10.5px/1 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
+  transition:background-color .3s var(--ease),color .3s var(--ease)}
+.expsel__row button[aria-pressed="true"]{background:var(--accent);color:#06161A}
+@media (hover:hover){.expsel__row button:not([aria-pressed="true"]):hover{color:#fff;background:rgba(255,255,255,.08)}}
+
+/* ---------- option one: the stack reveal ----------
+   The section grows tall enough to scroll through four states and the deck sticks inside it.
+   State lives in one class, so the movement between states is an ordinary CSS transition on a
+   transform -- nothing is driven frame by frame, and scrolling back up simply runs it in
+   reverse. */
+.exp--one{position:relative}
+/* the base deck only honours --x/--y/--r once it is "open"; inside an experience the cards are
+   always placed by them, and the experience decides what they are */
+.exp .card{transform:translate(-50%,-50%) translate(var(--x),var(--y)) rotate(var(--r))}
+.exp .card::after{display:none}
+/* the deck and everything that belongs under it travel together while the section scrolls */
+.exp--one .exp__hold{position:sticky;top:calc(var(--nav-h) + clamp(6px,1.6vh,18px))}
+.exp--one .deck{--sp:calc(var(--cw) * .98);height:calc(var(--ch) + clamp(52px,8vw,96px))}
+.exp--one .deck .card{transition:transform .9s cubic-bezier(.2,.9,.25,1),opacity .5s var(--ease)}
+/* stacked: every card on the pile, the NextGen card facing out */
+.exp--one .card{--x:0px;--y:0px;--r:calc(var(--i) * 1.6deg);z-index:calc(10 - var(--i))}
+.exp--one .card[data-grp="mark"]{z-index:20}
+/* a group that is not being shown waits on the pile and takes no clicks */
+.exp--one .card[data-grp="a"],.exp--one .card[data-grp="b"]{opacity:0;pointer-events:none}
+/* --- the first three --- */
+.exp--one .deck.is-a .card[data-grp="mark"]{z-index:1;--r:-2deg}
+.exp--one .deck.is-a .card[data-grp="a"]{opacity:1;pointer-events:auto;z-index:11}
+.exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(3){z-index:13}
+.exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(2){--x:calc(var(--sp) * -1.04);--y:12px;--r:-6.4deg}
+.exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(3){--x:0px;--y:-4px;--r:.6deg}
+.exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(4){--x:calc(var(--sp) * 1.04);--y:13px;--r:6.8deg}
+/* --- the deck closes: the NextGen card comes back to the top and is held there --- */
+.exp--one .deck.is-shut .card{opacity:1}
+.exp--one .deck.is-shut .card[data-grp="a"],.exp--one .deck.is-shut .card[data-grp="b"]{opacity:.85;pointer-events:none}
+.exp--one .deck.is-shut .card[data-grp="mark"]{z-index:20;--r:0deg;--y:0px}
+/* --- the second three, dealt from the same pile --- */
+.exp--one .deck.is-b .card[data-grp="mark"]{z-index:1;--r:2deg}
+.exp--one .deck.is-b .card[data-grp="b"]{opacity:1;pointer-events:auto;z-index:11}
+.exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(6){z-index:13}
+.exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(5){--x:calc(var(--sp) * -1.04);--y:12px;--r:-6.4deg}
+.exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(6){--x:0px;--y:-4px;--r:.6deg}
+.exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(7){--x:calc(var(--sp) * 1.04);--y:13px;--r:6.8deg}
+/* the cue that there is more to come, and which half you are on */
+.exp__more[hidden],.exp__bar[hidden],.exp__set[hidden]{display:none}
+.exp__more{position:relative;display:grid;justify-items:center;gap:10px;margin-top:clamp(16px,2.6vh,26px);
+  font:800 10px/1 var(--f-sans);letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.7);
+  opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
+.exp--one .deck.is-a ~ .exp__more{opacity:1}
+.exp__more i{display:block;width:16px;height:16px;border-left:1.6px solid var(--accent);
+  border-bottom:1.6px solid var(--accent);transform:rotate(-45deg);animation:more-dip 1.9s var(--ease) infinite}
+@keyframes more-dip{0%,100%{transform:rotate(-45deg) translate3d(0,0,0)}50%{transform:rotate(-45deg) translate3d(-4px,4px,0)}}
+.exp__set{margin-top:clamp(14px,2.2vh,22px);text-align:center;
+  font:800 9.5px/1 var(--f-sans);letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.42)}
+
+/* ---------- option two: the living deck ----------
+   One card forward, two behind it for depth, the rest held off. Advancing flicks the top card
+   away and lets the next settle, which is why the leaving card keeps its own class rather than
+   simply being re-sorted. */
+.exp--two{position:relative}
+.exp--two .deck{height:calc(var(--ch) + clamp(90px,13vw,150px))}
+.exp--two .card{--x:0px;--y:0px;--r:0deg;opacity:0;pointer-events:none;z-index:1;
+  transition:transform .72s cubic-bezier(.22,.9,.28,1),opacity .45s var(--ease)}
+.exp--two .card[data-grp="mark"]{display:none}
+.exp--two .card.is-front{opacity:1;pointer-events:auto;z-index:14;--x:0px;--y:0px;--r:0deg}
+.exp--two .card.is-next{opacity:.82;z-index:12;--x:16px;--y:14px;--r:3.4deg}
+.exp--two .card.is-after{opacity:.5;z-index:10;--x:30px;--y:26px;--r:6.4deg}
+/* flicked off the top of the pile */
+.exp--two .card.is-out{opacity:0;z-index:16;--x:-128%;--y:-26px;--r:-16deg;
+  transition:transform .66s cubic-bezier(.4,.05,.3,1),opacity .5s var(--ease)}
+.exp--two .deck.is-held .card.is-front{--y:-6px}
+/* the scattered NextGen backs. Decoration only: behind everything, and untouchable. */
+.exp__strewn{position:absolute;inset:-6% -4%;z-index:0;pointer-events:none;overflow:hidden}
+.exp--one .exp__strewn,.exp--three .exp__strewn{display:none}
+.strewn{position:absolute;width:clamp(96px,13vw,168px);aspect-ratio:5/7;border-radius:10px;padding:2px;
+  background:#05080A;opacity:.42;
+  background-image:linear-gradient(150deg,rgba(255,255,255,.3),rgba(255,255,255,.03) 26%,rgba(31,199,190,.34) 56%,rgba(255,255,255,.04) 76%,rgba(255,255,255,.2));
+  box-shadow:0 18px 40px -22px rgba(0,0,0,.95)}
+.strewn::before{content:"";position:absolute;inset:2px;border-radius:8px;
+  background:radial-gradient(70% 50% at 50% 0%,rgba(31,199,190,.16) 0%,rgba(31,199,190,0) 70%),
+  linear-gradient(162deg,#0A1315 0%,#05080A 60%)}
+.strewn::after{content:"nextgen";position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--f-display);font-weight:900;font-size:clamp(13px,1.8vw,21px);color:rgba(255,255,255,.3);
+  letter-spacing:-.04em}
+.strewn:nth-child(1){left:-3%;top:4%;transform:rotate(-17deg)}
+.strewn:nth-child(2){left:7%;bottom:-6%;transform:rotate(11deg)}
+.strewn:nth-child(3){right:-4%;top:-2%;transform:rotate(14deg)}
+.strewn:nth-child(4){right:4%;bottom:-8%;transform:rotate(-9deg)}
+.strewn:nth-child(5){left:22%;top:-11%;transform:rotate(6deg)}
+.strewn:nth-child(6){right:20%;bottom:-13%;transform:rotate(-14deg)}
+/* the controls under the deck */
+.exp__bar{position:relative;z-index:16;display:flex;align-items:center;justify-content:center;
+  gap:clamp(12px,3vw,22px);margin-top:clamp(18px,3vh,30px)}
+.exp__nav{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:999px;color:#fff;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.26);transition:background-color .3s var(--ease),color .3s var(--ease)}
+@media (hover:hover){.exp__nav:hover{background:var(--accent);color:#06161A}}
+.exp__nav svg{width:15px;height:15px}
+.exp__count{min-width:5.5em;text-align:center;font:800 11px/1 var(--f-sans);letter-spacing:.2em;
+  color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
+.exp__count b{color:var(--accent);font-weight:800}
+
+
+@media (max-width:760px){
+  /* three across a phone means a hand of cards, overlapping, rather than a row */
+  .exp--one .deck{--sp:calc(var(--cw) * .74);height:calc(var(--ch) + clamp(74px,16vw,110px))}
+  .exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(2),
+  .exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(5){--y:34px;--r:-8.5deg}
+  .exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(3),
+  .exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(6){--y:-24px;--r:0deg}
+  .exp--one .deck.is-a .card[data-grp="a"]:nth-of-type(4),
+  .exp--one .deck.is-b .card[data-grp="b"]:nth-of-type(7){--y:36px;--r:8.8deg}
+  .exp--two .card.is-next{--x:11px;--y:10px}
+  .exp--two .card.is-after{--x:20px;--y:18px}
+  .strewn{width:clamp(74px,22vw,104px);opacity:.3}
+  .expsel__row button{font-size:9.5px;letter-spacing:.1em;padding:0 12px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .exp--one .deck .card,.exp--two .card{transition:none}
+  .exp__more i{animation:none}
+}
+
+/* room to scroll the four states of option one. The deck sticks inside this, so the page keeps
+   moving the whole time -- nothing is pinned and nothing is waiting on an animation to finish. */
+.exp--one{min-height:245vh}
+@media (max-width:760px){.exp--one{min-height:265vh}}
+@media (prefers-reduced-motion:reduce){
+  /* no scroll choreography: both halves are simply laid out, one after the other */
+  .exp--one{min-height:0}
+  .exp--one .deck{position:static;height:auto;display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:clamp(14px,3vw,26px);justify-items:center}
+  .exp--one .card{position:static;transform:none!important;opacity:1!important;pointer-events:auto!important}
+  .exp--one .card[data-grp="mark"]{display:none}
+  .exp--one .exp__more{display:none}
+}
+
 
 /* ---------- 06 who nextgen is for ---------- */
 /* One composition: three editorial panels that rise into place as the section arrives, sharing one

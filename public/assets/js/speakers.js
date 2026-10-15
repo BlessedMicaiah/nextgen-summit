@@ -210,13 +210,29 @@
           '</div>' +
           '<span class="sp__thumb">' + shotTag(key, '', '') + '</span>' +
         '</div>' +
-        '<ul class="sp__wins">' + rows + '</ul>' +
+        '<div class="sp__list">' +
+          '<ul class="sp__wins">' + rows + '</ul>' +
+          '<button class="sp__more" type="button" data-sp-more hidden>Scroll for more' +
+            '<i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></i>' +
+          '</button>' +
+        '</div>' +
         (p.pending ? '<p class="sp__brole" style="margin-top:12px">' + p.pending + '</p>' : '') +
         act +
       '</div>';
 
     dlg.setAttribute('aria-label', full + ', speaker');
     return true;
+  }
+
+  /* On a short screen the credentials don't all fit on the back, and they scroll inside the card.
+     Its scrollbar is hidden, so a "Scroll for more" button and a fade at the foot of the list say
+     there is more, only while there is; the button scrolls the list on by most of its height. */
+  function more() {
+    var list = $('.sp__wins', back), btn = $('.sp__more', back);
+    if (!list || !btn) return;
+    var on = list.scrollHeight - list.clientHeight - list.scrollTop > 4;
+    list.parentNode.classList.toggle('has-more', on);
+    btn.hidden = !on;
   }
 
   /* Which way the card is facing. The stylesheet does the turning and decides which face is on
@@ -258,6 +274,7 @@
     opener = btn;
     leaving = false;
     face(false);                                     // every opening starts on the front
+    requestAnimationFrame(more);
     dlg.classList.toggle('is-morph', canMorph);
     dlg.classList.toggle('is-reveal', canMorph);
     if (typeof dlg.showModal === 'function') dlg.showModal();
@@ -285,7 +302,12 @@
   });
 
   dlg.addEventListener('click', function (e) {
-    if (e.target.closest('[data-sp-turn]')) { face(!dlg.classList.contains('is-back')); return; }
+    if (e.target.closest('[data-sp-turn]')) { face(!dlg.classList.contains('is-back')); more(); return; }
+    if (e.target.closest('[data-sp-more]')) {
+      var list = $('.sp__wins', back);
+      list.scrollBy({ top: list.clientHeight * 0.8, behavior: reduce.matches ? 'auto' : 'smooth' });
+      return;
+    }
     if (e.target.closest('[data-sp-close]')) { close(); return; }
     // the backdrop is anything outside the card itself; the card itself never closes it
     if (!e.target.closest('.sp__in')) close();
@@ -297,6 +319,10 @@
     e.preventDefault();
     close();
   });
+
+  // scroll doesn't bubble, so listen on the way down; and a resize can make the list fit, or not
+  back.addEventListener('scroll', more, true);
+  addEventListener('resize', function () { if (dlg.open) more(); });
 
   dlg.addEventListener('close', function () {
     face(false);                                     // reset for the next one

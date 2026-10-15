@@ -119,9 +119,11 @@
     });
 
     // for other scripts (pitch.js): glide to an element when Lenis is running
-    window.NGScrollTo = function (target) {
+    window.NGScrollTo = function (target, options) {
       if (!lenis) return false;
-      lenis.scrollTo(target);
+      // A layout switch may change the page height before ResizeObserver runs.
+      if (options && options.immediate) lenis.resize();
+      lenis.scrollTo(target, options);
       return true;
     };
 

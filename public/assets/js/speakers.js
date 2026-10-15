@@ -303,7 +303,7 @@
     }, { rootMargin: '0px' }).observe(exp);
 
     /* --- switching between them --- */
-    function setMode(m) {
+    function setMode(m, reveal) {
       mode = m;
       exp.setAttribute('data-exp', m);
       exp.classList.toggle('exp--one', m === 'one');
@@ -326,6 +326,17 @@
         STATES.forEach(function (c) { deckEl.classList.remove(c); });
         at = 0; arrange(); tick();
       }
+      // Stack Reveal is several screens tall. Keep a deliberate switch at the deck
+      // when that height changes, and cancel any old smooth-scroll destination.
+      // Initial page setup keeps the visitor's existing scroll position.
+      if (reveal) {
+        var navHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 80;
+        var top = Math.max(0, window.scrollY + exp.getBoundingClientRect().top - navHeight - 24);
+        if (!window.NGScrollTo || !window.NGScrollTo(top, { immediate: true, force: true })) {
+          window.scrollTo({ top: top, behavior: 'instant' });
+        }
+        if (m === 'one') readScroll();
+      }
       try { sessionStorage.setItem('ngsExp', m); } catch (e) {}
     }
 
@@ -337,7 +348,7 @@
     if (review && sel) {
       sel.hidden = false;
       $$('[data-exp-pick]').forEach(function (b) {
-        b.addEventListener('click', function () { setMode(b.getAttribute('data-exp-pick')); });
+        b.addEventListener('click', function () { setMode(b.getAttribute('data-exp-pick'), true); });
       });
     }
     var want = (location.search.match(/[?&]exp=(one|two)/) || [])[1];

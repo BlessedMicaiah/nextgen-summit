@@ -1,6 +1,8 @@
 .DS_Store
 Thumbs.db
 node_modules/
+.env
+.env.*
 .netlify/
 
 # registration data never belongs in the repository

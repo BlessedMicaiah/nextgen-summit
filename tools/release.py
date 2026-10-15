@@ -2,9 +2,10 @@
 
     python tools/release.py production   -> release/nextgensummit.us-<commit>.zip   (from main)
     python tools/release.py staging      -> release/staging-<commit>.zip           (from monday-launch)
+    python tools/release.py staging --overlay -> tracked files only; preserve server configuration
 
 Rule: nothing is released that is not on GitHub. The build stops unless the right branch is
-checked out, the working tree is clean, and the branch is identical to origin (pushed).
+checked out, tracked changes are committed, and the branch matches the chosen remote (pushed).
 
 The zip holds the contents of public/ at its top level, with api/config.php (private, never
 committed) and without any stored submissions. The staging build also:
@@ -13,6 +14,7 @@ committed) and without any stored submissions. The staging build also:
   - keeps its own submissions in nextgen-data-staging, beside the live data, outside the web root.
 """
 import os
+import argparse
 import subprocess
 import sys
 import zipfile
@@ -44,24 +46,37 @@ def stop(msg):
 
 
 def main():
-    target = sys.argv[1] if len(sys.argv) > 1 else ''
-    if target not in BRANCH:
-        stop('say which site: python tools/release.py production|staging')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('target', choices=BRANCH)
+    parser.add_argument('--overlay', action='store_true')
+    parser.add_argument('--remote', default='origin', help='Git remote to verify (default: origin)')
+    args = parser.parse_args()
+    target = args.target
     branch = BRANCH[target]
+    overlay = args.overlay
+    remote = args.remote
+    if remote not in git('remote').splitlines():
+        stop('choose a configured Git remote.')
+    if overlay and target != 'staging':
+        stop('--overlay is only supported for staging.')
 
     if git('rev-parse', '--abbrev-ref', 'HEAD') != branch:
         stop(f'{target} is built from {branch}; check it out first.')
-    if git('status', '--porcelain', '--untracked-files=all', '--', 'public', 'tools'):
+    if git('status', '--porcelain', '--untracked-files=no' if overlay else '--untracked-files=all', '--', 'public', 'tools'):
         stop('uncommitted changes. Commit them and push to GitHub first.')
-    git('fetch', '--quiet', 'origin', branch)
-    head, remote = git('rev-parse', 'HEAD'), git('rev-parse', f'origin/{branch}')
-    if head != remote:
-        stop(f'{branch} is not identical to GitHub ({head[:7]} here, {remote[:7]} on GitHub). Push first.')
-    if not os.path.isfile(os.path.join(PUBLIC, 'api', 'config.php')):
+    git('fetch', '--quiet', remote, branch)
+    head, remote_head = git('rev-parse', 'HEAD'), git('rev-parse', f'{remote}/{branch}')
+    if head != remote_head:
+        stop(f'{branch} is not identical to GitHub ({head[:7]} here, {remote_head[:7]} on {remote}). Push first.')
+    if not overlay and not os.path.isfile(os.path.join(PUBLIC, 'api', 'config.php')):
         stop('public/api/config.php is missing (private settings, never committed).')
 
+    # An overlay is uploaded file by file without clearing the destination. Never
+    # include local originals, private settings, or runtime data in that upload.
+    tracked = set(git('ls-files', '-z', '--', 'public').split('\0')) if overlay else None
+
     os.makedirs(os.path.join(ROOT, 'release'), exist_ok=True)
-    name = ('nextgensummit.us' if target == 'production' else 'staging') + f'-{head[:7]}.zip'
+    name = ('nextgensummit.us' if target == 'production' else 'staging') + f'-{head[:7]}' + ('-overlay' if overlay else '') + '.zip'
     out = os.path.join(ROOT, 'release', name)
     count = 0
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
@@ -72,6 +87,9 @@ def main():
                     continue
                 full = os.path.join(base, f)
                 rel = os.path.relpath(full, PUBLIC).replace(os.sep, '/')
+                if overlay and (f'public/{rel}' not in tracked or rel == 'api/config.php' or
+                                rel.startswith(('data/', 'api/resumes/'))):
+                    continue
                 if target == 'staging' and rel == 'sitemap.xml':
                     continue
                 data = open(full, 'rb').read()
@@ -85,6 +103,8 @@ def main():
                 z.writestr(rel, data)
                 count += 1
     print(f'{target}: {count} files from {branch} @ {head[:7]} (identical to GitHub) -> {out}')
+    if overlay:
+        print('OVERLAY ONLY: upload individual files; do not replace/clear the site or use archive deployment. Existing config.php and runtime data must remain in place.')
 
 
 if __name__ == '__main__':

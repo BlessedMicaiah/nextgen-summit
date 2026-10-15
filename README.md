@@ -88,6 +88,18 @@ Any host with **PHP 7.4 or newer** and Apache or LiteSpeed (`.htaccess` support)
     python tools/release.py production   # from main          -> release/nextgensummit.us-<commit>.zip
     python tools/release.py staging      # from monday-launch -> release/staging-<commit>.zip
 
+For an existing staging site whose private configuration is only on the server, use
+`python tools/release.py staging --overlay`. This packages committed public files only,
+omitting local source imports, `api/config.php` and runtime data. Back up changed remote
+files, upload assets before pages, and preserve all files absent from the archive. This
+archive is for individual file uploads only: do not use a deployment operation that clears
+the document root. Verify staging's noindex headers and the updated pages after uploading.
+Use `--remote upstream` when releasing from the shared `oasislifesprings-cloud` repository;
+the default `origin` remote is the separate `BlessedMicaiah` fork in this checkout.
+
+The speaker-switch regression check runs with Playwright installed:
+`node tools/verify-speaker-switch.cjs http://127.0.0.1:4173/` (or the staging URL).
+
 The script stops unless the right branch is checked out, clean, and identical to GitHub. The staging
 build adds noindex, drops the sitemap and keeps its own data folder (`nextgen-data-staging`).
 

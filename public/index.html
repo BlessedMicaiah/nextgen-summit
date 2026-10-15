@@ -147,7 +147,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preload" as="image" href="assets/img/hero-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="assets/img/hero-1600.jpg" imagesrcset="assets/img/hero-800.jpg 800w, assets/img/hero-1200.jpg 1200w, assets/img/hero-1600.jpg 1600w, assets/img/hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;family=Caveat:wght@700&amp;display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=20261015-01">
+<link rel="stylesheet" href="assets/css/site.css?v=20261015-02">
 <link rel="stylesheet" href="assets/css/names.css?v=20261015-01">
 <link rel="stylesheet" href="assets/css/sponsors.css?v=20261015-01">
 <script src="assets/js/liquid.js?v=20261015-01" defer></script>
@@ -159,7 +159,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="assets/js/forms.js?v=20261015-01" defer></script>
 <script src="assets/js/names.js?v=20261015-01" defer></script>
 <script src="assets/js/counter.js?v=20261015-01" defer></script>
-<script src="assets/js/speakers.js?v=20261015-01" defer></script>
+<script src="assets/js/speakers.js?v=20261015-02" defer></script>
 <script src="assets/js/sponsors.js?v=20261015-01" defer></script>
 </head>
 <body>
@@ -346,7 +346,194 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- 04 the invitation -->
+  <!-- 04 featured speakers
+       The lineup, on a nearly dark stage. The stage is drawn rather than photographed: one
+       blurred microphone, a few lights and a wet floor, so a phone and a desktop carry the
+       identical scene at any width for about a kilobyte and no extra request.
+
+       All six are on screen at once, three and three. A card is a control and opens the
+       collectible, which holds the biography; without JavaScript the cards are simply a grid of
+       portraits and the page still reads. -->
+  <section class="room" id="room" data-nav="photo" aria-labelledby="room-title">
+    <div class="room__stage" aria-hidden="true">
+      <span class="room__lights"></span>
+      <svg class="room__mic" viewBox="0 0 200 470" fill="none" aria-hidden="true" focusable="false">
+        <defs>
+          <filter id="room-blur" x="-30%" y="-12%" width="160%" height="130%">
+            <feGaussianBlur stdDeviation="4.4"/>
+          </filter>
+          <linearGradient id="room-steel" x1="0" y1="0" x2="1" y2=".7">
+            <stop offset="0" stop-color="#435F66"/>
+            <stop offset=".42" stop-color="#101A1E"/>
+            <stop offset="1" stop-color="#05090B"/>
+          </linearGradient>
+        </defs>
+        <g filter="url(#room-blur)">
+          <g fill="url(#room-steel)">
+            <g transform="rotate(-25 104 84)">
+              <rect x="76" y="16" width="56" height="116" rx="28"/>
+              <rect x="93" y="124" width="22" height="30" rx="7"/>
+            </g>
+            <path d="M74 150l28-24 13 15-27 25z"/>
+            <rect x="84" y="156" width="12" height="272" rx="6"/>
+            <path d="M38 440l52-38 7 13-47 41z"/>
+            <path d="M152 444l-56-42-7 13 50 44z"/>
+          </g>
+          <g stroke="#1FC7BE" stroke-opacity=".55" stroke-width="3.2" stroke-linecap="round">
+            <g transform="rotate(-25 104 84)"><path d="M80 42a25 25 0 0 1 25-24"/></g>
+            <path d="M86 198v158"/>
+          </g>
+        </g>
+      </svg>
+      <span class="room__floor"></span>
+      <span class="room__grain"></span>
+    </div>
+
+    <div class="room__in">
+      <div class="room__head">
+        <p class="label label--light rv">The lineup</p>
+        <h2 class="room__title wm rv" id="room-title" style="--d:.1s">featured speakers</h2>
+      </div>
+
+      <!-- The lineup, all of it, in one view. A card is a control: it opens the collectible,
+           which carries the biography. Nothing here is hidden behind a gesture. -->
+      <ul class="gal" data-gal>
+        <li class="card rv" style="--d:0.00s">
+          <button class="card__face" type="button" data-spk="tisha" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/tisha-edwards-620.jpg"
+                  srcset="assets/img/speakers/tisha-edwards-620.jpg 620w, assets/img/speakers/tisha-edwards-900.jpg 900w"
+                  sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Tisha Edwards">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Tisha<b>Edwards</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+        <li class="card rv" style="--d:0.06s">
+          <button class="card__face" type="button" data-spk="tunde" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/tunde-onakoya-620.jpg"
+                  srcset="assets/img/speakers/tunde-onakoya-620.jpg 620w, assets/img/speakers/tunde-onakoya-900.jpg 900w"
+                  sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Tunde Onakoya">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Tunde<b>Onakoya</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+        <li class="card rv" style="--d:0.12s">
+          <button class="card__face" type="button" data-spk="kennedy" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/kennedy-ekezie-620.jpg"
+                  srcset="assets/img/speakers/kennedy-ekezie-620.jpg 620w, assets/img/speakers/kennedy-ekezie-900.jpg 900w"
+                  sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Kennedy Ekezie">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Kennedy<b>Ekezie</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+        <li class="card rv" style="--d:0.18s">
+          <button class="card__face" type="button" data-spk="gianna" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/gianna-romero-620.jpg"
+                  srcset="assets/img/speakers/gianna-romero-620.jpg 620w, assets/img/speakers/gianna-romero-900.jpg 900w"
+                  sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Gianna Romero">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Gianna<b>Romero</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+        <li class="card rv" style="--d:0.24s">
+          <button class="card__face" type="button" data-spk="michael" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/michael-ley-620.jpg"
+                  srcset="assets/img/speakers/michael-ley-620.jpg 620w, assets/img/speakers/michael-ley-900.jpg 900w"
+                  sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Michael Ley">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Michael<b>Ley</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+
+        <li class="card rv" style="--d:0.30s">
+          <button class="card__face" type="button" data-spk="jack" aria-haspopup="dialog">
+            <span class="card__stock">
+              <span class="card__shot">
+                <img src="assets/img/speakers/jack-scalise-620.jpg"
+                  srcset="assets/img/speakers/jack-scalise-620.jpg 620w, assets/img/speakers/jack-scalise-900.jpg 900w"
+                  sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px" width="620" height="868" loading="lazy" decoding="async"
+                  alt="Jack Scalise">
+              </span>
+              <span class="card__wm wm" aria-hidden="true">nextgen</span>
+              <span class="card__id">
+                <span class="card__name">Jack<b>Scalise</b></span>
+                <span class="card__kind">Speaker</span>
+                <span class="card__line" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        </li>
+      </ul>
+
+      <p class="room__hint">Select a card to explore</p>
+      <p class="room__photo">Portraits supplied by NextGen Summit and used as provided. Tisha Edwards&rsquo; headshot is courtesy of the Maryland Bankers Association.</p>
+    </div>
+
+    <!-- the collectible. The script paints both faces from its own data, so every line is
+         editable text rather than something baked into a picture. The close control sits
+         outside the panel that turns, so it is reachable from either side. -->
+    <dialog class="sp" id="speaker" aria-label="Speaker">
+      <button class="sp__close" type="button" data-sp-close aria-label="Close">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <div class="sp__in">
+        <div class="sp__flip" data-sp-flip>
+          <div class="sp__front" data-sp-front></div>
+          <div class="sp__back" data-sp-back aria-hidden="true"></div>
+        </div>
+      </div>
+    </dialog>
+  </section>
+
+  <!-- 05 the invitation -->
   <section class="invite" id="details" data-nav="paper" aria-labelledby="invite-title">
     <div class="invite__liquid" aria-hidden="true">
       <canvas></canvas>
@@ -441,246 +628,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p class="pcta__copy rv" style="--d:.2s">Step into the NextGen Pitch Competition and put your idea in front of an audience ready to see what you can create. Build your pitch, take the stage, and compete.</p>
       <p class="pcta__cta rv" style="--d:.3s"><a class="btn btn--lg" href="/pitch/">Explore the pitch competition</a></p>
     </div>
-  </section>
-
-  <!-- 05 featured speakers
-       A deck of four collectible cards on a nearly dark stage. The stage is drawn rather than
-       photographed: one blurred microphone, a few lights and a wet floor, so a phone and a
-       desktop carry the identical scene at any width for about a kilobyte and no extra request.
-
-       The deck arrives stacked with the NextGen card on top and opens once, when the section
-       comes into view: a fan on a wide screen, a staggered two-by-two on a phone. Every card is
-       the same component; only where it comes to rest changes, in --x/--y/--r. Nothing shuffles
-       afterwards. Without JavaScript the cards are already open. -->
-  <section class="room" id="room" data-nav="photo" aria-labelledby="room-title">
-    <div class="room__stage" aria-hidden="true">
-      <span class="room__lights"></span>
-      <svg class="room__mic" viewBox="0 0 200 470" fill="none" aria-hidden="true" focusable="false">
-        <defs>
-          <filter id="room-blur" x="-30%" y="-12%" width="160%" height="130%">
-            <feGaussianBlur stdDeviation="4.4"/>
-          </filter>
-          <linearGradient id="room-steel" x1="0" y1="0" x2="1" y2=".7">
-            <stop offset="0" stop-color="#435F66"/>
-            <stop offset=".42" stop-color="#101A1E"/>
-            <stop offset="1" stop-color="#05090B"/>
-          </linearGradient>
-        </defs>
-        <g filter="url(#room-blur)">
-          <g fill="url(#room-steel)">
-            <g transform="rotate(-25 104 84)">
-              <rect x="76" y="16" width="56" height="116" rx="28"/>
-              <rect x="93" y="124" width="22" height="30" rx="7"/>
-            </g>
-            <path d="M74 150l28-24 13 15-27 25z"/>
-            <rect x="84" y="156" width="12" height="272" rx="6"/>
-            <path d="M38 440l52-38 7 13-47 41z"/>
-            <path d="M152 444l-56-42-7 13 50 44z"/>
-          </g>
-          <g stroke="#1FC7BE" stroke-opacity=".55" stroke-width="3.2" stroke-linecap="round">
-            <g transform="rotate(-25 104 84)"><path d="M80 42a25 25 0 0 1 25-24"/></g>
-            <path d="M86 198v158"/>
-          </g>
-        </g>
-      </svg>
-      <span class="room__floor"></span>
-      <span class="room__grain"></span>
-    </div>
-
-    <div class="room__in">
-      <div class="room__head">
-        <p class="label label--light rv">The lineup</p>
-        <h2 class="room__title wm rv" id="room-title" style="--d:.1s">featured speakers</h2>
-        <div class="room__note rv" style="--d:.2s">
-          <p>Meet the people behind the perspectives.</p>
-        </div>
-      </div>
-
-      <!-- One deck, two ways of dealing it. data-exp picks which; both move these same cards
-           and open the same dialog, so nothing about a speaker is written twice. -->
-      <div class="exp exp--one" data-exp="one">
-        <div class="exp__strewn" aria-hidden="true">
-          <span class="strewn"></span><span class="strewn"></span><span class="strewn"></span>
-          <span class="strewn"></span><span class="strewn"></span><span class="strewn"></span>
-        </div>
-        <div class="exp__hold">
-          <ul class="deck" data-deck>
-
-            <!-- the anchor card. It carries the brand, not a profile, so it is not a control and
-                 offers nothing to open. -->
-            <li class="card card--mark" style="--i:0" data-grp="mark">
-              <span class="card__face">
-                <span class="card__stock card__stock--mark">
-                  <span class="card__eyebrow">The next generation</span>
-                  <span class="card__lockup">
-                    <span class="wm" aria-hidden="true">nextgen</span>
-                    <span class="card__summit" aria-hidden="true">Summit</span>
-                    <span class="sr">NextGen Summit</span>
-                  </span>
-                  <span class="card__hr" aria-hidden="true"></span>
-                  <span class="card__said">The stage<br>is set.</span>
-                  <span class="card__foot">Speaker collection <span aria-hidden="true">&middot;</span> 2026</span>
-                </span>
-              </span>
-            </li>
-
-            <li class="card" style="--i:1" data-grp="a">
-              <button class="card__face" type="button" data-spk="tisha" aria-haspopup="dialog">
-                <span class="card__stock">
-                  <span class="card__shot">
-                    <img src="assets/img/speakers/tisha-edwards-620.jpg"
-                      srcset="assets/img/speakers/tisha-edwards-620.jpg 620w, assets/img/speakers/tisha-edwards-900.jpg 900w"
-                      sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
-                      alt="Tisha Edwards">
-                  </span>
-                  <span class="card__wm wm" aria-hidden="true">nextgen</span>
-                  <span class="card__id">
-                    <span class="card__name">Tisha<b>Edwards</b></span>
-                    <span class="card__kind">Speaker</span>
-                    <span class="card__line" aria-hidden="true"></span>
-                  </span>
-                </span>
-              </button>
-            </li>
-
-            <li class="card" style="--i:2" data-grp="a">
-              <button class="card__face" type="button" data-spk="tunde" aria-haspopup="dialog">
-                <span class="card__stock">
-                  <span class="card__shot">
-                    <img src="assets/img/speakers/tunde-onakoya-620.jpg"
-                      srcset="assets/img/speakers/tunde-onakoya-620.jpg 620w, assets/img/speakers/tunde-onakoya-900.jpg 900w"
-                      sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
-                      alt="Tunde Onakoya">
-                  </span>
-                  <span class="card__wm wm" aria-hidden="true">nextgen</span>
-                  <span class="card__id">
-                    <span class="card__name">Tunde<b>Onakoya</b></span>
-                    <span class="card__kind">Speaker</span>
-                    <span class="card__line" aria-hidden="true"></span>
-                  </span>
-                </span>
-              </button>
-            </li>
-
-            <li class="card" style="--i:3" data-grp="a">
-              <button class="card__face" type="button" data-spk="kennedy" aria-haspopup="dialog">
-                <span class="card__stock">
-                  <span class="card__shot">
-                    <img src="assets/img/speakers/kennedy-ekezie-620.jpg"
-                      srcset="assets/img/speakers/kennedy-ekezie-620.jpg 620w, assets/img/speakers/kennedy-ekezie-900.jpg 900w"
-                      sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
-                      alt="Kennedy Ekezie">
-                  </span>
-                  <span class="card__wm wm" aria-hidden="true">nextgen</span>
-                  <span class="card__id">
-                    <span class="card__name">Kennedy<b>Ekezie</b></span>
-                    <span class="card__kind">Speaker</span>
-                    <span class="card__line" aria-hidden="true"></span>
-                  </span>
-                </span>
-              </button>
-            </li>
-
-
-            <li class="card" style="--i:4" data-grp="b">
-              <button class="card__face" type="button" data-spk="gianna" aria-haspopup="dialog">
-                <span class="card__stock">
-                  <span class="card__shot">
-                    <img src="assets/img/speakers/gianna-romero-620.jpg"
-                      srcset="assets/img/speakers/gianna-romero-620.jpg 620w, assets/img/speakers/gianna-romero-900.jpg 900w"
-                      sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
-                      alt="Gianna Romero">
-                  </span>
-                  <span class="card__wm wm" aria-hidden="true">nextgen</span>
-                  <span class="card__id">
-                    <span class="card__name">Gianna<b>Romero</b></span>
-                    <span class="card__kind">Speaker</span>
-                    <span class="card__line" aria-hidden="true"></span>
-                  </span>
-                </span>
-              </button>
-            </li>
-            <li class="card" style="--i:5" data-grp="b">
-              <button class="card__face" type="button" data-spk="michael" aria-haspopup="dialog">
-                <span class="card__stock">
-                  <span class="card__shot">
-                    <img src="assets/img/speakers/michael-ley-620.jpg"
-                      srcset="assets/img/speakers/michael-ley-620.jpg 620w, assets/img/speakers/michael-ley-900.jpg 900w"
-                      sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
-                      alt="Michael Ley">
-                  </span>
-                  <span class="card__wm wm" aria-hidden="true">nextgen</span>
-                  <span class="card__id">
-                    <span class="card__name">Michael<b>Ley</b></span>
-                    <span class="card__kind">Speaker</span>
-                    <span class="card__line" aria-hidden="true"></span>
-                  </span>
-                </span>
-              </button>
-            </li>
-            <li class="card" style="--i:6" data-grp="b">
-              <button class="card__face" type="button" data-spk="jack" aria-haspopup="dialog">
-                <span class="card__stock">
-                  <span class="card__shot">
-                    <img src="assets/img/speakers/jack-scalise-620.jpg"
-                      srcset="assets/img/speakers/jack-scalise-620.jpg 620w, assets/img/speakers/jack-scalise-900.jpg 900w"
-                      sizes="(max-width:760px) 40vw, 248px" width="620" height="868" loading="lazy" decoding="async"
-                      alt="Jack Scalise">
-                  </span>
-                  <span class="card__wm wm" aria-hidden="true">nextgen</span>
-                  <span class="card__id">
-                    <span class="card__name">Jack<b>Scalise</b></span>
-                    <span class="card__kind">Speaker</span>
-                    <span class="card__line" aria-hidden="true"></span>
-                  </span>
-                </span>
-              </button>
-            </li>
-          </ul>
-
-          <p class="exp__more" data-exp-more><span>Scroll to reveal more speakers</span><i aria-hidden="true"></i></p>
-          <p class="exp__set" data-exp-set></p>
-
-          <div class="exp__bar" data-exp-bar hidden>
-            <button class="exp__nav" type="button" data-exp-prev aria-label="Previous speaker">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6"/></svg>
-            </button>
-            <p class="exp__count"><b data-exp-n>01</b> / 06</p>
-            <button class="exp__nav" type="button" data-exp-next aria-label="Next speaker">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- review only: speakers.js reveals this on staging, on localhost, or with ?exp= in the
-           address, and never on the public site. -->
-      <div class="expsel" data-expsel hidden>
-        <p class="expsel__k" id="expsel-k">Speaker experience</p>
-        <div class="expsel__row" role="group" aria-labelledby="expsel-k">
-          <button type="button" data-exp-pick="one" aria-pressed="true">Option 1 &mdash; Stack Reveal</button>
-          <button type="button" data-exp-pick="two" aria-pressed="false">Option 2 &mdash; Living Deck</button>
-        </div>
-      </div>
-
-      <p class="room__hint">Select a card to explore</p>
-      <p class="room__photo">Portraits supplied by NextGen Summit and used as provided. Tisha Edwards&rsquo; headshot is courtesy of the Maryland Bankers Association.</p>
-    </div>
-
-    <!-- the collectible. The script paints both faces from its own data, so every line is
-         editable text rather than something baked into a picture. The close control sits
-         outside the panel that turns, so it is reachable from either side. -->
-    <dialog class="sp" id="speaker" aria-label="Speaker">
-      <button class="sp__close" type="button" data-sp-close aria-label="Close">
-        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
-      </button>
-      <div class="sp__in">
-        <div class="sp__flip" data-sp-flip>
-          <div class="sp__front" data-sp-front></div>
-          <div class="sp__back" data-sp-back aria-hidden="true"></div>
-        </div>
-      </div>
-    </dialog>
   </section>
 
   <!-- 06 who nextgen is for: different generations, one stage -->

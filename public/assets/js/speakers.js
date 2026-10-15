@@ -18,6 +18,9 @@
   var dlg = $('#speaker');
   if (!gal || !dlg) return;
 
+  // the card-into-collectible morph below asks whether motion is wanted before it runs
+  var reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+
   /* ---------- the people ----------
      `wins` is the credential list on the back: a label and the thing itself. `icon` picks one
      of the outlines below. `link` is only ever a profile we have actually seen. */
@@ -226,15 +229,55 @@
     $$('a,button', isBack ? back : front).forEach(function (n) { n.removeAttribute('tabindex'); });
   }
 
+  /* The card you choose lifts out of the deck and grows into the collectible; on the way out it
+     shrinks back into its place. The deck card is hidden meanwhile, so there is only ever one of
+     it. Its centre is read from the screen (rotation does not move a centre) and its width from
+     layout (rotation would inflate a measured box); both faces are 5:7, so one scale fits. The
+     details then rise in from the stylesheet (.sp.is-reveal). Reduced motion keeps the plain fade. */
+  var inner = $('.sp__in', dlg);
+  var canMorph = !reduce.matches && typeof inner.animate === 'function';
+  var leaving = false;
+
+  function slot(btn) {
+    var stock = $('.card__stock', btn) || btn;
+    var li = btn.closest('.card');
+    var a = stock.getBoundingClientRect(), b = inner.getBoundingClientRect();
+    return 'translate(' + ((a.left + a.width / 2) - (b.left + b.width / 2)) + 'px,' +
+      ((a.top + a.height / 2) - (b.top + b.height / 2)) + 'px) rotate(' +
+      ((li && getComputedStyle(li).getPropertyValue('--r').trim()) || '0deg') + ') scale(' +
+      (stock.offsetWidth / (inner.offsetWidth || 1)) + ')';
+  }
+
+  function lift(btn, on) {
+    var li = btn && btn.closest('.card');
+    if (li) li.classList.toggle('is-lifted', on);
+  }
+
   function open(btn) {
     if (!paint(btn.getAttribute('data-spk'))) return;
     opener = btn;
+    leaving = false;
     face(false);                                     // every opening starts on the front
+    dlg.classList.toggle('is-morph', canMorph);
+    dlg.classList.toggle('is-reveal', canMorph);
     if (typeof dlg.showModal === 'function') dlg.showModal();
     else dlg.setAttribute('open', '');
+    if (!canMorph) return;
+    inner.animate([{ transform: slot(btn) }, { transform: 'none' }],
+      { duration: 680, easing: 'cubic-bezier(.16,1,.3,1)' });
+    lift(btn, true);
   }
 
-  function close() { if (dlg.open) dlg.close(); }
+  function close() {
+    if (!dlg.open || leaving) return;
+    if (!canMorph || !opener || !opener.isConnected) { dlg.close(); return; }
+    leaving = true;
+    dlg.classList.add('is-closing');
+    var to = slot(opener);
+    var run = inner.animate([{ transform: 'none' }, { transform: to }],
+      { duration: 440, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+    run.onfinish = run.oncancel = function () { if (dlg.open) dlg.close(); };
+  }
 
   gal.addEventListener('click', function (e) {
     var btn = e.target.closest ? e.target.closest('[data-spk]') : null;
@@ -248,8 +291,19 @@
     if (!e.target.closest('.sp__in')) close();
   });
 
+  // Escape goes the same way out as the close button, so the card still returns to the deck
+  dlg.addEventListener('cancel', function (e) {
+    if (!canMorph) return;
+    e.preventDefault();
+    close();
+  });
+
   dlg.addEventListener('close', function () {
     face(false);                                     // reset for the next one
+    if (inner.getAnimations) inner.getAnimations().forEach(function (a) { a.cancel(); });
+    dlg.classList.remove('is-closing', 'is-reveal', 'is-morph');
+    leaving = false;
+    lift(opener, false);                             // back in the deck before it takes focus
     if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     opener = null;
   });

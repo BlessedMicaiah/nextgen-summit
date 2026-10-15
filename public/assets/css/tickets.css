@@ -4,8 +4,6 @@
    and the Eventbrite modal are branded from one source (--accent).
    ========================================================================= */
 
-.nav__link.is-here{color:var(--accent-ink);cursor:default}
-.on-photo .nav__link.is-here{color:var(--accent)}
 
 /* ---------- hero: the photograph, the line, the date ---------- */
 .tkh{position:relative;z-index:71;min-height:74vh;min-height:74svh;display:flex;align-items:flex-end;color:#fff;overflow:hidden;background:#0B0B0F}
@@ -16,7 +14,7 @@
   linear-gradient(180deg,rgba(6,6,9,.6) 0%,rgba(6,6,9,.1) 24%,rgba(6,6,9,.18) 50%,rgba(6,6,9,.84) 90%,rgba(6,6,9,.94) 100%)}
 .tkh__inner{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:calc(var(--nav-h) + 24px) var(--gutter) clamp(30px,6vh,60px)}
 .tkh__eyebrow{font:700 clamp(10px,.82vw,12px)/1.4 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
-.tkh__title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(52px,9.6vw,164px);line-height:.88;text-shadow:0 2px 40px rgba(6,6,9,.4)}
+.tkh__title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(52px,9.6vw,164px);line-height:1.06;text-shadow:0 2px 40px rgba(6,6,9,.4)}
 .tkh__foot{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 40px;margin-top:clamp(22px,3.6vh,40px);padding-top:clamp(16px,2.4vh,24px);border-top:1px solid rgba(255,255,255,.28)}
 .tkh__when{font:700 clamp(12px,1vw,14px)/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:#fff;text-shadow:0 1px 10px rgba(6,6,9,.7)}
 /* small on purpose: supporting information, never louder than the page */
@@ -64,7 +62,7 @@
 /* ---------- ours, after their order goes through ---------- */
 .tkdone{padding:clamp(20px,4vh,40px) 0 0;outline:none}
 .tkdone[hidden]{display:none}
-.tkdone__title{font-size:clamp(64px,10vw,150px);line-height:.88;padding-bottom:.04em}
+.tkdone__title{font-size:clamp(64px,10vw,150px);line-height:1.06;padding-bottom:.04em}
 .tkdone__copy{margin-top:clamp(12px,2vh,20px);font:700 clamp(18px,1.6vw,24px)/1.4 var(--f-sans)}
 .tkdone__small{margin-top:10px;max-width:44ch;font:500 15px/1.6 var(--f-sans);color:var(--ink-2)}
 .tkdone__cta{margin-top:clamp(26px,4vh,42px)}
@@ -72,7 +70,7 @@
 
 /* ---------- scholarship application ---------- */
 .sch{max-width:52rem;margin:0 auto;padding:calc(var(--nav-h) + clamp(36px,7vh,80px)) var(--gutter) clamp(80px,13vh,150px)}
-.sch__title{margin-top:clamp(16px,2.6vh,30px);font-size:clamp(44px,7vw,104px);line-height:.92}
+.sch__title{margin-top:clamp(16px,2.6vh,30px);font-size:clamp(44px,7vw,104px);line-height:1.06}
 .sch__lede{margin-top:clamp(18px,3vh,30px);max-width:46ch;font:500 clamp(16px,1.25vw,19px)/1.55 var(--f-sans);color:var(--ink-2)}
 .sch__form{display:grid;gap:clamp(26px,4vh,36px);margin-top:clamp(34px,5.5vh,60px);padding-top:clamp(28px,4.4vh,44px);border-top:1px solid var(--rule)}
 .sch__form[hidden]{display:none}

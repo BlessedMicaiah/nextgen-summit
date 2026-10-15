@@ -1,12 +1,7 @@
 /* NextGen Summit — featured speakers.
-   Three states. A deck of four collectible cards on a dark stage; the chosen card, enlarged;
-   and its reverse, with the credentials, when it is turned over.
-
-   The deck does one thing: it opens. The cards sit stacked, NextGen on top, until the section
-   comes into view, and then each slides and turns to the place CSS has already given it. It is
-   observed once and then forgotten, so a small scroll cannot make it open and close again, and
-   nothing animates afterwards. Where the cards land is in the stylesheet, because that is where
-   the difference between a wide fan and a phone's two-by-two belongs.
+   The lineup is a plain grid of collectible cards, laid out by the stylesheet and never moved
+   from here. This file does two things: it holds what each card says, and it opens the chosen
+   card -- enlarged, and turning over to its reverse for the credentials.
 
    Every line a card says is written here, as text, so it can be corrected without touching a
    picture. Each line comes from an authoritative source for that person. */
@@ -19,12 +14,9 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
-  var deck = $('[data-deck]');
+  var gal = $('[data-gal]');
   var dlg = $('#speaker');
-  if (!deck || !dlg) return;
-
-  var reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
-  var hoverMQ = window.matchMedia ? matchMedia('(hover:hover) and (pointer:fine)') : { matches: false };
+  if (!gal || !dlg) return;
 
   /* ---------- the people ----------
      `wins` is the credential list on the back: a label and the thing itself. `icon` picks one
@@ -143,210 +135,7 @@
     globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c2.3 2.4 3.4 5.2 3.4 8.4s-1.1 6-3.4 8.4c-2.3-2.4-3.4-5.2-3.4-8.4s1.1-6 3.4-8.4z"/></svg>'
   };
 
-  /* ---------- the two experiences ----------
-     One deck of cards in the markup and two ways of dealing it. Neither experience owns a card:
-     they move the same elements, and both open the same dialog from the same data.
-
-     Option one is scroll driven. The section is tall and the deck sticks inside it, so where you
-     are in the section decides which of four states the deck is in. The state is a class, so the
-     movement between states is an ordinary CSS transition -- nothing is positioned frame by
-     frame, and scrolling back up simply runs it in reverse.
-
-     Option two deals the top card off the pile every few seconds, and stops the moment anyone
-     shows an interest in reading rather than watching. */
-  var expHold = null;          // option two's pause switch, once that experience is set up
-  var swiped = false;          // a swipe ends in a pointerup over a card; it is not a tap
-  var exp = $('.exp');
-  var deckEl = $('[data-deck]');
-  if (exp && deckEl) {
-    var cards = $$('.card', deckEl);
-    var speakerCards = cards.filter(function (c) { return !!$('[data-spk]', c); });
-    var moreEl = $('[data-exp-more]');
-    var setEl = $('[data-exp-set]');
-    var barEl = $('[data-exp-bar]');
-    var nEl = $('[data-exp-n]');
-    var mode = 'one';
-
-    /* --- option one --- */
-    var STATES = ['is-stack', 'is-a', 'is-shut', 'is-b'];
-    var SET_TEXT = ['', 'First three of six', 'The NextGen collection', 'Second three of six'];
-    var stateAt = -1, oneRaf = null, openAt = -1;
-
-    function setState(i) {
-      if (i === stateAt) return;
-      stateAt = i;
-      STATES.forEach(function (c, n) { deckEl.classList.toggle(c, n === i); });
-      if (setEl) setEl.textContent = SET_TEXT[i] || '';
-      // a card that is not being shown must not be reachable by keyboard either
-      cards.forEach(function (c) {
-        var grp = c.getAttribute('data-grp');
-        var on = grp === 'mark' ? false : (grp === 'a' ? i === 1 : i === 3);
-        var btn = $('[data-spk]', c);
-        if (btn) btn.tabIndex = on ? 0 : -1;
-      });
-    }
-
-    /* The opening is tied to the scroll rather than fired by it. --o runs 0 to 1 as the deck
-       comes up the screen and the cards read it directly, so they start separating on the first
-       pixel of scroll instead of waiting for a threshold. Measured before this: the deck sat
-       still for 1075px -- more than a whole screen -- because progress only began once the
-       section's top had passed the top of the viewport, and then a dead band ate 14% more. */
-    var LEAD = 0.92;        // progress starts while the deck is still almost a screen down
-    var SPREAD = 0.16;      // and the cards are fully dealt this far into the run
-
-    function readScroll() {
-      oneRaf = null;
-      if (mode !== 'one') return;
-      var vh = window.innerHeight;
-      var r = exp.getBoundingClientRect();
-      var head = vh * LEAD;
-      var span = head + r.height - vh;
-      if (span <= 0) { deckEl.style.setProperty('--o', '1'); setState(1); return; }
-      var p = Math.min(1, Math.max(0, (head - r.top) / span));
-
-      var o = Math.min(1, p / SPREAD);
-      if (o !== openAt) {
-        openAt = o;
-        deckEl.style.setProperty('--o', o.toFixed(4));
-        // while the scroll is driving it the cards must not also be easing, or they lag behind
-        deckEl.classList.toggle('is-live', o < 1);
-        // the NextGen card faces out until the deal is properly under way
-        deckEl.classList.toggle('is-lid', o < 0.4);
-      }
-      /* The lead-in means p is already part-spent by the time the deck settles, so the bands
-         sit later than they would without it: the first three are dealt by 0.16 and then hold
-         while the deck is stuck, the deck closes on the NextGen card, and the second three are
-         dealt. */
-      setState(p < 0.56 ? 1 : p < 0.72 ? 2 : 3);
-    }
-    function onScroll() { if (oneRaf === null) oneRaf = requestAnimationFrame(readScroll); }
-
-    /* --- option two --- */
-    var TURN = 4500;
-    var at = 0, timer = null, held = { hover: false, drag: false, dialog: false, away: false, hidden: false };
-
-    function arrange() {
-      var n = speakerCards.length;
-      speakerCards.forEach(function (c, i) {
-        var d = (i - at + n) % n;
-        c.classList.remove('is-front', 'is-next', 'is-after');
-        if (d === 0) c.classList.add('is-front');
-        else if (d === 1) c.classList.add('is-next');
-        else if (d === 2) c.classList.add('is-after');
-        var btn = $('[data-spk]', c);
-        if (btn) btn.tabIndex = d === 0 ? 0 : -1;
-      });
-      if (nEl) nEl.textContent = ('0' + (at + 1)).slice(-2);
-    }
-
-    function go(step) {
-      var n = speakerCards.length;
-      var leaving = speakerCards[at];
-      at = (at + step + n) % n;
-      if (step > 0 && leaving) {
-        leaving.classList.add('is-out');
-        setTimeout(function () { leaving.classList.remove('is-out'); arrange(); }, 340);
-      }
-      arrange();
-    }
-
-    expHold = function (k, v) { hold(k, v); };
-    function stopped() { return held.hover || held.drag || held.dialog || held.away || held.hidden; }
-    function tick() { clearInterval(timer); timer = null; if (mode === 'two' && !stopped() && !reduce.matches) timer = setInterval(function () { go(1); }, TURN); }
-    function hold(k, v) { held[k] = v; if (v) { clearInterval(timer); timer = null; } else tick(); }
-
-    // dragging and swiping, on one set of pointer handlers for mouse and touch alike
-    var down = null;
-    deckEl.addEventListener('pointerdown', function (e) {
-      if (mode !== 'two' || e.button) return;
-      down = { x: e.clientX, y: e.clientY, t: Date.now(), moved: false };
-      hold('drag', true);
-    });
-    deckEl.addEventListener('pointermove', function (e) {
-      if (!down) return;
-      var dx = e.clientX - down.x, dy = e.clientY - down.y;
-      // a vertical gesture is the page scrolling, and is left alone
-      if (!down.moved && Math.abs(dy) > Math.abs(dx)) { down = null; hold('drag', false); return; }
-      if (Math.abs(dx) > 8) down.moved = true;
-    });
-    function endDrag(e) {
-      if (!down) return;
-      var dx = (e.clientX || 0) - down.x;
-      var quick = Date.now() - down.t < 500;
-      if (down.moved && (Math.abs(dx) > 56 || (quick && Math.abs(dx) > 28))) go(dx < 0 ? 1 : -1);
-      var wasDrag = down.moved;
-      down = null;
-      hold('drag', false);
-      if (wasDrag) { swiped = true; setTimeout(function () { swiped = false; }, 0); }
-    }
-    deckEl.addEventListener('pointerup', endDrag);
-    deckEl.addEventListener('pointercancel', function () { down = null; hold('drag', false); });
-
-    if (barEl) {
-      $('[data-exp-prev]', barEl).addEventListener('click', function () { go(-1); tick(); });
-      $('[data-exp-next]', barEl).addEventListener('click', function () { go(1); tick(); });
-    }
-    deckEl.addEventListener('keydown', function (e) {
-      if (mode !== 'two') return;
-      if (e.key === 'ArrowRight') { go(1); tick(); e.preventDefault(); }
-      if (e.key === 'ArrowLeft') { go(-1); tick(); e.preventDefault(); }
-    });
-    deckEl.addEventListener('pointerenter', function () { if (hoverMQ.matches) hold('hover', true); });
-    deckEl.addEventListener('pointerleave', function () { if (hoverMQ.matches) hold('hover', false); });
-    deckEl.addEventListener('focusin', function () { hold('hover', true); });
-    deckEl.addEventListener('focusout', function () { hold('hover', false); });
-    document.addEventListener('visibilitychange', function () { hold('hidden', document.hidden); });
-
-    new IntersectionObserver(function (es) {
-      held.away = !es[0].isIntersecting;
-      if (held.away) { clearInterval(timer); timer = null; } else tick();
-    }, { rootMargin: '0px' }).observe(exp);
-
-    /* --- switching between them --- */
-    function setMode(m) {
-      mode = m;
-      exp.setAttribute('data-exp', m);
-      exp.classList.toggle('exp--one', m === 'one');
-      exp.classList.toggle('exp--two', m === 'two');
-      if (barEl) barEl.hidden = m !== 'two';
-      if (moreEl) moreEl.hidden = m !== 'one';
-      if (setEl) setEl.hidden = m !== 'one';
-      $$('[data-exp-pick]').forEach(function (b) {
-        b.setAttribute('aria-pressed', String(b.getAttribute('data-exp-pick') === m));
-      });
-      clearInterval(timer); timer = null;
-      cards.forEach(function (c) { c.classList.remove('is-front', 'is-next', 'is-after', 'is-out'); });
-      if (m === 'one') {
-        STATES.forEach(function (c) { deckEl.classList.remove(c); });
-        stateAt = -1;
-        readScroll();
-        addEventListener('scroll', onScroll, { passive: true });
-      } else {
-        removeEventListener('scroll', onScroll);
-        STATES.forEach(function (c) { deckEl.classList.remove(c); });
-        at = 0; arrange(); tick();
-      }
-      try { sessionStorage.setItem('ngsExp', m); } catch (e) {}
-    }
-
-    // the switch is for review, so it only exists where review happens
-    var host = location.hostname;
-    var review = host.indexOf('staging.') === 0 || host === 'localhost' || host === '127.0.0.1' ||
-      /[?&]exp=/.test(location.search);
-    var sel = $('[data-expsel]');
-    if (review && sel) {
-      sel.hidden = false;
-      $$('[data-exp-pick]').forEach(function (b) {
-        b.addEventListener('click', function () { setMode(b.getAttribute('data-exp-pick')); });
-      });
-    }
-    var want = (location.search.match(/[?&]exp=(one|two)/) || [])[1];
-    if (!want && review) { try { want = sessionStorage.getItem('ngsExp'); } catch (e) {} }
-    setMode(want === 'two' ? 'two' : 'one');
-    addEventListener('resize', onScroll, { passive: true });
-  }
-
-  /* ---------- states two and three: the collectible ---------- */
+  /* ---------- the collectible ---------- */
   var front = $('[data-sp-front]', dlg);
   var back = $('[data-sp-back]', dlg);
   var opener = null;
@@ -439,7 +228,6 @@
 
   function open(btn) {
     if (!paint(btn.getAttribute('data-spk'))) return;
-    if (expHold) expHold('dialog', true);            // the deck waits while this is being read
     opener = btn;
     face(false);                                     // every opening starts on the front
     if (typeof dlg.showModal === 'function') dlg.showModal();
@@ -448,8 +236,7 @@
 
   function close() { if (dlg.open) dlg.close(); }
 
-  deck.addEventListener('click', function (e) {
-    if (swiped) return;                              // that was a swipe, not a choice
+  gal.addEventListener('click', function (e) {
     var btn = e.target.closest ? e.target.closest('[data-spk]') : null;
     if (btn) open(btn);
   });
@@ -462,7 +249,6 @@
   });
 
   dlg.addEventListener('close', function () {
-    if (expHold) expHold('dialog', false);           // and carries on from where it was
     face(false);                                     // reset for the next one
     if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     opener = null;

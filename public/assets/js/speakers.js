@@ -58,8 +58,8 @@
     // past tense because his site puts it there: "Previously, founder and CEO at Kippa".
     kennedy: {
       first: 'Kennedy', last: 'Ekezie',
-      role: 'Technology entrepreneur <span aria-hidden="true">&middot;</span> Founder, Kippa',
-      roleFlat: 'Technology entrepreneur, Founder of Kippa',
+      role: 'Entrepreneur <span aria-hidden="true">&middot;</span> Forbes 30 Under 30',
+      roleFlat: 'Entrepreneur, Forbes 30 Under 30',
       shot: 'kennedy-ekezie',
       wins: [
         { k: 'Kippa', v: 'Founder and former CEO of a financial management platform used by 1 million businesses', icon: 'case' },

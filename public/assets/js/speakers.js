@@ -110,8 +110,7 @@
        platforms without claiming an audience on them. */
     /* Added 17 October on Pastor Debbie's word, with his speaker card and portrait. The four
        lines are his own description of the work he does rather than claims of office or award,
-       and are reproduced as supplied. No LinkedIn address came with him, so the card back
-       simply has no link until one does. */
+       and are reproduced as supplied. */
     jamar: {
       first: 'Jamar', last: 'Simms Jr.',
       role: 'Cinematographer <span aria-hidden="true">&middot;</span> Marketer',
@@ -122,7 +121,8 @@
         { k: 'Production', v: 'Camera operation, on-set capture and shaping compelling visual moments', icon: 'case' },
         { k: 'Marketing', v: 'Creative execution with marketing thinking, to help stories connect with people', icon: 'board' },
         { k: 'Creative', v: 'A strong eye for visuals, audience engagement and modern digital storytelling', icon: 'bulb' }
-      ]
+      ],
+      link: 'https://www.linkedin.com/in/jamar-simms-jr-30521a249'
     },
 
     jack: {

@@ -557,14 +557,15 @@ h1,h2,h3,p{margin:0}
   max-width:calc(var(--cw) * 4.28)}
 .gal .card{position:absolute;left:50%;top:50%;width:var(--cw);
   transform:translate(-50%,-50%) translate(var(--x,0px),var(--y,0px)) rotate(var(--r,0deg))}
-/* four across the top */
-.gal .card:nth-child(1){--x:calc(var(--sp) * -1.5);--y:calc(var(--ch) * -.54);--r:-5.6deg;z-index:11}
-.gal .card:nth-child(2){--x:calc(var(--sp) * -.5);--y:calc(var(--ch) * -.57);--r:-1.9deg;z-index:12}
-.gal .card:nth-child(3){--x:calc(var(--sp) * .5);--y:calc(var(--ch) * -.56);--r:2.1deg;z-index:13}
-.gal .card:nth-child(4){--x:calc(var(--sp) * 1.5);--y:calc(var(--ch) * -.52);--r:5.8deg;z-index:14}
-/* two set down below, centred under the four */
-.gal .card:nth-child(5){--x:calc(var(--sp) * -.52);--y:calc(var(--ch) * .55);--r:-3.4deg;z-index:15}
-.gal .card:nth-child(6){--x:calc(var(--sp) * .52);--y:calc(var(--ch) * .58);--r:3.5deg;z-index:16}
+/* three across the top */
+.gal .card:nth-child(1){--x:calc(var(--sp) * -1);--y:calc(var(--ch) * -.55);--r:-5.4deg;z-index:11}
+.gal .card:nth-child(2){--x:0px;--y:calc(var(--ch) * -.58);--r:1.4deg;z-index:13}
+.gal .card:nth-child(3){--x:calc(var(--sp) * 1);--y:calc(var(--ch) * -.54);--r:5.6deg;z-index:12}
+/* four set down below them */
+.gal .card:nth-child(4){--x:calc(var(--sp) * -1.5);--y:calc(var(--ch) * .55);--r:-5.8deg;z-index:14}
+.gal .card:nth-child(5){--x:calc(var(--sp) * -.5);--y:calc(var(--ch) * .58);--r:-2deg;z-index:15}
+.gal .card:nth-child(6){--x:calc(var(--sp) * .5);--y:calc(var(--ch) * .57);--r:2.2deg;z-index:16}
+.gal .card:nth-child(7){--x:calc(var(--sp) * 1.5);--y:calc(var(--ch) * .54);--r:5.9deg;z-index:17}
 /* the light each card leaves on the floor of the stage */
 .card::after{content:"";position:absolute;left:14%;right:14%;bottom:-12px;height:26px;border-radius:50%;
   pointer-events:none;background:radial-gradient(50% 50% at 50% 50%,rgba(31,199,190,.5) 0%,rgba(31,199,190,0) 70%)}
@@ -576,14 +577,15 @@ h1,h2,h3,p{margin:0}
      the edges reads as a collection rather than a shrunken grid. --cw is solved from the width
      a row actually occupies: two steps, one card, and the sideways bleed the lean adds. */
   .gal{--cw:min(calc((100vw - 8px) / 3.19),160px);--sp:calc(var(--cw) * 1.01);
-    height:calc(var(--ch) * 2.2);max-width:none;
+    height:calc(var(--ch) * 3.32);max-width:none;
     margin-inline:calc(var(--gutter) * -1);width:calc(100% + var(--gutter) * 2)}
-  .gal .card:nth-child(1){--x:calc(var(--sp) * -1);--y:calc(var(--ch) * -.54);--r:-5.2deg;z-index:11}
-  .gal .card:nth-child(2){--x:0px;--y:calc(var(--ch) * -.58);--r:1.2deg;z-index:13}
-  .gal .card:nth-child(3){--x:calc(var(--sp) * 1);--y:calc(var(--ch) * -.53);--r:5.4deg;z-index:12}
-  .gal .card:nth-child(4){--x:calc(var(--sp) * -1);--y:calc(var(--ch) * .55);--r:-4.8deg;z-index:14}
-  .gal .card:nth-child(5){--x:0px;--y:calc(var(--ch) * .59);--r:-1deg;z-index:16}
-  .gal .card:nth-child(6){--x:calc(var(--sp) * 1);--y:calc(var(--ch) * .54);--r:5deg;z-index:15}
+  .gal .card:nth-child(1){--x:calc(var(--sp) * -1);--y:calc(var(--ch) * -1.08);--r:-5.2deg;z-index:11}
+  .gal .card:nth-child(2){--x:0px;--y:calc(var(--ch) * -1.12);--r:1.2deg;z-index:13}
+  .gal .card:nth-child(3){--x:calc(var(--sp) * 1);--y:calc(var(--ch) * -1.07);--r:5.4deg;z-index:12}
+  .gal .card:nth-child(4){--x:calc(var(--sp) * -.5);--y:0px;--r:-4.6deg;z-index:14}
+  .gal .card:nth-child(5){--x:calc(var(--sp) * .5);--y:calc(var(--ch) * .03);--r:4.8deg;z-index:15}
+  .gal .card:nth-child(6){--x:calc(var(--sp) * -.5);--y:calc(var(--ch) * 1.1);--r:-5deg;z-index:16}
+  .gal .card:nth-child(7){--x:calc(var(--sp) * .5);--y:calc(var(--ch) * 1.13);--r:4.6deg;z-index:17}
 }
 
 .card__face{position:relative;display:block;width:100%;padding:0;border:0;background:none;text-align:left;

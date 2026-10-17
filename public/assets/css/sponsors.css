@@ -70,6 +70,14 @@
 .spon__site{display:block;margin-top:4px;font:600 12px/1.3 var(--f-sans);color:var(--accent-ink);overflow-wrap:anywhere}
 .spon__more{margin-top:clamp(26px,4vh,40px);display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;
   font:500 clamp(15px,1.25vw,18px)/1.5 var(--f-sans);color:var(--ink-2)}
+/* where a pointer can hover, a card shows only its logo, centred; the name and address rise in under it
+   on hover or keyboard focus. Touch screens keep them in view, and screen readers read them either way. */
+@media (hover:hover){
+  .spon__partner .spon__mark{transform:translateY(34px);transition:transform .55s var(--ease)}
+  .spon__partner .spon__who{opacity:0;transform:translateY(12px);transition:opacity .3s var(--ease),transform .5s var(--ease)}
+  .spon__partner .spon__card:hover .spon__mark,.spon__partner .spon__card:focus-visible .spon__mark{transform:none}
+  .spon__partner .spon__card:hover .spon__who,.spon__partner .spon__card:focus-visible .spon__who{opacity:1;transform:none;transition-delay:.08s}
+}
 
 @media (max-width:900px){
   .spon__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -104,5 +112,6 @@
   .spon__track{animation:none;width:auto;justify-content:center;transform:none!important}
   .spon__run{flex-wrap:wrap;justify-content:center;gap:14px;padding:0 var(--gutter)}
   .spon__run + .spon__run{display:none}
-  .spon__card,.spon__card img,.spon__go{transition:none;transform:none!important}
+  .spon__card,.spon__card img,.spon__go,.spon__mark{transition:none;transform:none!important}
+  .spon__who{transform:none!important}
 }

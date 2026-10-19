@@ -1,0 +1,188 @@
+<?php
+/* People's Choice — the voting rule, and contestant attribution.
+
+   TWO VOTING MODELS LIVE HERE. Only one of them is switched on.
+
+     'single'  one voter, one vote, for the whole competition.   <- APPROVED, and the default
+     'daily'   an allowance that refills at midnight Eastern,
+               larger for a verified ticket holder.              <- PROPOSED, not approved
+
+   The daily model is written, tested and selectable, because leadership asked to see it
+   working. It is not the default and a deploy cannot make it the default: the mode is a stored
+   setting an administrator changes deliberately. Quietly changing the rules of a live
+   competition is not something a release should be able to do.
+
+   Nothing here decides anything from browser storage, a cookie or an IP address. The allowance
+   is counted from the vote rows, server-side, every time. */
+declare(strict_types=1);
+
+require_once __DIR__ . '/pc-lib.php';
+
+const PC_MODE_DEFAULT = 'single';
+const PC_MODES = ['single', 'daily'];
+
+function pc_mode(): string
+{
+    $m = (string) pc_meta('mode', PC_MODE_DEFAULT);
+    return in_array($m, PC_MODES, true) ? $m : PC_MODE_DEFAULT;
+}
+
+/** How many votes this kind of voter gets per window. */
+function pc_allowance(bool $ticketHolder = false): int
+{
+    if (pc_mode() === 'single') {
+        return 1;                      // the approved rule: one, for the whole competition
+    }
+    $n = (int) pc_meta($ticketHolder ? 'daily_ticket' : 'daily_public', $ticketHolder ? '2' : '1');
+    return max(0, min(10, $n));
+}
+
+/** The Eastern calendar day a moment belongs to. The allowance refills when this changes. */
+function pc_day(?int $ts = null): string
+{
+    $dt = new DateTime('@' . ($ts ?? time()));
+    $dt->setTimezone(new DateTimeZone(PC_TZ));
+    return $dt->format('Y-m-d');
+}
+
+/** Votes this voter has already had counted in the current window. */
+function pc_used(string $voterKey): int
+{
+    $single = pc_mode() === 'single';
+    $db = pc_db();
+    if ($db) {
+        $sql = 'SELECT COUNT(*) AS n FROM pc_votes WHERE competition = ? AND voter_key LIKE ? AND valid = 1';
+        $args = [PC_COMPETITION, $voterKey . '%'];
+        $s = $db->prepare($sql);
+        $s->execute($args);
+        $r = $s->fetch();
+        $n = (int) ($r['n'] ?? 0);
+        if ($single) {
+            return $n;
+        }
+        $s = $db->prepare('SELECT COUNT(*) AS n FROM pc_votes
+                           WHERE competition = ? AND voter_key LIKE ? AND valid = 1 AND vote_day = ?');
+        $s->execute([PC_COMPETITION, $voterKey . '%', pc_day()]);
+        $r = $s->fetch();
+        return (int) ($r['n'] ?? 0);
+    }
+    $n = 0;
+    $day = pc_day();
+    foreach (pc_file_read()['votes'] as $v) {
+        if (strpos((string) ($v['voter_key'] ?? ''), $voterKey) !== 0 || (int) ($v['valid'] ?? 1) !== 1) {
+            continue;
+        }
+        if ($single || ($v['vote_day'] ?? '') === $day) {
+            $n++;
+        }
+    }
+    return $n;
+}
+
+function pc_remaining(string $voterKey, bool $ticketHolder = false): int
+{
+    return max(0, pc_allowance($ticketHolder) - pc_used($voterKey));
+}
+
+/** When the allowance next refills: midnight Eastern, or never under the approved rule. */
+function pc_next_window(): ?string
+{
+    if (pc_mode() === 'single') {
+        return null;
+    }
+    $dt = new DateTime('now', new DateTimeZone(PC_TZ));
+    $dt->modify('tomorrow midnight');
+    return $dt->format('c');
+}
+
+/* ---------- attribution ----------
+   How many visits a contestant's own sharing brought in, without following anyone around.
+   No IP address is stored and no cookie is set: "visitor" is a hash of address, user agent and
+   the Eastern day, salted with the server secret. It tells one person reloading from twenty
+   people arriving, and it stops being linkable to anything tomorrow. */
+function pc_visits_table(): void
+{
+    $db = pc_db();
+    if (!$db) {
+        return;
+    }
+    $db->exec('CREATE TABLE IF NOT EXISTS pc_visits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entrant_id TEXT NOT NULL,
+        source     TEXT,
+        day        TEXT NOT NULL,
+        visitor    TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )');
+    $db->exec('CREATE INDEX IF NOT EXISTS pc_visits_e ON pc_visits (entrant_id, day)');
+}
+
+function pc_visitor_token(): string
+{
+    $seed = ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($_SERVER['HTTP_USER_AGENT'] ?? '') . '|' . pc_day();
+    return substr(hash_hmac('sha256', $seed, NGS_SECRET), 0, 20);
+}
+
+function pc_log_visit(string $entrantId, ?string $source): void
+{
+    pc_visits_table();
+    $src = $source !== null && $source !== '' ? substr(preg_replace('/[^a-z0-9_.-]/i', '', $source), 0, 40) : 'direct';
+    $db = pc_db();
+    if ($db) {
+        $s = $db->prepare('INSERT INTO pc_visits (entrant_id, source, day, visitor, created_at)
+                           VALUES (?, ?, ?, ?, ?)');
+        $s->execute([$entrantId, $src, pc_day(), pc_visitor_token(), ngs_now()]);
+        return;
+    }
+    $d = pc_file_read();
+    $d['visits'] = $d['visits'] ?? [];
+    $d['visits'][] = [
+        'entrant_id' => $entrantId, 'source' => $src, 'day' => pc_day(),
+        'visitor' => pc_visitor_token(), 'created_at' => ngs_now(),
+    ];
+    pc_file_write($d);
+}
+
+/** Visits and approximate unique visitors per contestant. Admin only, never public. */
+function pc_traffic(): array
+{
+    pc_visits_table();
+    $out = [];
+    $db = pc_db();
+    if ($db) {
+        foreach ($db->query('SELECT entrant_id, COUNT(*) AS visits, COUNT(DISTINCT visitor) AS uniques
+                             FROM pc_visits GROUP BY entrant_id')->fetchAll() as $r) {
+            $out[(string) $r['entrant_id']] = ['visits' => (int) $r['visits'], 'uniques' => (int) $r['uniques']];
+        }
+        $src = $db->query('SELECT source, COUNT(*) AS n FROM pc_visits GROUP BY source ORDER BY n DESC')->fetchAll();
+        return ['by_entrant' => $out, 'by_source' => $src];
+    }
+    $seen = [];
+    foreach ((pc_file_read()['visits'] ?? []) as $v) {
+        $e = (string) $v['entrant_id'];
+        $out[$e] = $out[$e] ?? ['visits' => 0, 'uniques' => 0];
+        $out[$e]['visits']++;
+        $k = $e . '|' . $v['visitor'];
+        if (!isset($seen[$k])) {
+            $seen[$k] = 1;
+            $out[$e]['uniques']++;
+        }
+    }
+    return ['by_entrant' => $out, 'by_source' => []];
+}
+
+/** The slug a contestant's own page lives at. */
+function pc_slug(array $e): string
+{
+    return trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', (string) $e['name'])), '-');
+}
+
+function pc_by_slug(string $slug): ?array
+{
+    foreach (pc_entrants() as $e) {
+        if (pc_slug($e) === $slug) {
+            return $e;
+        }
+    }
+    return null;
+}

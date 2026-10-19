@@ -29,6 +29,8 @@
 
   var q = (location.search.match(/[?&]pc=([a-z-]+)/) || [])[1];
   if (q && STATES.indexOf(q) >= 0) STATE = q;
+  var FORCED = !!q;          // ?pc= is for walking through the states in review
+  var API = '/api/pc-vote.php';
   var qd = (location.search.match(/[?&]pcdeadline=([0-9T:+-]+)/) || [])[1];
   if (qd) DEADLINE = qd;
 
@@ -92,6 +94,25 @@
   }
   function keepBallot(id) {
     try { sessionStorage.setItem(BALLOT, JSON.stringify({ entrant: id, at: Date.now() })); } catch (e) {}
+  }
+
+  /* Who the voter is, as far as this prototype can tell. The email path uses what was typed;
+     the Google path mints a pseudo-identity and keeps it, so at least the same browser is the
+     same "person" twice. Neither is verification, and the server knows it: every row it writes
+     is marked simulated. Real auth replaces this function and the endpoint stops trusting the
+     request body at all. */
+  function voterClaim() {
+    if (method === 'email') {
+      var f = $('[data-pc-email]', vDlg);
+      if (f && f.value) return f.value.trim().toLowerCase();
+    }
+    var k = 'ngs-pc-simulated-identity', v = null;
+    try { v = localStorage.getItem(k); } catch (e) {}
+    if (!v) {
+      v = 'google-sim-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      try { localStorage.setItem(k, v); } catch (e) {}
+    }
+    return v;
   }
 
   /* ---------- 5. the gallery ---------- */
@@ -245,14 +266,52 @@
     track('auth_complete_simulated', { method: method || 'simulated' });
   }
 
+  /* The vote is the server's to accept. Nothing is marked done, stored or repainted until it
+     has said so: no optimistic counting, and a failure says what went wrong rather than
+     showing a confirmation that is not true. */
   function castVote() {
     if (!pending) return;
-    if (ballot()) { step('already'); return; }
-    keepBallot(pending.id);
-    step('done');
-    track('vote_success_simulated', { entrant_id: pending.id, entrant_slot: pending.n });
-    // every card and the open profile must now show the same thing
-    repaintAfterVote();
+    var btn = $('[data-pc-cast]', vDlg);
+    if (btn) { btn.disabled = true; btn.textContent = 'Recording…'; }
+    var who = pending;
+    fetch(API, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entrant: who.id, voter: voterClaim() })
+    }).then(function (r) {
+      return r.json().catch(function () { return { ok: false, reason: 'network' }; });
+    }).then(function (d) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Confirm my vote'; }
+      if (d && d.ok) {
+        keepBallot(who.id);
+        step('done');
+        track('vote_success', { entrant_id: who.id, entrant_slot: who.n, simulated: true });
+        repaintAfterVote();
+        return;
+      }
+      var why = d && d.reason;
+      if (why === 'duplicate') {
+        keepBallot(who.id);
+        $('[data-pc-already-for]', vDlg).textContent = who.name;
+        step('already');
+        track('vote_duplicate_blocked', { entrant_id: who.id });
+        repaintAfterVote();
+        return;
+      }
+      var e = $('[data-pc-error-cast]', vDlg);
+      if (e) {
+        e.textContent = why === 'closed' ? 'Voting is not open. Nothing was recorded.'
+          : why === 'rate' ? 'Too many attempts from this connection. Try again shortly.'
+          : 'That did not go through, and no vote was recorded. Please try again.';
+        e.hidden = false;
+      }
+      track('vote_failed', { entrant_id: who.id, reason: why || 'unknown' });
+    }).catch(function () {
+      if (btn) { btn.disabled = false; btn.textContent = 'Confirm my vote'; }
+      var e = $('[data-pc-error-cast]', vDlg);
+      if (e) { e.textContent = 'No connection, so no vote was recorded. Please try again.'; e.hidden = false; }
+      track('vote_failed', { reason: 'network' });
+    });
   }
 
   function repaintAfterVote() {
@@ -356,12 +415,15 @@
   });
 
   /* ---------- 10. the page furniture ---------- */
-  $$('[data-pc-state]').forEach(function (n) {
-    n.setAttribute('data-state', STATE);
-    var label = $('[data-pc-state-label]', n);
-    if (label) label.textContent = COPY[STATE].pill;
-  });
-  $$('[data-pc-state-note]').forEach(function (n) { n.textContent = COPY[STATE].note; });
+  function paintFurniture() {
+    $$('[data-pc-state]').forEach(function (n) {
+      n.setAttribute('data-state', STATE);
+      var label = $('[data-pc-state-label]', n);
+      if (label) label.textContent = COPY[STATE].pill;
+    });
+    $$('[data-pc-state-note]').forEach(function (n) { n.textContent = COPY[STATE].note; });
+  }
+  paintFurniture();
 
   // the countdown, only when there is something to count to
   var clock = $('[data-pc-clock]');
@@ -390,6 +452,22 @@
   }
   addEventListener('hashchange', fromHash);
   fromHash();
+
+  /* The competition's state belongs to the server; the constant above is only the fallback
+     for a page served before the endpoint answers. ?pc= still wins, for review. */
+  if (!FORCED) {
+    fetch(API, { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok || STATES.indexOf(d.state) < 0 || d.state === STATE) return;
+        STATE = d.state;
+        if (d.deadline) DEADLINE = d.deadline;
+        grid.innerHTML = ENTRANTS.map(cardHtml).join('');
+        paintFurniture();
+        if (ballot()) repaintAfterVote();
+      })
+      .catch(function () {});
+  }
 
   track('page_view', { state: STATE, entrants: ENTRANTS.length, simulated: true });
 })();

@@ -135,6 +135,11 @@
         '<button class="pce__open" type="button" data-pc-open="' + e.id + '">' +
           'Open ' + e.name + '</button>' +
         '<span class="pce__num">' + e.n + '</span>' +
+        '<button class="pce__share" type="button" data-pc-share="' + e.id + '" ' +
+          'aria-label="Share ' + e.name + '">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">' +
+          '<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/>' +
+          '<path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg></button>' +
         '<span class="pce__shot">' + shot + '</span>' +
         '<span class="pce__body">' +
           (e.draft ? '<span class="pce__flag">Placeholder slot</span>' : '') +
@@ -179,8 +184,15 @@
     return null;
   }
 
-  function shareUrl(e) {
-    return location.origin + location.pathname + '#' + e.id;
+  /* Each contestant has a page of their own, so a shared link lands on them rather than on a
+     fragment of the gallery -- which also means the preview card a messaging app draws is
+     theirs. ?s= records which platform sent the visit; it carries no person in it. */
+  function slugOf(e) {
+    return e.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+  function shareUrl(e, via) {
+    var u = location.origin + '/pitch/peoples-choice/' + slugOf(e) + '/';
+    return via ? u + '?s=' + via : u;
   }
 
   function paintProfile(e) {
@@ -284,12 +296,38 @@
       if (btn) { btn.disabled = false; btn.textContent = 'Confirm my vote'; }
       if (d && d.ok) {
         keepBallot(who.id);
+        var forEl = $('[data-pc-done-for]', vDlg);
+        if (forEl) forEl.textContent = 'Your vote for ' + who.name + ' at ' + who.company +
+          ' has been recorded. Now come and experience what’s next.';
+        /* "Come back tomorrow" only when the active configuration actually permits it. Under
+           the approved one-vote rule it would be a lie, so it stays hidden. */
+        var again = $('[data-pc-done-again]', vDlg);
+        if (again) {
+          var more = d.mode === 'daily' && typeof d.remaining === 'number';
+          if (more && d.remaining > 0) {
+            again.textContent = 'You have ' + d.remaining +
+              (d.remaining === 1 ? ' more vote' : ' more votes') + ' today.';
+            again.hidden = false;
+          } else if (more && d.next_window) {
+            again.textContent = 'That is your allowance for today. Come back after midnight Eastern to vote again.';
+            again.hidden = false;
+          } else {
+            again.hidden = true;
+          }
+        }
         step('done');
-        track('vote_success', { entrant_id: who.id, entrant_slot: who.n, simulated: true });
+        track('vote_success', { entrant_id: who.id, entrant_slot: who.n, simulated: true, mode: d.mode });
         repaintAfterVote();
         return;
       }
       var why = d && d.reason;
+      if (why === 'allowance') {
+        $('[data-pc-already-for]', vDlg).textContent = who.name;
+        step('already');
+        track('vote_allowance_spent', { entrant_id: who.id });
+        repaintAfterVote();
+        return;
+      }
       if (why === 'duplicate') {
         keepBallot(who.id);
         $('[data-pc-already-for]', vDlg).textContent = who.name;
@@ -331,9 +369,18 @@
       ? 'Back ' + e.name + ' in the NextGen Summit People’s Choice Award.'
       : 'Vote in the NextGen Summit People’s Choice Award.';
     $('[data-pc-share-url]', sDlg).textContent = url;
-    $('[data-pc-share-wa]', sDlg).href = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
-    $('[data-pc-share-li]', sDlg).href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
-    $('[data-pc-share-x]', sDlg).href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
+    $('[data-pc-share-wa]', sDlg).href = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + (e ? shareUrl(e, 'whatsapp') : url));
+    $('[data-pc-share-li]', sDlg).href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(e ? shareUrl(e, 'linkedin') : url);
+    $('[data-pc-share-x]', sDlg).href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(e ? shareUrl(e, 'x') : url);
+    var nat = $('[data-pc-share-native]', sDlg);
+    if (nat) {
+      nat.hidden = typeof navigator.share !== 'function';
+      nat.onclick = function () {
+        navigator.share({ title: e ? e.name : 'NextGen People’s Choice', text: text, url: url })
+          .then(function () { track('share_native', e ? { entrant_id: e.id } : {}); })
+          .catch(function () {});
+      };
+    }
     var copy = $('[data-pc-share-copy]', sDlg);
     copy.textContent = 'Copy link';
     copy.setAttribute('data-url', url);
@@ -426,32 +473,57 @@
   paintFurniture();
 
   // the countdown, only when there is something to count to
+  /* The countdown runs to an absolute instant the server worked out in Eastern time, so it is
+     the same moment for a visitor in Maryland and one in Lagos. Seconds tick, and when it
+     reaches zero the page asks the server what the state is now rather than deciding itself. */
   var clock = $('[data-pc-clock]');
-  if (clock) {
-    if (!DEADLINE) clock.hidden = true;
-    else {
-      var end = new Date(DEADLINE).getTime();
-      var tick = function () {
-        var left = end - Date.now();
-        if (isNaN(end) || left <= 0) { clock.hidden = true; return; }
-        var d = Math.floor(left / 864e5), h = Math.floor(left / 36e5) % 24, m = Math.floor(left / 6e4) % 60;
-        $('[data-pc-clock-v]', clock).innerHTML =
-          d + '<span>d</span> ' + h + '<span>h</span> ' + m + '<span>m</span>';
-        clock.hidden = false;
-      };
-      tick(); setInterval(tick, 30000);
-    }
+  var clockTimer = null;
+  function startClock() {
+    if (!clock) return;
+    clearInterval(clockTimer);
+    if (!DEADLINE) { clock.hidden = true; return; }
+    var end = new Date(DEADLINE).getTime();
+    if (isNaN(end)) { clock.hidden = true; return; }
+    var closed = false;
+    var tick = function () {
+      var left = end - Date.now();
+      if (left <= 0) {
+        clock.hidden = true;
+        if (!closed) {
+          closed = true;
+          STATE = 'closed';
+          grid.innerHTML = ENTRANTS.map(cardHtml).join('');
+          paintFurniture();
+          track('voting_closed_locally');
+        }
+        return;
+      }
+      var d = Math.floor(left / 864e5), h = Math.floor(left / 36e5) % 24,
+          m = Math.floor(left / 6e4) % 60, sec = Math.floor(left / 1e3) % 60;
+      $('[data-pc-clock-v]', clock).innerHTML =
+        d + '<span>d</span> ' + h + '<span>h</span> ' + m + '<span>m</span> ' + sec + '<span>s</span>';
+      clock.hidden = false;
+    };
+    tick();
+    clockTimer = setInterval(tick, 1000);
   }
+  startClock();
 
   if (ballot()) repaintAfterVote();
 
-  // a shared link opens straight onto that pitch
+  /* A shared link opens straight onto that pitch -- either a contestant's own page, where the
+     server left the id on the window, or a #fragment on the gallery. */
   function fromHash() {
     var id = location.hash.replace('#', '');
     if (byId[id]) openProfile(id, true);
   }
   addEventListener('hashchange', fromHash);
-  fromHash();
+  if (window.__pcOpen && byId[window.__pcOpen]) {
+    openProfile(window.__pcOpen, true);
+    track('entrant_link_visit', { entrant_id: window.__pcOpen, source: window.__pcSource || 'direct' });
+  } else {
+    fromHash();
+  }
 
   /* The competition's state belongs to the server; the constant above is only the fallback
      for a page served before the endpoint answers. ?pc= still wins, for review. */
@@ -459,9 +531,10 @@
     fetch(API, { credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (!d || !d.ok || STATES.indexOf(d.state) < 0 || d.state === STATE) return;
+        if (!d || !d.ok) return;
+        if (d.deadline && d.deadline !== DEADLINE) { DEADLINE = d.deadline; startClock(); }
+        if (STATES.indexOf(d.state) < 0 || d.state === STATE) return;
         STATE = d.state;
-        if (d.deadline) DEADLINE = d.deadline;
         grid.innerHTML = ENTRANTS.map(cardHtml).join('');
         paintFurniture();
         if (ballot()) repaintAfterVote();

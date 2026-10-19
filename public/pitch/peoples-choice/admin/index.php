@@ -15,7 +15,7 @@
    and nothing is incremented. */
 declare(strict_types=1);
 
-require dirname(__DIR__, 3) . '/api/pc-lib.php';
+require dirname(__DIR__, 3) . '/api/pc-rules.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -122,6 +122,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             pc_set_meta('state', $s);
             $notice = 'Voting state is now "' . $s . '".';
         }
+    } elseif ($authed && $action === 'mode') {
+        /* Changing the rule of a running competition is deliberate and logged in the notice,
+           never a side effect of a deploy. */
+        $m = is_string($_POST['mode'] ?? null) ? $_POST['mode'] : '';
+        if (in_array($m, PC_MODES, true)) {
+            pc_set_meta('mode', $m);
+            $notice = $m === 'single'
+                ? 'Voting rule set to the APPROVED one: one vote per voter, whole competition.'
+                : 'Voting rule set to the PROPOSED daily model. This is not approved; set it back to single before anything real.';
+        }
+    } elseif ($authed && $action === 'allowance') {
+        pc_set_meta('daily_public', (string) max(0, min(10, (int) ($_POST['daily_public'] ?? 1))));
+        pc_set_meta('daily_ticket', (string) max(0, min(10, (int) ($_POST['daily_ticket'] ?? 2))));
+        $notice = 'Daily allowances saved (they only apply while the daily rule is selected).';
     } elseif ($authed && $action === 'deadline') {
         $d = trim((string) ($_POST['deadline'] ?? ''));
         pc_set_meta('deadline', $d);
@@ -309,6 +323,62 @@ foreach ($standings as $r) {
           </tbody>
         </table>
       </div>
+    </section>
+
+    <section class="adm__sec">
+      <p class="adm__h">Contestant traffic</p>
+      <p class="adm__p">Visits that arrived through a contestant&rsquo;s own share link. No IP address is stored and no cookie is set: &ldquo;people&rdquo; is a same-day hash of address and browser, so it separates one person reloading from many people arriving, and stops being linkable tomorrow.</p>
+      <div class="adm__tablewrap">
+        <table class="adm__table">
+          <thead><tr><th>Contestant</th><th class="num">Visits</th><th class="num">People (approx)</th><th class="num">Valid votes</th></tr></thead>
+          <tbody>
+            <?php
+            $traffic = pc_traffic();
+            $votesBy = [];
+            foreach ($standings as $r) { $votesBy[$r['id']] = $r['votes']; }
+            $any = false;
+            foreach ($standings as $r):
+                $t = $traffic['by_entrant'][$r['id']] ?? null;
+                if (!$t) { continue; }
+                $any = true; ?>
+              <tr><td><?= h($r['name']) ?></td><td class="num"><?= (int) $t['visits'] ?></td>
+                  <td class="num"><?= (int) $t['uniques'] ?></td>
+                  <td class="num"><?= (int) ($votesBy[$r['id']] ?? 0) ?></td></tr>
+            <?php endforeach; ?>
+            <?php if (!$any): ?><tr><td colspan="4">No share-link visits recorded yet.</td></tr><?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php if (!empty($traffic['by_source'])): ?>
+      <p class="adm__p" style="margin-top:14px">Where they came from:
+        <?php foreach ($traffic['by_source'] as $sRow): ?>
+          <span class="adm__pill adm__pill--hidden"><?= h($sRow['source']) ?> <?= (int) $sRow['n'] ?></span>
+        <?php endforeach; ?>
+      </p>
+      <?php endif; ?>
+    </section>
+
+    <section class="adm__sec">
+      <p class="adm__h">Voting rule</p>
+      <p class="adm__p"><strong>Approved:</strong> one vote per voter for the whole competition. <strong>Proposed, not approved:</strong> a daily allowance, larger for a verified ticket holder. The proposed rule is selectable here so it can be seen working; it is not the default and a deploy cannot make it one.</p>
+      <div class="adm__bar">
+        <?php foreach (PC_MODES as $m): ?>
+        <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="mode"><input type="hidden" name="mode" value="<?= h($m) ?>">
+          <button class="adm__btn<?= $m === pc_mode() ? ' adm__btn--go' : '' ?>" type="submit"><?= $m === 'single' ? 'Single (approved)' : 'Daily (proposed)' ?></button>
+        </form>
+        <?php endforeach; ?>
+      </div>
+      <form method="post" class="adm__inline">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="allowance">
+        <label class="adm__label" for="dp">Daily votes &mdash; general public</label>
+        <input class="adm__input" id="dp" name="daily_public" type="number" min="0" max="10" value="<?= h(pc_meta('daily_public', '1')) ?>">
+        <label class="adm__label" for="dt">Daily votes &mdash; verified ticket holder</label>
+        <input class="adm__input" id="dt" name="daily_ticket" type="number" min="0" max="10" value="<?= h(pc_meta('daily_ticket', '2')) ?>">
+        <button class="adm__btn" type="submit">Save allowances</button>
+      </form>
+      <p class="adm__p" style="margin-top:12px">Current rule: <strong><?= h(pc_mode()) ?></strong> &middot; public <?= pc_allowance(false) ?> &middot; ticket holder <?= pc_allowance(true) ?><?= pc_next_window() ? ' &middot; refills ' . h(pc_next_window()) : '' ?></p>
     </section>
 
     <section class="adm__sec">

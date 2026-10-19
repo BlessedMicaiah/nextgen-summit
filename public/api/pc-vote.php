@@ -16,7 +16,7 @@
    for a real count. Google OAuth and email OTP replace pc_voter_key() and nothing else. */
 declare(strict_types=1);
 
-require __DIR__ . '/pc-lib.php';
+require __DIR__ . '/pc-rules.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -36,8 +36,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     pc_out(200, [
         'ok' => true,
         'state' => pc_state(),
-        'deadline' => pc_deadline(),
+        'deadline' => pc_deadline_iso(),       // absolute instant, Eastern resolved here
+        'closes_label' => 'October 28, 11:59 PM ET',
         'open' => pc_voting_open(),
+        'mode' => pc_mode(),
         'simulated' => true,
     ]);
 }
@@ -106,14 +108,42 @@ if (!pc_voting_open()) {
     pc_out(409, ['ok' => false, 'reason' => 'closed', 'state' => pc_state()]);
 }
 
-if (pc_has_voted($voter)) {
-    pc_out(409, ['ok' => false, 'reason' => 'duplicate']);
+/* A ticket holder's larger allowance, under the PROPOSED daily rule only.
+
+   This flag is taken from the request, which means it is a claim, not a fact -- exactly what
+   leadership said must not earn an extra vote. It is honoured here solely so the daily model
+   can be demonstrated on staging, and only while the proposed rule is selected. Before this
+   can be real the server has to establish ticket ownership itself, against Eventbrite or the
+   registration table, and tie that ticket to one voting identity. Until then nothing marked
+   this way should be read as a verified attendee. */
+$claimsTicket = pc_mode() === 'daily' && !empty($in['ticket']);
+
+$allow = pc_allowance($claimsTicket);
+$used = pc_used($voter);
+if ($used >= $allow) {
+    pc_out(409, [
+        'ok' => false,
+        'reason' => pc_mode() === 'daily' ? 'allowance' : 'duplicate',
+        'allowance' => $allow,
+        'remaining' => 0,
+        'next_window' => pc_next_window(),
+    ]);
 }
 
-$res = pc_cast($voter, $entrant, true);
+$res = pc_cast($voter, $entrant, true, $claimsTicket);
 if (!$res['ok']) {
-    pc_out(409, $res + ['ok' => false]);
+    pc_out(409, $res + ['ok' => false, 'next_window' => pc_next_window()]);
 }
 
-/* Accepted. Note what is NOT in this reply: any number at all. */
-pc_out(200, ['ok' => true, 'entrant' => $entrant, 'simulated' => true]);
+/* Accepted. Note what is NOT in this reply: any total, rank or leader. The remaining
+   allowance is about this voter alone and tells nobody how the competition is going. */
+pc_out(200, [
+    'ok' => true,
+    'entrant' => $entrant,
+    'simulated' => true,
+    'mode' => pc_mode(),
+    'allowance' => $allow,
+    'remaining' => $res['remaining'] ?? max(0, $allow - $used - 1),
+    'next_window' => pc_next_window(),
+    'ticket_claimed_unverified' => $claimsTicket,
+]);

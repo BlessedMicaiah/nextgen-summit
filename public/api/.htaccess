@@ -4,7 +4,7 @@
 # credentials and exists only on the server. The pattern below covers config.php and any
 # config.<something>.php, because the previous rule matched the first and would have served
 # the second -- which is how a secrets file ends up downloadable.
-<FilesMatch "^(_lib|pc-lib|pc-rules)\.php$">
+<FilesMatch "^(_lib|pc-lib|pc-rules|pc-twilio)\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

@@ -15,7 +15,7 @@
    and nothing is incremented. */
 declare(strict_types=1);
 
-require dirname(__DIR__, 3) . '/api/pc-rules.php';
+require dirname(__DIR__, 3) . '/api/pc-twilio.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -146,6 +146,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $notice = pc_invalidate($k, $on)
             ? ($on ? 'Vote invalidated. It has left the totals.' : 'Vote restored.')
             : 'No vote matched.';
+    } elseif ($authed && $action === 'phonereq') {
+        pc_set_meta('phone_required', ($_POST['to'] ?? '0') === '1' ? '1' : '0');
+        $notice = (string) pc_meta('phone_required', '0') === '1'
+            ? 'Phone verification is now required to vote. The simulated sign-in is closed.'
+            : 'The simulated sign-in is available again.';
     } elseif ($authed && $action === 'seed') {
         /* Test rows, so the dashboard can be shown doing its job before any real ballot
            exists. They are votes like any other -- same table, same counting -- and they go
@@ -186,8 +191,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261019-02">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261019-02">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261020-01">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261020-01">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -382,6 +387,33 @@ foreach ($standings as $r) {
     </section>
 
     <section class="adm__sec">
+      <p class="adm__h">Twilio configuration</p>
+      <p class="adm__p">A health check, not a viewer. It reports whether each credential is present and whether it starts with the prefix Twilio uses for that kind of identifier. <strong>No value is read, printed or logged anywhere</strong> &mdash; not here, not in the error log.</p>
+      <div class="adm__tablewrap">
+        <table class="adm__table">
+          <thead><tr><th>Check</th><th>Result</th></tr></thead>
+          <tbody>
+            <?php foreach (pc_twilio_status() as $k => $v):
+              $txt = is_bool($v) ? ($v ? 'yes' : 'no') : (string) $v;
+              $good = $txt === 'yes' || $txt === 'ok' || $txt === 'present'
+                   || strpos($txt, 'MOCK') === 0 || $txt === 'false'; ?>
+            <tr><td><?= h(str_replace('_', ' ', (string) $k)) ?></td>
+                <td><span class="adm__pill <?= $good ? 'adm__pill--ok' : 'adm__pill--draft' ?>"><?= h($txt) ?></span></td></tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <p class="adm__p" style="margin-top:12px">While the mode reads <strong>MOCK</strong> no SMS is sent and nothing is billed. Switching to live is a one-word edit to <code>config.twilio.php</code> on the server, deliberately not something this page can do.</p>
+      <p class="adm__p">Phone verification required to vote: <strong><?= (string) pc_meta('phone_required', '0') === '1' ? 'yes' : 'no (the preview&rsquo;s simulated sign-in still works)' ?></strong></p>
+      <div class="adm__bar">
+        <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="phonereq"><input type="hidden" name="to" value="<?= (string) pc_meta('phone_required', '0') === '1' ? '0' : '1' ?>">
+          <button class="adm__btn" type="submit"><?= (string) pc_meta('phone_required', '0') === '1' ? 'Allow the simulated sign-in again' : 'Require phone verification' ?></button>
+        </form>
+      </div>
+    </section>
+
+    <section class="adm__sec">
       <p class="adm__h">Test data</p>
       <p class="adm__p">Staging only. These write to the staging data directory, which is a different file from the live one.</p>
       <div class="adm__bar">
@@ -405,7 +437,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261019-02" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261020-01" defer></script>
 <?php endif; ?>
 </body>
 </html>

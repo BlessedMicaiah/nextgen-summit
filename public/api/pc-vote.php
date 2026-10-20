@@ -16,7 +16,7 @@
    for a real count. Google OAuth and email OTP replace pc_voter_key() and nothing else. */
 declare(strict_types=1);
 
-require __DIR__ . '/pc-rules.php';
+require __DIR__ . '/pc-twilio.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -99,7 +99,59 @@ function pc_voter_key(array $in): string
     return 'sim:' . substr(hash_hmac('sha256', strtolower($claim), NGS_SECRET), 0, 32);
 }
 
-$voter = pc_voter_key($in);
+/* Who is voting, in order of trust.
+
+   1. A verified phone session. The key comes from the session the server established after
+      an SMS code was confirmed -- never from the request, which is the client describing
+      itself. One number is one identity, and the unique index does the rest.
+   2. Failing that, the simulated claim, which is what the staging preview has used all along
+      and is marked as such in the database.
+
+   When phone verification is required (phone_required), step 2 is not offered at all. */
+function pc_voter_identity(array $in): array
+{
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    session_name('ngs_pc_voter');
+    session_set_cookie_params([
+        'lifetime' => 0, 'path' => '/',       // must match pc-otp.php, or the session is invisible here
+        'secure' => $https, 'httponly' => true, 'samesite' => 'Lax',
+    ]);
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+    $fresh = !empty($_SESSION['phone_key']) && !empty($_SESSION['verified_at'])
+        && time() - (int) $_SESSION['verified_at'] <= 2592000;
+    if ($fresh) {
+        return [
+            'key' => (string) $_SESSION['phone_key'],
+            'verified' => true,
+            'ticket' => !empty($_SESSION['ticket_verified']),
+            'csrf' => (string) ($_SESSION['csrf'] ?? ''),
+        ];
+    }
+    return ['key' => pc_voter_key($in), 'verified' => false, 'ticket' => false,
+            'csrf' => (string) ($_SESSION['csrf'] ?? '')];
+}
+
+$identity = pc_voter_identity($in);
+$voter = $identity['key'];
+
+/* Once phone verification is switched on, an unverified caller cannot vote at all -- the
+   simulated path is closed rather than left as a way round the queue. */
+$phoneRequired = (string) pc_meta('phone_required', '0') === '1';
+if ($phoneRequired && !$identity['verified']) {
+    pc_out(401, ['ok' => false, 'reason' => 'verify_required']);
+}
+
+/* A verified session proves nothing about THIS request, so it carries a CSRF token too. */
+if ($identity['verified']) {
+    $tok = (string) ($in['csrf'] ?? '');
+    if ($identity['csrf'] === '' || $tok === '' || !hash_equals($identity['csrf'], $tok)) {
+        pc_out(403, ['ok' => false, 'reason' => 'csrf']);
+    }
+}
+
 if ($voter === '') {
     pc_out(400, ['ok' => false, 'reason' => 'voter']);
 }
@@ -116,7 +168,8 @@ if (!pc_voting_open()) {
    can be real the server has to establish ticket ownership itself, against Eventbrite or the
    registration table, and tie that ticket to one voting identity. Until then nothing marked
    this way should be read as a verified attendee. */
-$claimsTicket = pc_mode() === 'daily' && !empty($in['ticket']);
+$claimsTicket = pc_mode() === 'daily'
+    && ($identity['verified'] ? $identity['ticket'] : !empty($in['ticket']));
 
 $allow = pc_allowance($claimsTicket);
 $used = pc_used($voter);
@@ -130,7 +183,7 @@ if ($used >= $allow) {
     ]);
 }
 
-$res = pc_cast($voter, $entrant, true, $claimsTicket);
+$res = pc_cast($voter, $entrant, !$identity['verified'], $claimsTicket);
 if (!$res['ok']) {
     pc_out(409, $res + ['ok' => false, 'next_window' => pc_next_window()]);
 }
@@ -145,5 +198,6 @@ pc_out(200, [
     'allowance' => $allow,
     'remaining' => $res['remaining'] ?? max(0, $allow - $used - 1),
     'next_window' => pc_next_window(),
-    'ticket_claimed_unverified' => $claimsTicket,
+    'ticket_claimed_unverified' => $claimsTicket && !$identity['verified'],
+    'identity' => $identity['verified'] ? 'phone_verified' : 'simulated',
 ]);

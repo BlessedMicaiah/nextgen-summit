@@ -1,5 +1,20 @@
-# Only register.php is public. The helpers and the config are never served.
-<FilesMatch "^(_lib|config)\.php$">
+# Only the endpoints are public. Everything else here is an include or a secret.
+#
+# config.php holds the site's private settings; config.twilio.php holds the Twilio
+# credentials and exists only on the server. The pattern below covers config.php and any
+# config.<something>.php, because the previous rule matched the first and would have served
+# the second -- which is how a secrets file ends up downloadable.
+<FilesMatch "^(_lib|pc-lib|pc-rules)\.php$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<FilesMatch "^config(\..+)?\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

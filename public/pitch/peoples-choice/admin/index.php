@@ -186,6 +186,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             exit;
         }
         $notice = $r['error'];
+    } elseif ($authed && $action === 'twilio_auth') {
+        /* Read-only. It asks Twilio to describe the Verify Service and reports the verdict.
+           Nothing is sent, no verification is started, and the live budget is not touched --
+           the probe writes no row to pc_otp_log. The status and Twilio's numeric code are the
+           only things that reach this screen. */
+        $p = pc_twilio_auth_probe();
+        $_SESSION['flash'] = 'Authentication test: HTTP ' . (int) $p['status']
+            . ($p['code'] !== null ? ' (Twilio code ' . (int) $p['code'] . ')' : '')
+            . ' - ' . $p['detail']
+            . ' No SMS was sent and the budget is unchanged.';
+        header('Location: ./', true, 303);
+        exit;
     } elseif ($authed && $action === 'phonereq') {
         pc_set_meta('phone_required', ($_POST['to'] ?? '0') === '1' ? '1' : '0');
         $notice = (string) pc_meta('phone_required', '0') === '1'
@@ -444,6 +456,17 @@ foreach ($standings as $r) {
         </table>
       </div>
       <?php $tw = pc_twilio_status(); ?>
+      <div class="adm__sec" style="margin-top:22px">
+        <p class="adm__h">Test authentication</p>
+        <p class="adm__p">The table above checks the <em>shape</em> of each credential, which a convincing fake also passes. This asks Twilio instead, with a <strong>read-only</strong> request for the Verify Service. It sends no message, starts no verification, bills nothing and <strong>does not touch the budget</strong> &mdash; worth doing first, because a live send spends a budget slot even when the credentials are wrong.</p>
+        <p class="adm__p"><strong>401</strong> means the credentials are wrong. <strong>403</strong> means they are <em>valid</em> but this restricted key may not read Verify Services &mdash; a permission limit, not a bad credential. <strong>404</strong> means they are valid but the Verify SID is not on this account.</p>
+        <div class="adm__bar">
+          <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+            <input type="hidden" name="action" value="twilio_auth">
+            <button class="adm__btn" type="submit">Test Twilio authentication</button>
+          </form>
+        </div>
+      </div>
       <div class="adm__sec" style="margin-top:22px">
         <p class="adm__h">Enter or update the credentials</p>
         <p class="adm__p">These are written to <code>nextgen-data-staging/config.twilio.php</code>, outside the web root, where a deploy cannot reach them. <strong>Leave a box empty to keep what is already saved.</strong> Nothing is ever shown back to this screen, so the boxes always start blank &mdash; that is deliberate, not a bug.</p>

@@ -354,6 +354,98 @@ function pc_twilio_call(string $path, array $form): array
             'data' => is_array($data) ? $data : [], 'error' => $err];
 }
 
+/* ---------- the read-only authentication probe ----------
+
+   What this exists to settle: pc_twilio_status() reports whether each credential has the right
+   SHAPE, which is equally true of a convincing fake -- we have already been fooled once by
+   values that reported ok on every line and had never spoken to Twilio. The only proof that
+   credentials authenticate is a call Twilio answers, and until now the cheapest such call was
+   a real SMS. That is the trap: pc_otp_start() writes its live row whether or not Twilio
+   accepted the request, so a wrong credential costs a budget slot per attempt, and with a
+   ceiling of three the first live message doubles as the first authentication test.
+
+   So this reads the Verify Service instead. A GET creates nothing, sends nothing, starts no
+   verification, and bills nothing. It deliberately writes NO row to pc_otp_log, so the live
+   budget is untouched -- that absence is the point, not an oversight.
+
+   READING THE RESULT, which is the whole value of it when the key is a restricted one:
+
+     200  the key and secret authenticate, and the Verify Service exists and is readable.
+     401  Twilio rejected the credentials themselves: the API Key SID or its secret is wrong.
+     403  the credentials ARE valid. Twilio authenticated them, or it would have answered 401.
+          What it refused is the scope: this restricted key may not READ Verify Services. That
+          is a permission result, and a key barred from reading a service may still be
+          permitted to create a verification -- so this is not grounds to widen the key.
+     404  authenticated, but no Verify Service on this account carries that SID.
+
+   Note what 403 and 404 share: both prove authentication succeeded. Only 401 condemns the
+   credentials.
+
+   On secrecy: only the HTTP status and Twilio's numeric error code leave this function. The
+   response body is decoded for that integer and then discarded -- it is never returned,
+   rendered or logged, because it can name the account and the service. */
+function pc_twilio_auth_probe(): array
+{
+    if (!pc_twilio_configured()) {
+        return ['ok' => false, 'status' => 0, 'code' => null, 'verdict' => 'not_configured',
+                'detail' => 'All four credentials must be saved before this can run.'];
+    }
+    if (!function_exists('curl_init')) {
+        return ['ok' => false, 'status' => 0, 'code' => null, 'verdict' => 'no_curl',
+                'detail' => 'curl is unavailable on this host, so Twilio cannot be reached.'];
+    }
+
+    $url = 'https://verify.twilio.com/v2/Services/' . rawurlencode((string) PC_TWILIO_VERIFY_SID);
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_HTTPGET => true,          // read-only by construction: no body, no POST, no send
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_USERPWD => ((string) PC_TWILIO_API_KEY) . ':' . ((string) PC_TWILIO_API_SECRET),
+        CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+    ]);
+    $body = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $transport = curl_error($ch);
+    curl_close($ch);
+
+    /* The only thing taken out of the reply is Twilio's numeric code, which names the fault
+       without describing the account. Everything else goes out of scope unread. */
+    $code = null;
+    if (is_string($body)) {
+        $j = json_decode($body, true);
+        if (is_array($j) && isset($j['code']) && is_numeric($j['code'])) {
+            $code = (int) $j['code'];
+        }
+    }
+    unset($body);
+
+    if ($status === 0) {
+        return ['ok' => false, 'status' => 0, 'code' => null, 'verdict' => 'unreachable',
+                'detail' => $transport !== ''
+                    ? 'No reply from Twilio: the request failed before an answer came back.'
+                    : 'No reply from Twilio.'];
+    }
+    if ($status >= 200 && $status < 300) {
+        return ['ok' => true, 'status' => $status, 'code' => $code, 'verdict' => 'authenticated',
+                'detail' => 'AUTHENTICATED. The API key and secret are genuine and the Verify Service exists and is readable.'];
+    }
+    if ($status === 401) {
+        return ['ok' => false, 'status' => 401, 'code' => $code, 'verdict' => 'bad_credentials',
+                'detail' => 'CREDENTIALS REJECTED. The API Key SID or its secret is wrong. This is not a permission problem, and a real SMS would fail the same way.'];
+    }
+    if ($status === 403) {
+        return ['ok' => false, 'status' => 403, 'code' => $code, 'verdict' => 'forbidden_scope',
+                'detail' => 'CREDENTIALS VALID, SCOPE REFUSED. Twilio authenticated the key, so the credentials are genuine, but this restricted key may not read Verify Services. It may still be permitted to create a verification. Do not widen the key for this diagnostic alone.'];
+    }
+    if ($status === 404) {
+        return ['ok' => false, 'status' => 404, 'code' => $code, 'verdict' => 'no_such_service',
+                'detail' => 'AUTHENTICATED, WRONG SERVICE. The key and secret are genuine, but no Verify Service on this account carries that SID.'];
+    }
+    return ['ok' => false, 'status' => $status, 'code' => $code, 'verdict' => 'other',
+            'detail' => 'Twilio answered with an unexpected status. Nothing was sent.'];
+}
+
 /* Start a verification. In MOCK the code is made here and kept in the caller's session; in
    LIVE Twilio sends it and we never learn it.
    @return array{ok:bool,reason?:string,mock?:bool,code?:string,wait?:int} */

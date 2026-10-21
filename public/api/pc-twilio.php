@@ -24,11 +24,39 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/pc-rules.php';
 
-/* The credentials live beside this file, on the server only. @include because its absence is a
-   normal state -- it means "not configured yet", not an error. */
-$pcTwilioConfig = __DIR__ . '/config.twilio.php';
-if (is_file($pcTwilioConfig)) {
-    require_once $pcTwilioConfig;
+/* WHERE THE CREDENTIALS LIVE, and why it is not next to this file.
+
+   A Hostinger deploy replaces the web root rather than merging into it: anything there that is
+   not in the archive is deleted. A secrets file in api/ therefore survives exactly until the
+   next release, which is the worst possible failure -- it works, and then one day it silently
+   does not. We learned this by losing one.
+
+   So they live in the data directory instead: outside the web root, never served, never in the
+   archive, and demonstrably untouched by deploys -- the vote database has sat there through
+   every release. The old location is still read if something is there, so an existing
+   installation keeps working, but the data directory wins.
+
+   Absence is a normal state. It means "not configured", not an error. */
+$pcTwilioCandidates = [
+    ngs_data_dir() . '/config.twilio.php',     // the home that survives a deploy
+    __DIR__ . '/config.twilio.php',            // legacy: read, but wiped by the next release
+];
+foreach ($pcTwilioCandidates as $pcTwilioConfig) {
+    if (is_file($pcTwilioConfig) && is_readable($pcTwilioConfig)) {
+        require_once $pcTwilioConfig;
+        break;
+    }
+}
+
+/** Where the credentials were actually found, for the diagnostic. Never their contents. */
+function pc_twilio_config_path(): ?string
+{
+    foreach ([ngs_data_dir() . '/config.twilio.php', __DIR__ . '/config.twilio.php'] as $p) {
+        if (is_file($p)) {
+            return $p;
+        }
+    }
+    return null;
 }
 
 function pc_twilio_configured(): bool
@@ -55,7 +83,7 @@ function pc_twilio_live(): bool
    an Account SID pasted into the Verify Service field, and so on. */
 function pc_twilio_status(): array
 {
-    $file = __DIR__ . '/config.twilio.php';
+    $file = pc_twilio_config_path() ?? (ngs_data_dir() . '/config.twilio.php');
     $defined = function (string $k): bool {
         return defined($k) && (string) constant($k) !== '' && strpos((string) constant($k), 'REPLACE_ME') === false;
     };
@@ -72,6 +100,10 @@ function pc_twilio_status(): array
     return [
         'file_present' => is_file($file),
         'file_readable' => is_file($file) && is_readable($file),
+        'file_location' => pc_twilio_config_path() === null ? 'not found'
+            : (strpos((string) pc_twilio_config_path(), ngs_data_dir()) === 0
+                ? 'data directory (survives deploys)'
+                : 'api folder (WILL BE WIPED by the next deploy - move it)'),
         'enabled_flag' => defined('PC_TWILIO_ENABLED') ? (PC_TWILIO_ENABLED ? 'true' : 'false') : 'not defined',
         'account_sid' => $prefix('PC_TWILIO_ACCOUNT_SID', 'AC'),
         'api_key' => $prefix('PC_TWILIO_API_KEY', 'SK'),

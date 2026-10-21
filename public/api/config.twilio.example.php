@@ -1,7 +1,14 @@
 <?php
 /* Twilio Verify credentials — TEMPLATE.
    ============================================================================
-   Copy this file to  config.twilio.php  ON THE SERVER and fill in the values.
+   Copy this file to  config.twilio.php  in the DATA DIRECTORY on the server:
+
+       domains/nextgensummit.us/nextgen-data-staging/config.twilio.php
+
+   NOT into this api/ folder. A Hostinger deploy replaces the web root, so a
+   secrets file here is deleted by the next release -- it works, and then one
+   day it silently does not. The data directory sits outside the web root and
+   is untouched by deploys; the vote database has lived there throughout.
 
    Do not create config.twilio.php on a laptop and do not commit it:
      - .gitignore excludes config.*.php, so git will not take it

@@ -79,7 +79,14 @@ if (isset($_GET['data'])) {
 }
 
 /* ---------- actions ---------- */
+/* A message that survives the redirect after a POST. Without this a successful save looked
+   exactly like nothing happening -- the fields render blank by design, so there was no other
+   signal that anything had been written. That is what "it is not updating" turned out to be. */
 $notice = '';
+if (!empty($_SESSION['flash'])) {
+    $notice = (string) $_SESSION['flash'];
+    unset($_SESSION['flash']);
+}
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
     if (!token_ok()) {
@@ -157,16 +164,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             'allowlist' => $_POST['allowlist'] ?? null,
             'budget' => $_POST['budget'] ?? '',
         ]);
-        $notice = $r['ok'] ? 'Twilio settings saved to the data directory.' : $r['error'];
         if ($r['ok']) {
+            $st = pc_twilio_status();
+            $_SESSION['flash'] = 'Saved. Account SID ' . $st['account_sid']
+                . ', API key ' . $st['api_key']
+                . ', secret ' . $st['api_secret']
+                . ', Verify SID ' . $st['verify_sid']
+                . ' - ' . $st['allowlist_state'] . '.';
             header('Location: ./', true, 303);
             exit;
         }
+        $notice = $r['error'];
     } elseif ($authed && $action === 'twilio_live') {
         $want = ($_POST['to'] ?? '') === '1';
         $r = pc_twilio_save(['enabled' => $want]);
         if ($r['ok']) {
-            $notice = $want
+            $_SESSION['flash'] = $want
                 ? 'LIVE SMS IS ON. Only allowlisted numbers can receive a message, and the budget still applies.'
                 : 'Live SMS is off again. Nothing can be sent.';
             header('Location: ./', true, 303);
@@ -446,7 +459,8 @@ foreach ($standings as $r) {
           <label class="adm__label" for="t4">Verify Service SID (begins VA)</label>
           <input class="adm__input" id="t4" name="verify_sid" type="password" autocomplete="new-password" placeholder="<?= $tw['verify_sid'] === 'ok' ? 'saved — leave blank to keep' : 'VA...' ?>">
           <label class="adm__label" for="t5">Test numbers allowed to receive a real SMS (one per line)</label>
-          <textarea class="adm__input" id="t5" name="allowlist" rows="3" placeholder="+14105550143"></textarea>
+          <textarea class="adm__input" id="t5" name="allowlist" rows="3" placeholder="+14105550143"><?= h(implode("
+", pc_sms_allowlist())) ?></textarea>
           <label class="adm__label" for="t6">Hard ceiling on real sends, ever</label>
           <input class="adm__input" id="t6" name="budget" type="number" min="0" max="50" value="<?= (int) $tw['live_budget'] ?>">
           <button class="adm__btn adm__btn--go" type="submit">Save settings</button>

@@ -469,6 +469,8 @@
             d.reason === 'number_daily' ? 'That number has asked for too many codes today.' :
             d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
             d.reason === 'country' ? 'We can only text US and Canada numbers at the moment.' :
+            d.reason === 'not_allowlisted' ? 'Live texting is limited to approved test numbers during this trial.' :
+            d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
             d.reason === 'phone' ? 'That does not look like a mobile number.' :
             d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
             'We could not send a code just now. Please try again.';

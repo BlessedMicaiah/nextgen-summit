@@ -80,6 +80,17 @@ function pc_twilio_status(): array
         'configured' => pc_twilio_configured(),
         'mode' => pc_twilio_live() ? 'LIVE (billable)' : 'MOCK (no SMS, nothing billed)',
         'curl_available' => function_exists('curl_init'),
+        'allowlist_numbers' => count(pc_sms_allowlist()),
+        'allowlist_state' => pc_sms_allowlist() === []
+            ? 'empty - no real SMS can be sent to anyone'
+            : 'only ' . count(pc_sms_allowlist()) . ' number(s) may receive a real SMS',
+        'live_budget' => pc_live_budget(),
+        'live_sent' => pc_live_sends(),
+        'live_budget_left' => pc_live_budget_left(),
+        'countries' => implode(', ', defined('PC_SMS_ALLOWED_COUNTRIES') ? PC_SMS_ALLOWED_COUNTRIES : ['US', 'CA']),
+        'cooldown_seconds' => defined('PC_SMS_MIN_SECONDS_BETWEEN') ? PC_SMS_MIN_SECONDS_BETWEEN : 60,
+        'per_number_per_day' => defined('PC_SMS_MAX_PER_NUMBER_PER_DAY') ? PC_SMS_MAX_PER_NUMBER_PER_DAY : 5,
+        'per_ip_per_hour' => defined('PC_SMS_MAX_PER_IP_PER_HOUR') ? PC_SMS_MAX_PER_IP_PER_HOUR : 20,
     ];
 }
 
@@ -141,25 +152,92 @@ function pc_otp_table(): void
         ip_hash    TEXT,
         action     TEXT NOT NULL,
         ok         INTEGER NOT NULL DEFAULT 0,
+        live       INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         ts         INTEGER NOT NULL
     )');
     $db->exec('CREATE INDEX IF NOT EXISTS pc_otp_phone ON pc_otp_log (phone_key, ts)');
     $db->exec('CREATE INDEX IF NOT EXISTS pc_otp_ip ON pc_otp_log (ip_hash, ts)');
+    // a log written before live sends existed has no 'live' column; add it rather than lose it
+    try {
+        $cols = array_column($db->query('PRAGMA table_info(pc_otp_log)')->fetchAll(), 'name');
+        if (!in_array('live', $cols, true)) {
+            $db->exec('ALTER TABLE pc_otp_log ADD COLUMN live INTEGER NOT NULL DEFAULT 0');
+        }
+    } catch (Throwable $e) {
+        error_log("People's Choice: otp log migration skipped.");
+    }
 }
 
 /* The log records that a code was asked for, not what it was and not whose number it was:
    phone_key is the same one-way hash the voting identity uses. */
-function pc_otp_note(string $phoneKey, string $action, bool $ok): void
+function pc_otp_note(string $phoneKey, string $action, bool $ok, bool $live = false): void
 {
     pc_otp_table();
     $db = pc_db();
     if (!$db) {
         return;
     }
-    $s = $db->prepare('INSERT INTO pc_otp_log (phone_key, ip_hash, action, ok, created_at, ts)
-                       VALUES (?, ?, ?, ?, ?, ?)');
-    $s->execute([$phoneKey, ngs_ip_hash(), $action, $ok ? 1 : 0, ngs_now(), time()]);
+    $s = $db->prepare('INSERT INTO pc_otp_log (phone_key, ip_hash, action, ok, live, created_at, ts)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $s->execute([$phoneKey, ngs_ip_hash(), $action, $ok ? 1 : 0, $live ? 1 : 0, ngs_now(), time()]);
+}
+
+/* ---------- the two hard stops in front of a bill ----------
+
+   A Twilio usage alert is an email. It does not stop anything. The only thing that can refuse
+   to spend money is code that refuses to make the call, so that is what these are.
+
+   Both FAIL CLOSED. Turning PC_TWILIO_ENABLED on with no allowlist defined sends nothing at
+   all, rather than sending to everyone -- the dangerous default is the one worth designing
+   out, because it is the one that happens by accident at 11pm. */
+
+/** Numbers permitted to receive a real message. Empty or undefined means nobody. */
+function pc_sms_allowlist(): array
+{
+    if (!defined('PC_SMS_LIVE_ALLOWLIST') || !is_array(PC_SMS_LIVE_ALLOWLIST)) {
+        return [];
+    }
+    $out = [];
+    foreach (PC_SMS_LIVE_ALLOWLIST as $n) {
+        $e = pc_phone_e164((string) $n);
+        if ($e !== null) {
+            $out[] = $e;
+        }
+    }
+    return $out;
+}
+
+function pc_sms_allowlisted(string $e164): bool
+{
+    $list = pc_sms_allowlist();
+    return $list !== [] && in_array($e164, $list, true);
+}
+
+/** How many real messages this server has ever sent. Counted from rows, not a counter. */
+function pc_live_sends(): int
+{
+    pc_otp_table();
+    $db = pc_db();
+    if (!$db) {
+        return 0;
+    }
+    try {
+        $r = $db->query("SELECT COUNT(*) AS n FROM pc_otp_log WHERE action = 'start' AND live = 1")->fetch();
+        return (int) ($r['n'] ?? 0);
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+function pc_live_budget(): int
+{
+    return defined('PC_SMS_LIVE_MAX_TOTAL') ? max(0, (int) PC_SMS_LIVE_MAX_TOTAL) : 0;
+}
+
+function pc_live_budget_left(): int
+{
+    return max(0, pc_live_budget() - pc_live_sends());
 }
 
 function pc_otp_count(string $field, string $value, int $seconds): int
@@ -252,7 +330,7 @@ function pc_otp_start(string $e164): array
     $key = pc_phone_key($e164);
 
     if (!pc_country_allowed($e164)) {
-        pc_otp_note($key, 'start', false);
+        pc_otp_note($key, 'blocked', false, false);
         return ['ok' => false, 'reason' => 'country'];
     }
     $gate = pc_otp_allowed($key);
@@ -261,12 +339,24 @@ function pc_otp_start(string $e164): array
     }
 
     if (!pc_twilio_live()) {
-        pc_otp_note($key, 'start', true);
+        pc_otp_note($key, 'start', true, false);
         return ['ok' => true, 'mock' => true, 'code' => str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT)];
     }
 
+    /* Live from here. Two refusals before the call, both of which cost nothing to be wrong
+       about and everything to be missing. */
+    if (!pc_sms_allowlisted($e164)) {
+        pc_otp_note($key, 'blocked', false, false);
+        return ['ok' => false, 'reason' => 'not_allowlisted'];
+    }
+    if (pc_live_budget_left() <= 0) {
+        pc_otp_note($key, 'blocked', false, false);
+        error_log("People's Choice: live SMS budget exhausted; refusing to send.");
+        return ['ok' => false, 'reason' => 'budget'];
+    }
+
     $res = pc_twilio_call('/Verifications', ['To' => $e164, 'Channel' => 'sms']);
-    pc_otp_note($key, 'start', $res['ok']);
+    pc_otp_note($key, 'start', $res['ok'], true);     // counted whether or not Twilio liked it
     if (!$res['ok']) {
         // the upstream message is not shown to the visitor: it can name the number
         error_log('People\'s Choice: Verify start failed, HTTP ' . $res['status']);

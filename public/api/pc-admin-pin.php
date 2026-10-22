@@ -59,16 +59,36 @@ function pc_admin_override(): array
     if (!is_file($f) || !is_readable($f)) {
         return $cache;
     }
-    require_once $f;
-    $hash = defined('NGS_ADMIN_HASH_V2') ? (string) NGS_ADMIN_HASH_V2 : '';
-    $salt = defined('NGS_ADMIN_SALT_V2') ? (string) NGS_ADMIN_SALT_V2 : '';
+
+    /* READ, DO NOT EXECUTE.
+
+       This used to require() the file. Two things were wrong with that. The small one is that
+       `const` is a compile-time, top-level construct, and this include happens inside a
+       function -- precisely the case the manual warns about, and a credential that silently
+       fails to load falls back to the old PIN and looks exactly like a wrong password.
+
+       The larger one is that requiring means EXECUTING a file from the data directory. The
+       file holds two hex strings; nothing about it needs to be code. Parsing it as text
+       removes an execution path into the application that had no reason to exist.
+
+       The <?php header and the .php extension are kept so that the file is inert if it ever
+       ends up somewhere served, and so the format does not change under files already in
+       place. */
+    $raw = @file_get_contents($f);
+    if (!is_string($raw) || $raw === '') {
+        error_log("People's Choice: admin PIN override unreadable; using config.php.");
+        return $cache;
+    }
+    $hash = preg_match("/NGS_ADMIN_HASH_V2\s*=\s*'([0-9a-f]{64})'/", $raw, $m) ? $m[1] : '';
+    $salt = preg_match("/NGS_ADMIN_SALT_V2\s*=\s*'([0-9a-f]{16,})'/", $raw, $m) ? $m[1] : '';
+    $epochRead = preg_match('/NGS_ADMIN_EPOCH\s*=\s*(\d+)/', $raw, $m) ? (int) $m[1] : 0;
+    unset($raw);
     if (strlen($hash) !== 64 || strlen($salt) < 16) {
         // present but not usable: fall back to config.php rather than lock the door
         error_log("People's Choice: admin PIN override present but unusable; using config.php.");
         return $cache;
     }
-    $cache = ['hash' => $hash, 'salt' => $salt,
-              'epoch' => defined('NGS_ADMIN_EPOCH') ? (int) NGS_ADMIN_EPOCH : 0];
+    $cache = ['hash' => $hash, 'salt' => $salt, 'epoch' => $epochRead];
     return $cache;
 }
 

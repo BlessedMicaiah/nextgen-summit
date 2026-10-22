@@ -301,6 +301,10 @@ foreach ($standings as $r) {
     <p class="adm__h">People&rsquo;s Choice</p>
     <h1 class="adm__title wm">results.</h1>
     <p class="adm__p">This dashboard uses the same admin password as the registrations tool.</p>
+    <?php /* Which credential is live, and nothing about what it is. Without this a rotated
+             PIN that failed to load is indistinguishable from a mistyped one, which is a
+             an expensive thing not to know when the lockout is five tries. */ ?>
+    <p class="adm__p" style="opacity:.75">Credential in use: <strong><?= pc_admin_rotated() ? 'rotated file (outside the web root)' : 'config.php (never rotated)' ?></strong></p>
     <?php if ($notice): ?><p class="adm__notice"><?= h($notice) ?></p><?php endif; ?>
     <form method="post" class="adm__form">
       <input type="hidden" name="csrf" value="<?= h($csrf) ?>">

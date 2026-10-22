@@ -240,6 +240,15 @@ function pc_sms_allowlist(): array
     return $out;
 }
 
+/** Staging and localhost, where anyone with the link is an invited tester. */
+function pc_sms_preview_host(): bool
+{
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    return strpos($host, 'staging.') === 0
+        || strpos($host, 'localhost') === 0
+        || strpos($host, '127.0.0.1') === 0;
+}
+
 function pc_sms_allowlisted(string $e164): bool
 {
     $list = pc_sms_allowlist();
@@ -469,7 +478,20 @@ function pc_otp_start(string $e164): array
 
     /* Live from here. Two refusals before the call, both of which cost nothing to be wrong
        about and everything to be missing. */
-    if (!pc_sms_allowlisted($e164)) {
+    /* The per-number allowlist applies to the LIVE SITE ONLY.
+
+       On staging, anyone holding the link is an invited tester using their own number, so
+       approving each one by hand is friction with nothing behind it.
+
+       What limits the damage there is not a list of numbers. It is the hard ceiling a few
+       lines below, which caps the total real messages this server will EVER send and is the
+       one control that cannot be talked round -- plus the cooldown, the per-number and per-IP
+       limits, and the country check above, all still in force. Someone who finds the staging
+       link can cost us the messages left under that ceiling and not one more.
+
+       Production keeps the allowlist and it still fails closed: an empty list there sends to
+       nobody, which is the right default for a page the public can reach. */
+    if (!pc_sms_preview_host() && !pc_sms_allowlisted($e164)) {
         pc_otp_note($key, 'blocked', false, false);
         return ['ok' => false, 'reason' => 'not_allowlisted'];
     }
@@ -482,9 +504,23 @@ function pc_otp_start(string $e164): array
     $res = pc_twilio_call('/Verifications', ['To' => $e164, 'Channel' => 'sms']);
     pc_otp_note($key, 'start', $res['ok'], true);     // counted whether or not Twilio liked it
     if (!$res['ok']) {
-        // the upstream message is not shown to the visitor: it can name the number
+        /* A refusal here costs a budget slot -- the row above is written whether Twilio liked
+           the request or not -- so it had better say WHY. It previously went to error_log and
+           nowhere else, and this host keeps no error log, so the first real attempt spent a
+           message and taught us nothing at all.
+
+           The HTTP status and Twilio's numeric code are carried back so the caller can show
+           them on a preview host. Neither is a secret: they name the fault, not the account
+           and not the number. The upstream MESSAGE is still dropped, because that one can
+           quote the number back. */
         error_log('People\'s Choice: Verify start failed, HTTP ' . $res['status']);
-        return ['ok' => false, 'reason' => 'provider'];
+        return [
+            'ok' => false,
+            'reason' => 'provider',
+            'status' => (int) $res['status'],
+            'code' => isset($res['data']['code']) && is_numeric($res['data']['code'])
+                ? (int) $res['data']['code'] : null,
+        ];
     }
     return ['ok' => true, 'mock' => false];
 }

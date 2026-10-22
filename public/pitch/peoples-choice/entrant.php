@@ -15,7 +15,6 @@
 declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/api/pc-rules.php';
-
 $slug = isset($_GET['slug']) && is_string($_GET['slug']) ? strtolower($_GET['slug']) : '';
 $slug = preg_replace('/[^a-z0-9-]/', '', $slug);
 $entrant = $slug !== '' ? pc_by_slug($slug) : null;

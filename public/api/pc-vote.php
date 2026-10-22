@@ -17,6 +17,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/pc-twilio.php';
+require_once __DIR__ . '/pc-attendee.php';   // the verified-attendee entitlement lives here
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -181,8 +182,15 @@ if (!pc_voting_open()) {
    can be real the server has to establish ticket ownership itself, against Eventbrite or the
    registration table, and tie that ticket to one voting identity. Until then nothing marked
    this way should be read as a verified attendee. */
+/* The entitlement is read from the binding table, which only an email-verified Eventbrite
+   registration can put there. The browser's claim is no longer consulted at all: it used to
+   be honoured for unverified voters so the daily model could be demonstrated, and a flag the
+   client controls has no business deciding how many points somebody gets. An unverified
+   visitor cannot vote at all now, so nothing is lost by dropping it. */
 $claimsTicket = pc_mode() === 'daily'
-    && ($identity['verified'] ? $identity['ticket'] : !empty($in['ticket']));
+    && $identity['verified']
+    && function_exists('pc_attendee_verified')
+    && pc_attendee_verified($voter);
 
 $allow = pc_allowance($claimsTicket);
 $used = pc_used($voter);

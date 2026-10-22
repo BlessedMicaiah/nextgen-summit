@@ -20,7 +20,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   gtag('config', 'G-3M5BCK61VB');
 </script>
 <title>People’s Choice Award · NextGen Summit Pitch Competition</title>
-<meta name="description" content="Twenty founders, twenty visions, one vote. The NextGen Summit People’s Choice Award. STAGING PREVIEW — voting is simulated and no vote is recorded.">
+<meta name="description" content="Twenty founders, twenty visions. Verify your phone and vote once a day in the NextGen Summit People’s Choice Award.">
 <meta name="theme-color" content="#FAFAF8">
 <link rel="canonical" href="https://nextgensummit.us/pitch/peoples-choice/">
 <meta name="robots" content="noindex, nofollow">
@@ -44,30 +44,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preload" as="image" href="/assets/img/pitch-hero-m-900.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="/assets/img/pitch-hero-1600.jpg" imagesrcset="/assets/img/pitch-hero-1200.jpg 1200w, /assets/img/pitch-hero-1600.jpg 1600w, /assets/img/pitch-hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261021-20">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261021-20">
-<link rel="stylesheet" href="/assets/css/peoples-choice.css?v=20261021-20">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261022-40">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261022-40">
+<link rel="stylesheet" href="/assets/css/peoples-choice.css?v=20261022-40">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261021-20" defer></script>
-<script src="/assets/js/announce.js?v=20261021-20" defer></script>
-<script src="/assets/js/depart.js?v=20261021-20" defer></script>
-<script src="/assets/js/forms.js?v=20261021-20" defer></script>
-<script src="/assets/js/peoples-choice.js?v=20261021-20" defer></script>
+<script src="/assets/js/site.js?v=20261022-40" defer></script>
+<script src="/assets/js/announce.js?v=20261022-40" defer></script>
+<script src="/assets/js/depart.js?v=20261022-40" defer></script>
+<script src="/assets/js/forms.js?v=20261022-40" defer></script>
+<script src="/assets/js/peoples-choice.js?v=20261022-40" defer></script>
 </head>
-<body class="has-pcbar">
+<body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PRVSWFBN"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 
-<!-- The preview banner. It is the first thing in the body and the loudest thing on the
-     page because every vote here is a simulation. It goes when the real backend lands. -->
-<div class="pcbar" role="status">
-  <span class="pcbar__in"><span class="pcbar__dot" aria-hidden="true"></span>Staging preview · voting is simulated · no vote is recorded</span>
-</div>
+<!-- The test banner is deliberately absent: staging is being run as a dress rehearsal, so it
+     should look like launch day rather than a preview. Put it back before inviting anyone who
+     might mistake this for the live site -- the markup is one revert away, and the page still
+     carries X-Robots-Tag noindex and a robots.txt that disallows everything, so the rehearsal
+     cannot be found by search. -->
+
 
 <a class="skip" href="#ph-title">Skip to content</a>
 <div class="grain" aria-hidden="true"></div>
@@ -196,7 +197,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="pcr" data-nav="photo" aria-labelledby="pcr-title">
     <div class="pcr__in">
       <p class="label label--light rv">How it works</p>
-      <h2 class="pcr__title wm rv" id="pcr-title" style="--d:.1s">one person.<br> one vote.</h2>
+      <h2 class="pcr__title wm rv" id="pcr-title" style="--d:.1s">one person.<br> one vote a day.</h2>
       <ul class="pcr__grid">
         <li class="pcr__item rv" style="--d:.16s">
           <p class="pcr__k">01</p>
@@ -206,12 +207,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <li class="pcr__item rv" style="--d:.22s">
           <p class="pcr__k">02</p>
           <p class="pcr__h">Verify, once</p>
-          <p class="pcr__p">We only ask who you are at the moment you vote &mdash; with Google, or a code sent to your email.</p>
+          <p class="pcr__p">We only ask who you are at the moment you vote &mdash; a six-digit code, texted to your phone. One number is one voter, and we ask only once.</p>
         </li>
         <li class="pcr__item rv" style="--d:.28s">
-          <p class="pcr__h">03</p>
+          <p class="pcr__k">03</p>
           <p class="pcr__h">Cast your vote</p>
-          <p class="pcr__p">One verified person gets one vote across the whole competition, and it cannot be changed once it is in.</p>
+          <p class="pcr__p">A verified voter gets one point a day for the founder they choose. Your allowance resets at midnight Eastern, and voting closes on October 28 at 11:59 PM ET.</p>
         </li>
         <li class="pcr__item rv" style="--d:.34s">
           <p class="pcr__k">04</p>
@@ -256,161 +257,282 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <p class="pcp__link" data-pc-p-ext hidden>Trouble with the player? <a href="#" target="_blank" rel="noopener noreferrer">Watch the pitch on the host site</a>.</p>
     </div>
+
   </div>
 </dialog>
 
-<!-- ==================== the vote flow (simulated) ==================== -->
+<!-- ==================== the vote flow ====================
+     Phone verification is the only route. The Google and email buttons that used to sit here
+     signed nobody in and recorded nothing: they were a simulation of an identity check, and
+     having them next to the real one made the real one look optional. -->
 <dialog class="pcv" data-pc-vote-dialog aria-label="Vote">
   <div class="pcv__in">
-    <p class="pcv__sim"><span aria-hidden="true">&#9888;</span> Simulated voting. Nothing on this screen signs you in, and no vote is recorded anywhere.</p>
+    <button class="pcv__x" type="button" data-pc-close-vote aria-label="Close">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+    </button>
 
-    <!-- step 1: verify -->
+    <!-- STAGE A: who you are supporting, and what your vote is worth -->
     <div data-pc-step="verify">
-      <p class="pcv__k">Step 1 of 2</p>
-      <h2 class="pcv__t wm">verify it&rsquo;s you.</h2>
-      <p class="pcv__p">One verified person gets one vote in the People&rsquo;s Choice Award. We ask now, and only now.</p>
-      <div class="pcv__who">
-        <div>
-          <p class="pcv__who-n" data-pc-who-n></p>
-          <p class="pcv__who-c" data-pc-who-c></p>
-        </div>
+      <p class="pcv__for">You&rsquo;re voting for</p>
+      <div class="pcv__hero">
+        <p class="pcv__hero-n" data-pc-who-n></p>
+        <p class="pcv__hero-c" data-pc-who-c></p>
       </div>
-      <div class="pcv__ways">
-        <button class="pcv__way pcv__way--first" type="button" data-pc-way="phone" hidden data-pc-phone-way>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>
-          Verify with a text message
-        </button>
-        <button class="pcv__way" type="button" data-pc-way="google">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7C21.8 19 23 16 23 12.3z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3C3.7 21.4 7.6 24 12 24z"/><path fill="#FBBC05" d="M5.6 14.7a7.2 7.2 0 0 1 0-4.6v-3H1.8a12 12 0 0 0 0 10.6l3.8-3z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.6 0 3.7 2.6 1.8 6.1l3.8 3C6.5 6.7 9 4.8 12 4.8z"/></svg>
-          Continue with Google
-        </button>
-        <p class="pcv__or">or</p>
-        <button class="pcv__way" type="button" data-pc-way="email">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M3 6l9 7 9-7"/></svg>
-          Verify with an email code
-        </button>
-      </div>
-      <div class="pcv__acts">
-        <button class="pcv__back" type="button" data-pc-close-vote>Cancel</button>
+      <h2 class="pcv__t pcv__t--sans">Help them win!</h2>
+      <p class="pcv__p">Vote for your favorite business in the NextGen People&rsquo;s Choice Business Awards. Verify your phone number to get started.</p>
+
+      <ul class="pcpt">
+        <li class="pcpt__row pcpt__row--on">
+          <span class="pcpt__n">+1</span>
+          <span class="pcpt__d"><b>Your daily vote</b><span>Cast one verified vote every day until October 28.</span></span>
+        </li>
+        <li class="pcpt__row pcpt__row--soon">
+          <span class="pcpt__n">+2</span>
+          <span class="pcpt__d"><b>NextGen attendee bonus</b><span>Registered attendees get 2 extra voting points per day after ticket verification.</span></span>
+        </li>
+      </ul>
+
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-begin>Verify &amp; vote</button>
+        <button class="pcv__back" type="button" data-pc-close-vote>Maybe later</button>
       </div>
     </div>
 
-    <!-- step 1a: phone -->
+    <!-- STAGE B i: the number -->
     <div data-pc-step="phone" hidden>
-      <p class="pcv__k">Step 1 of 2</p>
-      <h2 class="pcv__t wm">what&rsquo;s your number?</h2>
-      <p class="pcv__p">We text a six-digit code. One number, one voting identity &mdash; and we only ask once: next time you come back, you are already recognised.</p>
-      <div class="pcv__who">
-        <div>
-          <p class="pcv__who-n" data-pc-who-n></p>
-          <p class="pcv__who-c" data-pc-who-c></p>
-        </div>
+      <p class="pcv__k"><span class="pcv__dots"><i class="is-on"></i><i></i><i></i></span> Step 1 of 3</p>
+      <h2 class="pcv__t wm">your number.</h2>
+      <p class="pcv__p">We text you a six-digit code. One number is one voter &mdash; and we only ask once, so next time you are recognised straight away.</p>
+      <div class="pcv__mini" data-pc-mini>
+        <span data-pc-who-n></span><span data-pc-who-c></span>
       </div>
       <div class="pcv__field">
         <label class="pcv__label" for="pc-phone">Mobile number</label>
         <input class="pcv__input" id="pc-phone" type="tel" inputmode="tel" autocomplete="tel"
           placeholder="(410) 555-0199" data-pc-phone>
-        <p class="pcv__hint">US and Canada numbers.</p>
+        <p class="pcv__hint">US numbers. Standard message rates apply.</p>
       </div>
       <p class="pcv__err" data-pc-error-phone hidden></p>
-      <div class="pcv__acts">
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-phone-send>Send my code</button>
         <button class="pcv__back" type="button" data-pc-back="verify">Go back</button>
-        <button class="btn" type="button" data-pc-phone-send>Send my code</button>
       </div>
     </div>
 
-    <!-- step 1a-ii: the code -->
+    <!-- STAGE B ii: the code -->
     <div data-pc-step="phone-code" hidden>
-      <p class="pcv__k">Step 1 of 2</p>
-      <h2 class="pcv__t wm">enter your code.</h2>
-      <p class="pcv__p">Sent to <strong data-pc-phone-mask></strong>.</p>
-      <p class="pcv__sim" data-pc-test-code hidden></p>
+      <p class="pcv__k"><span class="pcv__dots"><i class="is-on"></i><i class="is-on"></i><i></i></span> Step 2 of 3</p>
+      <h2 class="pcv__t pcv__t--sans">Enter your code</h2>
+      <p class="pcv__p">We sent a six-digit code to <strong data-pc-phone-mask></strong>.<br><span class="pcv__sub">It expires in 10 minutes.</span></p>
+      <p class="pcv__note" data-pc-test-code hidden></p>
       <div class="pcv__field">
         <label class="pcv__label" for="pc-smscode">Six-digit code</label>
         <input class="pcv__input pcv__otp" id="pc-smscode" type="text" inputmode="numeric"
-          autocomplete="one-time-code" maxlength="6" placeholder="------" data-pc-smscode>
+          autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="------" data-pc-smscode>
       </div>
       <p class="pcv__err" data-pc-error-code hidden></p>
-      <div class="pcv__acts">
-        <button class="pcv__back" type="button" data-pc-back="phone">Change number</button>
-        <button class="pcv__back" type="button" data-pc-resend>Resend</button>
-        <button class="btn" type="button" data-pc-code-check>Verify</button>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-code-check>Verify my number</button>
+        <span class="pcv__row">
+          <button class="pcv__back" type="button" data-pc-back="phone">Change number</button>
+          <button class="pcv__back" type="button" data-pc-resend>Resend code</button>
+        </span>
       </div>
     </div>
 
-    <!-- step 1b: email -->
-    <div data-pc-step="otp" hidden>
-      <p class="pcv__k">Step 1 of 2</p>
-      <h2 class="pcv__t wm">what&rsquo;s your email?</h2>
-      <p class="pcv__p">We send a six-digit code. In this preview nothing is sent and nothing is stored.</p>
-      <div class="pcv__field">
-        <label class="pcv__label" for="pc-email">Email address</label>
-        <input class="pcv__input" id="pc-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" data-pc-email>
-      </div>
-      <p class="pcv__err" data-pc-error hidden></p>
-      <div class="pcv__acts">
-        <button class="pcv__back" type="button" data-pc-back="verify">Go back</button>
-        <button class="btn" type="button" data-pc-otp-send>Send the code</button>
-      </div>
-    </div>
-
-    <!-- step 1c: code -->
-    <div data-pc-step="otp-code" hidden>
-      <p class="pcv__k">Step 1 of 2</p>
-      <h2 class="pcv__t wm">enter the code.</h2>
-      <p class="pcv__p">Any six digits will do here &mdash; this is a simulation, and no code was sent.</p>
-      <div class="pcv__field">
-        <label class="pcv__label" for="pc-otp">Six-digit code</label>
-        <input class="pcv__input pcv__otp" id="pc-otp" type="text" inputmode="numeric" maxlength="6" placeholder="------">
-      </div>
-      <div class="pcv__acts">
-        <button class="pcv__back" type="button" data-pc-back="otp">Go back</button>
-        <button class="btn" type="button" data-pc-otp-check>Verify</button>
-      </div>
-    </div>
-
-    <!-- step 2: confirm -->
+    <!-- STAGE C: cast it -->
     <div data-pc-step="confirm" hidden>
-      <p class="pcv__k">Step 2 of 2</p>
-      <h2 class="pcv__t wm">confirm your vote.</h2>
-      <div class="pcv__who">
-        <div>
-          <p class="pcv__who-n" data-pc-who-n></p>
-          <p class="pcv__who-c" data-pc-who-c></p>
+      <p class="pcv__k"><span class="pcv__dots"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span> Step 3 of 3</p>
+      <h2 class="pcv__t wm">cast your vote.</h2>
+      <p class="pcv__for">Your vote goes to</p>
+      <div class="pcv__hero">
+        <p class="pcv__hero-n" data-pc-who-n></p>
+        <p class="pcv__hero-c" data-pc-who-c></p>
+      </div>
+      <p class="pcv__p" data-pc-confirm-note>This is today&rsquo;s vote. It cannot be moved to another founder once it is cast.</p>
+      <p class="pcv__err" data-pc-error-cast hidden></p>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-cast>Confirm my vote</button>
+        <button class="pcv__back" type="button" data-pc-close-vote>Cancel</button>
+      </div>
+    </div>
+
+    <!-- STATE B: the daily vote is in, and the registration bonus is still waiting.
+         This replaces a dead end. The old screen said "you have had your vote" and offered a
+         button back to the gallery, which was true of the phone point and wrong about
+         everything else: two points were sitting behind a registration check nobody was
+         invited to do. -->
+    <div data-pc-step="voted-bonus" hidden>
+      <p class="pcv__k"><span class="pcv__tick" aria-hidden="true">&#10003;</span> Your vote is counted</p>
+      <h2 class="pcv__t pcv__t--sans">But wait &mdash; you&rsquo;ve got 2 more points!</h2>
+      <p class="pcv__p">You have already given <strong data-pc-who-n></strong> 1 point today.
+        Registered for NextGen Summit? Verify your registration and give them two more.</p>
+      <ul class="pcpt">
+        <li class="pcpt__row pcpt__row--done">
+          <span class="pcpt__n">+1</span>
+          <span class="pcpt__d"><b>Phone vote</b><span>Counted today</span></span>
+        </li>
+        <li class="pcpt__row pcpt__row--on">
+          <span class="pcpt__n">+2</span>
+          <span class="pcpt__d"><b>NextGen attendee bonus</b><span>Yours to give once your registration is verified</span></span>
+        </li>
+      </ul>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-bonus-start>Claim my +2 bonus points</button>
+        <button class="pcv__back" type="button" data-pc-close-vote>Maybe later</button>
+      </div>
+    </div>
+
+    <!-- STATE C: registration already verified, the two points not yet given -->
+    <div data-pc-step="bonus-ready" hidden>
+      <p class="pcv__k"><span class="pcv__tick" aria-hidden="true">&#10003;</span> Verified NextGen attendee</p>
+      <h2 class="pcv__t pcv__t--sans">You&rsquo;ve unlocked 2 extra points.</h2>
+      <p class="pcv__for">Give them to</p>
+      <div class="pcv__hero">
+        <p class="pcv__hero-n" data-pc-who-n></p>
+        <p class="pcv__hero-c" data-pc-who-c></p>
+      </div>
+      <p class="pcv__p">Your registration is verified, so no code is needed. These two take you to three points for today.</p>
+      <p class="pcv__err" data-pc-error-ebclaim-c hidden></p>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-ebclaim>Give <span data-pc-who-n></span> +2 points</button>
+        <button class="pcv__back" type="button" data-pc-close-vote>Maybe later</button>
+      </div>
+    </div>
+
+    <!-- STATE D: the full three are spent -->
+    <div data-pc-step="all-done" hidden>
+      <div class="pcdone">
+        <span class="pcdone__tick" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.2 5.2L20 7"/></svg>
+        </span>
+        <h2 class="pcdone__t wm" data-pc-done-title>you gave 3 points today!</h2>
+        <p class="pcdone__p">Your support for <strong data-pc-who-n></strong> has been counted.</p>
+        <ul class="pcsum">
+          <li><span>Phone vote</span><b>+1</b></li>
+          <li data-pc-sum-bonus-row hidden><span>Registered attendee bonus</span><b data-pc-sum-bonus>+2</b></li>
+          <li class="pcsum__tot"><span>Today&rsquo;s total</span><b data-pc-sum-total>3</b></li>
+        </ul>
+        <p class="pcdone__again">Come back after midnight Eastern to vote again.</p>
+        <div class="pcdone__acts">
+          <button class="btn btn--lg" type="button" data-pc-share-page>Share <span data-pc-who-n></span></button>
+          <a class="btn btn--lg btn--ghost" href="/tickets/" data-pc-tickets>Get your NextGen ticket</a>
+          <button class="pcv__back" type="button" data-pc-close-vote>Back to the gallery</button>
         </div>
       </div>
-      <p class="pcv__p">You have one vote in the People&rsquo;s Choice Award. Your selection cannot be changed once it is submitted.</p>
-      <p class="pcv__err" data-pc-error-cast hidden></p>
-      <div class="pcv__acts">
-        <button class="pcv__back" type="button" data-pc-back="verify">Go back</button>
-        <button class="btn" type="button" data-pc-cast>Confirm my vote</button>
+    </div>
+
+    <!-- STATE E: today's support went to a different founder -->
+    <div data-pc-step="other" hidden>
+      <p class="pcv__k">Today&rsquo;s support is committed</p>
+      <h2 class="pcv__t pcv__t--sans">You&rsquo;ve already backed someone today.</h2>
+      <p class="pcv__p">Today&rsquo;s points went to <strong data-pc-other-for></strong>, and they cannot be moved or split between founders. Your allowance resets at midnight Eastern, and voting is open until <strong>October 28, 11:59 PM ET</strong>.</p>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg btn--ghost" type="button" data-pc-close-vote>Back to the gallery</button>
       </div>
     </div>
 
-    <!-- already voted -->
-    <div data-pc-step="already" hidden>
-      <p class="pcv__k">Already voted</p>
-      <h2 class="pcv__t wm">you&rsquo;ve had your vote.</h2>
-      <p class="pcv__p">Your one vote in this browser session went to <strong data-pc-already-for></strong>. Votes cannot be changed or moved.</p>
-      <div class="pcv__acts">
-        <button class="btn" type="button" data-pc-close-vote>Back to the gallery</button>
-      </div>
-    </div>
-
-    <!-- done -->
+    <!-- STAGE D: it worked, and here is what else is possible -->
     <div data-pc-step="done" hidden>
       <div class="pcdone">
         <span class="pcdone__tick" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.2 5.2L20 7"/></svg>
         </span>
-        <h2 class="pcdone__t wm">your vote has been counted!</h2>
+        <h2 class="pcdone__t wm">your vote is in!</h2>
+        <p class="pcdone__plus"><b>+1 point</b> for <span data-pc-done-name></span></p>
         <p class="pcdone__p" data-pc-done-for></p>
         <p class="pcdone__again" data-pc-done-again hidden></p>
+
+        <div class="pcbonus" data-pc-bonus hidden>
+          <p class="pcbonus__k">Wait &mdash; you&rsquo;ve got 2 more points!</p>
+          <p class="pcbonus__t">Already registered for NextGen Summit?</p>
+          <p class="pcbonus__p">Verify your registration and give your contestant two extra points today.</p>
+          <div class="pcbonus__acts">
+            <button class="btn btn--lg" type="button" data-pc-bonus-start>Verify my registration</button>
+            <button class="pcv__back" type="button" data-pc-bonus-later>Maybe later</button>
+          </div>
+        </div>
+        <div class="pcbonus pcbonus--have" data-pc-bonus-have hidden>
+          <p class="pcbonus__k">Registration verified</p>
+          <p class="pcbonus__t">Your NextGen registration is linked.</p>
+          <p class="pcbonus__p" data-pc-bonus-have-p></p>
+        </div>
+
         <div class="pcdone__ev">
           <p class="pcdone__ev-k">Experience NextGen Summit 2026</p>
           <p class="pcdone__ev-d">Friday, October 30, 2026</p>
           <p class="pcdone__ev-v">Meet the founders. Hear from inspiring speakers. Experience what&rsquo;s next.<br>Gordon Center for Performing Arts, Owings Mills, Maryland</p>
         </div>
+        <div class="pcdone__acts">
+          <a class="btn btn--lg" href="/tickets/" data-pc-tickets>Get your NextGen ticket</a>
+          <button class="btn btn--lg btn--ghost" type="button" data-pc-share-page>Share the competition</button>
+          <button class="pcv__back" type="button" data-pc-close-vote>Back to the gallery</button>
+        </div>
+      </div>
+    </div>
+    <!-- BONUS i: the registration email -->
+    <div data-pc-step="bonus-email" hidden>
+      <p class="pcv__k">Bonus points</p>
+      <h2 class="pcv__t wm">your registration.</h2>
+      <p class="pcv__p">Enter the email you used to register for NextGen Summit. We send a six-digit code to it, so only the person who can read that inbox can claim the points.</p>
+      <div class="pcv__field">
+        <label class="pcv__label" for="pc-ebmail">Registration email</label>
+        <input class="pcv__input" id="pc-ebmail" type="email" inputmode="email" autocomplete="email"
+          placeholder="you@example.com" data-pc-ebmail>
+      </div>
+      <p class="pcv__err" data-pc-error-ebmail hidden></p>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-ebmail-send>Send my code</button>
+        <button class="pcv__back" type="button" data-pc-bonus-cancel>Not now</button>
+      </div>
+    </div>
+
+    <!-- BONUS ii: the emailed code -->
+    <div data-pc-step="bonus-code" hidden>
+      <p class="pcv__k">Bonus points</p>
+      <h2 class="pcv__t wm">check your email.</h2>
+      <p class="pcv__p">We sent a six-digit code to <strong data-pc-ebmail-mask></strong>. It is good for fifteen minutes.</p>
+      <div class="pcv__field">
+        <label class="pcv__label" for="pc-ebcode">Six-digit code</label>
+        <input class="pcv__input pcv__otp" id="pc-ebcode" type="text" inputmode="numeric"
+          autocomplete="one-time-code" maxlength="6" placeholder="------" data-pc-ebcode>
+      </div>
+      <p class="pcv__err" data-pc-error-ebcode hidden></p>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-ebcode-check>Verify my registration</button>
+        <span class="pcv__row">
+          <button class="pcv__back" type="button" data-pc-back="bonus-email">Change email</button>
+          <button class="pcv__back" type="button" data-pc-bonus-cancel>Not now</button>
+        </span>
+      </div>
+    </div>
+
+    <!-- BONUS iii: ask for the points, explicitly -->
+    <div data-pc-step="bonus-confirm" hidden>
+      <p class="pcv__k">Bonus points</p>
+      <h2 class="pcv__t wm">add 2 points.</h2>
+      <p class="pcv__for">Your bonus goes to</p>
+      <div class="pcv__hero">
+        <p class="pcv__hero-n" data-pc-who-n></p>
+        <p class="pcv__hero-c" data-pc-who-c></p>
+      </div>
+      <p class="pcv__p">Your registration is verified. Adding these takes you to three points for today &mdash; your full daily allowance.</p>
+      <p class="pcv__err" data-pc-error-ebclaim hidden></p>
+      <div class="pcv__acts pcv__acts--stack">
+        <button class="btn btn--lg" type="button" data-pc-ebclaim>Add my 2 points</button>
+        <button class="pcv__back" type="button" data-pc-bonus-cancel>Maybe later</button>
+      </div>
+    </div>
+
+    <!-- BONUS iv: three points -->
+    <div data-pc-step="bonus-done" hidden>
+      <div class="pcdone">
+        <span class="pcdone__tick" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.2 5.2L20 7"/></svg>
+        </span>
+        <h2 class="pcdone__t wm">all three points in!</h2>
+        <p class="pcdone__plus"><b data-pc-bonus-total>+3 points</b> for <span data-pc-done-name></span></p>
+        <p class="pcdone__p" data-pc-bonus-done-p></p>
         <div class="pcdone__acts">
           <a class="btn btn--lg" href="/tickets/" data-pc-tickets>Get your NextGen ticket</a>
           <button class="btn btn--lg btn--ghost" type="button" data-pc-share-page>Share the competition</button>

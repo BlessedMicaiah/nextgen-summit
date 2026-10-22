@@ -25,6 +25,7 @@
      ?pc=open etc. overrides it here so leadership can walk through each state in review. */
   var STATES = ['coming-soon', 'open', 'closed', 'results'];
   var STATE = 'coming-soon';                 // <-- the staging default
+  var MODE = 'daily';                        // the rule in force; the server is the authority
   var DEADLINE = null;                       // <-- an ISO date once leadership sets one; null hides the clock
 
   var q = (location.search.match(/[?&]pc=([a-z-]+)/) || [])[1];
@@ -40,7 +41,7 @@
     'coming-soon': { pill: 'Voting opens soon', vote: 'Voting opens soon',
       note: 'Voting has not opened. The date will be announced once leadership confirms it.' },
     'open':        { pill: 'Voting open', vote: 'Vote for this pitch',
-      note: 'One verified person, one vote, for the whole competition.' },
+      note: 'One verified person, one vote a day, until October 28.' },
     'closed':      { pill: 'Voting closed', vote: 'Voting closed',
       note: 'Voting has closed. The result is with the NextGen team.' },
     'results':     { pill: 'Results published', vote: 'Voting closed',
@@ -274,41 +275,201 @@
     });
   }
 
+  /* Which screen this voter should be looking at, decided by the SERVER's account of them.
+
+     The old version asked sessionStorage whether this browser had voted and routed on that.
+     It was wrong twice over: a note the page wrote to itself is not evidence (clearing a tab
+     erased it, and the real enforcement was server-side all along), and the screen it routed
+     to was a dead end. Somebody who had cast their phone point and had two bonus points
+     waiting was told they had already voted and shown the way out. */
+
+  /* The visible step, so an error lands where the voter is rather than inside a hidden one. */
+  function liveStep() {
+    var found = null;
+    $$('[data-pc-step]', vDlg).forEach(function (n) { if (!n.hidden) found = n; });
+    return found || vDlg;
+  }
+
+  function routeFor(d, entrantId) {
+    if (!d || !d.ok || !d.verified) return 'verify';
+    var today = d.today_entrant || null;
+    if (today && today !== entrantId) return 'other';
+    if (!today) return (d.remaining > 0) ? 'confirm' : 'all-done';
+    if (d.bonus_claimable) return 'bonus-ready';   // attendee verified, points still to give
+    if (d.bonus_eligible) return 'voted-bonus';    // a registration check would unlock two
+    return 'all-done';
+  }
+
+  /* The summary on the completion screen reports what was actually given, not a fixed three. */
+  function paintSummary(d) {
+    var used = (d && typeof d.used === 'number') ? d.used : 0;
+    var bonus = Math.max(0, used - 1);
+    $$('[data-pc-sum-total]', vDlg).forEach(function (n) { n.textContent = String(used); });
+    $$('[data-pc-sum-bonus-row]', vDlg).forEach(function (n) { n.hidden = bonus <= 0; });
+    $$('[data-pc-sum-bonus]', vDlg).forEach(function (n) { n.textContent = '+' + bonus; });
+    $$('[data-pc-done-title]', vDlg).forEach(function (n) {
+      n.textContent = used >= 3 ? 'you gave 3 points today!'
+        : (used === 1 ? 'your vote is counted!' : 'you gave ' + used + ' points today!');
+    });
+  }
+
   function openVote(id) {
     var e = byId[id];
     if (!e) return;
     if (STATE !== 'open') return;
     pending = e; method = null;
-    var had = ballot();
     $$('[data-pc-who-n]', vDlg).forEach(function (n) { n.textContent = e.name; });
     $$('[data-pc-who-c]', vDlg).forEach(function (n) { n.textContent = e.company; });
-    step(had ? 'already' : 'verify');
-    refreshMe().then(function (d) {
-      var way = $('[data-pc-phone-way]', vDlg);
-      if (way) way.hidden = false;                 // the route exists whether SMS is live or mocked
-      if (d.verified && !had) {
-        /* Already verified on this device: no code, no message, straight to the confirmation.
-           This is the whole point of keeping a session. */
-        method = 'phone';
-        if (typeof d.remaining === 'number' && d.remaining <= 0) { step('already'); return; }
-        confirmStep();
-      }
-    });
-    if (had) {
-      $('[data-pc-already-for]', vDlg).textContent = (byId[had.entrant] || {}).name || 'another pitch';
-      track('vote_duplicate_blocked', { entrant_id: id });
-    } else {
-      track('vote_click', { entrant_id: id, entrant_slot: e.n });
-    }
+
+    /* Open on the invitation rather than a spinner; the server's answer arrives in a moment
+       and moves them on. Nothing is recorded by looking. */
+    step('verify');
     if (!vDlg.open) {
       if (typeof vDlg.showModal === 'function') vDlg.showModal();
       else vDlg.setAttribute('open', '');
     }
+
+    refreshMe().then(function (d) {
+      var to = routeFor(d, id);
+      if (to === 'other') {
+        var who = byId[d.today_entrant];
+        $$('[data-pc-other-for]', vDlg).forEach(function (n) {
+          n.textContent = who ? who.name : 'another founder';
+        });
+      }
+      if (to === 'all-done') paintSummary(d);
+      if (to === 'confirm') { method = 'phone'; confirmStep(); return; }
+      step(to);
+      track('vote_open', { entrant_id: id, state: to });
+    });
+  }
+
+
+
+  /* A provider refusal is the expensive one: the message was not sent and a slot was spent
+     anyway. On a preview host the server hands back Twilio's HTTP status and numeric code, so
+     say them -- the next attempt costs another of three, and guessing is not affordable. */
+
+  var lastPhone = '';
+  var resendTimer = null;
+
+  /* Hold the resend control for n seconds, counting down, so the wait is visible rather than
+     discovered by pressing it again and being refused. */
+  function holdResend(n) {
+    var rb = $('[data-pc-resend]', vDlg);
+    if (!rb) return;
+    if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+    var left = Math.ceil(n);
+    rb.disabled = true;
+    var tick = function () {
+      if (left <= 0) {
+        clearInterval(resendTimer); resendTimer = null;
+        rb.disabled = false; rb.textContent = 'Resend code';
+        return;
+      }
+      rb.textContent = 'Resend in ' + left + 's';
+      left--;
+    };
+    tick();
+    resendTimer = setInterval(tick, 1000);
+  }
+
+
+  /* What to tell someone when a code could not be sent. One copy, because the resend and the
+     first attempt fail for exactly the same reasons and should say the same things. */
+  function otpStartMsg(d) {
+    return d.reason === 'cooldown' ? 'Please wait ' + (d.wait || 60) + ' seconds before asking for another code.' :
+      d.reason === 'number_daily' ? 'That number has asked for too many codes today.' :
+      d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
+      d.reason === 'country' ? 'We can only text US and Canada numbers at the moment.' :
+      d.reason === 'not_allowlisted' ? 'This number is not approved for text messages on this preview.' :
+      d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
+      d.reason === 'phone' ? 'That does not look like a mobile number.' :
+      d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
+      d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
+      d.reason === 'provider' ? providerMsg(d) :
+      'We could not send a code just now. Please try again.';
+  }
+
+  function providerMsg(d) {
+    var base = 'The text could not be sent. This was refused by the SMS provider, not by us.';
+    if (d.provider_status || d.provider_code) {
+      base += ' (provider status ' + (d.provider_status || '?') +
+        (d.provider_code ? ', code ' + d.provider_code : '') + ')';
+    }
+    return base;
+  }
+
+
+  /* ---------- the verified-attendee bonus ----------
+     Every call needs the phone-verified session; the server refuses otherwise, so there is no
+     path from this file to a point that was not earned. */
+  var BONUS = '/api/pc-bonus.php';
+  var bonusEmail = '';
+
+  function bpost(action, body) {
+    return fetch(BONUS, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action: action, csrf: me.csrf }, body || {}))
+    }).then(function (r) {
+      return r.json().catch(function () { return { ok: false, reason: 'network' }; });
+    });
+  }
+
+  /* Which of the two blocks the success screen shows: the invitation, or a note that the
+     registration is already linked. Asked of the server rather than remembered locally. */
+  function paintBonus() {
+    var invite = $('[data-pc-bonus]', vDlg), have = $('[data-pc-bonus-have]', vDlg);
+    if (!invite || !have) return;
+    invite.hidden = true; have.hidden = true;
+    bpost('status').then(function (d) {
+      if (!d || !d.ok) return;
+      if (d.attendee_verified) {
+        have.hidden = false;
+        var hp = $('[data-pc-bonus-have-p]', vDlg);
+        if (hp) {
+          hp.textContent = d.remaining > 0
+            ? 'You have ' + d.remaining + ' more point' + (d.remaining === 1 ? '' : 's') +
+              ' to give today. They reset at midnight Eastern.'
+            : 'You have used all three of today’s points. They reset at midnight Eastern.';
+        }
+      } else if (d.mode === 'daily') {
+        invite.hidden = false;
+      }
+    });
+  }
+
+  function bonusErr(sel, d) {
+    var e = $(sel, vDlg);
+    if (!e) return;
+    e.textContent = bonusText(d);
+    e.hidden = false;
+  }
+
+  function bonusText(d) {
+    return
+      d.reason === 'not_found' ? 'We could not find a NextGen Summit registration for that email. Check the address you registered with, or use the ticket link below to join us.' :
+      d.reason === 'claimed' ? 'That registration has already been linked to another voter. Each registration counts once.' :
+      d.reason === 'unavailable' ? 'We cannot reach the registration system right now. Your vote is safe — please try the bonus again in a few minutes.' :
+      d.reason === 'mail' ? 'We could not send the email just now. Please try again in a moment.' :
+      d.reason === 'too_many' ? 'That is too many verification emails for one day. Please try again tomorrow.' :
+      d.reason === 'email' ? 'That does not look like an email address.' :
+      d.reason === 'expired' ? 'That code has expired. Send a new one and try again.' :
+      d.reason === 'attempts' ? 'Too many attempts. Start the registration check again.' :
+      d.reason === 'none' ? 'We have no code waiting. Send one and try again.' :
+      d.reason === 'code' ? ('That code did not match.' + (d.tries_left ? ' ' + d.tries_left + ' tries left.' : '')) :
+      d.reason === 'vote_first' ? 'Cast today’s vote first, then the bonus can be added to it.' :
+      d.reason === 'spent' ? 'Today’s points are already used. They reset at midnight Eastern.' :
+      d.reason === 'closed' ? 'Voting has closed.' :
+      d.reason === 'verify_required' ? 'Your session expired. Close this and verify your phone again.' :
+      d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
+      'Something went wrong. Please try again.';
   }
 
   function confirmStep() {
     step('confirm');
-    track('auth_complete_simulated', { method: method || 'simulated' });
+    track('verify_complete', { method: method || 'phone' });
   }
 
   /* The vote is the server's to accept. Nothing is marked done, stored or repainted until it
@@ -329,6 +490,8 @@
       if (btn) { btn.disabled = false; btn.textContent = 'Confirm my vote'; }
       if (d && d.ok) {
         keepBallot(who.id);
+        var nameEl = $('[data-pc-done-name]', vDlg);
+        if (nameEl) nameEl.textContent = who.name;
         var forEl = $('[data-pc-done-for]', vDlg);
         if (forEl) forEl.textContent = 'Your vote for ' + who.name + ' at ' + who.company +
           ' has been recorded. Now come and experience what’s next.';
@@ -349,24 +512,31 @@
           }
         }
         step('done');
-        track('vote_success', { entrant_id: who.id, entrant_slot: who.n, simulated: true, mode: d.mode });
+        paintBonus();          // invitation, or "already linked", decided by the server
+        track('vote_success', { entrant_id: who.id, entrant_slot: who.n,
+                                simulated: !!d.simulated, mode: d.mode });
         repaintAfterVote();
         return;
       }
+      /* The server refused. Ask it what this voter's position actually is and show that,
+         rather than assuming a refusal means there is nothing left to do -- an allowance
+         spent at the phone tier is precisely the person with two bonus points waiting. */
       var why = d && d.reason;
-      if (why === 'allowance') {
-        $('[data-pc-already-for]', vDlg).textContent = who.name;
-        step('already');
-        track('vote_allowance_spent', { entrant_id: who.id });
-        repaintAfterVote();
-        return;
-      }
-      if (why === 'duplicate') {
-        keepBallot(who.id);
-        $('[data-pc-already-for]', vDlg).textContent = who.name;
-        step('already');
-        track('vote_duplicate_blocked', { entrant_id: who.id });
-        repaintAfterVote();
+      if (why === 'allowance' || why === 'duplicate') {
+        track(why === 'duplicate' ? 'vote_duplicate_blocked' : 'vote_allowance_spent',
+              { entrant_id: who.id });
+        refreshMe().then(function (me2) {
+          var to = routeFor(me2, who.id);
+          if (to === 'all-done') paintSummary(me2);
+          if (to === 'other') {
+            var o = byId[me2.today_entrant];
+            $$('[data-pc-other-for]', vDlg).forEach(function (n) {
+              n.textContent = o ? o.name : 'another founder';
+            });
+          }
+          step(to === 'confirm' ? 'all-done' : to);
+          repaintAfterVote();
+        });
         return;
       }
       var e = $('[data-pc-error-cast]', vDlg);
@@ -464,20 +634,13 @@
       post('start', { phone: f.value }).then(function (d) {
         btn.disabled = false; btn.textContent = 'Send my code';
         if (!d.ok) {
-          err.textContent =
-            d.reason === 'cooldown' ? 'Please wait ' + (d.wait || 60) + ' seconds before asking for another code.' :
-            d.reason === 'number_daily' ? 'That number has asked for too many codes today.' :
-            d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
-            d.reason === 'country' ? 'We can only text US and Canada numbers at the moment.' :
-            d.reason === 'not_allowlisted' ? 'Live texting is limited to approved test numbers during this trial.' :
-            d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
-            d.reason === 'phone' ? 'That does not look like a mobile number.' :
-            d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
-            'We could not send a code just now. Please try again.';
+          err.textContent = otpStartMsg(d);
           err.hidden = false;
           track('otp_start_failed', { reason: d.reason });
           return;
         }
+        lastPhone = f.value;
+        holdResend(60);          // the server's cooldown, shown rather than discovered
         $('[data-pc-phone-mask]', vDlg).textContent = d.phone || 'your phone';
         var tc = $('[data-pc-test-code]', vDlg);
         if (d.test_code) {
@@ -490,7 +653,23 @@
       return;
     }
     if (t.closest('[data-pc-resend]')) {
-      step('phone');
+      /* It used to send the voter back to the number screen, which is "change number", not
+         "resend" -- the label promised one thing and did another. This asks for another code
+         for the same number and then holds the button for the server's cooldown, so the
+         countdown on screen matches the rule that will actually be applied. */
+      var rb = t.closest('[data-pc-resend]');
+      if (rb.disabled) return;
+      var rerr = $('[data-pc-error-code]', vDlg);
+      if (rerr) rerr.hidden = true;
+      rb.disabled = true; rb.textContent = 'Sending…';
+      post('start', { phone: lastPhone }).then(function (d) {
+        if (!d.ok) {
+          if (rerr) { rerr.textContent = otpStartMsg(d); rerr.hidden = false; }
+          holdResend(typeof d.wait === 'number' && d.wait > 0 ? d.wait : 60);
+          return;
+        }
+        holdResend(60);
+      });
       return;
     }
     if (t.closest('[data-pc-code-check]')) {
@@ -499,7 +678,7 @@
       var cb = t.closest('[data-pc-code-check]');
       cb.disabled = true; cb.textContent = 'Checking…';
       post('check', { code: c.value }).then(function (d) {
-        cb.disabled = false; cb.textContent = 'Verify';
+        cb.disabled = false; cb.textContent = 'Verify my number';
         if (!d.ok) {
           ce.textContent =
             d.reason === 'expired' ? 'That code has expired. Ask for a new one.' :
@@ -514,31 +693,72 @@
         me = d;
         method = 'phone';
         track('otp_verified', { mock: d.sms === 'mock' });
-        if (typeof d.remaining === 'number' && d.remaining <= 0) { step('already'); return; }
         confirmStep();
       });
       return;
     }
-    if ((el = t.closest('[data-pc-way]'))) {
-      method = el.getAttribute('data-pc-way');
-      track('auth_start_simulated', { method: el.getAttribute('data-pc-way') });
-      // Google lands straight on the confirmation; email collects a code first. Either way the
-      // same completion event fires, so the funnel has both halves.
-      if (method === 'phone') step('phone');
-      else if (method === 'google') confirmStep();
-      else step('otp');
+    /* One route in. The Google and email branches that used to live here signed nobody in:
+       Google went straight to the confirmation and email accepted any six digits. Both are
+       gone, so the only way to a ballot is a code we actually sent. */
+    if (t.closest('[data-pc-begin]')) {
+      method = 'phone';
+      track('verify_start', { method: 'phone' });
+      step('phone');
       return;
     }
-    if (t.closest('[data-pc-otp-send]')) {
-      var mail = $('[data-pc-email]', vDlg);
-      if (!mail.value || mail.value.indexOf('@') < 0) {
-        var e1 = $('[data-pc-error]', vDlg);
-        e1.textContent = 'Enter an email address to continue the simulation.'; e1.hidden = false;
-        return;
-      }
-      step('otp-code'); return;
+    if (t.closest('[data-pc-bonus-start]')) { step('bonus-email'); return; }
+    if (t.closest('[data-pc-bonus-later]') || t.closest('[data-pc-bonus-cancel]')) {
+      step('done'); paintBonus(); return;
     }
-    if (t.closest('[data-pc-otp-check]')) { confirmStep(); return; }
+    if (t.closest('[data-pc-ebmail-send]')) {
+      var em = $('[data-pc-ebmail]', vDlg), eme = $('[data-pc-error-ebmail]', vDlg);
+      eme.hidden = true;
+      var b1 = t.closest('[data-pc-ebmail-send]');
+      b1.disabled = true; b1.textContent = 'Sending…';
+      bonusEmail = (em.value || '').trim();
+      bpost('lookup', { email: bonusEmail }).then(function (d) {
+        b1.disabled = false; b1.textContent = 'Send my code';
+        if (!d.ok) { bonusErr('[data-pc-error-ebmail]', d); return; }
+        if (d.already) { step('bonus-confirm'); return; }
+        var mask = $('[data-pc-ebmail-mask]', vDlg);
+        if (mask) mask.textContent = bonusEmail;
+        step('bonus-code');
+      });
+      return;
+    }
+    if (t.closest('[data-pc-ebcode-check]')) {
+      var cc = $('[data-pc-ebcode]', vDlg), cce = $('[data-pc-error-ebcode]', vDlg);
+      cce.hidden = true;
+      var b2 = t.closest('[data-pc-ebcode-check]');
+      b2.disabled = true; b2.textContent = 'Checking…';
+      bpost('check', { code: (cc.value || '') }).then(function (d) {
+        b2.disabled = false; b2.textContent = 'Verify my registration';
+        if (!d.ok) { bonusErr('[data-pc-error-ebcode]', d); return; }
+        step('bonus-confirm');          // verified, and nothing awarded until they ask
+      });
+      return;
+    }
+    if (t.closest('[data-pc-ebclaim]')) {
+      var scope = liveStep();
+      var ce = $('[data-pc-error-ebclaim]', scope) || $('[data-pc-error-ebclaim-c]', scope);
+      if (ce) ce.hidden = true;
+      var b3 = t.closest('[data-pc-ebclaim]');
+      b3.disabled = true; b3.textContent = 'Adding…';
+      bpost('claim').then(function (d) {
+        b3.disabled = false; b3.textContent = 'Add my 2 points';
+        if (!d.ok) {
+          if (ce) { ce.textContent = bonusText(d); ce.hidden = false; }
+          return;
+        }
+        var tot = $('[data-pc-bonus-total]', vDlg);
+        if (tot) tot.textContent = '+' + (d.used || 3) + ' points';
+        var bp = $('[data-pc-bonus-done-p]', vDlg);
+        if (bp) bp.textContent = 'That is your full allowance for today. Come back tomorrow after midnight Eastern for three more.';
+        track('bonus_claimed', { awarded: d.awarded });
+        step('bonus-done');
+      });
+      return;
+    }
     if (t.closest('[data-pc-cast]')) { castVote(); return; }
     if ((el = t.closest('[data-pc-back]'))) { step(el.getAttribute('data-pc-back')); return; }
     if (t.closest('[data-pc-close-vote]')) { vDlg.close(); return; }
@@ -569,7 +789,11 @@
       var label = $('[data-pc-state-label]', n);
       if (label) label.textContent = COPY[STATE].pill;
     });
-    $$('[data-pc-state-note]').forEach(function (n) { n.textContent = COPY[STATE].note; });
+    var note = COPY[STATE].note;
+    if (STATE === 'open' && MODE === 'single') {
+      note = 'One verified person, one vote, for the whole competition.';
+    }
+    $$('[data-pc-state-note]').forEach(function (n) { n.textContent = note; });
   }
   paintFurniture();
 
@@ -634,6 +858,7 @@
       .then(function (d) {
         if (!d || !d.ok) return;
         if (d.deadline && d.deadline !== DEADLINE) { DEADLINE = d.deadline; startClock(); }
+        if (d.mode && d.mode !== MODE) { MODE = d.mode; paintFurniture(); }
         if (STATES.indexOf(d.state) < 0 || d.state === STATE) return;
         STATE = d.state;
         grid.innerHTML = ENTRANTS.map(cardHtml).join('');

@@ -332,3 +332,208 @@ body.has-pcbar .nav{top:34px}
 [data-pc-test-code]{margin-top:14px;font-weight:700}
 [data-pc-test-code] b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;
   letter-spacing:.22em;margin-left:6px}
+
+/* =========================================================================
+   The vote flow, rebuilt around what a voter is actually doing.
+
+   The old screen opened on "verify it's you" with three buttons, two of which verified
+   nothing. It read as a security check standing between a person and a thing they wanted to
+   do. This one opens on the founder they came to support and says what their vote is worth,
+   because that is the reason they pressed the button.
+
+   Light paper, like the rest of this page. Mobile first: one column, full-width controls,
+   nothing smaller than a comfortable thumb target.
+   ========================================================================= */
+
+.pcv__x{position:absolute;top:10px;right:10px;z-index:4;display:inline-grid;place-items:center;
+  width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:background-color .3s var(--ease),color .3s var(--ease)}
+.pcv__x:hover{background:var(--paper-2);color:var(--ink)}
+.pcv__x svg{width:15px;height:15px}
+.pcv__in{position:relative}
+
+/* who this is for, said first and said large */
+.pcv__for{font:800 9.5px/1 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent-ink)}
+.pcv__hero{margin-top:10px;padding:15px 16px;border-radius:12px;background:var(--paper-2);
+  box-shadow:inset 0 0 0 1px var(--rule)}
+.pcv__hero-n{font:800 clamp(19px,5vw,23px)/1.2 var(--f-sans);letter-spacing:-.01em;color:var(--ink)}
+.pcv__hero-c{margin-top:4px;font:800 9.5px/1.3 var(--f-sans);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3)}
+.pcv__mini{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-top:16px;
+  padding:10px 13px;border-radius:9px;background:var(--paper-2)}
+.pcv__mini span:first-child{font:800 13.5px/1.3 var(--f-sans)}
+.pcv__mini span:last-child{font:800 9px/1.3 var(--f-sans);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+/* what a vote is worth. Two rows, because there are two kinds of point and one of them is
+   not available yet -- saying so here is cheaper than a disappointment later. */
+.pcpt{margin-top:20px;display:grid;gap:9px;list-style:none;padding:0}
+.pcpt__row{display:flex;align-items:flex-start;gap:13px;padding:13px 14px;border-radius:11px}
+.pcpt__row--on{background:rgba(31,199,190,.1);box-shadow:inset 0 0 0 1.5px rgba(0,122,116,.3)}
+.pcpt__row--soon{background:var(--paper-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.pcpt__n{flex:none;display:grid;place-items:center;min-width:44px;height:36px;border-radius:9px;
+  font:800 16px/1 var(--f-sans)}
+.pcpt__row--on .pcpt__n{background:var(--accent);color:#06161A}
+.pcpt__row--soon .pcpt__n{background:var(--rule);color:var(--ink-3)}
+.pcpt__d{display:grid;gap:2px}
+.pcpt__d b{font:800 13.5px/1.35 var(--f-sans);color:var(--ink)}
+.pcpt__d span{font:500 12.5px/1.45 var(--f-sans);color:var(--ink-2)}
+.pcpt__row--soon .pcpt__d b{color:var(--ink-2)}
+
+/* three steps, shown as three dots rather than a sentence of arithmetic */
+.pcv__dots{display:inline-flex;align-items:center;gap:5px;margin-right:9px;vertical-align:middle}
+.pcv__dots i{width:6px;height:6px;border-radius:50%;background:var(--rule-strong);display:block}
+.pcv__dots i.is-on{background:var(--accent-ink)}
+
+.pcv__acts--stack{flex-direction:column;align-items:stretch}
+.pcv__acts--stack .btn{width:100%}
+.pcv__row{display:flex;gap:10px;justify-content:center}
+.pcv__row .pcv__back{flex:1 1 auto}
+.pcv__note{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding:10px 13px;
+  border-radius:9px;background:rgba(255,229,0,.16);box-shadow:inset 0 0 0 1px rgba(160,140,0,.3);
+  font:600 12.5px/1.5 var(--f-sans);color:var(--ink)}
+.pcv__note[hidden]{display:none}
+.pcv__note b{margin-left:6px;font-size:15px;letter-spacing:.14em}
+
+/* the point, named, immediately after it is awarded */
+.pcdone__plus{margin-top:12px;display:inline-block;padding:9px 16px;border-radius:999px;
+  background:rgba(31,199,190,.16);box-shadow:inset 0 0 0 1.5px rgba(0,122,116,.32);
+  font:700 14px/1.3 var(--f-sans);color:var(--ink)}
+.pcdone__plus b{font-weight:800;color:var(--accent-ink)}
+
+/* the second ask, offered only as far as it is honest to offer it */
+.pcbonus{margin-top:22px;padding:17px 16px;border-radius:13px;text-align:left;
+  background:var(--paper-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.pcbonus__k{font:800 9.5px/1 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;
+  color:var(--accent-ink)}
+.pcbonus__t{margin-top:9px;font:800 16px/1.35 var(--f-sans);color:var(--ink)}
+.pcbonus__t b{color:var(--accent-ink)}
+.pcbonus__p{margin-top:6px;font:500 13px/1.55 var(--f-sans);color:var(--ink-2)}
+.pcbonus__soon{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;
+  border-radius:9px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--rule);
+  font:500 12px/1.5 var(--f-sans);color:var(--ink-2)}
+.pcbonus__soon span{color:var(--ink-3);line-height:1.5}
+
+@media (prefers-reduced-motion:reduce){
+  .pcv__x{transition:none}
+}
+
+/* the bonus invitation: a celebration with an offer in it, not another checkpoint */
+.pcbonus__acts{display:grid;gap:9px;margin-top:15px}
+.pcbonus__acts .btn{width:100%}
+.pcbonus__acts .pcv__back{width:100%}
+.pcbonus--have{background:rgba(31,199,190,.1);box-shadow:inset 0 0 0 1.5px rgba(0,122,116,.28)}
+.pcbonus[hidden],.pcbonus--have[hidden]{display:none}
+
+/* =========================================================================
+   The vote flow in the dark, per the team's correction.
+
+   It was paper, matching the page it opens over. The corrected design puts it on near-black
+   with the turquoise doing the work, which reads better over the dark gallery behind it and
+   stops the dialog feeling like a form bolted onto a cinematic page.
+
+   Scoped to .pcv and its own tokens, so the rest of the page is untouched and the light
+   treatment of the gallery, profiles and share sheet stays exactly as it was.
+   ========================================================================= */
+
+.pcv{
+  --v-bg:#0E1113;        /* the card */
+  --v-bg-2:#191D20;      /* panels inside it */
+  --v-line:rgba(255,255,255,.12);
+  --v-ink:#FFFFFF;
+  --v-ink-2:rgba(255,255,255,.72);
+  --v-ink-3:rgba(255,255,255,.5);
+  background:var(--v-bg);color:var(--v-ink)}
+.pcv::backdrop{background:rgba(2,5,7,.82);backdrop-filter:blur(4px)}
+
+.pcv__x{color:var(--v-ink-3)}
+.pcv__x:hover{background:rgba(255,255,255,.1);color:var(--v-ink)}
+
+.pcv__for{color:var(--accent)}
+.pcv__hero{background:var(--v-bg-2);box-shadow:inset 0 0 0 1px var(--v-line)}
+.pcv__hero-n{color:var(--v-ink)}
+.pcv__hero-c{color:var(--v-ink-3)}
+.pcv__mini{background:var(--v-bg-2)}
+.pcv__mini span:last-child{color:var(--v-ink-3)}
+
+/* the corrected design sets this line in the sans, not the display face */
+.pcv__t{color:var(--v-ink)}
+.pcv__t--sans{font:800 clamp(27px,6.6vw,34px)/1.12 var(--f-sans);letter-spacing:-.02em}
+.pcv__p{color:var(--v-ink-2)}
+.pcv__k{color:var(--v-ink-3)}
+.pcv__dots i{background:rgba(255,255,255,.26)}
+.pcv__dots i.is-on{background:var(--accent)}
+
+.pcpt__row--on{background:rgba(31,199,190,.12);box-shadow:inset 0 0 0 1px rgba(31,199,190,.42)}
+.pcpt__row--soon{background:var(--v-bg-2);box-shadow:inset 0 0 0 1px var(--v-line)}
+.pcpt__row--on .pcpt__n{background:var(--accent);color:#06161A}
+.pcpt__row--soon .pcpt__n{background:rgba(255,255,255,.1);color:var(--v-ink-2)}
+.pcpt__d b{color:var(--v-ink)}
+.pcpt__d span{color:var(--v-ink-2)}
+.pcpt__row--soon .pcpt__d b{color:var(--v-ink)}
+
+.pcv__label{color:var(--v-ink-3)}
+.pcv__input{background:var(--v-bg-2);border-color:var(--v-line);color:var(--v-ink)}
+.pcv__input::placeholder{color:rgba(255,255,255,.34)}
+.pcv__input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,199,190,.22)}
+.pcv__hint{color:var(--v-ink-3)}
+.pcv__err{color:#FF7A8F}
+.pcv__note{background:rgba(255,229,0,.14);box-shadow:inset 0 0 0 1px rgba(255,229,0,.34);color:var(--v-ink)}
+
+.pcv__back{background:transparent;color:var(--v-ink);box-shadow:inset 0 0 0 1px var(--v-line)}
+.pcv__back:hover{background:rgba(255,255,255,.08)}
+
+.pcdone__t{color:var(--v-ink)}
+.pcdone__p,.pcdone__again{color:var(--v-ink-2)}
+.pcdone__plus{background:rgba(31,199,190,.16);box-shadow:inset 0 0 0 1px rgba(31,199,190,.42);
+  color:var(--v-ink)}
+.pcdone__plus b{color:var(--accent)}
+
+.pcbonus{background:var(--v-bg-2);box-shadow:inset 0 0 0 1px var(--v-line)}
+.pcbonus--have{background:rgba(31,199,190,.1);box-shadow:inset 0 0 0 1px rgba(31,199,190,.34)}
+.pcbonus__k{color:var(--accent)}
+.pcbonus__t{color:var(--v-ink)}
+.pcbonus__t b{color:var(--accent)}
+.pcbonus__p{color:var(--v-ink-2)}
+
+/* ---------- the returning voter ----------
+   States that used to be one dead end. A tick where something is already done, a live row
+   where something is still available, and a summary that adds up what was actually given. */
+.pcv__tick{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;
+  margin-right:7px;background:var(--accent);color:#06161A;font-size:9px;font-weight:800;
+  vertical-align:middle}
+.pcpt__row--done{background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px var(--v-line);
+  opacity:.72}
+.pcpt__row--done .pcpt__n{background:rgba(31,199,190,.25);color:var(--accent)}
+.pcpt__row--done .pcpt__d b,.pcpt__row--done .pcpt__d span{color:var(--v-ink-2)}
+
+.pcsum{margin:clamp(16px,3vw,22px) auto 0;width:min(320px,100%);list-style:none;padding:0;
+  text-align:left}
+.pcsum li{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:10px 2px;border-bottom:1px solid var(--v-line);
+  font:600 13.5px/1.4 var(--f-sans);color:var(--v-ink-2)}
+.pcsum li[hidden]{display:none}
+.pcsum li b{font-weight:800;color:var(--v-ink)}
+.pcsum__tot{border-bottom:0;padding-top:12px}
+.pcsum__tot span{color:var(--v-ink);font-weight:800}
+.pcsum__tot b{font-size:19px;color:var(--accent)}
+
+/* ---------- the six digits ----------
+   Large, evenly spaced and unmistakably the thing to type into. The tracking does the work of
+   separate boxes without the focus-management problems six inputs bring -- and it keeps
+   autocomplete="one-time-code", which is what makes iOS offer the code above the keyboard. */
+.pcv__otp{font-size:clamp(26px,8vw,32px);letter-spacing:.42em;text-indent:.42em;
+  text-align:center;font-weight:800;min-height:64px;padding:0 10px}
+.pcv__otp::placeholder{letter-spacing:.42em;color:rgba(255,255,255,.22);font-weight:700}
+.pcv__sub{display:inline-block;margin-top:4px;font-size:13px;color:var(--v-ink-3)}
+
+/* resend and change-number read as the quieter pair they are */
+.pcv__row .pcv__back{min-height:44px;font-size:11.5px;box-shadow:inset 0 0 0 1px var(--v-line);
+  background:transparent;color:var(--v-ink-2)}
+.pcv__row .pcv__back:hover:not(:disabled){background:rgba(255,255,255,.08);color:var(--v-ink)}
+.pcv__row .pcv__back:disabled{opacity:.5;cursor:default}
+
+/* the modal keeps its own scroll on a short phone, so the keyboard cannot bury the button */
+.pcv{max-height:min(92svh,calc(100% - 20px));overflow:auto;overscroll-behavior:contain}
+.pcv__in{padding-bottom:max(clamp(22px,4vw,34px),env(safe-area-inset-bottom))}

@@ -33,7 +33,10 @@ function pc_allowance(bool $ticketHolder = false): int
     if (pc_mode() === 'single') {
         return 1;                      // the approved rule: one, for the whole competition
     }
-    $n = (int) pc_meta($ticketHolder ? 'daily_ticket' : 'daily_public', $ticketHolder ? '2' : '1');
+    /* These are TOTALS for the day, not increments. A verified attendee's three is the
+       one phone-verified point plus the two the registration unlocks; it is stored as
+       one number because the allowance is what the slot loop counts against. */
+    $n = (int) pc_meta($ticketHolder ? 'daily_ticket' : 'daily_public', $ticketHolder ? '3' : '1');
     return max(0, min(10, $n));
 }
 

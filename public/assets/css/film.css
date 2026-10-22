@@ -1,42 +1,98 @@
 /* ============================================================================
-   NextGen Summit — the film pop-up (see js/film.js)
-   .film        the layer over the page: a shade and the player box.
-   .is-in       opened: the shade fades in, the box opens out of a slit, the print bar runs across.
-   .is-mini     tucked into the bottom-right corner while the page scrolls; tap to bring it back.
-   .is-free     the film has played to its end: the countdown ring turns into the close button.
-   .is-over     the end card (Watch again) over the last frame.
-   .is-blocked  the browser would not start it: poster and a play button.
+   NextGen Summit — the Convener's film (see js/film.js)
+   .film-call   the call button in the bottom-right corner: face, print ring, badge, words.
+                .is-here arrived · .is-ring rings · .is-tucked words tucked away · .is-done watched
+                .is-gone hidden while the film is open
+   .film        the film: a shade and the player box, opened out of the call button.
+                .is-cinema as large as the screen allows · .is-mini tucked into the corner
+                .is-free the close is unlocked · .is-over end card · .is-blocked play button
+                .is-sound sound on
    Colours come from the tokens in site.css.
    ========================================================================= */
 
+/* ---------- the call button ---------- */
+.film-call{position:fixed;z-index:89;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:13px;padding:6px 20px 6px 6px;border:0;border-radius:999px;background:var(--ink);color:#fff;cursor:pointer;text-align:left;
+  box-shadow:0 16px 38px -12px rgba(var(--shade),.6),0 0 0 1px rgba(255,255,255,.08);
+  opacity:0;translate:0 28px;scale:.6;pointer-events:none;transform-origin:85% 50%;
+  transition:opacity .5s var(--ease),translate 1s cubic-bezier(.34,1.56,.64,1),scale 1s cubic-bezier(.34,1.56,.64,1),padding .6s var(--ease),gap .6s var(--ease),background-color .3s var(--ease)}
+.film-call.is-here{opacity:1;translate:0 0;scale:1;pointer-events:auto}
+.film-call.is-here:hover{scale:1.05}
+.film-call.is-here:active{scale:.95;transition-duration:.15s}
+.film-call.is-gone{opacity:0;pointer-events:none;transition:opacity .25s var(--ease)}
+/* out of the way while a link or button sits under its corner */
+.film-call.is-here.is-away{opacity:0;translate:0 calc(100% + 36px);pointer-events:none;transition:opacity .35s var(--ease),translate .6s var(--ease-io)}
+.film-call:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+.film-call__face{position:relative;flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%}
+.film-call__face img{position:relative;display:block;width:46px;height:46px;border-radius:50%;object-fit:cover;transition:scale .5s var(--ease)}
+.film-call:hover .film-call__face img{scale:1.08}
+/* the print ring, always turning */
+.film-call__ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--cyan),var(--magenta),var(--yellow),var(--cyan));
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));
+  animation:film-spin 3s linear infinite}
+@keyframes film-spin{to{rotate:1turn}}
+/* the sonar: a ring that keeps leaving the face until the film has been watched */
+.film-call__face::before,.film-call__face::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);opacity:0;pointer-events:none}
+.film-call:not(.is-done) .film-call__face::before{animation:film-sonar 2.6s var(--ease) infinite}
+.film-call:not(.is-done) .film-call__face::after{animation:film-sonar 2.6s var(--ease) 1.3s infinite}
+@keyframes film-sonar{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
+.film-call__play{position:absolute;inset:3px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;opacity:0;transition:opacity .3s var(--ease)}
+.film-call__play svg{width:18px;height:18px;margin-left:2px;scale:.6;transition:scale .5s var(--ease)}
+.film-call:hover .film-call__play,.film-call:focus-visible .film-call__play{opacity:1}
+.film-call:hover .film-call__play svg,.film-call:focus-visible .film-call__play svg{scale:1}
+
+.film-call__text{display:grid;gap:5px;max-width:210px;overflow:hidden;white-space:nowrap;transition:max-width .6s var(--ease),opacity .4s var(--ease)}
+.film-call__k{display:inline-flex;align-items:center;gap:7px;font:700 10px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.film-call__t{font:800 15px/1.1 var(--f-sans);letter-spacing:.01em}
+/* typing dots, as if the message were still arriving */
+.film-call__dots{display:inline-flex;gap:3px}
+.film-call__dots i{width:4px;height:4px;border-radius:50%;background:currentColor;animation:film-dot 1.2s var(--ease-io) infinite}
+.film-call__dots i:nth-child(2){animation-delay:.15s}
+.film-call__dots i:nth-child(3){animation-delay:.3s}
+@keyframes film-dot{0%,60%,100%{opacity:.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+.film-call.is-done .film-call__dots{display:none}
+
+/* the badge pops in after the button lands */
+.film-call__badge{position:absolute;left:40px;top:-3px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--magenta);color:#fff;
+  font:800 11px/22px var(--f-sans);text-align:center;box-shadow:0 0 0 3px var(--ink);scale:0;transition:scale .6s cubic-bezier(.34,1.56,.64,1) .55s,background-color .3s var(--ease)}
+.film-call.is-here .film-call__badge{scale:1}
+.film-call.is-gone .film-call__badge{scale:0;transition-delay:0s}
+.film-call.is-done .film-call__badge{background:var(--accent);color:var(--ink)}
+.film-call.is-ring .film-call__badge{animation:film-bump .9s var(--ease)}
+@keyframes film-bump{30%{scale:1.35}60%{scale:.9}}
+
+/* the ring: a quick shake of the face */
+.film-call.is-ring .film-call__face{animation:film-shake .9s var(--ease-io)}
+@keyframes film-shake{10%,30%,50%,70%{rotate:-13deg}20%,40%,60%{rotate:13deg}80%{rotate:-4deg}}
+
+/* tucked: only the face (small screens, after a few seconds) */
+.film-call.is-tucked{gap:0;padding-right:6px}
+.film-call.is-tucked .film-call__text{max-width:0;opacity:0}
+
+/* ---------- the film ---------- */
 .film{position:fixed;inset:0;z-index:90;pointer-events:none}
-.film__shade{position:absolute;inset:0;background:rgba(var(--shade),.66);opacity:0;pointer-events:auto;transition:opacity .7s var(--ease)}
+.film__shade{position:absolute;inset:0;background:rgba(var(--shade),.66);opacity:0;pointer-events:auto;transition:opacity .7s var(--ease),background-color .7s var(--ease)}
 .film.is-in .film__shade{opacity:1}
+.film.is-cinema .film__shade{background:rgba(4,4,7,.94)}
 .film.is-mini .film__shade,.film.is-leaving .film__shade{opacity:0;pointer-events:none;transition-duration:.45s}
 
-/* ---------- the box: centred, or tucked into the corner ---------- */
 .film__box{--w:min(980px,calc(100vw - 32px),calc((100vh - 140px) * 16 / 9));
   position:absolute;left:50%;top:50%;translate:-50% -50%;width:var(--w);
   border-radius:14px;overflow:hidden;background:#000;color:#fff;pointer-events:auto;transform-origin:0 0;
   box-shadow:0 40px 110px -24px rgba(var(--shade),.7),0 0 0 1px rgba(255,255,255,.06);
   transition:box-shadow .6s var(--ease),border-radius .6s var(--ease),scale .5s var(--ease)}
 @supports (height:100svh){.film__box{--w:min(980px,calc(100vw - 32px),calc((100svh - 140px) * 16 / 9))}}
+.film.is-cinema .film__box{--w:min(calc(100vw - 24px),calc((100vh - 24px) * 16 / 9));border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 160px rgba(0,163,230,.12)}
+@supports (height:100svh){.film.is-cinema .film__box{--w:min(calc(100vw - 24px),calc((100svh - 24px) * 16 / 9))}}
 .film.is-mini .film__box{left:auto;top:auto;translate:none;
   right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));
   width:clamp(176px,40vw,340px);border-radius:12px;box-shadow:0 18px 44px -12px rgba(var(--shade),.55),0 0 0 1px rgba(255,255,255,.1)}
 @media (hover:hover){.film.is-mini .film__box:hover{scale:1.035}}
 
-/* opening: out of a slit, lifting as it comes */
-.film.is-in .film__box{animation:film-open 1.1s var(--ease) backwards}
-@keyframes film-open{
-  0%{opacity:0;clip-path:inset(49.5% 6% round 14px);scale:.94}
-  25%{opacity:1}
-  100%{clip-path:inset(0 round 14px);scale:1}
-}
-
 /* the print bar: cyan, magenta, yellow, run in from the left */
 .film__bar{position:relative;z-index:3;height:5px;background:linear-gradient(90deg,var(--cyan) 0 33.3%,var(--magenta) 33.3% 66.6%,var(--yellow) 66.6%);transform-origin:0 50%}
-.film.is-in .film__bar{animation:film-bar 1.2s var(--ease) .25s backwards}
+.film.is-in .film__bar{animation:film-bar 1.2s var(--ease) .35s backwards}
 @keyframes film-bar{from{transform:scaleX(0)}}
 .film.is-mini .film__bar{height:3px}
 
@@ -56,8 +112,26 @@
 @keyframes film-rec{50%{opacity:.25}}
 .film.is-mini .film__kicker{display:none}
 
+/* top right: cinema size, then the gate */
+.film__tr{position:absolute;z-index:3;top:clamp(8px,1.6vw,14px);right:clamp(8px,1.6vw,14px);display:flex;align-items:center;gap:8px}
+.film__wide{display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;cursor:pointer;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background-color .3s var(--ease),scale .5s var(--ease)}
+.film__wide:hover{background:rgba(0,0,0,.6);scale:1.08}
+.film__wide svg{width:20px;height:20px;overflow:visible}
+.film__wide path{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform-origin:50% 50%;transition:opacity .35s var(--ease),scale .5s var(--ease)}
+.film__wide:hover .film__out{scale:1.14}
+.film__in{opacity:0;scale:.6}
+.film.is-cinema .film__out,.film.is-full .film__out{opacity:0;scale:1.4}
+.film.is-cinema .film__in,.film.is-full .film__in{opacity:1;scale:1}
+/* full screen (phones): the picture fills it, black around */
+.film__box:fullscreen{display:flex;flex-direction:column;justify-content:center;width:100%;height:100%;border-radius:0;translate:none;background:#000}
+.film__box:fullscreen .film__bar{display:none}
+.film__box:fullscreen .film__frame{width:100%;max-height:100%;margin:auto}
+.film__box:fullscreen .film__video{object-fit:contain}
+.film.is-mini .film__wide{display:none}
+
 /* the gate: a ring that counts the film down, then becomes the close button */
-.film__gate{position:absolute;z-index:1;top:clamp(8px,1.6vw,14px);right:clamp(8px,1.6vw,14px);display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;border-radius:50%;
+.film__gate{position:relative;display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;border-radius:50%;
   background:rgba(0,0,0,.38);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);cursor:default;transition:background-color .3s var(--ease),scale .5s var(--ease)}
 .film__gate svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .film__track{fill:none;stroke:rgba(255,255,255,.22);stroke-width:2.5}
@@ -70,34 +144,46 @@
 .film.is-free .film__count{opacity:0;scale:.4}
 .film.is-free .film__x{stroke-dashoffset:0;transition:stroke-dashoffset .45s var(--ease) .25s}
 .film.is-free .film__x+.film__x{transition-delay:.38s}
-.film.is-free .film__gate::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);animation:film-ripple 1.1s var(--ease) both;pointer-events:none}
-.film.is-free .film__gate{animation:film-pop .6s var(--ease)}
+.film.is-free:not(.is-known) .film__gate::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);animation:film-ripple 1.1s var(--ease) both;pointer-events:none}
+.film.is-free:not(.is-known) .film__gate{animation:film-pop .6s var(--ease)}
 @keyframes film-ripple{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(2.1)}}
 @keyframes film-pop{40%{scale:1.18}}
-.film.is-mini .film__gate{top:6px;right:6px;width:36px;height:36px}
+.film.is-mini .film__tr{top:6px;right:6px}
+.film.is-mini .film__gate{width:36px;height:36px}
 .film.is-mini .film__count{font-size:10px}
 
-/* sound: the film starts muted unless the browser allows sound; the chip turns it on */
-.film__sound{position:absolute;z-index:1;left:clamp(10px,2vw,18px);bottom:clamp(14px,2.4vw,22px);display:inline-flex;align-items:center;gap:10px;min-height:40px;padding:0 16px 0 12px;border:0;border-radius:999px;
+/* sound: a speaker whose waves go out while the sound is on; muted, a cross draws in their place */
+.film__sound{position:absolute;z-index:1;left:clamp(10px,2vw,18px);bottom:clamp(14px,2.4vw,22px);display:inline-flex;align-items:center;gap:9px;min-height:42px;padding:0 16px 0 11px;border:0;border-radius:999px;
   background:#fff;color:var(--ink);font:700 11px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer;
-  box-shadow:0 8px 24px -8px rgba(0,0,0,.5);transition:background-color .3s var(--ease),color .3s var(--ease),scale .5s var(--ease)}
-.film__sound:hover{scale:1.05}
-.film:not(.is-sound) .film__sound{animation:film-nudge 2.4s var(--ease) 1.6s 3}
+  box-shadow:0 8px 24px -8px rgba(0,0,0,.5);transition:background-color .35s var(--ease),color .35s var(--ease),scale .5s var(--ease)}
+.film__sound:hover{scale:1.06}
+.film__sound.is-tap{animation:film-tap .5s var(--ease)}
+@keyframes film-tap{35%{scale:.88}}
+.film:not(.is-sound) .film__sound:not(.is-tap){animation:film-nudge 2.4s var(--ease) 1.6s 3}
 @keyframes film-nudge{0%,100%{scale:1}12%{scale:1.1}24%{scale:1}}
 .film.is-sound .film__sound{background:rgba(0,0,0,.42);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.film__eq{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
-.film__eq i{width:3px;height:100%;border-radius:1px;background:currentColor;transform-origin:50% 100%;transform:scaleY(.3)}
-.film.is-sound:not(.is-paused):not(.is-over) .film__eq i{animation:film-eq .9s var(--ease-io) infinite alternate}
-.film__eq i:nth-child(2){animation-delay:-.45s!important}
-.film__eq i:nth-child(3){animation-delay:-.2s!important}
-.film__eq i:nth-child(4){animation-delay:-.7s!important}
-@keyframes film-eq{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
-.film__sound .film__off{display:inline}
-.film__sound .film__on,.film.is-sound .film__sound .film__off{display:none}
-.film.is-sound .film__sound .film__on{display:inline}
-.film.is-mini .film__sound{left:6px;bottom:9px;min-height:30px;padding:0 9px;gap:0}
+.film__spk{width:22px;height:22px;overflow:visible}
+.film__cone{fill:currentColor;transform-origin:30% 50%}
+.film__w,.film__m{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.film__w{opacity:0;transform-origin:30% 50%;scale:.6;transition:opacity .3s var(--ease),scale .45s var(--ease)}
+.film__m{stroke-dasharray:1;stroke-dashoffset:0;transition:stroke-dashoffset .35s var(--ease) .1s}
+.film__m+.film__m{transition-delay:.2s}
+.film.is-sound .film__m{stroke-dashoffset:1;transition-delay:0s}
+.film.is-sound .film__w{opacity:1;scale:1}
+.film.is-sound .film__w2{transition-delay:.08s}
+/* playing with sound: the waves pulse out and the cone beats */
+.film.is-sound:not(.is-paused):not(.is-over):not(.is-blocked) .film__w1{animation:film-wave 1.1s var(--ease) infinite}
+.film.is-sound:not(.is-paused):not(.is-over):not(.is-blocked) .film__w2{animation:film-wave 1.1s var(--ease) .18s infinite}
+.film.is-sound:not(.is-paused):not(.is-over):not(.is-blocked) .film__cone{animation:film-beat 1.1s var(--ease) infinite}
+@keyframes film-wave{0%{opacity:.25;translate:-2px 0}45%{opacity:1;translate:0 0}100%{opacity:.25;translate:1.5px 0}}
+@keyframes film-beat{0%,100%{scale:1}20%{scale:1.1}}
+.film__sl{display:inline}
+.film__on,.film.is-sound .film__off{display:none}
+.film.is-sound .film__on{display:inline}
+.film.is-mini .film__sound{left:6px;bottom:9px;min-height:30px;padding:0 6px;gap:0}
+.film.is-mini .film__spk{width:18px;height:18px}
+.film.is-mini .film__sl{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .film.is-over .film__sound{opacity:0;pointer-events:none}
-.film.is-mini .film__sound .film__off,.film.is-mini .film__sound .film__on{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 
 /* the progress line along the bottom, in the print colours */
 .film__progress{position:absolute;z-index:1;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.18);pointer-events:none}
@@ -128,17 +214,19 @@
 .film.is-mini .film__grow{display:grid}
 .film__grow svg{width:26px;height:26px;padding:8px;box-sizing:content-box;border-radius:50%;background:rgba(0,0,0,.45);opacity:0;scale:.7;transition:opacity .3s var(--ease),scale .4s var(--ease)}
 .film__grow:hover svg,.film__grow:focus-visible svg{opacity:1;scale:1}
-.film.is-mini .film__gate,.film.is-mini .film__sound{z-index:2}
+.film.is-mini .film__tr,.film.is-mini .film__sound{z-index:2}
 
 @media (max-width:600px){
+  .film-call{padding-right:16px;gap:11px}
+  .film-call__t{font-size:14px}
   .film__kicker{font-size:10px;letter-spacing:.16em}
-  .film__gate{width:42px;height:42px}
-  .film__sound{min-height:36px;padding:0 13px 0 10px;font-size:10px}
+  .film__wide,.film__gate{width:42px;height:42px}
+  .film__sound{min-height:38px;padding:0 13px 0 10px;font-size:10px}
   .film__again{min-height:40px;padding:0 16px;font-size:11px}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .film__shade,.film__box,.film__ui,.film__gate,.film__ring,.film__count,.film__sound,.film__play,.film__end,.film__again,.film__again svg,.film__grow svg{transition:none!important}
-  .film.is-in .film__box,.film.is-in .film__bar,.film__kicker::before,.film.is-free .film__gate,.film.is-free .film__gate::after,.film__sound,.film__eq i{animation:none!important}
+  .film-call,.film-call *,.film__shade,.film__box,.film__ui,.film__wide,.film__wide path,.film__gate,.film__ring,.film__count,.film__sound,.film__w,.film__m,.film__play,.film__end,.film__again,.film__again svg,.film__grow svg{transition:none!important}
+  .film-call *,.film-call__face::before,.film-call__face::after,.film.is-in .film__bar,.film__kicker::before,.film.is-free .film__gate,.film.is-free .film__gate::after,.film__sound,.film__w,.film__cone{animation:none!important}
   .film.is-free .film__x{transition:none}
 }

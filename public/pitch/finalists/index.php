@@ -25,7 +25,7 @@ $allowed = ngs_fin_allowed();
 $all = ngs_finalists();
 $finalists = ngs_fin_visible($all, $allowed);
 $confirmed = ngs_finalists_confirmed();
-$stamp = '20261022-01';
+$stamp = '20261022-02';
 
 function fe($v): string
 {

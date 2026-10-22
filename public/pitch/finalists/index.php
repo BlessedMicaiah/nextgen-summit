@@ -2,26 +2,30 @@
 /* The Top 10 Pitch Finalists.
 
    A page of its own, deliberately. People's Choice is a voting system over twenty
-   semifinalists; this introduces the ten who pitch live and lets people watch them. The two
-   are related by rule, not by identity, so nothing here casts a vote, counts one, or links a
-   card to one. If that relationship is ever confirmed, it belongs in a decision, not in an
-   assumption made by this file.
+   semifinalists and remains the Pitch Competition's main destination while voting runs; this
+   introduces the ten who pitch live and lets people watch them. Nothing here casts a vote,
+   counts one, or reads a leaderboard -- including for the tenth slot, which the People's
+   Choice winner takes only once the result is certified by a person.
 
-   Everything on the page is drawn from ngs_finalists(), so confirming a finalist is one edit
-   in api/finalists.php and nothing here changes. All ten slots render from the first day, so
-   the layout never reflows as names arrive, and an unconfirmed slot says plainly that it is a
-   placeholder rather than borrowing a stock face and a made-up company.
+   PRIVATE UNTIL SAID OTHERWISE. The page sits behind a preview gate (api/finalists-gate.php),
+   not merely off the navigation, because what is on it is the identity of founders who have
+   not been announced. In front of the gate the cards are anonymous placeholders and the
+   details are not in the markup at all.
 
-   The cards reuse the speaker deck's visual language (.card) and the collectible dialog's
-   (.sp) rather than inventing a second one. What is new here is the back of the card: a pitch
-   video instead of a list of achievements. */
+   Everything is drawn from ngs_finalists(), so confirming a finalist is one edit in
+   api/finalists.php and nothing here changes. The cards reuse the speaker deck's visual
+   language (.card) and the collectible dialog's (.sp); what is new is the back of the card. */
 declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/api/finalists.php';
+require dirname(__DIR__, 2) . '/api/finalists-gate.php';
 
-$finalists = ngs_finalists();
+$gateNotice = ngs_fin_gate_post();
+$allowed = ngs_fin_allowed();
+$all = ngs_finalists();
+$finalists = ngs_fin_visible($all, $allowed);
 $confirmed = ngs_finalists_confirmed();
-$stamp = '20261022-01';
+$stamp = '20261022-02';
 
 function fe($v): string
 {
@@ -29,15 +33,16 @@ function fe($v): string
 }
 
 header('Content-Type: text/html; charset=utf-8');
+header('X-Robots-Tag: noindex, nofollow, noarchive');
+header('Cache-Control: no-store');
 ?><!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Top 10 Pitch Finalists &middot; NextGen Summit</title>
-<meta name="description" content="The ten founders pitching live at NextGen Summit on October 30. Meet the finalists and watch their pitches.">
-<meta name="theme-color" content="#06161A">
+<title>The Final 10 &middot; NextGen Summit</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#06161A">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -48,32 +53,50 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="stylesheet" href="/assets/css/site.css?v=<?= $stamp ?>">
 <link rel="stylesheet" href="/assets/css/finalists.css?v=<?= $stamp ?>">
 <script src="/assets/js/site.js?v=<?= $stamp ?>" defer></script>
+<?php if ($allowed || NGS_FINALISTS_PUBLIC): ?>
 <script src="/assets/js/finalists.js?v=<?= $stamp ?>" defer></script>
+<?php endif; ?>
 </head>
 <body>
 
+<?php if (!$allowed && !NGS_FINALISTS_PUBLIC): ?>
+  <?php /* The gate. No finalist data has been loaded into this page at all -- there is nothing
+           in the markup to read, so this is a closed door rather than a blurred window. */ ?>
+  <main class="fgate">
+    <div class="fgate__in">
+      <p class="fgate__eyebrow">NextGen Summit</p>
+      <h1 class="fgate__title wm">the final 10.</h1>
+      <p class="fgate__p">This page is in preview. The finalists are not announced yet, so it is
+        behind the same password as the staging dashboard.</p>
+      <?php if ($gateNotice): ?><p class="fgate__notice"><?= fe($gateNotice) ?></p><?php endif; ?>
+      <form method="post" class="fgate__form">
+        <input type="hidden" name="csrf" value="<?= fe(ngs_fin_csrf()) ?>">
+        <input type="hidden" name="action" value="preview">
+        <label class="fgate__label" for="pw">Preview password</label>
+        <input class="fgate__input" id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
+        <button class="fgate__btn" type="submit">View the preview</button>
+      </form>
+    </div>
+  </main>
+<?php else: ?>
+
 <a class="skip" href="#fin-title">Skip to content</a>
 <div class="grain" aria-hidden="true"></div>
+
+<?php if (!NGS_FINALISTS_PUBLIC): ?>
+  <div class="pcbar" role="status">
+    <span class="pcbar__in"><span class="pcbar__dot" aria-hidden="true"></span>
+    Private preview &middot; finalists are not announced &middot; do not share this page or screenshots of it</span>
+  </div>
+<?php endif; ?>
 
 <header class="nav at-hero on-photo">
   <a class="nav__mark" href="/" aria-label="NextGen Summit, home">
     <span class="wm" aria-hidden="true">nextgen</span><span class="nav__summit" aria-hidden="true">Summit</span>
   </a>
-  <div class="count" data-until="2026-10-30T00:00:00-04:00">
-    <p class="sr" data-count-sr>NextGen Summit is on October 30.</p>
-    <p class="count__row" aria-hidden="true">
-      <span class="count__u"><span class="count__n" data-count="days">--</span><span class="count__l">d<span class="count__word">ays</span></span></span>
-      <span class="count__u count__u--hms"><span class="count__n" data-count="hours">--</span><span class="count__l">h</span></span>
-      <span class="count__u count__u--hms"><span class="count__n" data-count="minutes">--</span><span class="count__l">m</span></span>
-      <span class="count__u count__u--hms"><span class="count__n" data-count="seconds">--</span><span class="count__l">s</span></span>
-      <span class="count__to">to NextGen</span>
-    </p>
-  </div>
   <nav class="nav__links" aria-label="Utilities">
-    <a class="nav__link" href="/about/">About</a>
     <a class="nav__link" href="/">The Summit</a>
     <a class="nav__link" href="/pitch/">Pitch Competition</a>
-    <span class="nav__link is-here" aria-current="page">Finalists</span>
     <a class="btn btn--sm" href="/tickets/">Get tickets</a>
   </nav>
 </header>
@@ -81,16 +104,19 @@ header('Content-Type: text/html; charset=utf-8');
 <main>
   <section class="fin" data-nav="photo" aria-labelledby="fin-title">
     <div class="fin__head">
-      <p class="fin__eyebrow">Pitch Competition</p>
-      <h1 class="fin__title wm" id="fin-title">the top ten.</h1>
-      <p class="fin__lede">Ten founders, twenty-nine and under, pitching live on the NextGen stage on
-        October&nbsp;30 for a share of a $10,000 prize pool. Open a card to watch the pitch.</p>
+      <p class="fin__eyebrow">Pitch Competition &middot; October 30, 2026 &middot; Maryland</p>
+      <h1 class="fin__title wm" id="fin-title">the final 10.</h1>
+      <p class="fin__lede">Ten founders. Ten bold ideas. One stage.</p>
+      <p class="fin__sub">Nine are selected by the judging panel and one by the public vote. On
+        the night they pitch live to an executive panel and the NextGen audience, with final
+        scores combining the judges and the room, for a share of a $10,000 prize pool.</p>
+      <p class="fin__cta"><a class="btn" href="/tickets/">Get tickets for October 30</a></p>
 
       <?php if ($confirmed < 10): ?>
         <p class="fin__status" role="status">
           <span class="fin__dot" aria-hidden="true"></span>
-          <strong><?= (int) $confirmed ?> of 10</strong> finalists confirmed.
-          The remaining <?= 10 - (int) $confirmed ?> are placeholders and will be filled in as the line-up is announced.
+          <strong><?= (int) $confirmed ?> of 10</strong> finalists entered.
+          The rest are placeholders and will be filled in as the line-up is confirmed.
         </p>
       <?php endif; ?>
     </div>
@@ -101,8 +127,6 @@ header('Content-Type: text/html; charset=utf-8');
           <?php if ($f['confirmed']): ?>
             <button class="card__face" type="button" data-fin="<?= fe($f['id']) ?>" aria-haspopup="dialog">
               <span class="card__stock">
-<?php /* A name can be confirmed before the portrait arrives, so an empty 'shot' gets the same
-         honest empty frame as an unannounced slot rather than a broken image. */ ?>
                 <?php if ($f['shot'] !== ''): ?>
                   <span class="card__shot">
                     <img src="<?= fe(NGS_FINALIST_IMG . $f['shot']) ?>-620.jpg?v=<?= $stamp ?>"
@@ -117,15 +141,20 @@ header('Content-Type: text/html; charset=utf-8');
                   </span>
                 <?php endif; ?>
                 <span class="card__wm wm" aria-hidden="true">nextgen</span>
+                <span class="fin__tag">Top 10 Finalist</span>
                 <span class="card__id">
                   <span class="card__name"><?= fe($f['first']) ?><b><?= fe($f['last']) ?></b></span>
                   <span class="card__kind"><?= fe($f['venture']) ?></span>
                   <span class="card__line" aria-hidden="true"></span>
+                  <span class="fin__flip">Flip for more</span>
                 </span>
               </span>
+              <?php if ($f['status'] === 'internal'): ?>
+                <span class="fin__badge fin__badge--int">Internal</span>
+              <?php endif; ?>
             </button>
           <?php else: ?>
-            <div class="card__face fin__ph" aria-label="Finalist <?= fe($f['n']) ?>, to be announced">
+            <div class="card__face fin__ph" aria-label="Finalist <?= fe($f['n']) ?><?= $f['reserved'] !== '' ? ', reserved for the ' . fe($f['reserved']) : '' ?>, to be announced">
               <span class="card__stock">
                 <span class="card__shot fin__phshot" aria-hidden="true">
                   <span class="fin__phnum"><?= fe($f['n']) ?></span>
@@ -133,19 +162,20 @@ header('Content-Type: text/html; charset=utf-8');
                 <span class="card__wm wm" aria-hidden="true">nextgen</span>
                 <span class="card__id">
                   <span class="card__name">Finalist<b><?= fe($f['n']) ?></b></span>
-                  <span class="card__kind">To be announced</span>
+                  <span class="card__kind"><?= $f['reserved'] !== '' ? fe($f['reserved']) : 'To be announced' ?></span>
                   <span class="card__line" aria-hidden="true"></span>
                 </span>
               </span>
-              <span class="fin__badge">Placeholder</span>
+              <span class="fin__badge"><?= $f['reserved'] !== '' ? 'Reserved' : 'Placeholder' ?></span>
             </div>
           <?php endif; ?>
         </li>
       <?php endforeach; ?>
     </ul>
 
-    <p class="fin__foot">These ten pitch live at the Summit. The People&rsquo;s Choice Award is a
-      separate vote &mdash; see the <a class="linkish" href="/pitch/">Pitch Competition</a> page for how the two fit together.</p>
+    <p class="fin__foot">The People&rsquo;s Choice Award is a separate vote, open until
+      <strong>October 28, 11:59 PM ET</strong> &mdash; its winner takes the tenth place here.
+      <a class="linkish" href="/pitch/peoples-choice/">Go and vote</a>.</p>
 
     <dialog class="sp fin__dlg" id="finalist" aria-label="Finalist">
       <button class="sp__close" type="button" data-fin-close aria-label="Close">
@@ -166,6 +196,7 @@ header('Content-Type: text/html; charset=utf-8');
     <ul>
       <li><a href="/">The Summit</a></li>
       <li><a href="/pitch/">Pitch Competition</a></li>
+      <li><a href="/tickets/">Tickets</a></li>
       <li><a class="foot__mail" href="mailto:hello@nextgensummit.us">hello@nextgensummit.us</a></li>
     </ul>
   </nav>
@@ -176,5 +207,6 @@ header('Content-Type: text/html; charset=utf-8');
     $finalists,
     JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 ) ?></script>
+<?php endif; ?>
 </body>
 </html>

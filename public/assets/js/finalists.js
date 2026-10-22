@@ -95,6 +95,15 @@
       media = '<div class="fin__vwrap"><p class="fin__soon">The pitch video will be added here once it is published.</p></div>';
     }
 
+    /* Each section appears only if there is approved copy for it. An empty heading with
+       nothing under it invites someone to fill the gap with a guess, so the heading goes too. */
+    function sec(label, body) {
+      return body
+        ? '<div class="fin__sec"><p class="fin__sech">' + label + '</p>' +
+          '<p class="fin__secp">' + esc(body) + '</p></div>'
+        : '';
+    }
+
     back.innerHTML =
       '<div class="sp__pane sp__bpane">' +
         '<div class="sp__bhead">' +
@@ -105,12 +114,18 @@
             '<span class="sp__rule" aria-hidden="true"></span>' +
           '</div>' +
         '</div>' +
+        sec('Company / Project', f.venture) +
+        sec('About the business', f.summary) +
+        sec('Meet the founder', f.bio) +
+        '<div class="fin__sec"><p class="fin__sech">Watch the pitch</p></div>' +
         media +
-        (f.blurb ? '<p class="fin__bblurb">' + esc(f.blurb) + '</p>' : '') +
         '<p class="sp__act">' +
           (f.video && f.video.watch
             ? '<a class="sp__li" href="' + esc(f.video.watch) + '" target="_blank" rel="noopener noreferrer">Open in a new tab</a>'
             : '') +
+          '<button class="fin__share" type="button" data-fin-share="' + esc(f.id) + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 15V3M8 7l4-4 4 4"/></svg>Share</button>' +
           '<button class="sp__turn" type="button" data-fin-turn>Back to<br>front' +
             '<i aria-hidden="true">' + ARR_L + '</i></button>' +
         '</p>' +
@@ -148,6 +163,35 @@
     if (btn) btn.remove();
   }
 
+  /* Share this finalist. The phone's own share sheet where there is one, the clipboard
+     otherwise, and the button says which happened rather than appearing to do nothing.
+
+     The link carries a fragment, not a query: this page is a private preview and a fragment
+     never leaves the browser, so sharing a card cannot quietly hand the preview URL's meaning
+     to a server log. Until the page is published the warning in the banner still applies --
+     the control is here so it is built and tested, not so unannounced names get passed around. */
+  function share(btn) {
+    var id = btn.getAttribute('data-fin-share');
+    var f = PEOPLE[id];
+    if (!f) return;
+    var url = location.origin + location.pathname + '#' + id;
+    var said = function (msg) {
+      var was = btn.innerHTML;
+      btn.textContent = msg;
+      setTimeout(function () { btn.innerHTML = was; }, 1800);
+    };
+    if (navigator.share) {
+      navigator.share({ title: f.name + ' - NextGen Summit', url: url }).catch(function () {});
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { said('Link copied'); },
+        function () { said('Could not copy'); });
+      return;
+    }
+    said('Copy: ' + url);
+  }
+
   function open(btn) {
     if (!paint(btn.getAttribute('data-fin'))) return;
     opener = btn;
@@ -172,6 +216,8 @@
     if (e.target.closest('[data-fin-turn]')) { face(!dlg.classList.contains('is-back')); return; }
     var p = e.target.closest('[data-fin-play]');
     if (p) { play(p.parentNode); return; }
+    var s = e.target.closest('[data-fin-share]');
+    if (s) { share(s); return; }
     // a press on the backdrop, outside the card itself, closes it
     if (e.target === dlg) close();
   });

@@ -216,6 +216,46 @@
 .film__grow:hover svg,.film__grow:focus-visible svg{opacity:1;scale:1}
 .film.is-mini .film__tr,.film.is-mini .film__sound{z-index:2}
 
+/* ---------- in a page section (About): the same player, in the flow of the page ---------- */
+.film--inline{position:relative;inset:auto;z-index:auto;pointer-events:auto}
+.film--inline .film__box{position:relative;left:auto;top:auto;translate:none;width:100%;border-radius:16px;
+  box-shadow:0 60px 120px -50px rgba(0,163,230,.45),0 34px 80px -34px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08);
+  opacity:0;scale:.94;clip-path:inset(10% 8% round 16px);
+  transition:opacity .8s var(--ease),scale 1.3s var(--ease),clip-path 1.3s var(--ease),box-shadow .6s var(--ease)}
+.film--inline.is-seen .film__box{opacity:1;scale:1;clip-path:inset(0 round 16px)}
+.film--inline.is-seen .film__bar{animation:film-bar 1.3s var(--ease) .45s backwards}
+.film--inline .film__video{transition:scale 1.4s var(--ease),filter .8s var(--ease)}
+
+/* waiting: the poster, dimmed, a big play button with the sonar, and the length */
+.film--inline.is-idle .film__video{filter:brightness(.72)}
+@media (hover:hover){.film--inline.is-idle:hover .film__video{scale:1.04;filter:brightness(.82)}}
+.film--inline.is-idle .film__play{opacity:1;scale:1;pointer-events:auto;width:clamp(72px,9vw,104px);height:clamp(72px,9vw,104px);margin:calc(clamp(72px,9vw,104px) / -2) 0 0 calc(clamp(72px,9vw,104px) / -2)}
+.film--inline .film__play::before,.film--inline .film__play::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);opacity:0;pointer-events:none}
+.film--inline.is-idle .film__play::before{animation:film-sonar 2.6s var(--ease) infinite}
+.film--inline.is-idle .film__play::after{animation:film-sonar 2.6s var(--ease) 1.3s infinite}
+.film--inline.is-idle .film__play:hover{scale:1.08}
+.film__cue{position:absolute;z-index:1;left:50%;top:calc(50% + clamp(48px,6vw,70px));translate:-50% 0;display:flex;align-items:center;gap:12px;white-space:nowrap;pointer-events:none;
+  font:700 12px/1 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.5);opacity:0;transition:opacity .4s var(--ease)}
+.film__len{padding:5px 8px;border-radius:5px;background:rgba(0,0,0,.45);letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.film--inline.is-idle .film__cue{opacity:1}
+.film--inline.is-idle .film__sound,.film--inline.is-idle .film__progress,.film--inline.is-idle .film__tr{opacity:0;pointer-events:none}
+.film--inline .film__sound,.film--inline .film__tr{transition:opacity .4s var(--ease),background-color .35s var(--ease),color .35s var(--ease),scale .5s var(--ease)}
+
+/* the progress line can be clicked along: it thickens under the pointer */
+.film--inline .film__progress{pointer-events:auto;cursor:pointer;height:5px;transition:height .25s var(--ease),opacity .4s var(--ease)}
+.film--inline .film__progress::before{content:"";position:absolute;left:0;right:0;bottom:0;height:22px}
+.film--inline .film__progress:hover{height:9px}
+.film--inline .film__end{padding-bottom:max(22px,12%)}
+
+/* full screen: no frame, no entrance */
+.film--inline .film__box:fullscreen{border-radius:0;box-shadow:none;clip-path:none;opacity:1;scale:1}
+
+@media (max-width:600px){
+  .film--inline .film__box{border-radius:12px}
+  .film--inline.is-seen .film__box{clip-path:inset(0 round 12px)}
+  .film__cue{font-size:10px;gap:8px}
+}
+
 @media (max-width:600px){
   .film-call{padding-right:16px;gap:11px}
   .film-call__t{font-size:14px}
@@ -226,7 +266,8 @@
 }
 
 @media (prefers-reduced-motion:reduce){
-  .film-call,.film-call *,.film__shade,.film__box,.film__ui,.film__wide,.film__wide path,.film__gate,.film__ring,.film__count,.film__sound,.film__w,.film__m,.film__play,.film__end,.film__again,.film__again svg,.film__grow svg{transition:none!important}
-  .film-call *,.film-call__face::before,.film-call__face::after,.film.is-in .film__bar,.film__kicker::before,.film.is-free .film__gate,.film.is-free .film__gate::after,.film__sound,.film__w,.film__cone{animation:none!important}
+  .film-call,.film-call *,.film__shade,.film__box,.film__video,.film__cue,.film__ui,.film__wide,.film__wide path,.film__gate,.film__ring,.film__count,.film__sound,.film__w,.film__m,.film__play,.film__end,.film__again,.film__again svg,.film__grow svg{transition:none!important}
+  .film-call *,.film-call__face::before,.film-call__face::after,.film.is-in .film__bar,.film__kicker::before,.film.is-free .film__gate,.film.is-free .film__gate::after,.film__sound,.film__w,.film__cone,.film--inline .film__play::before,.film--inline .film__play::after,.film--inline.is-seen .film__bar{animation:none!important}
+  .film--inline .film__box{opacity:1;scale:1;clip-path:none}
   .film.is-free .film__x{transition:none}
 }

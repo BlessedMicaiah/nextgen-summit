@@ -1,30 +1,66 @@
-/* NextGen Summit: the Convener's film (see css/film.css). Used on the homepage and the About page.
+/* NextGen Summit: the Convener's film (see css/film.css).
+   Homepage: a call button and a pop-up player.
    - A call button waits in the bottom-right corner: the Convener's face in a spinning print ring,
      a "1" badge and "New message / From our Convener". It rings now and then until the film has
-     been watched; on small screens the words tuck away after a few seconds, leaving the face.
+     been watched; on small screens the words tuck away after a few seconds, leaving the face. It
+     steps out of the way while a link or button sits under its corner.
    - A click opens the film out of the button into the middle of the screen, with sound (the click
-     allows it). A cinema button makes it as large as the screen allows, and back.
-   - The close button stays locked until the film has played to its end the first time; a ring
-     around it counts the film down. Once watched (remembered in this browser), it can be closed at
-     any time. Freed early only if the film cannot play (load error, a 10 s stall, no frame in 30 s,
-     play refused), so nobody is left stuck with it.
+     allows it). A cinema button makes it as large as the screen allows (full screen on an upright
+     phone), and back.
+   - The close button unlocks after 15 s of the film; a ring around it counts them down. Once the
+     film has been watched to the end (remembered in this browser), it can be closed at once. Also
+     freed early if the film cannot play (load error, a 10 s stall, no frame in 30 s, play refused).
    - Scrolling, Esc or a click on the shade tucks it into the bottom-right corner, where it keeps
      playing; a tap there brings it back. Closing flies it back into the call button, ready to be
-     played again as often as anyone likes.
-   - ?film in the address opens it straight away. */
+     played again as often as anyone likes. ?film in the address opens it straight away.
+   About page: the film is a section of the page instead. Any element with data-film-inline gets a
+   player in place (poster and a play button; the film itself loads on the first play), with the
+   same sound, full-screen and end-card controls, a progress line to click along, and no gate.
+   A page with an inline player gets no call button. */
 (function () {
   'use strict';
 
   var SRC = '/assets/nextgen-film.mp4?v=20261021-10';
   var POSTER = '/assets/img/nextgen-film-poster.jpg?v=20261021-10';
-  var FACE = '/assets/img/convener-face.jpg?v=20261022-01';
+  var FACE = '/assets/img/convener-face.jpg?v=20261022-20';
   var DONE = 'ngs-film-watched';    // localStorage: watched to the end once, so the close is free
   var REST = 83;                    // s: the frame the end card rests on (the nextgen mark on black)
+  var GATE = 15;                    // s of the film before the close button unlocks
   var STALL = 10000;                // no progress for this long once it has started: free the close
   var NEVER = 30000;                // no first frame at all after this long: free the close
   var NUDGE = 40;                   // px of scrolling that tucks it into the corner
   var RING = 2 * Math.PI * 21;      // the countdown ring's circumference (r = 21 in a 48 box)
   var EASE = 'cubic-bezier(.16,1,.3,1)';
+
+  // the controls both players share
+  var WIDE =
+    '<button class="film__wide" type="button" aria-pressed="false" aria-label="Cinema size">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path class="film__out" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>' +
+        '<path class="film__in" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' +
+      '</svg>' +
+    '</button>';
+  var CONTROLS =
+    '<button class="film__sound" type="button" aria-pressed="false" aria-label="Sound">' +
+      '<svg class="film__spk" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path class="film__cone" d="M3.5 9.2h3.6L12 5v14l-4.9-4.2H3.5z"/>' +
+        '<path class="film__w film__w1" d="M15.3 9.6a3.4 3.4 0 0 1 0 4.8"/>' +
+        '<path class="film__w film__w2" d="M17.9 7a7.1 7.1 0 0 1 0 10"/>' +
+        '<path class="film__m" pathLength="1" d="M16 9.5l5 5"/>' +
+        '<path class="film__m" pathLength="1" d="M21 9.5l-5 5"/>' +
+      '</svg>' +
+      '<span class="film__sl film__off">Tap for sound</span><span class="film__sl film__on">Mute</span>' +
+    '</button>' +
+    '<button class="film__play" type="button" aria-label="Play the film">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l16 9-16 9z" fill="currentColor"/></svg>' +
+    '</button>' +
+    '<div class="film__end">' +
+      '<button class="film__again" type="button">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        'Watch again' +
+      '</button>' +
+    '</div>' +
+    '<div class="film__progress" aria-hidden="true"><span></span></div>';
 
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var small = window.matchMedia && matchMedia('(max-width: 600px)');
@@ -128,13 +164,8 @@
               '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +
             '<div class="film__tr">' +
-              '<button class="film__wide" type="button" aria-pressed="false" aria-label="Cinema size">' +
-                '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-                  '<path class="film__out" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>' +
-                  '<path class="film__in" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' +
-                '</svg>' +
-              '</button>' +
-              '<button class="film__gate" type="button" disabled aria-label="Close, available when the film ends">' +
+              WIDE +
+              '<button class="film__gate" type="button" disabled aria-label="Close, available after 15 seconds">' +
                 '<svg viewBox="0 0 48 48" aria-hidden="true">' +
                   '<circle class="film__track" cx="24" cy="24" r="21"/>' +
                   '<circle class="film__ring" cx="24" cy="24" r="21" stroke-dasharray="' + RING.toFixed(2) + '" stroke-dashoffset="' + RING.toFixed(2) + '"/>' +
@@ -144,26 +175,7 @@
                 '<span class="film__count" aria-hidden="true"></span>' +
               '</button>' +
             '</div>' +
-            '<button class="film__sound" type="button" aria-pressed="false" aria-label="Sound">' +
-              '<svg class="film__spk" viewBox="0 0 24 24" aria-hidden="true">' +
-                '<path class="film__cone" d="M3.5 9.2h3.6L12 5v14l-4.9-4.2H3.5z"/>' +
-                '<path class="film__w film__w1" d="M15.3 9.6a3.4 3.4 0 0 1 0 4.8"/>' +
-                '<path class="film__w film__w2" d="M17.9 7a7.1 7.1 0 0 1 0 10"/>' +
-                '<path class="film__m" pathLength="1" d="M16 9.5l5 5"/>' +
-                '<path class="film__m" pathLength="1" d="M21 9.5l-5 5"/>' +
-              '</svg>' +
-              '<span class="film__sl film__off">Tap for sound</span><span class="film__sl film__on">Mute</span>' +
-            '</button>' +
-            '<button class="film__play" type="button" aria-label="Play the film">' +
-              '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l16 9-16 9z" fill="currentColor"/></svg>' +
-            '</button>' +
-            '<div class="film__end">' +
-              '<button class="film__again" type="button">' +
-                '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-                'Watch again' +
-              '</button>' +
-            '</div>' +
-            '<div class="film__progress" aria-hidden="true"><span></span></div>' +
+            CONTROLS +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -203,8 +215,10 @@
         var p = f.classList.contains('is-over') ? 1 : Math.min(1, t / d);
         bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
         if (!free) {
-          ring.style.strokeDashoffset = (RING * (1 - p)).toFixed(2);
-          count.textContent = Math.max(0, Math.ceil(d - t));
+          var g = Math.min(1, t / GATE);
+          ring.style.strokeDashoffset = (RING * (1 - g)).toFixed(2);
+          count.textContent = Math.max(0, Math.ceil(GATE - t));
+          if (t >= GATE) release('You can close the film now.');
         }
       }
       if (t !== last) { last = t; lastMove = Date.now(); }
@@ -387,8 +401,118 @@
     start(true);
   }
 
+  /* ---------- in a page section (About) ---------- */
+  function inline(host) {
+    host.innerHTML =
+      '<div class="film film--inline is-idle">' +
+        '<div class="film__box">' +
+          '<div class="film__bar" aria-hidden="true"></div>' +
+          '<div class="film__frame">' +
+            '<video class="film__video" playsinline webkit-playsinline preload="none" disableremoteplayback poster="' + POSTER + '" aria-label="A message from the Convener of NextGen Summit"></video>' +
+            '<div class="film__ui">' +
+              '<div class="film__tr">' + WIDE + '</div>' +
+              CONTROLS +
+              '<p class="film__cue" aria-hidden="true"><span>Play the message</span><span class="film__len">1:26</span></p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    var f = host.firstChild;
+    function $(s) { return f.querySelector(s); }
+    var box = $('.film__box'), v = $('.film__video'), sound = $('.film__sound'), wide = $('.film__wide'),
+        bar = $('.film__progress span'), line = $('.film__progress'), raf = 0;
+    wide.setAttribute('aria-label', 'Full screen');
+    $('.film__play').setAttribute('aria-label', 'Play the message from our Convener');
+
+    function setSound(on) {
+      f.classList.toggle('is-sound', on);
+      sound.setAttribute('aria-pressed', on ? 'true' : 'false');
+      sound.setAttribute('aria-label', on ? 'Mute' : 'Turn the sound on');
+    }
+    function tick() {
+      var d = v.duration;
+      if (d && isFinite(d)) bar.style.transform = 'scaleX(' + (f.classList.contains('is-over') ? 1 : Math.min(1, v.currentTime / d)).toFixed(4) + ')';
+      raf = v.paused ? 0 : requestAnimationFrame(tick);
+    }
+    // with sound (a click allows it); if the browser still refuses, muted
+    function play() {
+      if (!v.getAttribute('src')) { v.preload = 'auto'; v.src = SRC; }
+      f.classList.remove('is-idle', 'is-paused', 'is-over');
+      if (f.classList.contains('is-over-seen')) { f.classList.remove('is-over-seen'); v.currentTime = 0; }
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {
+        v.muted = true; setSound(false);
+        var q = v.play(); if (q && q.catch) q.catch(function () { f.classList.add('is-paused'); });
+      });
+      setSound(!v.muted);
+    }
+    v.addEventListener('play', function () { if (!raf) raf = requestAnimationFrame(tick); });
+    v.addEventListener('playing', function () { f.classList.remove('is-paused', 'is-over'); });
+    v.addEventListener('pause', function () { if (!v.ended && !f.classList.contains('is-over')) f.classList.add('is-paused'); tick(); });
+    v.addEventListener('ended', function () {
+      f.classList.remove('is-paused');
+      f.classList.add('is-over', 'is-over-seen');
+      if (v.duration > REST) v.currentTime = REST;   // the last second is black: rest on the mark
+      bar.style.transform = 'scaleX(1)';
+      remember();
+    });
+
+    $('.film__play').addEventListener('click', play);
+    $('.film__again').addEventListener('click', play);
+    sound.addEventListener('click', function () {
+      var on = v.muted;
+      v.muted = !on;
+      setSound(on);
+      sound.classList.remove('is-tap'); void sound.offsetWidth; sound.classList.add('is-tap');
+    });
+    // a click on the picture plays or pauses
+    $('.film__frame').addEventListener('click', function (e) {
+      if (e.target.closest('button') || e.target.closest('.film__progress') || f.classList.contains('is-over')) return;
+      if (v.paused) play();
+      else v.pause();
+    });
+    // the progress line can be clicked along
+    line.addEventListener('click', function (e) {
+      if (!v.duration || !isFinite(v.duration)) return;
+      var r = line.getBoundingClientRect();
+      f.classList.remove('is-over', 'is-over-seen');
+      v.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * v.duration;
+      tick();
+    });
+
+    // full screen, and back
+    function full() { return document.fullscreenElement === box; }
+    document.addEventListener('fullscreenchange', function () {
+      f.classList.toggle('is-full', full());
+      wide.setAttribute('aria-pressed', full() ? 'true' : 'false');
+      wide.setAttribute('aria-label', full() ? 'Leave full screen' : 'Full screen');
+    });
+    wide.addEventListener('click', function () {
+      if (full()) { document.exitFullscreen(); return; }
+      if (box.requestFullscreen) {
+        var p = box.requestFullscreen();
+        if (p && p.then) p.then(function () {
+          if (innerHeight > innerWidth) try { var o = screen.orientation.lock('landscape'); if (o && o.catch) o.catch(function () {}); } catch (e) {}
+        }, function () {});
+      } else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();   // iPhone: the video alone
+    });
+
+    // it opens into view as the section arrives, and pauses when scrolled out of sight
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (e.isIntersecting && e.intersectionRatio > .2) f.classList.add('is-seen');
+          else if (!e.isIntersecting && !v.paused && !full()) v.pause();
+        });
+      }, { threshold: [0, .2] }).observe(box);
+    } else f.classList.add('is-seen');
+    document.addEventListener('visibilitychange', function () { if (document.hidden && !v.paused) v.pause(); });
+  }
+
   function begin() {
     if (typeof document.createElement('video').play !== 'function') return;
+    var hosts = document.querySelectorAll('[data-film-inline]');
+    if (hosts.length) { Array.prototype.forEach.call(hosts, inline); return; }
     call = buildCall();
     dress();
     call.addEventListener('click', show);

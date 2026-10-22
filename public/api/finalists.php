@@ -22,12 +22,22 @@
 
      1. Set 'confirmed' => true.
      2. Fill in 'first', 'last', and 'venture' (the business or the pitch title).
-     3. Add 'blurb' (one or two sentences) and 'category' when they are supplied.
+     3. Add 'summary' (what problem they are solving), 'bio' (who the founder is) and
+        'category' as leadership approves them. Each is omitted from the card if empty --
+        nothing is invented to fill a gap.
      4. Drop the portrait into assets/img/finalists/ and set 'shot' to the file stem; the page
         expects <stem>-620.jpg and, if you have it, <stem>-900.jpg. Portraits are shown at 5:7,
-        matching the speaker cards.
+        matching the speaker cards, and are never cropped to a face or regenerated.
      5. Set 'video' to the YouTube or Vimeo watch URL. Leave it empty and the back of the card
         simply says the pitch is coming, rather than showing a broken player.
+
+   PUBLICATION STATUS is separate from confirmation, deliberately. A finalist can be known to
+   us and still not announced. 'status' is one of:
+
+     'placeholder' the slot is empty. Nothing to show.
+     'internal'    details are entered but NOT cleared for announcement. The card is visible
+                   only behind the preview gate and is marked internal on its face.
+     'published'   cleared by leadership. Visible when the page itself is published.
 
    Anything you leave out is omitted rather than guessed at. */
 declare(strict_types=1);
@@ -45,30 +55,54 @@ function ngs_finalists(): array
     $slots = [
         // ---- slot 1 ----------------------------------------------------------------
         [
+            'status' => 'placeholder',
             'confirmed' => false,
             'first' => '', 'last' => '',
             'venture' => '',
             'category' => '',
-            'blurb' => '',
+            'summary' => '',          // ABOUT THE BUSINESS: the problem, and their answer to it
+            'bio' => '',              // MEET THE FOUNDER
             'shot' => '',
             'video' => '',
         ],
     ];
 
-    /* Slots 2..10 are the same empty shape. Written as a loop rather than nine copies so that
-       the shape cannot drift between them; fill one in by replacing it with a literal, exactly
+    /* Slots 2..9 are the same empty shape. Written as a loop rather than eight copies so the
+       shape cannot drift between them; fill one in by replacing it with a literal, exactly
        like slot 1 above. */
-    for ($i = 2; $i <= 10; $i++) {
+    for ($i = 2; $i <= 9; $i++) {
         $slots[] = [
+            'status' => 'placeholder',
             'confirmed' => false,
             'first' => '', 'last' => '',
             'venture' => '',
             'category' => '',
-            'blurb' => '',
+            'summary' => '',
+            'bio' => '',
             'shot' => '',
             'video' => '',
         ];
     }
+
+    /* ---- slot 10: the People's Choice qualifier ----
+
+       Held open on purpose. The tenth place goes to whoever wins the public vote, and that is
+       not known until voting closes on 28 October and the result is certified. Nothing here
+       reads the leaderboard: a live standing is not a result, and a card that filled itself in
+       from a running tally would announce a winner the competition has not declared. Someone
+       enters this one by hand, afterwards, like any other. */
+    $slots[] = [
+        'status' => 'placeholder',
+        'confirmed' => false,
+        'reserved' => "People's Choice winner",
+        'first' => '', 'last' => '',
+        'venture' => '',
+        'category' => '',
+        'summary' => '',
+        'bio' => '',
+        'shot' => '',
+        'video' => '',
+    ];
 
     if (isset($_GET['demo']) && $_GET['demo'] === '1' && ngs_finalists_demo_allowed()
         && empty($slots[0]['confirmed'])) {
@@ -80,16 +114,26 @@ function ngs_finalists(): array
         $n = str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT);
         $name = trim(($s['first'] ?? '') . ' ' . ($s['last'] ?? ''));
         $ok = !empty($s['confirmed']) && $name !== '';
+        $status = (string) ($s['status'] ?? 'placeholder');
+        if (!$ok) {
+            $status = 'placeholder';            // nothing entered: nothing to publish
+        } elseif (!in_array($status, ['internal', 'published'], true)) {
+            $status = 'internal';               // confirmed but unclassified stays unannounced
+        }
         $out[] = [
             'id' => 'finalist-' . $n,
             'n' => $n,
             'confirmed' => $ok,
+            'status' => $status,
+            'published' => $status === 'published',
+            'reserved' => (string) ($s['reserved'] ?? ''),
             'first' => $ok ? (string) $s['first'] : 'Finalist',
             'last' => $ok ? (string) $s['last'] : $n,
             'name' => $ok ? $name : 'Finalist ' . $n,
             'venture' => $ok ? (string) $s['venture'] : 'To be announced',
             'category' => $ok ? (string) ($s['category'] ?? '') : '',
-            'blurb' => $ok ? (string) ($s['blurb'] ?? '') : '',
+            'summary' => $ok ? (string) ($s['summary'] ?? '') : '',
+            'bio' => $ok ? (string) ($s['bio'] ?? '') : '',
             'shot' => $ok ? (string) ($s['shot'] ?? '') : '',
             'video' => $ok ? ngs_finalist_video((string) ($s['video'] ?? '')) : null,
         ];
@@ -121,13 +165,16 @@ function ngs_finalists_demo_allowed(): bool
 function ngs_finalists_demo(): array
 {
     return [
+        'status' => 'internal',
         'confirmed' => true,
         'first' => 'Demo', 'last' => 'Card',
         'venture' => 'Example Venture (demo, not a real finalist)',
         'category' => 'Demo only',
-        'blurb' => 'This card is a layout demonstration so the team can see a confirmed finalist '
-            . 'before the line-up is announced. The name, the venture and the video are stand-ins '
-            . 'and belong to no entrant.',
+        'summary' => 'This is where ABOUT THE BUSINESS goes: the problem the founder is solving '
+            . 'and the answer they are proposing, in a couple of sentences supplied by leadership.',
+        'bio' => 'This is where MEET THE FOUNDER goes: a short introduction to the person behind '
+            . 'the venture. It is omitted entirely until approved copy exists, rather than filled '
+            . 'with anything invented.',
         'shot' => '',
         'video' => 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
     ];

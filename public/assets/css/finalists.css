@@ -41,7 +41,16 @@
 .fin__deck{position:relative;width:min(1180px,92vw);margin:0 auto;padding:0;list-style:none;
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,3.4vw,30px)}
 @media (min-width:620px){.fin__deck{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (min-width:980px){.fin__deck{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+/* 4 - 4 - 2, with the last pair centred under the rows above.
+   Ten does not divide by four, and a trailing row of two pushed to the left reads like the
+   grid ran out rather than like a set that ends. Placing the ninth card in the second column
+   centres the pair without needing a different element or a second grid. */
+@media (min-width:980px){
+  .fin__deck{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .fin__deck > :nth-child(9){grid-column:2}
+  .fin__deck > :nth-child(10){grid-column:3}
+}
 
 /* the base .card in site.css is positioned by .gal on the homepage; here it simply sits in the
    grid, so only the shadow pad needs resetting */
@@ -68,6 +77,37 @@
 .fin__foot{width:min(760px,90vw);margin:clamp(34px,6vw,58px) auto 0;text-align:center;
   font:500 14px/1.6 var(--f-sans);color:rgba(255,255,255,.6)}
 .fin__foot .linkish{color:var(--accent)}
+.fin__foot strong{color:#fff}
+
+.fin__sub{margin:clamp(12px,2.2vw,16px) auto 0;max-width:52ch;
+  font:500 clamp(14px,1.9vw,16px)/1.65 var(--f-sans);color:rgba(255,255,255,.62)}
+.fin__cta{margin-top:clamp(20px,3.4vw,28px)}
+
+/* the designation and the invitation, on the face of the card */
+.fin__tag{position:absolute;right:clamp(9px,4%,14px);top:clamp(8px,3.4%,12px);z-index:3;
+  padding:3px 8px;border-radius:999px;background:rgba(31,199,190,.18);
+  box-shadow:inset 0 0 0 1px rgba(31,199,190,.5);
+  font:800 7.5px/1.4 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.fin__flip{display:block;margin-top:clamp(5px,2.4%,8px);
+  font:800 7.5px/1.4 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.62)}
+@media (hover:hover){.fin__deck .card__face:hover .fin__flip{color:var(--accent)}}
+
+.fin__badge--int{background:rgba(236,0,140,.92);color:#fff}
+
+/* ---------- the back of the card: structured sections ---------- */
+.fin__sec{margin-top:clamp(12px,2.4vw,16px)}
+.fin__sec:first-of-type{margin-top:0}
+.fin__sech{font:800 8.5px/1.4 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent)}
+.fin__secp{margin-top:5px;font:500 13.5px/1.6 var(--f-sans);color:rgba(255,255,255,.8)}
+.fin__share{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;
+  border:0;border-radius:999px;cursor:pointer;
+  background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);color:#fff;
+  font:800 9.5px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;
+  transition:background-color .3s var(--ease)}
+.fin__share:hover,.fin__share:focus-visible{background:rgba(31,199,190,.24)}
+.fin__share svg{width:14px;height:14px}
 
 /* ---------- the back of the card: the pitch ----------
    A poster with a play control, and the player only loads when it is asked for. Ten embedded

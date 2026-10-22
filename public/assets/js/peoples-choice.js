@@ -25,6 +25,7 @@
      ?pc=open etc. overrides it here so leadership can walk through each state in review. */
   var STATES = ['coming-soon', 'open', 'closed', 'results'];
   var STATE = 'coming-soon';                 // <-- the staging default
+  var MODE = 'daily';                        // the rule in force; the server is the authority
   var DEADLINE = null;                       // <-- an ISO date once leadership sets one; null hides the clock
 
   var q = (location.search.match(/[?&]pc=([a-z-]+)/) || [])[1];
@@ -40,7 +41,7 @@
     'coming-soon': { pill: 'Voting opens soon', vote: 'Voting opens soon',
       note: 'Voting has not opened. The date will be announced once leadership confirms it.' },
     'open':        { pill: 'Voting open', vote: 'Vote for this pitch',
-      note: 'One verified person, one vote, for the whole competition.' },
+      note: 'One verified person, one vote a day, until October 28.' },
     'closed':      { pill: 'Voting closed', vote: 'Voting closed',
       note: 'Voting has closed. The result is with the NextGen team.' },
     'results':     { pill: 'Results published', vote: 'Voting closed',
@@ -698,7 +699,11 @@
       var label = $('[data-pc-state-label]', n);
       if (label) label.textContent = COPY[STATE].pill;
     });
-    $$('[data-pc-state-note]').forEach(function (n) { n.textContent = COPY[STATE].note; });
+    var note = COPY[STATE].note;
+    if (STATE === 'open' && MODE === 'single') {
+      note = 'One verified person, one vote, for the whole competition.';
+    }
+    $$('[data-pc-state-note]').forEach(function (n) { n.textContent = note; });
   }
   paintFurniture();
 
@@ -763,6 +768,7 @@
       .then(function (d) {
         if (!d || !d.ok) return;
         if (d.deadline && d.deadline !== DEADLINE) { DEADLINE = d.deadline; startClock(); }
+        if (d.mode && d.mode !== MODE) { MODE = d.mode; paintFurniture(); }
         if (STATES.indexOf(d.state) < 0 || d.state === STATE) return;
         STATE = d.state;
         grid.innerHTML = ENTRANTS.map(cardHtml).join('');

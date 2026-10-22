@@ -101,13 +101,21 @@ header('Content-Type: text/html; charset=utf-8');
           <?php if ($f['confirmed']): ?>
             <button class="card__face" type="button" data-fin="<?= fe($f['id']) ?>" aria-haspopup="dialog">
               <span class="card__stock">
-                <span class="card__shot">
-                  <img src="<?= fe(NGS_FINALIST_IMG . $f['shot']) ?>-620.jpg?v=<?= $stamp ?>"
-                    srcset="<?= fe(NGS_FINALIST_IMG . $f['shot']) ?>-620.jpg?v=<?= $stamp ?> 620w, <?= fe(NGS_FINALIST_IMG . $f['shot']) ?>-900.jpg?v=<?= $stamp ?> 900w"
-                    sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px"
-                    width="620" height="868" loading="lazy" decoding="async"
-                    alt="<?= fe($f['name']) ?>">
-                </span>
+<?php /* A name can be confirmed before the portrait arrives, so an empty 'shot' gets the same
+         honest empty frame as an unannounced slot rather than a broken image. */ ?>
+                <?php if ($f['shot'] !== ''): ?>
+                  <span class="card__shot">
+                    <img src="<?= fe(NGS_FINALIST_IMG . $f['shot']) ?>-620.jpg?v=<?= $stamp ?>"
+                      srcset="<?= fe(NGS_FINALIST_IMG . $f['shot']) ?>-620.jpg?v=<?= $stamp ?> 620w, <?= fe(NGS_FINALIST_IMG . $f['shot']) ?>-900.jpg?v=<?= $stamp ?> 900w"
+                      sizes="(max-width:760px) 44vw, (max-width:1100px) 30vw, 306px"
+                      width="620" height="868" loading="lazy" decoding="async"
+                      alt="<?= fe($f['name']) ?>">
+                  </span>
+                <?php else: ?>
+                  <span class="card__shot fin__phshot" aria-hidden="true">
+                    <span class="fin__phnum"><?= fe($f['n']) ?></span>
+                  </span>
+                <?php endif; ?>
                 <span class="card__wm wm" aria-hidden="true">nextgen</span>
                 <span class="card__id">
                   <span class="card__name"><?= fe($f['first']) ?><b><?= fe($f['last']) ?></b></span>

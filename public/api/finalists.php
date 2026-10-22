@@ -70,6 +70,11 @@ function ngs_finalists(): array
         ];
     }
 
+    if (isset($_GET['demo']) && $_GET['demo'] === '1' && ngs_finalists_demo_allowed()
+        && empty($slots[0]['confirmed'])) {
+        $slots[0] = ngs_finalists_demo();
+    }
+
     $out = [];
     foreach ($slots as $i => $s) {
         $n = str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT);
@@ -90,6 +95,42 @@ function ngs_finalists(): array
         ];
     }
     return $out;
+}
+
+/* ---------- the demo card ----------
+
+   With ten empty slots there is nothing to open, so neither the team nor a reviewer can see
+   what a confirmed finalist actually looks like -- the flip, the pitch player, the layout with
+   a real portrait in it. That matters while the line-up is still being gathered.
+
+   So ?demo=1 fills the first slot with an obviously fake card. It is fenced to staging and
+   localhost, exactly like the mock OTP code, so it cannot appear on the live site however the
+   URL is typed. It names no real person and claims no real venture: it says "demo card" on its
+   face, and the video is Blender Foundation's Big Buck Bunny, which is Creative Commons and
+   belongs to nobody in this competition.
+
+   Delete nothing when the real finalists arrive; a confirmed slot 1 simply wins. */
+function ngs_finalists_demo_allowed(): bool
+{
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    return strpos($host, 'staging.') === 0
+        || strpos($host, 'localhost') === 0
+        || strpos($host, '127.0.0.1') === 0;
+}
+
+function ngs_finalists_demo(): array
+{
+    return [
+        'confirmed' => true,
+        'first' => 'Demo', 'last' => 'Card',
+        'venture' => 'Example Venture (demo, not a real finalist)',
+        'category' => 'Demo only',
+        'blurb' => 'This card is a layout demonstration so the team can see a confirmed finalist '
+            . 'before the line-up is announced. The name, the venture and the video are stand-ins '
+            . 'and belong to no entrant.',
+        'shot' => '',
+        'video' => 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+    ];
 }
 
 /** How many of the ten are filled in. Drives the "9 of 10 confirmed" line on the page. */

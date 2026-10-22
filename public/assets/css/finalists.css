@@ -24,12 +24,16 @@
 
 /* How much of the line-up is real. Said plainly, because a visitor counting nine faces and one
    gap deserves to know which of those is the truth. */
-.fin__status{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
-  margin-top:clamp(16px,3vw,24px);padding:10px 16px;border-radius:999px;
+/* Deliberately NOT a flex container. Every text node in one becomes its own flex item, so
+   "9 of 10" and the sentence after it wrapped as separate blocks and read like two thoughts.
+   Normal inline flow keeps it one sentence. */
+.fin__status{display:block;width:fit-content;max-width:min(52ch,90vw);
+  margin:clamp(16px,3vw,24px) auto 0;padding:11px 18px;border-radius:18px;
   background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
-  font:600 13px/1.4 var(--f-sans);color:rgba(255,255,255,.82)}
+  font:600 13px/1.55 var(--f-sans);color:rgba(255,255,255,.82);text-align:center}
 .fin__status strong{color:#fff}
-.fin__dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.fin__dot{display:inline-block;vertical-align:middle;width:7px;height:7px;border-radius:50%;
+  background:var(--accent);margin-right:8px;margin-top:-2px}
 
 /* ---------- the deck ----------
    A grid, not the homepage fan: ten cards need to be scannable and comparable, and a phone has

@@ -40,7 +40,11 @@
   }
 
   function shot(f, alt) {
-    if (!f.shot) return '';
+    // confirmed, but the portrait has not arrived yet: the same honest empty frame as the deck
+    if (!f.shot) {
+      return '<span class="fin__phshot" aria-hidden="true"><span class="fin__phnum">' +
+        esc(f.n) + '</span></span>';
+    }
     var b = '/assets/img/finalists/' + f.shot;
     return '<img src="' + esc(b) + '-620.jpg" srcset="' + esc(b) + '-620.jpg 620w, ' +
       esc(b) + '-900.jpg 900w" sizes="(max-width:760px) 92vw, 430px" width="620" height="868" ' +

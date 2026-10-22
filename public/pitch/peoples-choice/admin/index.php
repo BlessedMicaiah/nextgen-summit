@@ -15,7 +15,7 @@
    and nothing is incremented. */
 declare(strict_types=1);
 
-require dirname(__DIR__, 3) . '/api/pc-rules.php';
+require dirname(__DIR__, 3) . '/api/pc-twilio-write.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -79,7 +79,14 @@ if (isset($_GET['data'])) {
 }
 
 /* ---------- actions ---------- */
+/* A message that survives the redirect after a POST. Without this a successful save looked
+   exactly like nothing happening -- the fields render blank by design, so there was no other
+   signal that anything had been written. That is what "it is not updating" turned out to be. */
 $notice = '';
+if (!empty($_SESSION['flash'])) {
+    $notice = (string) $_SESSION['flash'];
+    unset($_SESSION['flash']);
+}
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
     if (!token_ok()) {
@@ -146,6 +153,56 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $notice = pc_invalidate($k, $on)
             ? ($on ? 'Vote invalidated. It has left the totals.' : 'Vote restored.')
             : 'No vote matched.';
+    } elseif ($authed && $action === 'twilio') {
+        /* The posted values go straight to the writer and are not kept, not echoed and not
+           logged. $_POST is left behind when this request ends. */
+        $r = pc_twilio_save([
+            'account_sid' => $_POST['account_sid'] ?? '',
+            'api_key' => $_POST['api_key'] ?? '',
+            'api_secret' => $_POST['api_secret'] ?? '',
+            'verify_sid' => $_POST['verify_sid'] ?? '',
+            'allowlist' => $_POST['allowlist'] ?? null,
+            'budget' => $_POST['budget'] ?? '',
+        ]);
+        if ($r['ok']) {
+            $st = pc_twilio_status();
+            $_SESSION['flash'] = 'Saved. Account SID ' . $st['account_sid']
+                . ', API key ' . $st['api_key']
+                . ', secret ' . $st['api_secret']
+                . ', Verify SID ' . $st['verify_sid']
+                . ' - ' . $st['allowlist_state'] . '.';
+            header('Location: ./', true, 303);
+            exit;
+        }
+        $notice = $r['error'];
+    } elseif ($authed && $action === 'twilio_live') {
+        $want = ($_POST['to'] ?? '') === '1';
+        $r = pc_twilio_save(['enabled' => $want]);
+        if ($r['ok']) {
+            $_SESSION['flash'] = $want
+                ? 'LIVE SMS IS ON. Only allowlisted numbers can receive a message, and the budget still applies.'
+                : 'Live SMS is off again. Nothing can be sent.';
+            header('Location: ./', true, 303);
+            exit;
+        }
+        $notice = $r['error'];
+    } elseif ($authed && $action === 'twilio_auth') {
+        /* Read-only. It asks Twilio to describe the Verify Service and reports the verdict.
+           Nothing is sent, no verification is started, and the live budget is not touched --
+           the probe writes no row to pc_otp_log. The status and Twilio's numeric code are the
+           only things that reach this screen. */
+        $p = pc_twilio_auth_probe();
+        $_SESSION['flash'] = 'Authentication test: HTTP ' . (int) $p['status']
+            . ($p['code'] !== null ? ' (Twilio code ' . (int) $p['code'] . ')' : '')
+            . ' - ' . $p['detail']
+            . ' No SMS was sent and the budget is unchanged.';
+        header('Location: ./', true, 303);
+        exit;
+    } elseif ($authed && $action === 'phonereq') {
+        pc_set_meta('phone_required', ($_POST['to'] ?? '0') === '1' ? '1' : '0');
+        $notice = (string) pc_meta('phone_required', '0') === '1'
+            ? 'Phone verification is now required to vote. The simulated sign-in is closed.'
+            : 'The simulated sign-in is available again.';
     } elseif ($authed && $action === 'seed') {
         /* Test rows, so the dashboard can be shown doing its job before any real ballot
            exists. They are votes like any other -- same table, same counting -- and they go
@@ -186,8 +243,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261019-02">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261019-02">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261021-01">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261021-01">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -382,6 +439,85 @@ foreach ($standings as $r) {
     </section>
 
     <section class="adm__sec">
+      <p class="adm__h">Twilio configuration</p>
+      <p class="adm__p">A health check, not a viewer. It reports whether each credential is present and whether it starts with the prefix Twilio uses for that kind of identifier. <strong>No value is read, printed or logged anywhere</strong> &mdash; not here, not in the error log.</p>
+      <div class="adm__tablewrap">
+        <table class="adm__table">
+          <thead><tr><th>Check</th><th>Result</th></tr></thead>
+          <tbody>
+            <?php foreach (pc_twilio_status() as $k => $v):
+              $txt = is_bool($v) ? ($v ? 'yes' : 'no') : (string) $v;
+              $good = $txt === 'yes' || $txt === 'ok' || $txt === 'present'
+                   || strpos($txt, 'MOCK') === 0 || $txt === 'false'; ?>
+            <tr><td><?= h(str_replace('_', ' ', (string) $k)) ?></td>
+                <td><span class="adm__pill <?= $good ? 'adm__pill--ok' : 'adm__pill--draft' ?>"><?= h($txt) ?></span></td></tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php $tw = pc_twilio_status(); ?>
+      <div class="adm__sec" style="margin-top:22px">
+        <p class="adm__h">Test authentication</p>
+        <p class="adm__p">The table above checks the <em>shape</em> of each credential, which a convincing fake also passes. This asks Twilio instead, with a <strong>read-only</strong> request for the Verify Service. It sends no message, starts no verification, bills nothing and <strong>does not touch the budget</strong> &mdash; worth doing first, because a live send spends a budget slot even when the credentials are wrong.</p>
+        <p class="adm__p"><strong>401</strong> means the credentials are wrong. <strong>403</strong> means they are <em>valid</em> but this restricted key may not read Verify Services &mdash; a permission limit, not a bad credential. <strong>404</strong> means they are valid but the Verify SID is not on this account.</p>
+        <div class="adm__bar">
+          <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+            <input type="hidden" name="action" value="twilio_auth">
+            <button class="adm__btn" type="submit">Test Twilio authentication</button>
+          </form>
+        </div>
+      </div>
+      <div class="adm__sec" style="margin-top:22px">
+        <p class="adm__h">Enter or update the credentials</p>
+        <p class="adm__p">These are written to <code>nextgen-data-staging/config.twilio.php</code>, outside the web root, where a deploy cannot reach them. <strong>Leave a box empty to keep what is already saved.</strong> Nothing is ever shown back to this screen, so the boxes always start blank &mdash; that is deliberate, not a bug.</p>
+        <form method="post" class="adm__inline" autocomplete="off">
+          <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="twilio">
+          <label class="adm__label" for="t1">Account SID (begins AC)</label>
+          <input class="adm__input" id="t1" name="account_sid" type="password" autocomplete="new-password" placeholder="<?= $tw['account_sid'] === 'ok' ? 'saved — leave blank to keep' : 'AC...' ?>">
+          <label class="adm__label" for="t2">API Key SID (begins SK)</label>
+          <input class="adm__input" id="t2" name="api_key" type="password" autocomplete="new-password" placeholder="<?= $tw['api_key'] === 'ok' ? 'saved — leave blank to keep' : 'SK...' ?>">
+          <label class="adm__label" for="t3">API Key Secret</label>
+          <input class="adm__input" id="t3" name="api_secret" type="password" autocomplete="new-password" placeholder="<?= $tw['api_secret'] === 'present' ? 'saved — leave blank to keep' : 'the secret shown once at key creation' ?>">
+          <label class="adm__label" for="t4">Verify Service SID (begins VA)</label>
+          <input class="adm__input" id="t4" name="verify_sid" type="password" autocomplete="new-password" placeholder="<?= $tw['verify_sid'] === 'ok' ? 'saved — leave blank to keep' : 'VA...' ?>">
+          <label class="adm__label" for="t5">Test numbers allowed to receive a real SMS (one per line)</label>
+          <textarea class="adm__input" id="t5" name="allowlist" rows="3" placeholder="+14105550143"><?= h(implode("
+", pc_sms_allowlist())) ?></textarea>
+          <label class="adm__label" for="t6">Hard ceiling on real sends, ever</label>
+          <input class="adm__input" id="t6" name="budget" type="number" min="0" max="50" value="<?= (int) $tw['live_budget'] ?>">
+          <button class="adm__btn adm__btn--go" type="submit">Save settings</button>
+        </form>
+      </div>
+
+      <div class="adm__sec" style="margin-top:22px">
+        <p class="adm__h">Live SMS</p>
+        <?php if (pc_twilio_live()): ?>
+          <p class="adm__warn"><b>Live</b> Real messages can be sent, to allowlisted numbers only, up to the remaining budget of <?= (int) $tw['live_budget_left'] ?>.</p>
+        <?php else: ?>
+          <p class="adm__p">Currently off. Nothing can be sent.</p>
+        <?php endif; ?>
+        <div class="adm__bar">
+          <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+            <input type="hidden" name="action" value="twilio_live">
+            <input type="hidden" name="to" value="<?= pc_twilio_live() ? '0' : '1' ?>">
+            <button class="adm__btn <?= pc_twilio_live() ? 'adm__btn--warn' : 'adm__btn--go' ?>" type="submit">
+              <?= pc_twilio_live() ? 'Turn live SMS off' : 'Turn live SMS on' ?></button>
+          </form>
+        </div>
+      </div>
+
+      <p class="adm__p" style="margin-top:12px">While the mode reads <strong>MOCK</strong> no SMS is sent and nothing is billed. Switching to live is a one-word edit to <code>config.twilio.php</code> on the server, deliberately not something this page can do.</p>
+      <p class="adm__p">Phone verification required to vote: <strong><?= (string) pc_meta('phone_required', '0') === '1' ? 'yes' : 'no (the preview&rsquo;s simulated sign-in still works)' ?></strong></p>
+      <div class="adm__bar">
+        <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="phonereq"><input type="hidden" name="to" value="<?= (string) pc_meta('phone_required', '0') === '1' ? '0' : '1' ?>">
+          <button class="adm__btn" type="submit"><?= (string) pc_meta('phone_required', '0') === '1' ? 'Allow the simulated sign-in again' : 'Require phone verification' ?></button>
+        </form>
+      </div>
+    </section>
+
+    <section class="adm__sec">
       <p class="adm__h">Test data</p>
       <p class="adm__p">Staging only. These write to the staging data directory, which is a different file from the live one.</p>
       <div class="adm__bar">
@@ -405,7 +541,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261019-02" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261021-01" defer></script>
 <?php endif; ?>
 </body>
 </html>

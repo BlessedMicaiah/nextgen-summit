@@ -1,0 +1,515 @@
+<?php
+/* People's Choice — phone verification.
+
+   Twilio is spoken to from here and nowhere else. The browser never sees a credential, never
+   sees a phone number it did not type, and never decides whether a code was correct.
+
+   TWO MODES, and the file decides which:
+
+     MOCK   config.twilio.php absent, or PC_TWILIO_ENABLED false.
+            No network call is made and nothing is billed. A real six-digit code is generated
+            and held server-side, and on a non-production host it is handed back in the reply
+            so the flow can be walked through end to end. That is a testing affordance and it
+            is why it is fenced to staging.
+
+     LIVE   enabled, and all four credentials present.
+            Twilio Verify sends and checks the code. We never see the code at all.
+
+   The mode is never taken from the request. A browser cannot ask for mock.
+
+   On secrets: this file reads the constants and passes them to curl. It does not log them, does
+   not echo them, and does not put them in an error message. pc_twilio_status() deliberately
+   reports whether each is DEFINED and never what it is. */
+declare(strict_types=1);
+
+require_once __DIR__ . '/pc-rules.php';
+
+/* WHERE THE CREDENTIALS LIVE, and why it is not next to this file.
+
+   A Hostinger deploy replaces the web root rather than merging into it: anything there that is
+   not in the archive is deleted. A secrets file in api/ therefore survives exactly until the
+   next release, which is the worst possible failure -- it works, and then one day it silently
+   does not. We learned this by losing one.
+
+   So they live in the data directory instead: outside the web root, never served, never in the
+   archive, and demonstrably untouched by deploys -- the vote database has sat there through
+   every release. The old location is still read if something is there, so an existing
+   installation keeps working, but the data directory wins.
+
+   Absence is a normal state. It means "not configured", not an error. */
+$pcTwilioCandidates = [
+    ngs_data_dir() . '/config.twilio.php',     // the home that survives a deploy
+    __DIR__ . '/config.twilio.php',            // legacy: read, but wiped by the next release
+];
+foreach ($pcTwilioCandidates as $pcTwilioConfig) {
+    if (is_file($pcTwilioConfig) && is_readable($pcTwilioConfig)) {
+        require_once $pcTwilioConfig;
+        break;
+    }
+}
+
+/** Where the credentials were actually found, for the diagnostic. Never their contents. */
+function pc_twilio_config_path(): ?string
+{
+    foreach ([ngs_data_dir() . '/config.twilio.php', __DIR__ . '/config.twilio.php'] as $p) {
+        if (is_file($p)) {
+            return $p;
+        }
+    }
+    return null;
+}
+
+function pc_twilio_configured(): bool
+{
+    foreach (['PC_TWILIO_ACCOUNT_SID', 'PC_TWILIO_API_KEY', 'PC_TWILIO_API_SECRET', 'PC_TWILIO_VERIFY_SID'] as $k) {
+        if (!defined($k)) {
+            return false;
+        }
+        $v = (string) constant($k);
+        if ($v === '' || strpos($v, 'REPLACE_ME') !== false) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function pc_twilio_live(): bool
+{
+    return defined('PC_TWILIO_ENABLED') && PC_TWILIO_ENABLED === true && pc_twilio_configured();
+}
+
+/* A health report with no secrets in it. Each entry says whether something is present and
+   plausible, never what it contains. The prefix checks catch the commonest setup mistake --
+   an Account SID pasted into the Verify Service field, and so on. */
+function pc_twilio_status(): array
+{
+    $file = pc_twilio_config_path() ?? (ngs_data_dir() . '/config.twilio.php');
+    $defined = function (string $k): bool {
+        return defined($k) && (string) constant($k) !== '' && strpos((string) constant($k), 'REPLACE_ME') === false;
+    };
+    $prefix = function (string $k, string $want): string {
+        if (!defined($k)) {
+            return 'missing';
+        }
+        $v = (string) constant($k);
+        if ($v === '' || strpos($v, 'REPLACE_ME') !== false) {
+            return 'placeholder';
+        }
+        return strpos($v, $want) === 0 ? 'ok' : 'wrong prefix (expected ' . $want . ')';
+    };
+    return [
+        'file_present' => is_file($file),
+        'file_readable' => is_file($file) && is_readable($file),
+        'file_location' => pc_twilio_config_path() === null ? 'not found'
+            : (strpos((string) pc_twilio_config_path(), ngs_data_dir()) === 0
+                ? 'data directory (survives deploys)'
+                : 'api folder (WILL BE WIPED by the next deploy - move it)'),
+        'enabled_flag' => defined('PC_TWILIO_ENABLED') ? (PC_TWILIO_ENABLED ? 'true' : 'false') : 'not defined',
+        'account_sid' => $prefix('PC_TWILIO_ACCOUNT_SID', 'AC'),
+        'api_key' => $prefix('PC_TWILIO_API_KEY', 'SK'),
+        'api_secret' => $defined('PC_TWILIO_API_SECRET') ? 'present' : 'missing',
+        'verify_sid' => $prefix('PC_TWILIO_VERIFY_SID', 'VA'),
+        'configured' => pc_twilio_configured(),
+        'mode' => pc_twilio_live() ? 'LIVE (billable)' : 'MOCK (no SMS, nothing billed)',
+        'curl_available' => function_exists('curl_init'),
+        'allowlist_numbers' => count(pc_sms_allowlist()),
+        'allowlist_state' => pc_sms_allowlist() === []
+            ? 'empty - no real SMS can be sent to anyone'
+            : 'only ' . count(pc_sms_allowlist()) . ' number(s) may receive a real SMS',
+        'live_budget' => pc_live_budget(),
+        'live_sent' => pc_live_sends(),
+        'live_budget_left' => pc_live_budget_left(),
+        'countries' => implode(', ', defined('PC_SMS_ALLOWED_COUNTRIES') ? PC_SMS_ALLOWED_COUNTRIES : ['US', 'CA']),
+        'cooldown_seconds' => defined('PC_SMS_MIN_SECONDS_BETWEEN') ? PC_SMS_MIN_SECONDS_BETWEEN : 60,
+        'per_number_per_day' => defined('PC_SMS_MAX_PER_NUMBER_PER_DAY') ? PC_SMS_MAX_PER_NUMBER_PER_DAY : 5,
+        'per_ip_per_hour' => defined('PC_SMS_MAX_PER_IP_PER_HOUR') ? PC_SMS_MAX_PER_IP_PER_HOUR : 20,
+    ];
+}
+
+/* ---------- phone numbers ----------
+   Everything downstream keys on the E.164 form, so two spellings of one number are one voter.
+   Deliberately conservative: a 10-digit number is assumed North American, an 11-digit one
+   starting 1 likewise, anything already in + form is kept, and anything else is refused rather
+   than guessed at. A wrong guess here would either merge two people or split one. */
+function pc_phone_e164(string $raw): ?string
+{
+    $s = trim($raw);
+    $plus = strpos($s, '+') === 0;
+    $d = preg_replace('/\D+/', '', $s);
+    if ($d === '') {
+        return null;
+    }
+    if ($plus) {
+        return strlen($d) >= 8 && strlen($d) <= 15 ? '+' . $d : null;
+    }
+    if (strlen($d) === 10) {
+        return '+1' . $d;
+    }
+    if (strlen($d) === 11 && $d[0] === '1') {
+        return '+' . $d;
+    }
+    return null;
+}
+
+function pc_phone_country(string $e164): string
+{
+    return strpos($e164, '+1') === 0 ? 'US' : 'XX';   // +1 covers US and CA; Lookup would refine it
+}
+
+/** What a voter is allowed to see of their own number. Never the whole thing. */
+function pc_phone_mask(string $e164): string
+{
+    $n = strlen($e164);
+    return $n <= 4 ? '****' : str_repeat('*', max(0, $n - 4)) . substr($e164, -4);
+}
+
+/** The voting identity a verified number maps to. One number, one identity, irreversibly. */
+function pc_phone_key(string $e164): string
+{
+    return 'tel:' . substr(hash_hmac('sha256', $e164, NGS_SECRET), 0, 32);
+}
+
+/* ---------- rate limiting ----------
+   In front of anything Twilio charges for, because a bill is the thing that cannot be undone.
+   Counted from rows, server-side; the browser has no say. */
+function pc_otp_table(): void
+{
+    $db = pc_db();
+    if (!$db) {
+        return;
+    }
+    $db->exec('CREATE TABLE IF NOT EXISTS pc_otp_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone_key  TEXT NOT NULL,
+        ip_hash    TEXT,
+        action     TEXT NOT NULL,
+        ok         INTEGER NOT NULL DEFAULT 0,
+        live       INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        ts         INTEGER NOT NULL
+    )');
+    $db->exec('CREATE INDEX IF NOT EXISTS pc_otp_phone ON pc_otp_log (phone_key, ts)');
+    $db->exec('CREATE INDEX IF NOT EXISTS pc_otp_ip ON pc_otp_log (ip_hash, ts)');
+    // a log written before live sends existed has no 'live' column; add it rather than lose it
+    try {
+        $cols = array_column($db->query('PRAGMA table_info(pc_otp_log)')->fetchAll(), 'name');
+        if (!in_array('live', $cols, true)) {
+            $db->exec('ALTER TABLE pc_otp_log ADD COLUMN live INTEGER NOT NULL DEFAULT 0');
+        }
+    } catch (Throwable $e) {
+        error_log("People's Choice: otp log migration skipped.");
+    }
+}
+
+/* The log records that a code was asked for, not what it was and not whose number it was:
+   phone_key is the same one-way hash the voting identity uses. */
+function pc_otp_note(string $phoneKey, string $action, bool $ok, bool $live = false): void
+{
+    pc_otp_table();
+    $db = pc_db();
+    if (!$db) {
+        return;
+    }
+    $s = $db->prepare('INSERT INTO pc_otp_log (phone_key, ip_hash, action, ok, live, created_at, ts)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $s->execute([$phoneKey, ngs_ip_hash(), $action, $ok ? 1 : 0, $live ? 1 : 0, ngs_now(), time()]);
+}
+
+/* ---------- the two hard stops in front of a bill ----------
+
+   A Twilio usage alert is an email. It does not stop anything. The only thing that can refuse
+   to spend money is code that refuses to make the call, so that is what these are.
+
+   Both FAIL CLOSED. Turning PC_TWILIO_ENABLED on with no allowlist defined sends nothing at
+   all, rather than sending to everyone -- the dangerous default is the one worth designing
+   out, because it is the one that happens by accident at 11pm. */
+
+/** Numbers permitted to receive a real message. Empty or undefined means nobody. */
+function pc_sms_allowlist(): array
+{
+    if (!defined('PC_SMS_LIVE_ALLOWLIST') || !is_array(PC_SMS_LIVE_ALLOWLIST)) {
+        return [];
+    }
+    $out = [];
+    foreach (PC_SMS_LIVE_ALLOWLIST as $n) {
+        $e = pc_phone_e164((string) $n);
+        if ($e !== null) {
+            $out[] = $e;
+        }
+    }
+    return $out;
+}
+
+function pc_sms_allowlisted(string $e164): bool
+{
+    $list = pc_sms_allowlist();
+    return $list !== [] && in_array($e164, $list, true);
+}
+
+/** How many real messages this server has ever sent. Counted from rows, not a counter. */
+function pc_live_sends(): int
+{
+    pc_otp_table();
+    $db = pc_db();
+    if (!$db) {
+        return 0;
+    }
+    try {
+        $r = $db->query("SELECT COUNT(*) AS n FROM pc_otp_log WHERE action = 'start' AND live = 1")->fetch();
+        return (int) ($r['n'] ?? 0);
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+function pc_live_budget(): int
+{
+    return defined('PC_SMS_LIVE_MAX_TOTAL') ? max(0, (int) PC_SMS_LIVE_MAX_TOTAL) : 0;
+}
+
+function pc_live_budget_left(): int
+{
+    return max(0, pc_live_budget() - pc_live_sends());
+}
+
+function pc_otp_count(string $field, string $value, int $seconds): int
+{
+    pc_otp_table();
+    $db = pc_db();
+    if (!$db) {
+        return 0;
+    }
+    $col = $field === 'ip' ? 'ip_hash' : 'phone_key';
+    $s = $db->prepare("SELECT COUNT(*) AS n FROM pc_otp_log
+                       WHERE $col = ? AND action = 'start' AND ts > ?");
+    $s->execute([$value, time() - $seconds]);
+    $r = $s->fetch();
+    return (int) ($r['n'] ?? 0);
+}
+
+function pc_otp_last(string $phoneKey): int
+{
+    pc_otp_table();
+    $db = pc_db();
+    if (!$db) {
+        return 0;
+    }
+    $s = $db->prepare("SELECT ts FROM pc_otp_log WHERE phone_key = ? AND action = 'start'
+                       ORDER BY ts DESC LIMIT 1");
+    $s->execute([$phoneKey]);
+    $r = $s->fetch();
+    return (int) ($r['ts'] ?? 0);
+}
+
+/** @return array{ok:bool,reason?:string,wait?:int} */
+function pc_otp_allowed(string $phoneKey): array
+{
+    $perDay = defined('PC_SMS_MAX_PER_NUMBER_PER_DAY') ? PC_SMS_MAX_PER_NUMBER_PER_DAY : 5;
+    $gap = defined('PC_SMS_MIN_SECONDS_BETWEEN') ? PC_SMS_MIN_SECONDS_BETWEEN : 60;
+    $perIp = defined('PC_SMS_MAX_PER_IP_PER_HOUR') ? PC_SMS_MAX_PER_IP_PER_HOUR : 20;
+
+    $since = pc_otp_last($phoneKey);
+    if ($since > 0 && time() - $since < $gap) {
+        return ['ok' => false, 'reason' => 'cooldown', 'wait' => $gap - (time() - $since)];
+    }
+    if (pc_otp_count('phone', $phoneKey, 86400) >= $perDay) {
+        return ['ok' => false, 'reason' => 'number_daily'];
+    }
+    if (pc_otp_count('ip', ngs_ip_hash(), 3600) >= $perIp) {
+        return ['ok' => false, 'reason' => 'ip_hourly'];
+    }
+    return ['ok' => true];
+}
+
+function pc_country_allowed(string $e164): bool
+{
+    $list = defined('PC_SMS_ALLOWED_COUNTRIES') ? PC_SMS_ALLOWED_COUNTRIES : ['US', 'CA'];
+    return in_array(pc_phone_country($e164), $list, true) || in_array('*', $list, true);
+}
+
+/* ---------- talking to Twilio ---------- */
+
+function pc_twilio_call(string $path, array $form): array
+{
+    if (!function_exists('curl_init')) {
+        return ['ok' => false, 'status' => 0, 'error' => 'curl unavailable'];
+    }
+    $url = 'https://verify.twilio.com/v2/Services/' . rawurlencode((string) PC_TWILIO_VERIFY_SID) . $path;
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query($form),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 15,
+        // the credentials go here and nowhere else in this codebase
+        CURLOPT_USERPWD => ((string) PC_TWILIO_API_KEY) . ':' . ((string) PC_TWILIO_API_SECRET),
+        CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+    ]);
+    $body = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_error($ch);
+    curl_close($ch);
+    $data = is_string($body) ? json_decode($body, true) : null;
+    return ['ok' => $status >= 200 && $status < 300, 'status' => $status,
+            'data' => is_array($data) ? $data : [], 'error' => $err];
+}
+
+/* ---------- the read-only authentication probe ----------
+
+   What this exists to settle: pc_twilio_status() reports whether each credential has the right
+   SHAPE, which is equally true of a convincing fake -- we have already been fooled once by
+   values that reported ok on every line and had never spoken to Twilio. The only proof that
+   credentials authenticate is a call Twilio answers, and until now the cheapest such call was
+   a real SMS. That is the trap: pc_otp_start() writes its live row whether or not Twilio
+   accepted the request, so a wrong credential costs a budget slot per attempt, and with a
+   ceiling of three the first live message doubles as the first authentication test.
+
+   So this reads the Verify Service instead. A GET creates nothing, sends nothing, starts no
+   verification, and bills nothing. It deliberately writes NO row to pc_otp_log, so the live
+   budget is untouched -- that absence is the point, not an oversight.
+
+   READING THE RESULT, which is the whole value of it when the key is a restricted one:
+
+     200  the key and secret authenticate, and the Verify Service exists and is readable.
+     401  Twilio rejected the credentials themselves: the API Key SID or its secret is wrong.
+     403  the credentials ARE valid. Twilio authenticated them, or it would have answered 401.
+          What it refused is the scope: this restricted key may not READ Verify Services. That
+          is a permission result, and a key barred from reading a service may still be
+          permitted to create a verification -- so this is not grounds to widen the key.
+     404  authenticated, but no Verify Service on this account carries that SID.
+
+   Note what 403 and 404 share: both prove authentication succeeded. Only 401 condemns the
+   credentials.
+
+   On secrecy: only the HTTP status and Twilio's numeric error code leave this function. The
+   response body is decoded for that integer and then discarded -- it is never returned,
+   rendered or logged, because it can name the account and the service. */
+function pc_twilio_auth_probe(): array
+{
+    if (!pc_twilio_configured()) {
+        return ['ok' => false, 'status' => 0, 'code' => null, 'verdict' => 'not_configured',
+                'detail' => 'All four credentials must be saved before this can run.'];
+    }
+    if (!function_exists('curl_init')) {
+        return ['ok' => false, 'status' => 0, 'code' => null, 'verdict' => 'no_curl',
+                'detail' => 'curl is unavailable on this host, so Twilio cannot be reached.'];
+    }
+
+    $url = 'https://verify.twilio.com/v2/Services/' . rawurlencode((string) PC_TWILIO_VERIFY_SID);
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_HTTPGET => true,          // read-only by construction: no body, no POST, no send
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_USERPWD => ((string) PC_TWILIO_API_KEY) . ':' . ((string) PC_TWILIO_API_SECRET),
+        CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+    ]);
+    $body = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $transport = curl_error($ch);
+    curl_close($ch);
+
+    /* The only thing taken out of the reply is Twilio's numeric code, which names the fault
+       without describing the account. Everything else goes out of scope unread. */
+    $code = null;
+    if (is_string($body)) {
+        $j = json_decode($body, true);
+        if (is_array($j) && isset($j['code']) && is_numeric($j['code'])) {
+            $code = (int) $j['code'];
+        }
+    }
+    unset($body);
+
+    if ($status === 0) {
+        return ['ok' => false, 'status' => 0, 'code' => null, 'verdict' => 'unreachable',
+                'detail' => $transport !== ''
+                    ? 'No reply from Twilio: the request failed before an answer came back.'
+                    : 'No reply from Twilio.'];
+    }
+    if ($status >= 200 && $status < 300) {
+        return ['ok' => true, 'status' => $status, 'code' => $code, 'verdict' => 'authenticated',
+                'detail' => 'AUTHENTICATED. The API key and secret are genuine and the Verify Service exists and is readable.'];
+    }
+    if ($status === 401) {
+        return ['ok' => false, 'status' => 401, 'code' => $code, 'verdict' => 'bad_credentials',
+                'detail' => 'CREDENTIALS REJECTED. The API Key SID or its secret is wrong. This is not a permission problem, and a real SMS would fail the same way.'];
+    }
+    if ($status === 403) {
+        return ['ok' => false, 'status' => 403, 'code' => $code, 'verdict' => 'forbidden_scope',
+                'detail' => 'CREDENTIALS VALID, SCOPE REFUSED. Twilio authenticated the key, so the credentials are genuine, but this restricted key may not read Verify Services. It may still be permitted to create a verification. Do not widen the key for this diagnostic alone.'];
+    }
+    if ($status === 404) {
+        return ['ok' => false, 'status' => 404, 'code' => $code, 'verdict' => 'no_such_service',
+                'detail' => 'AUTHENTICATED, WRONG SERVICE. The key and secret are genuine, but no Verify Service on this account carries that SID.'];
+    }
+    return ['ok' => false, 'status' => $status, 'code' => $code, 'verdict' => 'other',
+            'detail' => 'Twilio answered with an unexpected status. Nothing was sent.'];
+}
+
+/* Start a verification. In MOCK the code is made here and kept in the caller's session; in
+   LIVE Twilio sends it and we never learn it.
+   @return array{ok:bool,reason?:string,mock?:bool,code?:string,wait?:int} */
+function pc_otp_start(string $e164): array
+{
+    $key = pc_phone_key($e164);
+
+    if (!pc_country_allowed($e164)) {
+        pc_otp_note($key, 'blocked', false, false);
+        return ['ok' => false, 'reason' => 'country'];
+    }
+    $gate = pc_otp_allowed($key);
+    if (!$gate['ok']) {
+        return $gate;
+    }
+
+    if (!pc_twilio_live()) {
+        pc_otp_note($key, 'start', true, false);
+        return ['ok' => true, 'mock' => true, 'code' => str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT)];
+    }
+
+    /* Live from here. Two refusals before the call, both of which cost nothing to be wrong
+       about and everything to be missing. */
+    if (!pc_sms_allowlisted($e164)) {
+        pc_otp_note($key, 'blocked', false, false);
+        return ['ok' => false, 'reason' => 'not_allowlisted'];
+    }
+    if (pc_live_budget_left() <= 0) {
+        pc_otp_note($key, 'blocked', false, false);
+        error_log("People's Choice: live SMS budget exhausted; refusing to send.");
+        return ['ok' => false, 'reason' => 'budget'];
+    }
+
+    $res = pc_twilio_call('/Verifications', ['To' => $e164, 'Channel' => 'sms']);
+    pc_otp_note($key, 'start', $res['ok'], true);     // counted whether or not Twilio liked it
+    if (!$res['ok']) {
+        // the upstream message is not shown to the visitor: it can name the number
+        error_log('People\'s Choice: Verify start failed, HTTP ' . $res['status']);
+        return ['ok' => false, 'reason' => 'provider'];
+    }
+    return ['ok' => true, 'mock' => false];
+}
+
+/** @return array{ok:bool,reason?:string} */
+function pc_otp_check(string $e164, string $code, ?string $expected): array
+{
+    $key = pc_phone_key($e164);
+    $code = preg_replace('/\D+/', '', $code);
+    if (strlen($code) !== 6) {
+        pc_otp_note($key, 'check', false);
+        return ['ok' => false, 'reason' => 'format'];
+    }
+
+    if (!pc_twilio_live()) {
+        $good = $expected !== null && hash_equals($expected, $code);
+        pc_otp_note($key, 'check', $good);
+        return $good ? ['ok' => true, 'mock' => true] : ['ok' => false, 'reason' => 'code', 'mock' => true];
+    }
+
+    $res = pc_twilio_call('/VerificationCheck', ['To' => $e164, 'Code' => $code]);
+    $good = $res['ok'] && (($res['data']['status'] ?? '') === 'approved');
+    pc_otp_note($key, 'check', $good);
+    if (!$good) {
+        return ['ok' => false, 'reason' => $res['status'] === 404 ? 'expired' : 'code'];
+    }
+    return ['ok' => true, 'mock' => false];
+}

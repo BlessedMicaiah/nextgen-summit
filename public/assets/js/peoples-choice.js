@@ -31,6 +31,8 @@
   if (q && STATES.indexOf(q) >= 0) STATE = q;
   var FORCED = !!q;          // ?pc= is for walking through the states in review
   var API = '/api/pc-vote.php';
+  var OTP = '/api/pc-otp.php';
+  var me = { verified: false, csrf: '', sms: 'mock' };   // what the SERVER says about this visitor
   var qd = (location.search.match(/[?&]pcdeadline=([0-9T:+-]+)/) || [])[1];
   if (qd) DEADLINE = qd;
 
@@ -252,6 +254,26 @@
     if (err) err.hidden = true;
   }
 
+  /* Everything about the voter comes from this call, never from storage: whether they are
+     verified, how many votes they have left, when the allowance refills. A browser that lies
+     about any of it is simply ignored by the server. */
+  function refreshMe() {
+    return fetch(OTP + '?action=status', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.ok) me = d; return me; })
+      .catch(function () { return me; });
+  }
+
+  function post(action, body) {
+    return fetch(OTP, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action: action, csrf: me.csrf }, body || {}))
+    }).then(function (r) {
+      return r.json().catch(function () { return { ok: false, reason: 'network' }; });
+    });
+  }
+
   function openVote(id) {
     var e = byId[id];
     if (!e) return;
@@ -261,6 +283,17 @@
     $$('[data-pc-who-n]', vDlg).forEach(function (n) { n.textContent = e.name; });
     $$('[data-pc-who-c]', vDlg).forEach(function (n) { n.textContent = e.company; });
     step(had ? 'already' : 'verify');
+    refreshMe().then(function (d) {
+      var way = $('[data-pc-phone-way]', vDlg);
+      if (way) way.hidden = false;                 // the route exists whether SMS is live or mocked
+      if (d.verified && !had) {
+        /* Already verified on this device: no code, no message, straight to the confirmation.
+           This is the whole point of keeping a session. */
+        method = 'phone';
+        if (typeof d.remaining === 'number' && d.remaining <= 0) { step('already'); return; }
+        confirmStep();
+      }
+    });
     if (had) {
       $('[data-pc-already-for]', vDlg).textContent = (byId[had.entrant] || {}).name || 'another pitch';
       track('vote_duplicate_blocked', { entrant_id: id });
@@ -289,7 +322,7 @@
     fetch(API, {
       method: 'POST', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entrant: who.id, voter: voterClaim() })
+      body: JSON.stringify({ entrant: who.id, voter: voterClaim(), csrf: me.csrf })
     }).then(function (r) {
       return r.json().catch(function () { return { ok: false, reason: 'network' }; });
     }).then(function (d) {
@@ -420,12 +453,80 @@
       if (el.disabled) return;
       openVote(el.getAttribute('data-pc-vote')); return;
     }
+    if (t.closest('[data-pc-phone-send]')) {
+      var f = $('[data-pc-phone]', vDlg), err = $('[data-pc-error-phone]', vDlg);
+      err.hidden = true;
+      if (!f.value.replace(/\D/g, '')) {
+        err.textContent = 'Enter your mobile number.'; err.hidden = false; return;
+      }
+      var btn = t.closest('[data-pc-phone-send]');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      post('start', { phone: f.value }).then(function (d) {
+        btn.disabled = false; btn.textContent = 'Send my code';
+        if (!d.ok) {
+          err.textContent =
+            d.reason === 'cooldown' ? 'Please wait ' + (d.wait || 60) + ' seconds before asking for another code.' :
+            d.reason === 'number_daily' ? 'That number has asked for too many codes today.' :
+            d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
+            d.reason === 'country' ? 'We can only text US and Canada numbers at the moment.' :
+            d.reason === 'not_allowlisted' ? 'Live texting is limited to approved test numbers during this trial.' :
+            d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
+            d.reason === 'phone' ? 'That does not look like a mobile number.' :
+            d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
+            'We could not send a code just now. Please try again.';
+          err.hidden = false;
+          track('otp_start_failed', { reason: d.reason });
+          return;
+        }
+        $('[data-pc-phone-mask]', vDlg).textContent = d.phone || 'your phone';
+        var tc = $('[data-pc-test-code]', vDlg);
+        if (d.test_code) {
+          tc.innerHTML = '⚠ ' + d.test_note + ' Code:<b>' + d.test_code + '</b>';
+          tc.hidden = false;
+        } else { tc.hidden = true; }
+        step('phone-code');
+        track('otp_start', { mock: !!d.mock });
+      });
+      return;
+    }
+    if (t.closest('[data-pc-resend]')) {
+      step('phone');
+      return;
+    }
+    if (t.closest('[data-pc-code-check]')) {
+      var c = $('[data-pc-smscode]', vDlg), ce = $('[data-pc-error-code]', vDlg);
+      ce.hidden = true;
+      var cb = t.closest('[data-pc-code-check]');
+      cb.disabled = true; cb.textContent = 'Checking…';
+      post('check', { code: c.value }).then(function (d) {
+        cb.disabled = false; cb.textContent = 'Verify';
+        if (!d.ok) {
+          ce.textContent =
+            d.reason === 'expired' ? 'That code has expired. Ask for a new one.' :
+            d.reason === 'too_many' ? 'Too many attempts. Start again with your number.' :
+            d.reason === 'format' ? 'Enter the six digits from the message.' :
+            d.reason === 'no_pending' ? 'Ask for a code first.' :
+            'That code did not match.' + (typeof d.tries_left === 'number' ? ' ' + d.tries_left + ' left.' : '');
+          ce.hidden = false;
+          track('otp_check_failed', { reason: d.reason });
+          return;
+        }
+        me = d;
+        method = 'phone';
+        track('otp_verified', { mock: d.sms === 'mock' });
+        if (typeof d.remaining === 'number' && d.remaining <= 0) { step('already'); return; }
+        confirmStep();
+      });
+      return;
+    }
     if ((el = t.closest('[data-pc-way]'))) {
       method = el.getAttribute('data-pc-way');
       track('auth_start_simulated', { method: el.getAttribute('data-pc-way') });
       // Google lands straight on the confirmation; email collects a code first. Either way the
       // same completion event fires, so the funnel has both halves.
-      if (method === 'google') confirmStep(); else step('otp');
+      if (method === 'phone') step('phone');
+      else if (method === 'google') confirmStep();
+      else step('otp');
       return;
     }
     if (t.closest('[data-pc-otp-send]')) {

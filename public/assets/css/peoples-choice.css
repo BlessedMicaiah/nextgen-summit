@@ -324,3 +324,11 @@ body.has-pcbar .nav{top:34px}
 .pcdone__again{margin-top:10px;padding:10px 14px;border-radius:9px;background:rgba(31,199,190,.14);
   font:700 12.5px/1.5 var(--f-sans);color:var(--accent-ink)}
 .pcdone__again[hidden]{display:none}
+
+/* ---------- phone verification ---------- */
+.pcv__hint{margin-top:7px;font:500 11.5px/1.4 var(--f-sans);color:var(--ink-3)}
+.pcv__way--first{box-shadow:inset 0 0 0 2px var(--accent-ink)}
+.pcv__way--first:hover{box-shadow:inset 0 0 0 2px var(--accent-ink);background:var(--paper-2)}
+[data-pc-test-code]{margin-top:14px;font-weight:700}
+[data-pc-test-code] b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;
+  letter-spacing:.22em;margin-left:6px}

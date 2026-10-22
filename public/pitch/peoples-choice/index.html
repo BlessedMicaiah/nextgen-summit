@@ -276,6 +276,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
       </div>
       <div class="pcv__ways">
+        <button class="pcv__way pcv__way--first" type="button" data-pc-way="phone" hidden data-pc-phone-way>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>
+          Verify with a text message
+        </button>
         <button class="pcv__way" type="button" data-pc-way="google">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7C21.8 19 23 16 23 12.3z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3C3.7 21.4 7.6 24 12 24z"/><path fill="#FBBC05" d="M5.6 14.7a7.2 7.2 0 0 1 0-4.6v-3H1.8a12 12 0 0 0 0 10.6l3.8-3z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.6 0 3.7 2.6 1.8 6.1l3.8 3C6.5 6.7 9 4.8 12 4.8z"/></svg>
           Continue with Google
@@ -288,6 +292,49 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <div class="pcv__acts">
         <button class="pcv__back" type="button" data-pc-close-vote>Cancel</button>
+      </div>
+    </div>
+
+    <!-- step 1a: phone -->
+    <div data-pc-step="phone" hidden>
+      <p class="pcv__k">Step 1 of 2</p>
+      <h2 class="pcv__t wm">what&rsquo;s your number?</h2>
+      <p class="pcv__p">We text a six-digit code. One number, one voting identity &mdash; and we only ask once: next time you come back, you are already recognised.</p>
+      <div class="pcv__who">
+        <div>
+          <p class="pcv__who-n" data-pc-who-n></p>
+          <p class="pcv__who-c" data-pc-who-c></p>
+        </div>
+      </div>
+      <div class="pcv__field">
+        <label class="pcv__label" for="pc-phone">Mobile number</label>
+        <input class="pcv__input" id="pc-phone" type="tel" inputmode="tel" autocomplete="tel"
+          placeholder="(410) 555-0199" data-pc-phone>
+        <p class="pcv__hint">US and Canada numbers.</p>
+      </div>
+      <p class="pcv__err" data-pc-error-phone hidden></p>
+      <div class="pcv__acts">
+        <button class="pcv__back" type="button" data-pc-back="verify">Go back</button>
+        <button class="btn" type="button" data-pc-phone-send>Send my code</button>
+      </div>
+    </div>
+
+    <!-- step 1a-ii: the code -->
+    <div data-pc-step="phone-code" hidden>
+      <p class="pcv__k">Step 1 of 2</p>
+      <h2 class="pcv__t wm">enter your code.</h2>
+      <p class="pcv__p">Sent to <strong data-pc-phone-mask></strong>.</p>
+      <p class="pcv__sim" data-pc-test-code hidden></p>
+      <div class="pcv__field">
+        <label class="pcv__label" for="pc-smscode">Six-digit code</label>
+        <input class="pcv__input pcv__otp" id="pc-smscode" type="text" inputmode="numeric"
+          autocomplete="one-time-code" maxlength="6" placeholder="------" data-pc-smscode>
+      </div>
+      <p class="pcv__err" data-pc-error-code hidden></p>
+      <div class="pcv__acts">
+        <button class="pcv__back" type="button" data-pc-back="phone">Change number</button>
+        <button class="pcv__back" type="button" data-pc-resend>Resend</button>
+        <button class="btn" type="button" data-pc-code-check>Verify</button>
       </div>
     </div>
 

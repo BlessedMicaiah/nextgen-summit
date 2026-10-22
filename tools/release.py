@@ -86,6 +86,9 @@ def main():
         for base, dirs, files in os.walk(PUBLIC):
             dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', 'resumes')]
             for f in files:
+                # the Twilio secrets live on the server only; never carry them in a build
+                if f == 'config.twilio.php':
+                    continue
                 if f.endswith(SKIP_EXT):
                     continue
                 full = os.path.join(base, f)

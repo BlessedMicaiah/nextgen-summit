@@ -17,6 +17,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/pc-twilio.php';
+require_once __DIR__ . '/pc-attendee.php';   // the verified-attendee entitlement
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -84,11 +85,25 @@ function pc_csrf_ok(array $in): bool
 }
 
 /* ---------- what the caller is allowed to know about themselves ---------- */
+/* Everything the interface needs to decide what this voter can do next, in one answer.
+
+   It used to report only whether a phone was verified, and the page filled in the rest from a
+   sessionStorage note it had written itself. That is how a returning voter ended up staring at
+   a dead end: the browser remembered casting a vote, routed to "you have already voted", and
+   never asked the server whether anything else was still available to them. The server knew
+   they had two bonus points waiting. Nobody asked it.
+
+   So the state is computed here now, and the page renders whatever this says. */
 function pc_me(): array
 {
     $verified = pc_session_verified();
     $key = pc_session_key();
-    $ticket = !empty($_SESSION['ticket_verified']);          // phase two; always false for now
+    /* The attendee entitlement is a row in pc_attendee, written only after an emailed code
+       proved the registration belongs to this voter. It used to be read from a session flag
+       that nothing ever set, so a verified attendee was reported as having an allowance of
+       one and the extra two were invisible to the interface. */
+    $ticket = $verified && $key !== null
+        && function_exists('pc_attendee_verified') && pc_attendee_verified($key);
     $out = [
         'ok' => true,
         'verified' => $verified,
@@ -106,8 +121,43 @@ function pc_me(): array
         $out['remaining'] = pc_remaining($key, $ticket);
         $out['next_window'] = pc_next_window();
         $out['ticket_verified'] = $ticket;
+
+        /* Which founder today's vote went to. The bonus follows that choice and cannot be
+           pointed somewhere else, so the page needs to know it to tell a voter who wanders to
+           a different contestant what has already happened. */
+        $out['today_entrant'] = pc_today_entrant($key);
+
+        /* The two questions the interface actually asks, answered here rather than inferred
+           from arithmetic that is easy to get wrong.
+
+           bonus_eligible is NOT "remaining > 0". A voter who has cast their one phone point
+           has nothing remaining at their current tier, and is exactly the person with two
+           points waiting behind a registration check. Reading remaining alone is what made
+           the old screen say "that is your lot" to someone who still had two to give. */
+        $out['bonus_eligible'] = pc_mode() === 'daily' && !$ticket && pc_voting_open();
+        $out['bonus_claimable'] = $ticket && pc_voting_open()
+            && $out['remaining'] > 0 && $out['today_entrant'] !== null;
     }
     return $out;
+}
+
+/** The founder this voter backed today, or null. */
+function pc_today_entrant(?string $voterKey): ?string
+{
+    if ($voterKey === null) {
+        return null;
+    }
+    $db = pc_db();
+    if (!$db) {
+        return null;
+    }
+    $day = pc_mode() === 'daily' ? pc_day() : 'all';
+    $s = $db->prepare('SELECT entrant_id FROM pc_votes
+                       WHERE competition = ? AND voter_key = ? AND vote_day = ? AND valid = 1
+                       ORDER BY slot ASC LIMIT 1');
+    $s->execute([PC_COMPETITION, $voterKey, $day]);
+    $r = $s->fetch();
+    return $r ? (string) $r['entrant_id'] : null;
 }
 
 $raw = (string) file_get_contents('php://input');

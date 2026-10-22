@@ -275,45 +275,75 @@
     });
   }
 
+  /* Which screen this voter should be looking at, decided by the SERVER's account of them.
+
+     The old version asked sessionStorage whether this browser had voted and routed on that.
+     It was wrong twice over: a note the page wrote to itself is not evidence (clearing a tab
+     erased it, and the real enforcement was server-side all along), and the screen it routed
+     to was a dead end. Somebody who had cast their phone point and had two bonus points
+     waiting was told they had already voted and shown the way out. */
+
+  /* The visible step, so an error lands where the voter is rather than inside a hidden one. */
+  function liveStep() {
+    var found = null;
+    $$('[data-pc-step]', vDlg).forEach(function (n) { if (!n.hidden) found = n; });
+    return found || vDlg;
+  }
+
+  function routeFor(d, entrantId) {
+    if (!d || !d.ok || !d.verified) return 'verify';
+    var today = d.today_entrant || null;
+    if (today && today !== entrantId) return 'other';
+    if (!today) return (d.remaining > 0) ? 'confirm' : 'all-done';
+    if (d.bonus_claimable) return 'bonus-ready';   // attendee verified, points still to give
+    if (d.bonus_eligible) return 'voted-bonus';    // a registration check would unlock two
+    return 'all-done';
+  }
+
+  /* The summary on the completion screen reports what was actually given, not a fixed three. */
+  function paintSummary(d) {
+    var used = (d && typeof d.used === 'number') ? d.used : 0;
+    var bonus = Math.max(0, used - 1);
+    $$('[data-pc-sum-total]', vDlg).forEach(function (n) { n.textContent = String(used); });
+    $$('[data-pc-sum-bonus-row]', vDlg).forEach(function (n) { n.hidden = bonus <= 0; });
+    $$('[data-pc-sum-bonus]', vDlg).forEach(function (n) { n.textContent = '+' + bonus; });
+    $$('[data-pc-done-title]', vDlg).forEach(function (n) {
+      n.textContent = used >= 3 ? 'you gave 3 points today!'
+        : (used === 1 ? 'your vote is counted!' : 'you gave ' + used + ' points today!');
+    });
+  }
+
   function openVote(id) {
     var e = byId[id];
     if (!e) return;
     if (STATE !== 'open') return;
     pending = e; method = null;
-    var had = ballot();
     $$('[data-pc-who-n]', vDlg).forEach(function (n) { n.textContent = e.name; });
     $$('[data-pc-who-c]', vDlg).forEach(function (n) { n.textContent = e.company; });
-    step(had ? 'already' : 'verify');
-    refreshMe().then(function (d) {
-      /* A returning voter is already verified: no second code, ever. Tell them where they
-         stand today rather than walking them through a verification they have done. */
-      var note = $('[data-pc-confirm-note]', vDlg);
-      if (note && d.verified) {
-        note.textContent = typeof d.remaining === 'number'
-          ? 'You are already verified on this device, so no code is needed. ' +
-            (d.remaining === 1 ? 'You have 1 vote left today.'
-                               : 'You have ' + d.remaining + ' votes left today.')
-          : 'You are already verified on this device, so no code is needed.';
-      }
-      if (d.verified && !had) {
-        /* Already verified on this device: no code, no message, straight to the confirmation.
-           This is the whole point of keeping a session. */
-        method = 'phone';
-        if (typeof d.remaining === 'number' && d.remaining <= 0) { step('already'); return; }
-        confirmStep();
-      }
-    });
-    if (had) {
-      $('[data-pc-already-for]', vDlg).textContent = (byId[had.entrant] || {}).name || 'another pitch';
-      track('vote_duplicate_blocked', { entrant_id: id });
-    } else {
-      track('vote_click', { entrant_id: id, entrant_slot: e.n });
-    }
+
+    /* Open on the invitation rather than a spinner; the server's answer arrives in a moment
+       and moves them on. Nothing is recorded by looking. */
+    step('verify');
     if (!vDlg.open) {
       if (typeof vDlg.showModal === 'function') vDlg.showModal();
       else vDlg.setAttribute('open', '');
     }
+
+    refreshMe().then(function (d) {
+      var to = routeFor(d, id);
+      if (to === 'other') {
+        var who = byId[d.today_entrant];
+        $$('[data-pc-other-for]', vDlg).forEach(function (n) {
+          n.textContent = who ? who.name : 'another founder';
+        });
+      }
+      if (to === 'all-done') paintSummary(d);
+      if (to === 'confirm') { method = 'phone'; confirmStep(); return; }
+      step(to);
+      track('vote_open', { entrant_id: id, state: to });
+    });
   }
+
 
 
   /* A provider refusal is the expensive one: the message was not sent and a slot was spent
@@ -371,7 +401,12 @@
   function bonusErr(sel, d) {
     var e = $(sel, vDlg);
     if (!e) return;
-    e.textContent =
+    e.textContent = bonusText(d);
+    e.hidden = false;
+  }
+
+  function bonusText(d) {
+    return
       d.reason === 'not_found' ? 'We could not find a NextGen Summit registration for that email. Check the address you registered with, or use the ticket link below to join us.' :
       d.reason === 'claimed' ? 'That registration has already been linked to another voter. Each registration counts once.' :
       d.reason === 'unavailable' ? 'We cannot reach the registration system right now. Your vote is safe — please try the bonus again in a few minutes.' :
@@ -388,7 +423,6 @@
       d.reason === 'verify_required' ? 'Your session expired. Close this and verify your phone again.' :
       d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
       'Something went wrong. Please try again.';
-    e.hidden = false;
   }
 
   function confirmStep() {
@@ -442,20 +476,25 @@
         repaintAfterVote();
         return;
       }
+      /* The server refused. Ask it what this voter's position actually is and show that,
+         rather than assuming a refusal means there is nothing left to do -- an allowance
+         spent at the phone tier is precisely the person with two bonus points waiting. */
       var why = d && d.reason;
-      if (why === 'allowance') {
-        $('[data-pc-already-for]', vDlg).textContent = who.name;
-        step('already');
-        track('vote_allowance_spent', { entrant_id: who.id });
-        repaintAfterVote();
-        return;
-      }
-      if (why === 'duplicate') {
-        keepBallot(who.id);
-        $('[data-pc-already-for]', vDlg).textContent = who.name;
-        step('already');
-        track('vote_duplicate_blocked', { entrant_id: who.id });
-        repaintAfterVote();
+      if (why === 'allowance' || why === 'duplicate') {
+        track(why === 'duplicate' ? 'vote_duplicate_blocked' : 'vote_allowance_spent',
+              { entrant_id: who.id });
+        refreshMe().then(function (me2) {
+          var to = routeFor(me2, who.id);
+          if (to === 'all-done') paintSummary(me2);
+          if (to === 'other') {
+            var o = byId[me2.today_entrant];
+            $$('[data-pc-other-for]', vDlg).forEach(function (n) {
+              n.textContent = o ? o.name : 'another founder';
+            });
+          }
+          step(to === 'confirm' ? 'all-done' : to);
+          repaintAfterVote();
+        });
         return;
       }
       var e = $('[data-pc-error-cast]', vDlg);
@@ -606,7 +645,6 @@
         me = d;
         method = 'phone';
         track('otp_verified', { mock: d.sms === 'mock' });
-        if (typeof d.remaining === 'number' && d.remaining <= 0) { step('already'); return; }
         confirmStep();
       });
       return;
@@ -653,13 +691,17 @@
       return;
     }
     if (t.closest('[data-pc-ebclaim]')) {
-      var ce = $('[data-pc-error-ebclaim]', vDlg);
-      ce.hidden = true;
+      var scope = liveStep();
+      var ce = $('[data-pc-error-ebclaim]', scope) || $('[data-pc-error-ebclaim-c]', scope);
+      if (ce) ce.hidden = true;
       var b3 = t.closest('[data-pc-ebclaim]');
       b3.disabled = true; b3.textContent = 'Adding…';
       bpost('claim').then(function (d) {
         b3.disabled = false; b3.textContent = 'Add my 2 points';
-        if (!d.ok) { bonusErr('[data-pc-error-ebclaim]', d); return; }
+        if (!d.ok) {
+          if (ce) { ce.textContent = bonusText(d); ce.hidden = false; }
+          return;
+        }
         var tot = $('[data-pc-bonus-total]', vDlg);
         if (tot) tot.textContent = '+' + (d.used || 3) + ' points';
         var bp = $('[data-pc-bonus-done-p]', vDlg);

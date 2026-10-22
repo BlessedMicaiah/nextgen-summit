@@ -29,6 +29,138 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/pc-admin-pin.php';
 
+/* ---------- the team passcode ----------
+
+   Two credentials, two different jobs. The admin PIN opens the dashboard, the Twilio settings,
+   the voting rules and the unannounced finalists. The team passcode opens the staging voting
+   page and nothing else: browse, verify a phone, cast a vote. A tester needs the second and
+   has no business holding the first, and before this existed the only way to let somebody test
+   was to hand them the keys to the configuration.
+
+   Stored the same way the rotated admin PIN is -- a salted HMAC in a file in the data
+   directory, outside the web root, untouched by deploys, never in git. Read as TEXT and not
+   require()d: a credential is two hex strings and has no reason to be executable, and `const`
+   in a file included from inside a function is the trap that cost us an afternoon already.
+
+   It is deliberately NOT a fallback for the admin PIN. pc_admin_check() never consults it, so
+   a team member who wanders to /admin/ meets the same door they always did. */
+
+function ngs_team_file(): string
+{
+    return ngs_data_dir() . '/config.team.php';
+}
+
+/** @return array{hash:string,salt:string,set_at:int} */
+function ngs_team_cred(): array
+{
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+    $cache = ['hash' => '', 'salt' => '', 'set_at' => 0];
+    $f = ngs_team_file();
+    if (!is_file($f) || !is_readable($f)) {
+        return $cache;
+    }
+    $raw = @file_get_contents($f);
+    if (!is_string($raw) || $raw === '') {
+        return $cache;
+    }
+    $hash = preg_match("/NGS_TEAM_HASH\s*=\s*'([0-9a-f]{64})'/", $raw, $m) ? $m[1] : '';
+    $salt = preg_match("/NGS_TEAM_SALT\s*=\s*'([0-9a-f]{16,})'/", $raw, $m) ? $m[1] : '';
+    $when = preg_match('/NGS_TEAM_SET_AT\s*=\s*(\d+)/', $raw, $m) ? (int) $m[1] : 0;
+    unset($raw);
+    if (strlen($hash) !== 64 || strlen($salt) < 16) {
+        return $cache;
+    }
+    $cache = ['hash' => $hash, 'salt' => $salt, 'set_at' => $when];
+    return $cache;
+}
+
+function ngs_team_configured(): bool
+{
+    return ngs_team_cred()['hash'] !== '';
+}
+
+function ngs_team_set_at(): int
+{
+    return ngs_team_cred()['set_at'];
+}
+
+/** Constant-time check of the team passcode. Never consulted by pc_admin_check(). */
+function ngs_team_check(string $pw): bool
+{
+    if ($pw === '') {
+        return false;
+    }
+    $c = ngs_team_cred();
+    if ($c['hash'] === '') {
+        return false;                 // not configured means nobody gets in on it
+    }
+    return hash_equals($c['hash'], hash_hmac('sha256', $pw, $c['salt']));
+}
+
+/**
+ * Set or replace the team passcode. Called only from the admin dashboard, which has already
+ * established that whoever is asking holds the admin PIN.
+ *
+ * Written to a neighbour and renamed into place, and read back before the rename is accepted,
+ * so a half-written credential cannot be what the gate reads next.
+ *
+ * @return array{ok:bool,error?:string}
+ */
+function ngs_team_set(string $new): array
+{
+    if (strlen($new) < 6) {
+        return ['ok' => false, 'error' => 'Use at least 6 characters. Nothing was changed.'];
+    }
+    if (strlen($new) > 200 || trim($new) === '') {
+        return ['ok' => false, 'error' => 'That passcode will not do. Nothing was changed.'];
+    }
+    $salt = bin2hex(random_bytes(32));
+    $hash = hash_hmac('sha256', $new, $salt);
+    $lines = [
+        '<?php',
+        '/* NextGen staging TEAM passcode. Lets a tester onto the staging voting page and',
+        '   nothing else -- it is not an admin credential and opens no dashboard. Holds a',
+        '   salted HMAC and never the passcode. Delete this file to close team access. */',
+        'declare(strict_types=1);',
+        '',
+        "const NGS_TEAM_SALT = '" . $salt . "';",
+        "const NGS_TEAM_HASH = '" . $hash . "';",
+        'const NGS_TEAM_SET_AT = ' . time() . ';',
+        '',
+    ];
+    $path = ngs_team_file();
+    $dir = dirname($path);
+    if (!is_dir($dir) || !is_writable($dir)) {
+        return ['ok' => false, 'error' => 'The data directory is not writable by PHP. Nothing was changed.'];
+    }
+    $tmp = $path . '.new';
+    if (@file_put_contents($tmp, implode("\n", $lines), LOCK_EX) === false) {
+        return ['ok' => false, 'error' => 'Could not write the passcode. Nothing was changed.'];
+    }
+    @chmod($tmp, 0600);
+    $back = @file_get_contents($tmp);
+    if (!is_string($back) || strpos($back, $hash) === false || strpos($back, $salt) === false) {
+        @unlink($tmp);
+        return ['ok' => false, 'error' => 'The passcode did not read back correctly. Nothing was changed.'];
+    }
+    if (!@rename($tmp, $path)) {
+        @unlink($tmp);
+        return ['ok' => false, 'error' => 'Could not move the passcode into place.'];
+    }
+    @chmod($path, 0600);
+    return ['ok' => true];
+}
+
+/** Close team access entirely. */
+function ngs_team_clear(): bool
+{
+    $f = ngs_team_file();
+    return !is_file($f) || @unlink($f);
+}
+
 /** Is this one of the hosts the gate governs? */
 function ngs_staging_gate_active(): bool
 {
@@ -78,11 +210,20 @@ function ngs_staging_gate_ok(): bool
     $ok = !empty($_SESSION['stg_ok'])
         && (int) ($_SESSION['stg_at'] ?? 0) > time() - 12 * 3600
         && (int) ($_SESSION['stg_epoch'] ?? 0) === pc_admin_epoch();
+    $GLOBALS['ngs_stg_level'] = $ok ? (string) ($_SESSION['stg_level'] ?? 'team') : '';
     session_write_close();
     if ($had && $prev !== '') {
         session_name($prev);          // leave the caller's session name as we found it
     }
     return $ok;
+}
+
+
+/** Which credential opened the gate: 'admin', 'team', or '' when it is not open. */
+function ngs_staging_level(): string
+{
+    ngs_staging_gate_ok();
+    return (string) ($GLOBALS['ngs_stg_level'] ?? '');
 }
 
 /**
@@ -147,11 +288,17 @@ function ngs_staging_gate_post(): string
     if ($until > time()) {
         return 'Too many attempts. Try again in ' . ceil(($until - time()) / 60) . ' minutes.';
     }
-    if (pc_admin_check(is_string($_POST['password'] ?? null) ? $_POST['password'] : '')) {
+    /* Either credential opens the preview; the session remembers which, and nothing reads
+       that to grant admin rights. The team passcode is checked first so a tester's attempt
+       never touches the admin credential's lockout counter. */
+    $pw = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+    $level = ngs_team_check($pw) ? 'team' : (pc_admin_check($pw) ? 'admin' : '');
+    if ($level !== '') {
         session_regenerate_id(true);
         $_SESSION['stg_ok'] = true;
         $_SESSION['stg_at'] = time();
         $_SESSION['stg_epoch'] = pc_admin_epoch();
+        $_SESSION['stg_level'] = $level;
         $_SESSION['stg_tries'] = 0;
         header('Location: ./', true, 303);
         exit;
@@ -163,7 +310,7 @@ function ngs_staging_gate_post(): string
         $_SESSION['stg_tries'] = 0;
     }
     sleep(2);
-    return 'That password did not match.';
+    return 'That passcode did not match.';
 }
 
 /** The sign-in page itself, in the NextGen dark. Nothing of the voting page is sent with it. */
@@ -182,18 +329,18 @@ function ngs_staging_gate_page(string $notice): void
         . '<link rel="preconnect" href="https://fonts.googleapis.com">'
         . '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
         . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">'
-        . '<link rel="stylesheet" href="/assets/css/site.css?v=20261022-08">'
-        . '<link rel="stylesheet" href="/assets/css/finalists.css?v=20261022-08">'
+        . '<link rel="stylesheet" href="/assets/css/site.css?v=20261022-09">'
+        . '<link rel="stylesheet" href="/assets/css/finalists.css?v=20261022-09">'
         . '</head><body><main class="fgate"><div class="fgate__in">'
         . '<p class="fgate__eyebrow">NextGen Summit</p>'
-        . '<h1 class="fgate__title wm">staging.</h1>'
+        . '<h1 class="fgate__title wm">team preview.</h1>'
         . '<p class="fgate__p">This preview sends real text messages, so it is limited to the '
-        . 'NextGen team. Sign in with the staging password to continue.</p>'
+        . 'NextGen team. Enter the team access passcode to continue.</p>'
         . ($notice !== '' ? '<p class="fgate__notice">' . $h($notice) . '</p>' : '')
         . '<form method="post" class="fgate__form">'
         . '<input type="hidden" name="csrf" value="' . $h($csrf) . '">'
         . '<input type="hidden" name="action" value="stgin">'
-        . '<label class="fgate__label" for="pw">Staging password</label>'
+        . '<label class="fgate__label" for="pw">Team access passcode</label>'
         . '<input class="fgate__input" id="pw" name="password" type="password" '
         . 'autocomplete="current-password" required autofocus>'
         . '<button class="fgate__btn" type="submit">Enter the preview</button>'

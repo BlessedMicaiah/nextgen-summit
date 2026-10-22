@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__, 3) . '/api/pc-twilio-write.php';
 require_once dirname(__DIR__, 3) . '/api/pc-admin-pin.php';
+require_once dirname(__DIR__, 3) . '/api/pc-staging-gate.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -205,6 +206,26 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             . ' No SMS was sent and the budget is unchanged.';
         header('Location: ./', true, 303);
         exit;
+    } elseif ($authed && $action === 'teampass') {
+        /* Setting the TEAM passcode, from behind the admin PIN. The two are separate
+           credentials on purpose: this one lets a tester onto the staging voting page and
+           opens no dashboard, so it can be shared with people who should not hold the PIN. */
+        $want = is_string($_POST['team_pass'] ?? null) ? $_POST['team_pass'] : '';
+        if (($_POST['clear'] ?? '') === '1') {
+            $_SESSION['flash'] = ngs_team_clear()
+                ? 'Team access is closed. The passcode no longer works and testers will need a new one.'
+                : 'Could not remove the team passcode file.';
+            header('Location: ./', true, 303);
+            exit;
+        }
+        $r = ngs_team_set($want);
+        if ($r['ok']) {
+            $_SESSION['flash'] = 'Team passcode saved. Share it with testers along with the '
+                . 'staging voting link. It does not open this dashboard.';
+            header('Location: ./', true, 303);
+            exit;
+        }
+        $notice = $r['error'];
     } elseif ($authed && $action === 'adminpin') {
         /* The current PIN is demanded again even though this session is already authenticated:
            an unlocked phone left on a table should not be enough to change the lock.
@@ -286,8 +307,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261022-08">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261022-08">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261022-09">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261022-09">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -493,6 +514,31 @@ foreach ($standings as $r) {
     </section>
 
     <section class="adm__sec">
+      <p class="adm__h">Team access passcode</p>
+      <p class="adm__p">A second, lesser credential for people who should test the voting flow but should <strong>not</strong> hold the admin PIN. It opens the staging voting page, the contestant links and the SMS and voting endpoints &mdash; and <strong>nothing on this dashboard</strong>. Stored as a salted hash in the data directory, outside the web root.</p>
+      <p class="adm__p"><strong>Status:</strong> <?= ngs_team_configured()
+          ? 'set' . (ngs_team_set_at() ? ' on ' . h(date('j M Y, g:i a', ngs_team_set_at())) : '')
+          : 'not set &mdash; team members cannot reach the preview' ?></p>
+      <form method="post" class="adm__inline" autocomplete="off">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="teampass">
+        <label class="adm__label" for="tp">New team passcode (at least 6 characters)</label>
+        <input class="adm__input" id="tp" name="team_pass" type="text" autocomplete="off" minlength="6"
+          placeholder="something easy to read out loud">
+        <button class="adm__btn adm__btn--go" type="submit">Save the team passcode</button>
+      </form>
+      <?php if (ngs_team_configured()): ?>
+        <div class="adm__bar">
+          <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+            <input type="hidden" name="action" value="teampass">
+            <input type="hidden" name="clear" value="1">
+            <button class="adm__btn adm__btn--warn" type="submit">Close team access</button>
+          </form>
+        </div>
+      <?php endif; ?>
+    </section>
+
+    <section class="adm__sec">
       <p class="adm__h">Change the admin PIN</p>
       <p class="adm__p">Over HTTPS, straight to the server. The PIN is never shown back, never written to a file in readable form and never logged &mdash; only a salted HMAC of it is stored, in the data directory <strong>outside the web root</strong>, so a deploy cannot undo the change. <code>config.php</code> is not opened for writing, so <code>NGS_SECRET</code>, the voter identities derived from it, the database key and the Twilio credentials are not merely preserved &mdash; they are never touched.</p>
       <p class="adm__p">The new PIN is verified against what was actually written <em>before</em> the old one stops working. You stay signed in here; every other admin session is signed out.</p>
@@ -613,7 +659,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261022-08" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261022-09" defer></script>
 <?php endif; ?>
 </body>
 </html>

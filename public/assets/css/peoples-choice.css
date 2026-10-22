@@ -418,3 +418,10 @@ body.has-pcbar .nav{top:34px}
 @media (prefers-reduced-motion:reduce){
   .pcv__x{transition:none}
 }
+
+/* the bonus invitation: a celebration with an offer in it, not another checkpoint */
+.pcbonus__acts{display:grid;gap:9px;margin-top:15px}
+.pcbonus__acts .btn{width:100%}
+.pcbonus__acts .pcv__back{width:100%}
+.pcbonus--have{background:rgba(31,199,190,.1);box-shadow:inset 0 0 0 1.5px rgba(0,122,116,.28)}
+.pcbonus[hidden],.pcbonus--have[hidden]{display:none}

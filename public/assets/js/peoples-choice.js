@@ -327,6 +327,69 @@
     return base;
   }
 
+
+  /* ---------- the verified-attendee bonus ----------
+     Every call needs the phone-verified session; the server refuses otherwise, so there is no
+     path from this file to a point that was not earned. */
+  var BONUS = '/api/pc-bonus.php';
+  var bonusEmail = '';
+
+  function bpost(action, body) {
+    return fetch(BONUS, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action: action, csrf: me.csrf }, body || {}))
+    }).then(function (r) {
+      return r.json().catch(function () { return { ok: false, reason: 'network' }; });
+    });
+  }
+
+  /* Which of the two blocks the success screen shows: the invitation, or a note that the
+     registration is already linked. Asked of the server rather than remembered locally. */
+  function paintBonus() {
+    var invite = $('[data-pc-bonus]', vDlg), have = $('[data-pc-bonus-have]', vDlg);
+    if (!invite || !have) return;
+    invite.hidden = true; have.hidden = true;
+    bpost('status').then(function (d) {
+      if (!d || !d.ok) return;
+      if (d.attendee_verified) {
+        have.hidden = false;
+        var hp = $('[data-pc-bonus-have-p]', vDlg);
+        if (hp) {
+          hp.textContent = d.remaining > 0
+            ? 'You have ' + d.remaining + ' more point' + (d.remaining === 1 ? '' : 's') +
+              ' to give today. They reset at midnight Eastern.'
+            : 'You have used all three of today’s points. They reset at midnight Eastern.';
+        }
+      } else if (d.mode === 'daily') {
+        invite.hidden = false;
+      }
+    });
+  }
+
+  function bonusErr(sel, d) {
+    var e = $(sel, vDlg);
+    if (!e) return;
+    e.textContent =
+      d.reason === 'not_found' ? 'We could not find a NextGen Summit registration for that email. Check the address you registered with, or use the ticket link below to join us.' :
+      d.reason === 'claimed' ? 'That registration has already been linked to another voter. Each registration counts once.' :
+      d.reason === 'unavailable' ? 'We cannot reach the registration system right now. Your vote is safe — please try the bonus again in a few minutes.' :
+      d.reason === 'mail' ? 'We could not send the email just now. Please try again in a moment.' :
+      d.reason === 'too_many' ? 'That is too many verification emails for one day. Please try again tomorrow.' :
+      d.reason === 'email' ? 'That does not look like an email address.' :
+      d.reason === 'expired' ? 'That code has expired. Send a new one and try again.' :
+      d.reason === 'attempts' ? 'Too many attempts. Start the registration check again.' :
+      d.reason === 'none' ? 'We have no code waiting. Send one and try again.' :
+      d.reason === 'code' ? ('That code did not match.' + (d.tries_left ? ' ' + d.tries_left + ' tries left.' : '')) :
+      d.reason === 'vote_first' ? 'Cast today’s vote first, then the bonus can be added to it.' :
+      d.reason === 'spent' ? 'Today’s points are already used. They reset at midnight Eastern.' :
+      d.reason === 'closed' ? 'Voting has closed.' :
+      d.reason === 'verify_required' ? 'Your session expired. Close this and verify your phone again.' :
+      d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
+      'Something went wrong. Please try again.';
+    e.hidden = false;
+  }
+
   function confirmStep() {
     step('confirm');
     track('verify_complete', { method: method || 'phone' });
@@ -372,7 +435,9 @@
           }
         }
         step('done');
-        track('vote_success', { entrant_id: who.id, entrant_slot: who.n, simulated: true, mode: d.mode });
+        paintBonus();          // invitation, or "already linked", decided by the server
+        track('vote_success', { entrant_id: who.id, entrant_slot: who.n,
+                                simulated: !!d.simulated, mode: d.mode });
         repaintAfterVote();
         return;
       }
@@ -551,6 +616,55 @@
       method = 'phone';
       track('verify_start', { method: 'phone' });
       step('phone');
+      return;
+    }
+    if (t.closest('[data-pc-bonus-start]')) { step('bonus-email'); return; }
+    if (t.closest('[data-pc-bonus-later]') || t.closest('[data-pc-bonus-cancel]')) {
+      step('done'); paintBonus(); return;
+    }
+    if (t.closest('[data-pc-ebmail-send]')) {
+      var em = $('[data-pc-ebmail]', vDlg), eme = $('[data-pc-error-ebmail]', vDlg);
+      eme.hidden = true;
+      var b1 = t.closest('[data-pc-ebmail-send]');
+      b1.disabled = true; b1.textContent = 'Sending…';
+      bonusEmail = (em.value || '').trim();
+      bpost('lookup', { email: bonusEmail }).then(function (d) {
+        b1.disabled = false; b1.textContent = 'Send my code';
+        if (!d.ok) { bonusErr('[data-pc-error-ebmail]', d); return; }
+        if (d.already) { step('bonus-confirm'); return; }
+        var mask = $('[data-pc-ebmail-mask]', vDlg);
+        if (mask) mask.textContent = bonusEmail;
+        step('bonus-code');
+      });
+      return;
+    }
+    if (t.closest('[data-pc-ebcode-check]')) {
+      var cc = $('[data-pc-ebcode]', vDlg), cce = $('[data-pc-error-ebcode]', vDlg);
+      cce.hidden = true;
+      var b2 = t.closest('[data-pc-ebcode-check]');
+      b2.disabled = true; b2.textContent = 'Checking…';
+      bpost('check', { code: (cc.value || '') }).then(function (d) {
+        b2.disabled = false; b2.textContent = 'Verify my registration';
+        if (!d.ok) { bonusErr('[data-pc-error-ebcode]', d); return; }
+        step('bonus-confirm');          // verified, and nothing awarded until they ask
+      });
+      return;
+    }
+    if (t.closest('[data-pc-ebclaim]')) {
+      var ce = $('[data-pc-error-ebclaim]', vDlg);
+      ce.hidden = true;
+      var b3 = t.closest('[data-pc-ebclaim]');
+      b3.disabled = true; b3.textContent = 'Adding…';
+      bpost('claim').then(function (d) {
+        b3.disabled = false; b3.textContent = 'Add my 2 points';
+        if (!d.ok) { bonusErr('[data-pc-error-ebclaim]', d); return; }
+        var tot = $('[data-pc-bonus-total]', vDlg);
+        if (tot) tot.textContent = '+' + (d.used || 3) + ' points';
+        var bp = $('[data-pc-bonus-done-p]', vDlg);
+        if (bp) bp.textContent = 'That is your full allowance for today. Come back tomorrow after midnight Eastern for three more.';
+        track('bonus_claimed', { awarded: d.awarded });
+        step('bonus-done');
+      });
       return;
     }
     if (t.closest('[data-pc-cast]')) { castVote(); return; }

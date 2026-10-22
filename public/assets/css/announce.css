@@ -2,8 +2,7 @@
    NextGen Summit — the extended pitch deadline
    1. .dl  the old date struck through in red, the new
            date written in beside it. Drawn once when it scrolls into view.
-   2. .ann the announcement that opens a few seconds into a visit, once a session.
-   Colours come from the tokens in site.css. Remove both once October 20 has passed.
+   Colours come from the tokens in site.css. The pop-up that shared this file was removed after October 20.
    ========================================================================= */
 
 /* ---------- 1. the struck date ---------- */
@@ -19,36 +18,6 @@
 .js .dl:not(.is-on) .dl__old::after{transform:scaleX(0)}
 .js .dl:not(.is-on) .dl__new{opacity:0;transform:translate3d(0,.35em,0)}
 
-/* ---------- 2. the announcement ---------- */
-.ann{width:min(520px,calc(100% - 32px));max-height:calc(100% - 32px);margin:auto;padding:0;border:0;border-radius:14px;background:var(--paper);color:var(--ink);box-shadow:0 30px 80px -20px rgba(var(--shade),.45);overflow:auto;overscroll-behavior:contain}
-.ann::backdrop{background:rgba(var(--shade),.55)}
-.ann[open]{animation:ann-in .7s var(--ease) both}
-.ann[open]::backdrop{animation:ann-fade .5s var(--ease) both}
-.ann.is-leaving{animation:ann-out .3s var(--ease-io) both}
-.ann.is-leaving::backdrop{animation:ann-fade .3s var(--ease-io) reverse both}
-@keyframes ann-in{from{opacity:0;transform:translate3d(0,24px,0) scale(.97)}to{opacity:1;transform:none}}
-@keyframes ann-out{to{opacity:0;transform:translate3d(0,12px,0) scale(.98)}}
-@keyframes ann-fade{from{opacity:0}to{opacity:1}}
-
-.ann__bar{height:6px;background:linear-gradient(90deg,var(--cyan) 0 33.3%,var(--magenta) 33.3% 66.6%,var(--yellow) 66.6%)}
-.ann__in{position:relative;outline:none;padding:clamp(26px,5vw,40px) clamp(22px,5vw,40px) clamp(24px,4.6vw,34px)}
-.ann__close{position:absolute;top:10px;right:10px;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:8px;transition:background-color .3s var(--ease)}
-.ann__close:hover{background:var(--paper-2)}
-.ann__close svg{width:16px;height:16px}
-.ann__kicker{display:inline-flex;align-items:center;gap:10px;font:700 11px/1.3 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
-.ann__kicker::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
-.ann__title{margin-top:14px;padding-right:28px;font-size:clamp(40px,8vw,58px);line-height:.9;padding-bottom:.04em}
-.ann__date{margin-top:18px;font:800 clamp(22px,4.4vw,30px)/1.2 var(--f-sans);letter-spacing:.01em}
-.ann__copy{margin-top:12px;max-width:40ch;font:500 16px/1.55 var(--f-sans);color:var(--ink-2)}
-.ann__cta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px;margin-top:clamp(20px,3.6vw,28px)}
-.ann__later{min-height:44px;font:700 12px/1 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);transition:color .3s var(--ease)}
-.ann__later:hover{color:var(--ink)}
-@media (max-width:480px){
-  .ann__cta .btn{width:100%}
-  .ann__later{width:100%;text-align:center}
-}
-
 @media (prefers-reduced-motion:reduce){
   .js .dl__old::after,.js .dl__new{transition:none}
-  .ann[open],.ann[open]::backdrop,.ann.is-leaving,.ann.is-leaving::backdrop{animation:none}
 }

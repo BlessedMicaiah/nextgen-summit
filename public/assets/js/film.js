@@ -17,7 +17,8 @@
   var KEY = 'ngs-film-seen';
   var DELAY = 1600;                 // after the page has loaded, so the hero gets its moment first
   var REST = 83;                    // s: the frame the end card rests on (the nextgen mark on black)
-  var STALL = 10000;                // no progress for this long while meant to be playing: free the close
+  var STALL = 10000;                // no progress for this long once it has started: free the close
+  var NEVER = 30000;                // no first frame at all after this long: free the close
   var NUDGE = 40;                   // px of scrolling that tucks it into the corner
   var RING = 2 * Math.PI * 21;      // the countdown ring's circumference (r = 21 in a 48 box)
   var EASE = 'cubic-bezier(.16,1,.3,1)';
@@ -83,7 +84,7 @@
     var box = $('.film__box'), v = $('.film__video'), gate = $('.film__gate'), ring = $('.film__ring'),
         count = $('.film__count'), bar = $('.film__progress span'), sound = $('.film__sound'), live = $('.sr');
 
-    var mini = false, free = false, closing = false, held = false, raf = 0;
+    var mini = false, free = false, closing = false, held = false, begun = false, raf = 0;
     var y0 = window.scrollY, last = -1, lastMove = Date.now();
 
     /* ---------- the gate ---------- */
@@ -108,7 +109,8 @@
         }
       }
       if (t !== last) { last = t; lastMove = Date.now(); }
-      else if (!free && !v.paused && !document.hidden && Date.now() - lastMove > STALL) release('The film could not keep playing. You can close it now.');
+      // stalls count only once frames have come: a slow first load is not a stall
+      else if (!free && begun && !v.paused && !document.hidden && Date.now() - lastMove > STALL) release('The film could not keep playing. You can close it now.');
       raf = requestAnimationFrame(tick);
     }
 
@@ -139,7 +141,8 @@
       if (p && p.catch) p.catch(function () {});
     }
 
-    v.addEventListener('playing', function () { f.classList.remove('is-blocked', 'is-paused', 'is-over'); lastMove = Date.now(); });
+    v.addEventListener('playing', function () { begun = true; f.classList.remove('is-blocked', 'is-paused', 'is-over'); lastMove = Date.now(); });
+    setTimeout(function () { if (!begun) release('The film could not load. You can close it now.'); }, NEVER);
     v.addEventListener('pause', function () { if (held) f.classList.add('is-paused'); });
     v.addEventListener('ended', function () {
       f.classList.add('is-over');
@@ -163,8 +166,7 @@
     });
     // a click on the picture pauses and resumes, as people expect of a video
     $('.film__frame').addEventListener('click', function (e) {
-      if (mini || e.target.closest('button')) return;
-      if (v.ended) return;
+      if (mini || e.target.closest('button') || f.classList.contains('is-over')) return;
       if (v.paused) play(!v.muted);
       else { held = true; v.pause(); }
     });

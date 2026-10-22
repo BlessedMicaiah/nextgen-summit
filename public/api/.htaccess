@@ -4,7 +4,10 @@
 # credentials and exists only on the server. The pattern below covers config.php and any
 # config.<something>.php, because the previous rule matched the first and would have served
 # the second -- which is how a secrets file ends up downloadable.
-<FilesMatch "^(_lib|pc-lib|pc-rules|pc-twilio)\.php$">
+# pc-admin-pin.php is an include like the rest: it handles the admin credential, so if an
+# edit ever left it unparseable the raw source would otherwise be served as text. Same
+# reasoning that put pc-twilio.php in this list.
+<FilesMatch "^(_lib|pc-lib|pc-rules|pc-twilio|pc-admin-pin)\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

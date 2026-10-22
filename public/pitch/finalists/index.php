@@ -62,19 +62,19 @@ header('Cache-Control: no-store');
 <?php if (!$allowed && !NGS_FINALISTS_PUBLIC): ?>
   <?php /* The gate. No finalist data has been loaded into this page at all -- there is nothing
            in the markup to read, so this is a closed door rather than a blurred window. */ ?>
-  <main class="adm">
-    <div class="adm__in adm__gate">
-      <p class="adm__h">NextGen Summit</p>
-      <h1 class="adm__title wm">the final 10.</h1>
-      <p class="adm__p">This page is in preview. The finalists are not announced yet, so it is
+  <main class="fgate">
+    <div class="fgate__in">
+      <p class="fgate__eyebrow">NextGen Summit</p>
+      <h1 class="fgate__title wm">the final 10.</h1>
+      <p class="fgate__p">This page is in preview. The finalists are not announced yet, so it is
         behind the same password as the staging dashboard.</p>
-      <?php if ($gateNotice): ?><p class="adm__notice"><?= fe($gateNotice) ?></p><?php endif; ?>
-      <form method="post" class="adm__form">
+      <?php if ($gateNotice): ?><p class="fgate__notice"><?= fe($gateNotice) ?></p><?php endif; ?>
+      <form method="post" class="fgate__form">
         <input type="hidden" name="csrf" value="<?= fe(ngs_fin_csrf()) ?>">
         <input type="hidden" name="action" value="preview">
-        <label class="adm__label" for="pw">Preview password</label>
-        <input class="adm__input" id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
-        <button class="adm__btn adm__btn--go" type="submit">View the preview</button>
+        <label class="fgate__label" for="pw">Preview password</label>
+        <input class="fgate__input" id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
+        <button class="fgate__btn" type="submit">View the preview</button>
       </form>
     </div>
   </main>

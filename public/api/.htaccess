@@ -8,7 +8,7 @@
 # edit ever left it unparseable the raw source would otherwise be served as text. Same
 # reasoning that put pc-twilio.php in this list.
 # finalists.php is the finalist data include; same reasoning again.
-<FilesMatch "^(_lib|pc-lib|pc-rules|pc-twilio|pc-admin-pin|finalists|finalists-gate|pc-attendee|pc-staging-gate)\.php$">
+<FilesMatch "^(_lib|pc-lib|pc-rules|pc-twilio|pc-admin-pin|finalists|finalists-gate|pc-attendee)\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

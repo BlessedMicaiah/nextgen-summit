@@ -23,7 +23,6 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/pc-rules.php';
-require_once __DIR__ . '/pc-staging-gate.php';
 
 /* WHERE THE CREDENTIALS LIVE, and why it is not next to this file.
 
@@ -239,6 +238,15 @@ function pc_sms_allowlist(): array
         }
     }
     return $out;
+}
+
+/** Staging and localhost, where anyone with the link is an invited tester. */
+function pc_sms_preview_host(): bool
+{
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    return strpos($host, 'staging.') === 0
+        || strpos($host, 'localhost') === 0
+        || strpos($host, '127.0.0.1') === 0;
 }
 
 function pc_sms_allowlisted(string $e164): bool
@@ -470,15 +478,20 @@ function pc_otp_start(string $e164): array
 
     /* Live from here. Two refusals before the call, both of which cost nothing to be wrong
        about and everything to be missing. */
-    /* The per-number allowlist, unless the staging gate is already doing that job.
+    /* The per-number allowlist applies to the LIVE SITE ONLY.
 
-       It existed because this endpoint answered anybody who asked. Behind the gate it answers
-       only signed-in NextGen administrators, so approving each of their numbers by hand adds
-       nothing but friction for the people doing the testing. The waiver is tied to the gate:
-       no gated host, or no session, and this refuses exactly as it always did. The live site
-       cannot waive it at all, and the budget ceiling below is untouched either way. */
-    if (!pc_sms_allowlisted($e164)
-        && !(function_exists('ngs_sms_allowlist_waived') && ngs_sms_allowlist_waived())) {
+       On staging, anyone holding the link is an invited tester using their own number, so
+       approving each one by hand is friction with nothing behind it.
+
+       What limits the damage there is not a list of numbers. It is the hard ceiling a few
+       lines below, which caps the total real messages this server will EVER send and is the
+       one control that cannot be talked round -- plus the cooldown, the per-number and per-IP
+       limits, and the country check above, all still in force. Someone who finds the staging
+       link can cost us the messages left under that ceiling and not one more.
+
+       Production keeps the allowlist and it still fails closed: an empty list there sends to
+       nobody, which is the right default for a page the public can reach. */
+    if (!pc_sms_preview_host() && !pc_sms_allowlisted($e164)) {
         pc_otp_note($key, 'blocked', false, false);
         return ['ok' => false, 'reason' => 'not_allowlisted'];
     }

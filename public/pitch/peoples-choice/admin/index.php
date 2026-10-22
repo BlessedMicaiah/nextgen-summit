@@ -291,8 +291,15 @@ foreach ($standings as $r) {
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
+<?php /* This banner used to assert that voter identity was simulated. It stopped being true
+         the moment phone verification became the default, and a warning that states the
+         opposite of what the system does is worse than no warning. It now reads the actual
+         setting rather than repeating what was true when it was written. */ ?>
   <span class="pcbar__in"><span class="pcbar__dot" aria-hidden="true"></span>
-  Staging &middot; vote rows are real and counted live &middot; voter identity is still simulated</span>
+  Staging &middot; vote rows are real and counted live &middot;
+  <?= (string) pc_meta('phone_required', '1') === '1'
+      ? 'voters must verify a phone number'
+      : 'VOTER IDENTITY IS SIMULATED - the vote limit can be walked around' ?></span>
 </div>
 
 <?php if (!$authed): ?>

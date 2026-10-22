@@ -34,7 +34,7 @@
     f.className = 'film';
     f.setAttribute('role', 'dialog');
     f.setAttribute('aria-modal', 'false');
-    f.setAttribute('aria-label', 'A message from NextGen Summit');
+    f.setAttribute('aria-label', 'A message from the Convener of NextGen Summit');
     f.innerHTML =
       '<div class="film__shade" aria-hidden="true"></div>' +
       '<div class="film__box">' +
@@ -42,7 +42,7 @@
         '<div class="film__frame">' +
           '<video class="film__video" playsinline webkit-playsinline muted preload="none" disableremoteplayback poster="' + POSTER + '"></video>' +
           '<div class="film__ui">' +
-            '<p class="film__kicker" aria-hidden="true">A message from nextgen</p>' +
+            '<p class="film__kicker" aria-hidden="true">A message from the Convener</p>' +
             '<button class="film__grow" type="button" aria-label="Bring the film back to the middle">' +
               '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +

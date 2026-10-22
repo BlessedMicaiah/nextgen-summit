@@ -150,11 +150,23 @@ if ($action === 'start') {
 
     $res = pc_otp_start($e164);
     if (!$res['ok']) {
-        pc_json(429, [
+        $fail = [
             'ok' => false,
             'reason' => $res['reason'] ?? 'blocked',
             'wait' => $res['wait'] ?? null,
-        ]);
+        ];
+        /* On a preview host only, say what the provider actually said. A failed send still
+           spends one of three messages, so "could not send" with no detail is the most
+           expensive error message on the site. Fenced the same way the mock code is. */
+        if (($res['reason'] ?? '') === 'provider') {
+            $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+            if (strpos($host, 'staging.') === 0 || strpos($host, 'localhost') === 0
+                || strpos($host, '127.0.0.1') === 0) {
+                $fail['provider_status'] = $res['status'] ?? 0;
+                $fail['provider_code'] = $res['code'] ?? null;
+            }
+        }
+        pc_json(429, $fail);
     }
 
     /* The pending attempt lives in the session, not in the reply. In MOCK the code is kept

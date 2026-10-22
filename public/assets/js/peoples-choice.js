@@ -284,8 +284,16 @@
     $$('[data-pc-who-c]', vDlg).forEach(function (n) { n.textContent = e.company; });
     step(had ? 'already' : 'verify');
     refreshMe().then(function (d) {
-      var way = $('[data-pc-phone-way]', vDlg);
-      if (way) way.hidden = false;                 // the route exists whether SMS is live or mocked
+      /* A returning voter is already verified: no second code, ever. Tell them where they
+         stand today rather than walking them through a verification they have done. */
+      var note = $('[data-pc-confirm-note]', vDlg);
+      if (note && d.verified) {
+        note.textContent = typeof d.remaining === 'number'
+          ? 'You are already verified on this device, so no code is needed. ' +
+            (d.remaining === 1 ? 'You have 1 vote left today.'
+                               : 'You have ' + d.remaining + ' votes left today.')
+          : 'You are already verified on this device, so no code is needed.';
+      }
       if (d.verified && !had) {
         /* Already verified on this device: no code, no message, straight to the confirmation.
            This is the whole point of keeping a session. */
@@ -306,9 +314,22 @@
     }
   }
 
+
+  /* A provider refusal is the expensive one: the message was not sent and a slot was spent
+     anyway. On a preview host the server hands back Twilio's HTTP status and numeric code, so
+     say them -- the next attempt costs another of three, and guessing is not affordable. */
+  function providerMsg(d) {
+    var base = 'The text could not be sent. This was refused by the SMS provider, not by us.';
+    if (d.provider_status || d.provider_code) {
+      base += ' (provider status ' + (d.provider_status || '?') +
+        (d.provider_code ? ', code ' + d.provider_code : '') + ')';
+    }
+    return base;
+  }
+
   function confirmStep() {
     step('confirm');
-    track('auth_complete_simulated', { method: method || 'simulated' });
+    track('verify_complete', { method: method || 'phone' });
   }
 
   /* The vote is the server's to accept. Nothing is marked done, stored or repainted until it
@@ -329,6 +350,8 @@
       if (btn) { btn.disabled = false; btn.textContent = 'Confirm my vote'; }
       if (d && d.ok) {
         keepBallot(who.id);
+        var nameEl = $('[data-pc-done-name]', vDlg);
+        if (nameEl) nameEl.textContent = who.name;
         var forEl = $('[data-pc-done-for]', vDlg);
         if (forEl) forEl.textContent = 'Your vote for ' + who.name + ' at ' + who.company +
           ' has been recorded. Now come and experience what’s next.';
@@ -473,6 +496,8 @@
             d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
             d.reason === 'phone' ? 'That does not look like a mobile number.' :
             d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
+            d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
+            d.reason === 'provider' ? providerMsg(d) :
             'We could not send a code just now. Please try again.';
           err.hidden = false;
           track('otp_start_failed', { reason: d.reason });
@@ -519,26 +544,15 @@
       });
       return;
     }
-    if ((el = t.closest('[data-pc-way]'))) {
-      method = el.getAttribute('data-pc-way');
-      track('auth_start_simulated', { method: el.getAttribute('data-pc-way') });
-      // Google lands straight on the confirmation; email collects a code first. Either way the
-      // same completion event fires, so the funnel has both halves.
-      if (method === 'phone') step('phone');
-      else if (method === 'google') confirmStep();
-      else step('otp');
+    /* One route in. The Google and email branches that used to live here signed nobody in:
+       Google went straight to the confirmation and email accepted any six digits. Both are
+       gone, so the only way to a ballot is a code we actually sent. */
+    if (t.closest('[data-pc-begin]')) {
+      method = 'phone';
+      track('verify_start', { method: 'phone' });
+      step('phone');
       return;
     }
-    if (t.closest('[data-pc-otp-send]')) {
-      var mail = $('[data-pc-email]', vDlg);
-      if (!mail.value || mail.value.indexOf('@') < 0) {
-        var e1 = $('[data-pc-error]', vDlg);
-        e1.textContent = 'Enter an email address to continue the simulation.'; e1.hidden = false;
-        return;
-      }
-      step('otp-code'); return;
-    }
-    if (t.closest('[data-pc-otp-check]')) { confirmStep(); return; }
     if (t.closest('[data-pc-cast]')) { castVote(); return; }
     if ((el = t.closest('[data-pc-back]'))) { step(el.getAttribute('data-pc-back')); return; }
     if (t.closest('[data-pc-close-vote]')) { vDlg.close(); return; }

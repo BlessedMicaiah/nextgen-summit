@@ -482,9 +482,23 @@ function pc_otp_start(string $e164): array
     $res = pc_twilio_call('/Verifications', ['To' => $e164, 'Channel' => 'sms']);
     pc_otp_note($key, 'start', $res['ok'], true);     // counted whether or not Twilio liked it
     if (!$res['ok']) {
-        // the upstream message is not shown to the visitor: it can name the number
+        /* A refusal here costs a budget slot -- the row above is written whether Twilio liked
+           the request or not -- so it had better say WHY. It previously went to error_log and
+           nowhere else, and this host keeps no error log, so the first real attempt spent a
+           message and taught us nothing at all.
+
+           The HTTP status and Twilio's numeric code are carried back so the caller can show
+           them on a preview host. Neither is a secret: they name the fault, not the account
+           and not the number. The upstream MESSAGE is still dropped, because that one can
+           quote the number back. */
         error_log('People\'s Choice: Verify start failed, HTTP ' . $res['status']);
-        return ['ok' => false, 'reason' => 'provider'];
+        return [
+            'ok' => false,
+            'reason' => 'provider',
+            'status' => (int) $res['status'],
+            'code' => isset($res['data']['code']) && is_numeric($res['data']['code'])
+                ? (int) $res['data']['code'] : null,
+        ];
     }
     return ['ok' => true, 'mock' => false];
 }

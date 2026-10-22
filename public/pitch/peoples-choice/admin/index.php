@@ -16,6 +16,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__, 3) . '/api/pc-twilio-write.php';
+require_once dirname(__DIR__, 3) . '/api/pc-mailer.php';
 require_once dirname(__DIR__, 3) . '/api/pc-admin-pin.php';
 
 header('X-Robots-Tag: noindex, nofollow');
@@ -205,6 +206,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             . ' No SMS was sent and the budget is unchanged.';
         header('Location: ./', true, 303);
         exit;
+    } elseif ($authed && $action === 'smtp') {
+        /* The relay settings. The app password goes straight to the writer and is not kept,
+           echoed or logged; a blank field keeps what is stored, so the sender address can be
+           corrected without retyping it. */
+        $r = pc_smtp_save([
+            'host' => $_POST['smtp_host'] ?? '',
+            'port' => $_POST['smtp_port'] ?? '',
+            'secure' => $_POST['smtp_secure'] ?? '',
+            'user' => $_POST['smtp_user'] ?? '',
+            'pass' => $_POST['smtp_pass'] ?? '',
+            'from' => $_POST['smtp_from'] ?? '',
+            'name' => $_POST['smtp_name'] ?? '',
+        ]);
+        if ($r['ok']) {
+            $st = pc_smtp_status();
+            $_SESSION['flash'] = 'Email settings saved. Host ' . $st['host'] . ', username '
+                . $st['username'] . ', password ' . $st['password'] . ', from ' . $st['from'] . '.';
+            header('Location: ./', true, 303);
+            exit;
+        }
+        $notice = $r['error'];
     } elseif ($authed && $action === 'adminpin') {
         /* The current PIN is demanded again even though this session is already authenticated:
            an unlocked phone left on a table should not be enough to change the lock.
@@ -286,8 +308,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261022-15">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261022-15">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261022-16">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261022-16">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -493,6 +515,38 @@ foreach ($standings as $r) {
     </section>
 
     <section class="adm__sec">
+      <p class="adm__h">Email delivery (verification codes)</p>
+      <p class="adm__p">The relay that sends voting codes. Use a <strong>Google Workspace app password</strong>, not an account password &mdash; it is scoped to this site and can be revoked on its own. Written to <code>config.smtp.php</code> in the data directory, outside the web root, and never shown back.</p>
+      <?php $sm = pc_smtp_status(); ?>
+      <div class="adm__table-wrap">
+        <table class="adm__table"><tbody>
+          <?php foreach ($sm as $k => $v): ?>
+            <tr><th><?= h(str_replace('_', ' ', $k)) ?></th><td><?= h(is_bool($v) ? ($v ? 'yes' : 'no') : (string) $v) ?></td></tr>
+          <?php endforeach; ?>
+        </tbody></table>
+      </div>
+      <form method="post" class="adm__inline" autocomplete="off">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="smtp">
+        <label class="adm__label" for="sh">SMTP host</label>
+        <input class="adm__input" id="sh" name="smtp_host" type="text" placeholder="smtp.gmail.com" value="<?= h($sm['host'] === 'not set' ? '' : $sm['host']) ?>">
+        <label class="adm__label" for="sp">Port</label>
+        <input class="adm__input" id="sp" name="smtp_port" type="number" min="1" max="65535" value="<?= (int) $sm['port'] ?>">
+        <label class="adm__label" for="se">Encryption</label>
+        <input class="adm__input" id="se" name="smtp_secure" type="text" placeholder="tls" value="<?= h($sm['encryption']) ?>">
+        <label class="adm__label" for="su">SMTP username (full mailbox address)</label>
+        <input class="adm__input" id="su" name="smtp_user" type="text" autocomplete="off" placeholder="<?= $sm['username'] === 'present' ? 'saved — leave blank to keep' : 'you@nextgensummit.us' ?>">
+        <label class="adm__label" for="sw">App password</label>
+        <input class="adm__input" id="sw" name="smtp_pass" type="password" autocomplete="new-password" placeholder="<?= $sm['password'] === 'present' ? 'saved — leave blank to keep' : '16 characters from Google' ?>">
+        <label class="adm__label" for="sf">From address</label>
+        <input class="adm__input" id="sf" name="smtp_from" type="text" placeholder="<?= h($sm['from'] === 'not set' ? 'vote@nextgensummit.us' : $sm['from']) ?>">
+        <label class="adm__label" for="sn">From name</label>
+        <input class="adm__input" id="sn" name="smtp_name" type="text" value="<?= h($sm['from_name']) ?>">
+        <button class="adm__btn adm__btn--go" type="submit">Save email settings</button>
+      </form>
+    </section>
+
+    <section class="adm__sec">
       <p class="adm__h">Change the admin PIN</p>
       <p class="adm__p">Over HTTPS, straight to the server. The PIN is never shown back, never written to a file in readable form and never logged &mdash; only a salted HMAC of it is stored, in the data directory <strong>outside the web root</strong>, so a deploy cannot undo the change. <code>config.php</code> is not opened for writing, so <code>NGS_SECRET</code>, the voter identities derived from it, the database key and the Twilio credentials are not merely preserved &mdash; they are never touched.</p>
       <p class="adm__p">The new PIN is verified against what was actually written <em>before</em> the old one stops working. You stay signed in here; every other admin session is signed out.</p>
@@ -613,7 +667,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261022-15" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261022-16" defer></script>
 <?php endif; ?>
 </body>
 </html>

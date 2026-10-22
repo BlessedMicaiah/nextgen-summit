@@ -33,10 +33,11 @@
 .forwho li{padding-left:26px;position:relative;font:700 clamp(17px,1.5vw,23px)/1.45 var(--f-sans);color:var(--ink)}
 .forwho li::before{content:"";position:absolute;left:0;top:.6em;width:12px;height:2px;background:var(--accent)}
 
-/* the Convener's message, on ink: the film plays in the page (js/film.js, css/film.css) */
-.ab--film{max-width:none;background:var(--ink);color:#fff;padding-block:clamp(70px,13vh,160px);overflow:hidden}
+/* the Convener's message, on the page's own paper: the film plays in the page (js/film.js, css/film.css) */
+.ab--film{max-width:none;padding-block:clamp(56px,10vh,130px);overflow:hidden}
 .ab--film > *{max-width:var(--maxw);margin-inline:auto}
-.ab--film .ab__k{color:var(--accent)}
+/* on paper the player needs a softer shadow than film.css gives it on dark */
+.ab--film .film--inline .film__box{box-shadow:0 44px 90px -46px rgba(var(--shade),.5),0 18px 40px -28px rgba(0,163,230,.35),0 0 0 1px rgba(var(--shade),.06)}
 .ab__film-t{margin-top:clamp(12px,1.8vh,18px);font-size:clamp(42px,7vw,108px);line-height:1.06;letter-spacing:-.035em}
 .ab__film{margin-top:clamp(30px,5vh,60px)}
 .ab__film > *{max-width:1120px}

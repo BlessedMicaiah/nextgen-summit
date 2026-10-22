@@ -518,3 +518,22 @@ body.has-pcbar .nav{top:34px}
 .pcsum__tot{border-bottom:0;padding-top:12px}
 .pcsum__tot span{color:var(--v-ink);font-weight:800}
 .pcsum__tot b{font-size:19px;color:var(--accent)}
+
+/* ---------- the six digits ----------
+   Large, evenly spaced and unmistakably the thing to type into. The tracking does the work of
+   separate boxes without the focus-management problems six inputs bring -- and it keeps
+   autocomplete="one-time-code", which is what makes iOS offer the code above the keyboard. */
+.pcv__otp{font-size:clamp(26px,8vw,32px);letter-spacing:.42em;text-indent:.42em;
+  text-align:center;font-weight:800;min-height:64px;padding:0 10px}
+.pcv__otp::placeholder{letter-spacing:.42em;color:rgba(255,255,255,.22);font-weight:700}
+.pcv__sub{display:inline-block;margin-top:4px;font-size:13px;color:var(--v-ink-3)}
+
+/* resend and change-number read as the quieter pair they are */
+.pcv__row .pcv__back{min-height:44px;font-size:11.5px;box-shadow:inset 0 0 0 1px var(--v-line);
+  background:transparent;color:var(--v-ink-2)}
+.pcv__row .pcv__back:hover:not(:disabled){background:rgba(255,255,255,.08);color:var(--v-ink)}
+.pcv__row .pcv__back:disabled{opacity:.5;cursor:default}
+
+/* the modal keeps its own scroll on a short phone, so the keyboard cannot bury the button */
+.pcv{max-height:min(92svh,calc(100% - 20px));overflow:auto;overscroll-behavior:contain}
+.pcv__in{padding-bottom:max(clamp(22px,4vw,34px),env(safe-area-inset-bottom))}

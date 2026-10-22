@@ -349,6 +349,48 @@
   /* A provider refusal is the expensive one: the message was not sent and a slot was spent
      anyway. On a preview host the server hands back Twilio's HTTP status and numeric code, so
      say them -- the next attempt costs another of three, and guessing is not affordable. */
+
+  var lastPhone = '';
+  var resendTimer = null;
+
+  /* Hold the resend control for n seconds, counting down, so the wait is visible rather than
+     discovered by pressing it again and being refused. */
+  function holdResend(n) {
+    var rb = $('[data-pc-resend]', vDlg);
+    if (!rb) return;
+    if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+    var left = Math.ceil(n);
+    rb.disabled = true;
+    var tick = function () {
+      if (left <= 0) {
+        clearInterval(resendTimer); resendTimer = null;
+        rb.disabled = false; rb.textContent = 'Resend code';
+        return;
+      }
+      rb.textContent = 'Resend in ' + left + 's';
+      left--;
+    };
+    tick();
+    resendTimer = setInterval(tick, 1000);
+  }
+
+
+  /* What to tell someone when a code could not be sent. One copy, because the resend and the
+     first attempt fail for exactly the same reasons and should say the same things. */
+  function otpStartMsg(d) {
+    return d.reason === 'cooldown' ? 'Please wait ' + (d.wait || 60) + ' seconds before asking for another code.' :
+      d.reason === 'number_daily' ? 'That number has asked for too many codes today.' :
+      d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
+      d.reason === 'country' ? 'We can only text US and Canada numbers at the moment.' :
+      d.reason === 'not_allowlisted' ? 'This number is not approved for text messages on this preview.' :
+      d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
+      d.reason === 'phone' ? 'That does not look like a mobile number.' :
+      d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
+      d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
+      d.reason === 'provider' ? providerMsg(d) :
+      'We could not send a code just now. Please try again.';
+  }
+
   function providerMsg(d) {
     var base = 'The text could not be sent. This was refused by the SMS provider, not by us.';
     if (d.provider_status || d.provider_code) {
@@ -592,23 +634,13 @@
       post('start', { phone: f.value }).then(function (d) {
         btn.disabled = false; btn.textContent = 'Send my code';
         if (!d.ok) {
-          err.textContent =
-            d.reason === 'cooldown' ? 'Please wait ' + (d.wait || 60) + ' seconds before asking for another code.' :
-            d.reason === 'number_daily' ? 'That number has asked for too many codes today.' :
-            d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
-            d.reason === 'country' ? 'We can only text US and Canada numbers at the moment.' :
-            d.reason === 'not_allowlisted' ? 'This number is not approved for text messages on this preview.' :
-            d.reason === 'staging_locked' ? 'Your staging session has expired. Reload the page and sign in again.' :
-            d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
-            d.reason === 'phone' ? 'That does not look like a mobile number.' :
-            d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
-            d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
-            d.reason === 'provider' ? providerMsg(d) :
-            'We could not send a code just now. Please try again.';
+          err.textContent = otpStartMsg(d);
           err.hidden = false;
           track('otp_start_failed', { reason: d.reason });
           return;
         }
+        lastPhone = f.value;
+        holdResend(60);          // the server's cooldown, shown rather than discovered
         $('[data-pc-phone-mask]', vDlg).textContent = d.phone || 'your phone';
         var tc = $('[data-pc-test-code]', vDlg);
         if (d.test_code) {
@@ -621,7 +653,23 @@
       return;
     }
     if (t.closest('[data-pc-resend]')) {
-      step('phone');
+      /* It used to send the voter back to the number screen, which is "change number", not
+         "resend" -- the label promised one thing and did another. This asks for another code
+         for the same number and then holds the button for the server's cooldown, so the
+         countdown on screen matches the rule that will actually be applied. */
+      var rb = t.closest('[data-pc-resend]');
+      if (rb.disabled) return;
+      var rerr = $('[data-pc-error-code]', vDlg);
+      if (rerr) rerr.hidden = true;
+      rb.disabled = true; rb.textContent = 'Sending…';
+      post('start', { phone: lastPhone }).then(function (d) {
+        if (!d.ok) {
+          if (rerr) { rerr.textContent = otpStartMsg(d); rerr.hidden = false; }
+          holdResend(typeof d.wait === 'number' && d.wait > 0 ? d.wait : 60);
+          return;
+        }
+        holdResend(60);
+      });
       return;
     }
     if (t.closest('[data-pc-code-check]')) {
@@ -630,7 +678,7 @@
       var cb = t.closest('[data-pc-code-check]');
       cb.disabled = true; cb.textContent = 'Checking…';
       post('check', { code: c.value }).then(function (d) {
-        cb.disabled = false; cb.textContent = 'Verify';
+        cb.disabled = false; cb.textContent = 'Verify my number';
         if (!d.ok) {
           ce.textContent =
             d.reason === 'expired' ? 'That code has expired. Ask for a new one.' :

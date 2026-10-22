@@ -139,7 +139,20 @@ $voter = $identity['key'];
 
 /* Once phone verification is switched on, an unverified caller cannot vote at all -- the
    simulated path is closed rather than left as a way round the queue. */
-$phoneRequired = (string) pc_meta('phone_required', '0') === '1';
+/* The default is now REQUIRED, and that is a security fix rather than a preference.
+
+   An unverified voter's identity is pc_voter_key(), an HMAC of a string the browser supplies.
+   Change the string, become a new voter, vote again: the allowance is real but the identity
+   behind it is not, so the simulated path had no limit at all. It existed so the flow could be
+   demonstrated before Twilio was wired up, and it defaulted to open.
+
+   A phone-verified identity has no such hole -- it is an HMAC of the E.164 number, the same
+   for every session and every device, and the unique index does the rest. Requiring
+   verification is therefore what closes the bypass.
+
+   An administrator can still turn it off deliberately on the dashboard; what has changed is
+   that doing nothing now means closed rather than open. */
+$phoneRequired = (string) pc_meta('phone_required', '1') === '1';
 if ($phoneRequired && !$identity['verified']) {
     pc_out(401, ['ok' => false, 'reason' => 'verify_required']);
 }
@@ -193,7 +206,8 @@ if (!$res['ok']) {
 pc_out(200, [
     'ok' => true,
     'entrant' => $entrant,
-    'simulated' => true,
+    // what was actually recorded, not a constant: the row stores !verified, so should this
+    'simulated' => !$identity['verified'],
     'mode' => pc_mode(),
     'allowance' => $allow,
     'remaining' => $res['remaining'] ?? max(0, $allow - $used - 1),

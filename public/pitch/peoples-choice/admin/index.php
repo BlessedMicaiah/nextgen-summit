@@ -243,7 +243,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         unset($cur, $new, $again);
     } elseif ($authed && $action === 'phonereq') {
         pc_set_meta('phone_required', ($_POST['to'] ?? '0') === '1' ? '1' : '0');
-        $notice = (string) pc_meta('phone_required', '0') === '1'
+        $notice = (string) pc_meta('phone_required', '1') === '1'
             ? 'Phone verification is now required to vote. The simulated sign-in is closed.'
             : 'The simulated sign-in is available again.';
     } elseif ($authed && $action === 'seed') {
@@ -573,11 +573,11 @@ foreach ($standings as $r) {
       </div>
 
       <p class="adm__p" style="margin-top:12px">While the mode reads <strong>MOCK</strong> no SMS is sent and nothing is billed. Switching to live is a one-word edit to <code>config.twilio.php</code> on the server, deliberately not something this page can do.</p>
-      <p class="adm__p">Phone verification required to vote: <strong><?= (string) pc_meta('phone_required', '0') === '1' ? 'yes' : 'no (the preview&rsquo;s simulated sign-in still works)' ?></strong></p>
+      <p class="adm__p">Phone verification required to vote: <strong><?= (string) pc_meta('phone_required', '1') === '1' ? 'yes' : 'no (the preview&rsquo;s simulated sign-in still works)' ?></strong></p>
       <div class="adm__bar">
         <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-          <input type="hidden" name="action" value="phonereq"><input type="hidden" name="to" value="<?= (string) pc_meta('phone_required', '0') === '1' ? '0' : '1' ?>">
-          <button class="adm__btn" type="submit"><?= (string) pc_meta('phone_required', '0') === '1' ? 'Allow the simulated sign-in again' : 'Require phone verification' ?></button>
+          <input type="hidden" name="action" value="phonereq"><input type="hidden" name="to" value="<?= (string) pc_meta('phone_required', '1') === '1' ? '0' : '1' ?>">
+          <button class="adm__btn" type="submit"><?= (string) pc_meta('phone_required', '1') === '1' ? 'Allow the simulated sign-in again' : 'Require phone verification' ?></button>
         </form>
       </div>
     </section>

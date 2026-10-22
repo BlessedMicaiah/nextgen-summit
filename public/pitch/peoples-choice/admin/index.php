@@ -16,6 +16,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__, 3) . '/api/pc-twilio-write.php';
+require_once dirname(__DIR__, 3) . '/api/pc-admin-pin.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -35,7 +36,12 @@ if (empty($_SESSION['csrf'])) {
     $_SESSION['csrf'] = bin2hex(random_bytes(16));
 }
 $csrf = $_SESSION['csrf'];
-$authed = !empty($_SESSION['ok']) && (int) ($_SESSION['at'] ?? 0) > time() - 8 * 3600;
+/* A session is good for eight hours AND only for the epoch it was opened under. Rotating the
+   PIN moves the epoch, so every session but the one that did the rotating stops being
+   authenticated on its very next request. That is the revocation. */
+$authed = !empty($_SESSION['ok'])
+    && (int) ($_SESSION['at'] ?? 0) > time() - 8 * 3600
+    && (int) ($_SESSION['epoch'] ?? 0) === pc_admin_epoch();
 
 function h($v): string
 {
@@ -101,10 +107,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $notice = 'Too many attempts. Try again in ' . ceil(($until - time()) / 60) . ' minutes.';
         } else {
             $pw = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
-            if (hash_equals(NGS_ADMIN_HASH, hash_hmac('sha256', $pw, NGS_ADMIN_SALT))) {
+            if (pc_admin_check($pw)) {
                 session_regenerate_id(true);
                 $_SESSION['ok'] = true;
                 $_SESSION['at'] = time();
+                $_SESSION['epoch'] = pc_admin_epoch();
                 $_SESSION['tries'] = 0;
                 header('Location: ./', true, 303);
                 exit;
@@ -198,9 +205,45 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             . ' No SMS was sent and the budget is unchanged.';
         header('Location: ./', true, 303);
         exit;
+    } elseif ($authed && $action === 'adminpin') {
+        /* The current PIN is demanded again even though this session is already authenticated:
+           an unlocked phone left on a table should not be enough to change the lock.
+
+           Neither PIN is kept, echoed or logged. They live in $_POST for the length of this
+           request and are unset before it ends. */
+        $cur = is_string($_POST['current_pin'] ?? null) ? $_POST['current_pin'] : '';
+        $new = is_string($_POST['new_pin'] ?? null) ? $_POST['new_pin'] : '';
+        $again = is_string($_POST['new_pin2'] ?? null) ? $_POST['new_pin2'] : '';
+        if (!pc_admin_check($cur)) {
+            sleep(2);
+            $notice = 'The current PIN did not match. Nothing was changed.';
+        } elseif ($new !== $again) {
+            $notice = 'The two copies of the new PIN did not match. Nothing was changed.';
+        } else {
+            $r = pc_admin_rotate($new);
+            if ($r['ok']) {
+                /* Carry THIS session across its own rotation and no other: every other
+                   session is still on the previous epoch and is signed out from here on. The
+                   new PIN was verified against the written file before we got this far, so
+                   the lock is known to open before the old key is discarded. */
+                session_regenerate_id(true);
+                $_SESSION['ok'] = true;
+                $_SESSION['at'] = time();
+                $_SESSION['epoch'] = (int) $r['epoch'];
+                $_SESSION['tries'] = 0;
+                $_SESSION['flash'] = 'The admin PIN has been changed, and verified before the '
+                    . 'old one was retired. This session stays signed in; every other admin '
+                    . 'session has been signed out. Twilio, the voting rules and the vote '
+                    . 'database were not touched.';
+                header('Location: ./', true, 303);
+                exit;
+            }
+            $notice = $r['error'];
+        }
+        unset($cur, $new, $again);
     } elseif ($authed && $action === 'phonereq') {
         pc_set_meta('phone_required', ($_POST['to'] ?? '0') === '1' ? '1' : '0');
-        $notice = (string) pc_meta('phone_required', '0') === '1'
+        $notice = (string) pc_meta('phone_required', '1') === '1'
             ? 'Phone verification is now required to vote. The simulated sign-in is closed.'
             : 'The simulated sign-in is available again.';
     } elseif ($authed && $action === 'seed') {
@@ -258,6 +301,10 @@ foreach ($standings as $r) {
     <p class="adm__h">People&rsquo;s Choice</p>
     <h1 class="adm__title wm">results.</h1>
     <p class="adm__p">This dashboard uses the same admin password as the registrations tool.</p>
+    <?php /* Which credential is live, and nothing about what it is. Without this a rotated
+             PIN that failed to load is indistinguishable from a mistyped one, which is a
+             an expensive thing not to know when the lockout is five tries. */ ?>
+    <p class="adm__p" style="opacity:.75">Credential in use: <strong><?= pc_admin_rotated() ? 'rotated file (outside the web root)' : 'config.php (never rotated)' ?></strong></p>
     <?php if ($notice): ?><p class="adm__notice"><?= h($notice) ?></p><?php endif; ?>
     <form method="post" class="adm__form">
       <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
@@ -439,6 +486,24 @@ foreach ($standings as $r) {
     </section>
 
     <section class="adm__sec">
+      <p class="adm__h">Change the admin PIN</p>
+      <p class="adm__p">Over HTTPS, straight to the server. The PIN is never shown back, never written to a file in readable form and never logged &mdash; only a salted HMAC of it is stored, in the data directory <strong>outside the web root</strong>, so a deploy cannot undo the change. <code>config.php</code> is not opened for writing, so <code>NGS_SECRET</code>, the voter identities derived from it, the database key and the Twilio credentials are not merely preserved &mdash; they are never touched.</p>
+      <p class="adm__p">The new PIN is verified against what was actually written <em>before</em> the old one stops working. You stay signed in here; every other admin session is signed out.</p>
+      <p class="adm__p"><strong>Status:</strong> <?= h(pc_admin_rotation_note()) ?></p>
+      <form method="post" class="adm__inline" autocomplete="off">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="adminpin">
+        <label class="adm__label" for="p0">Current PIN</label>
+        <input class="adm__input" id="p0" name="current_pin" type="password" autocomplete="current-password" required>
+        <label class="adm__label" for="p1">New PIN (at least 8 characters)</label>
+        <input class="adm__input" id="p1" name="new_pin" type="password" autocomplete="new-password" minlength="8" required>
+        <label class="adm__label" for="p2">New PIN again</label>
+        <input class="adm__input" id="p2" name="new_pin2" type="password" autocomplete="new-password" minlength="8" required>
+        <button class="adm__btn adm__btn--go" type="submit">Change the PIN</button>
+      </form>
+    </section>
+
+    <section class="adm__sec">
       <p class="adm__h">Twilio configuration</p>
       <p class="adm__p">A health check, not a viewer. It reports whether each credential is present and whether it starts with the prefix Twilio uses for that kind of identifier. <strong>No value is read, printed or logged anywhere</strong> &mdash; not here, not in the error log.</p>
       <div class="adm__tablewrap">
@@ -508,11 +573,11 @@ foreach ($standings as $r) {
       </div>
 
       <p class="adm__p" style="margin-top:12px">While the mode reads <strong>MOCK</strong> no SMS is sent and nothing is billed. Switching to live is a one-word edit to <code>config.twilio.php</code> on the server, deliberately not something this page can do.</p>
-      <p class="adm__p">Phone verification required to vote: <strong><?= (string) pc_meta('phone_required', '0') === '1' ? 'yes' : 'no (the preview&rsquo;s simulated sign-in still works)' ?></strong></p>
+      <p class="adm__p">Phone verification required to vote: <strong><?= (string) pc_meta('phone_required', '1') === '1' ? 'yes' : 'no (the preview&rsquo;s simulated sign-in still works)' ?></strong></p>
       <div class="adm__bar">
         <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-          <input type="hidden" name="action" value="phonereq"><input type="hidden" name="to" value="<?= (string) pc_meta('phone_required', '0') === '1' ? '0' : '1' ?>">
-          <button class="adm__btn" type="submit"><?= (string) pc_meta('phone_required', '0') === '1' ? 'Allow the simulated sign-in again' : 'Require phone verification' ?></button>
+          <input type="hidden" name="action" value="phonereq"><input type="hidden" name="to" value="<?= (string) pc_meta('phone_required', '1') === '1' ? '0' : '1' ?>">
+          <button class="adm__btn" type="submit"><?= (string) pc_meta('phone_required', '1') === '1' ? 'Allow the simulated sign-in again' : 'Require phone verification' ?></button>
         </form>
       </div>
     </section>

@@ -290,6 +290,63 @@
     return found || vDlg;
   }
 
+
+  var lastEmail = '';
+  var emailResendTimer = null;
+
+  function holdEmailResend(n) {
+    var rb = $('[data-pc-vemail-resend]', vDlg);
+    if (!rb) return;
+    if (emailResendTimer) { clearInterval(emailResendTimer); emailResendTimer = null; }
+    var left = Math.ceil(n);
+    rb.disabled = true;
+    var tick = function () {
+      if (left <= 0) {
+        clearInterval(emailResendTimer); emailResendTimer = null;
+        rb.disabled = false; rb.textContent = 'Resend code';
+        return;
+      }
+      rb.textContent = 'Resend in ' + left + 's';
+      left--;
+    };
+    tick();
+    emailResendTimer = setInterval(tick, 1000);
+  }
+
+  /* Deliberately vague about whether an address has been seen before: a refusal that said
+     "already voted" would turn this into a way of testing whether somebody is on our list. */
+  function emailMsg(d) {
+    return d.reason === 'email' ? 'That does not look like an email address.' :
+      d.reason === 'disposable' ? 'Please use a permanent email address rather than a temporary one.' :
+      d.reason === 'cooldown' ? 'Please wait ' + (d.wait || 60) + ' seconds before asking for another code.' :
+      d.reason === 'addr_daily' ? 'That address has asked for too many codes today.' :
+      d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
+      d.reason === 'mail_not_configured' ? 'Email verification is not switched on yet. Please try the phone option.' :
+      d.reason === 'mail' ? 'We could not send the email just now. Please try again in a moment.' :
+      d.reason === 'expired' ? 'That code has expired. Send a new one.' :
+      d.reason === 'attempts' ? 'Too many attempts. Start again with your email address.' :
+      d.reason === 'no_pending' ? 'Ask for a code first.' :
+      d.reason === 'code' ? ('That code did not match.' + (d.tries_left ? ' ' + d.tries_left + ' tries left.' : '')) :
+      d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
+      d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
+      'Something went wrong. Please try again.';
+  }
+
+  /* The phone option is only offered when SMS can actually deliver. Hiding the fact that it is
+     unavailable would send voters into a flow that cannot finish. */
+  function paintChannels() {
+    var smsWay = $('[data-pc-sms-way]', vDlg);
+    if (!smsWay) return;
+    var live = me.sms === 'live';
+    smsWay.disabled = !live;
+    smsWay.classList.toggle('is-off', !live);
+    var sub = $('[data-pc-sms-sub]', vDlg);
+    if (sub) {
+      sub.textContent = live ? 'Receive a code by text message'
+        : 'Text messages are paused while we complete carrier approval';
+    }
+  }
+
   function routeFor(d, entrantId) {
     if (!d || !d.ok || !d.verified) return 'verify';
     var today = d.today_entrant || null;
@@ -330,6 +387,7 @@
     }
 
     refreshMe().then(function (d) {
+      paintChannels();
       var to = routeFor(d, id);
       if (to === 'other') {
         var who = byId[d.today_entrant];
@@ -700,10 +758,64 @@
     /* One route in. The Google and email branches that used to live here signed nobody in:
        Google went straight to the confirmation and email accepted any six digits. Both are
        gone, so the only way to a ballot is a code we actually sent. */
-    if (t.closest('[data-pc-begin]')) {
-      method = 'phone';
-      track('verify_start', { method: 'phone' });
-      step('phone');
+    if ((el = t.closest('[data-pc-begin]'))) {
+      var ch = el.getAttribute('data-pc-begin') || 'sms';
+      if (ch === 'sms' && me.sms !== 'live') return;     // not offered when it cannot work
+      method = ch === 'email' ? 'email' : 'phone';
+      track('verify_start', { method: method });
+      step(ch === 'email' ? 'email' : 'phone');
+      return;
+    }
+    if (t.closest('[data-pc-vemail-send]')) {
+      var ve = $('[data-pc-vemail]', vDlg), vee = $('[data-pc-error-vemail]', vDlg);
+      vee.hidden = true;
+      var vb = t.closest('[data-pc-vemail-send]');
+      if (vb.disabled) return;
+      vb.disabled = true; vb.textContent = 'Sending…';
+      lastEmail = (ve.value || '').trim();
+      post('email_start', { email: lastEmail }).then(function (d) {
+        vb.disabled = false; vb.textContent = 'Send my code';
+        if (!d.ok) { vee.textContent = emailMsg(d); vee.hidden = false; return; }
+        $('[data-pc-vemail-mask]', vDlg).textContent = d.mask || lastEmail;
+        holdEmailResend(60);
+        step('email-code');
+        track('email_otp_sent', {});
+      });
+      return;
+    }
+    if (t.closest('[data-pc-vemail-resend]')) {
+      var rb2 = t.closest('[data-pc-vemail-resend]');
+      if (rb2.disabled) return;
+      var re2 = $('[data-pc-error-vemailcode]', vDlg);
+      if (re2) re2.hidden = true;
+      rb2.disabled = true; rb2.textContent = 'Sending…';
+      post('email_start', { email: lastEmail }).then(function (d) {
+        if (!d.ok && re2) { re2.textContent = emailMsg(d); re2.hidden = false; }
+        holdEmailResend(typeof d.wait === 'number' && d.wait > 0 ? d.wait : 60);
+      });
+      return;
+    }
+    if (t.closest('[data-pc-vemail-check]')) {
+      var vc = $('[data-pc-vemailcode]', vDlg), vce = $('[data-pc-error-vemailcode]', vDlg);
+      vce.hidden = true;
+      var vcb = t.closest('[data-pc-vemail-check]');
+      if (vcb.disabled) return;
+      vcb.disabled = true; vcb.textContent = 'Checking…';
+      post('email_check', { code: vc.value }).then(function (d) {
+        vcb.disabled = false; vcb.textContent = 'Verify my email';
+        if (!d.ok) { vce.textContent = emailMsg(d); vce.hidden = false; return; }
+        me.verified = true;
+        track('email_otp_verified', {});
+        /* Verifying never casts anything. Ask the server where this voter now stands and go
+           to whichever screen that is -- usually the confirmation, with the vote still to be
+           pressed. */
+        var who = pending;
+        refreshMe().then(function (m2) {
+          var to = routeFor(m2, who ? who.id : '');
+          if (to === 'all-done') paintSummary(m2);
+          step(to === 'confirm' ? 'confirm' : to);
+        });
+      });
       return;
     }
     if (t.closest('[data-pc-bonus-start]')) { step('bonus-email'); return; }

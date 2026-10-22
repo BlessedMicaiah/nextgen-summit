@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/pc-twilio.php';
 require_once __DIR__ . '/pc-attendee.php';   // the verified-attendee entitlement
+require_once __DIR__ . '/pc-email-otp.php';  // the email channel
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -113,6 +114,8 @@ function pc_me(): array
         'open' => pc_voting_open(),
         'deadline' => pc_deadline_iso(),
         'sms' => pc_twilio_live() ? 'live' : 'mock',
+        'email_ready' => pc_smtp_configured(),
+        'channel' => (string) ($_SESSION['channel'] ?? ''),
     ];
     if ($verified && $key !== null) {
         $out['phone'] = isset($_SESSION['phone_mask']) ? (string) $_SESSION['phone_mask'] : '****';
@@ -268,11 +271,64 @@ if ($action === 'check') {
     /* Verified. The session is rebuilt around the new identity, and the number itself is not
        kept -- only its one-way key and the last four digits to show the voter. */
     session_regenerate_id(true);
-    $_SESSION['phone_key'] = pc_phone_key($e164);
+    $wasEmail = !empty($_SESSION['phone_key']) && strpos((string) $_SESSION['phone_key'], 'eml:') === 0
+        ? (string) $_SESSION['phone_key'] : '';
+    $telKey = pc_phone_key($e164);
+    /* This person has now proved both channels in one session, so the two identities are the
+       same voter and are merged. Without this, verifying by email and then by phone would
+       hand one person a second daily vote -- the obvious hole the moment a second channel
+       existed. The phone side becomes canonical because it is the stronger proof. */
+    if ($wasEmail !== '') {
+        pc_identity_link($telKey, $wasEmail);
+    }
+    $_SESSION['phone_key'] = pc_canonical($telKey);
     $_SESSION['phone_mask'] = pc_phone_mask($e164);
+    $_SESSION['channel'] = 'sms';
     $_SESSION['verified_at'] = time();
     $_SESSION['ticket_verified'] = false;
     unset($_SESSION['pending_phone'], $_SESSION['pending_code'], $_SESSION['pending_tries']);
+
+    pc_json(200, pc_me() + ['just_verified' => true]);
+}
+
+/* ---------- the email channel ----------
+
+   Same shape as the phone path and the same session afterwards, because everything downstream
+   -- the allowance, the vote, the bonus -- cares about a voting identity and not about how it
+   was proved. */
+if ($action === 'email_start') {
+    $res = pc_email_otp_start((string) ($in['email'] ?? ''));
+    if (!$res['ok']) {
+        pc_json($res['reason'] === 'cooldown' ? 429 : 400,
+            ['ok' => false, 'reason' => $res['reason'] ?? 'email', 'wait' => $res['wait'] ?? null]);
+    }
+    $_SESSION['pending_email'] = trim((string) ($in['email'] ?? ''));
+    pc_json(200, ['ok' => true, 'sent' => true, 'mask' => $res['mask'] ?? '']);
+}
+
+if ($action === 'email_check') {
+    $email = (string) ($_SESSION['pending_email'] ?? '');
+    if ($email === '') {
+        pc_json(400, ['ok' => false, 'reason' => 'no_pending']);
+    }
+    $res = pc_email_otp_check($email, (string) ($in['code'] ?? ''));
+    if (!$res['ok']) {
+        pc_json(400, ['ok' => false, 'reason' => $res['reason'] ?? 'code',
+                      'tries_left' => $res['tries_left'] ?? null]);
+    }
+    session_regenerate_id(true);
+    $emlKey = (string) $res['ident'];
+    $wasPhone = !empty($_SESSION['phone_key']) && strpos((string) $_SESSION['phone_key'], 'tel:') === 0
+        ? (string) $_SESSION['phone_key'] : '';
+    if ($wasPhone !== '') {
+        pc_identity_link($wasPhone, $emlKey);
+    }
+    $_SESSION['phone_key'] = pc_canonical($emlKey);   // the identity slot, whatever proved it
+    $_SESSION['phone_mask'] = (string) ($res['mask'] ?? '');
+    $_SESSION['channel'] = 'email';
+    $_SESSION['verified_at'] = time();
+    $_SESSION['ticket_verified'] = false;
+    unset($_SESSION['pending_email']);
 
     pc_json(200, pc_me() + ['just_verified' => true]);
 }

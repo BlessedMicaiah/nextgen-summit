@@ -1,3 +1,20 @@
+# index.php first, because on staging it is the gate that asks who you are before the gallery
+# is served at all. It hands index.html straight through once you are in, and on the live site
+# it does nothing. Without this line Apache may pick index.html and walk right past the gate.
+DirectoryIndex index.php index.html
+
+# index.html is the page's source, not a way around the gate: entrant.php reads it from disk,
+# so denying it over HTTP costs nothing and closes the obvious detour.
+<FilesMatch "^index\.html$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
 # One directory per contestant, served by one file.
 #   /pitch/peoples-choice/semifinalist-07/  ->  entrant.php?slug=semifinalist-07
 # The gallery itself, the admin dashboard and real files are left alone.

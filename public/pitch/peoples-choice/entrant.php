@@ -15,6 +15,13 @@
 declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/api/pc-rules.php';
+require_once dirname(__DIR__, 2) . '/api/pc-staging-gate.php';
+
+/* A contestant link serves the same gallery, so it answers to the same gate on
+   staging; otherwise it would be a way straight past it. No-op on the live site. */
+if (ngs_staging_gate_active() && !ngs_staging_gate_ok()) {
+    ngs_staging_gate_page(ngs_staging_gate_post());
+}
 
 $slug = isset($_GET['slug']) && is_string($_GET['slug']) ? strtolower($_GET['slug']) : '';
 $slug = preg_replace('/[^a-z0-9-]/', '', $slug);

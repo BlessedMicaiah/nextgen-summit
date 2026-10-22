@@ -24,6 +24,11 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/pc-attendee.php';
+require_once __DIR__ . '/pc-staging-gate.php';
+
+/* Staging is for the NextGen team, and this is what replaced the per-number
+   allowlist as the thing guarding real text messages. On the live site it is a no-op. */
+ngs_staging_gate_require();
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');

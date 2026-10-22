@@ -23,6 +23,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/pc-rules.php';
+require_once __DIR__ . '/pc-staging-gate.php';
 
 /* WHERE THE CREDENTIALS LIVE, and why it is not next to this file.
 
@@ -469,7 +470,15 @@ function pc_otp_start(string $e164): array
 
     /* Live from here. Two refusals before the call, both of which cost nothing to be wrong
        about and everything to be missing. */
-    if (!pc_sms_allowlisted($e164)) {
+    /* The per-number allowlist, unless the staging gate is already doing that job.
+
+       It existed because this endpoint answered anybody who asked. Behind the gate it answers
+       only signed-in NextGen administrators, so approving each of their numbers by hand adds
+       nothing but friction for the people doing the testing. The waiver is tied to the gate:
+       no gated host, or no session, and this refuses exactly as it always did. The live site
+       cannot waive it at all, and the budget ceiling below is untouched either way. */
+    if (!pc_sms_allowlisted($e164)
+        && !(function_exists('ngs_sms_allowlist_waived') && ngs_sms_allowlist_waived())) {
         pc_otp_note($key, 'blocked', false, false);
         return ['ok' => false, 'reason' => 'not_allowlisted'];
     }

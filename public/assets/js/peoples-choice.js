@@ -190,7 +190,8 @@
         '</span></span>';
     var canVote = STATE === 'open';
     return '' +
-      '<li class="pce ffc" data-pc-card="' + e.id + '" data-ff-slug="' + esc(e.slug || e.id) + '">' +
+      '<li class="pce ffc' + (e.shot && e.shotFit !== 'contain' ? ' ffc--photo' : '') +
+        '" data-pc-card="' + e.id + '" data-ff-slug="' + esc(e.slug || e.id) + '">' +
         '<button class="ffc__open" type="button" data-pc-open="' + e.id + '">' +
           'Open ' + esc(e.name) + '</button>' +
         '<span class="ffc__shot">' + shot +

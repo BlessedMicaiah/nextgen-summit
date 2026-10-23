@@ -213,8 +213,11 @@
   /* Desktop is not the phone feed stretched wide: the first card takes a double column and
      reads as the opening spread of a magazine. */
   .ff-grid { grid-template-columns: repeat(3, 1fr); }
-  .ff-grid > li:first-child { grid-column: span 2; }
-  .ff-grid > li:first-child .ffc__shot { aspect-ratio: 16 / 10; }
+  /* Only a founder with an actual photograph leads the spread. A logo blown up to double
+     width is a white rectangle where a person should be, and the founder whose turn it is
+     to lead is decided by the contestant order, not by who happens to have good artwork. */
+  .ff-grid > li:first-child.ffc--photo { grid-column: span 2; }
+  .ff-grid > li:first-child.ffc--photo .ffc__shot { aspect-ratio: 16 / 10; }
 }
 
 /* The card. Dimensional edge, dark face, portrait doing the talking. */

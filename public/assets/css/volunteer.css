@@ -1,0 +1,98 @@
+/* ============================================================================
+   NextGen Summit — the volunteer sign-up (js/volunteer.js)
+   Lives in the "Join the team" drawer. Rides on site.css: the same fields, buttons and
+   tokens as the scholarship form; this file is the steps, the choices and the welcome.
+   ========================================================================= */
+
+.drawer--vf{width:min(660px,100%)}
+.vf{display:flex;flex-direction:column;flex:1;margin-top:clamp(6px,1.4vh,14px)}
+.vf[hidden],.vf-done[hidden]{display:none}
+
+/* ---------- head: the line, then five segments that fill as you go ---------- */
+.vf__title{font-size:clamp(40px,5.4vw,64px);line-height:1}
+.vf__bar{list-style:none;display:flex;gap:6px;margin:clamp(20px,3vh,28px) 0 0;padding:0}
+.vf__seg{flex:1 1 0;min-width:0}
+.vf__seg.is-skip{display:none}
+.vf__seg::before{content:"";display:block;height:4px;border-radius:4px;background:var(--rule);transition:background-color .5s var(--ease)}
+.vf__seg.is-done::before{background:var(--ink)}
+.vf__seg.is-on::before{background:var(--accent);box-shadow:0 0 0 3px rgba(31,199,190,.18)}
+.vf__seg span{display:block;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 9.5px/1.2 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);transition:color .4s var(--ease)}
+.vf__seg.is-on span{color:var(--accent-ink)}
+.vf__seg.is-done span{color:var(--ink)}
+
+/* ---------- a step ---------- */
+.vf__step{margin:clamp(24px,3.6vh,34px) 0 0;padding:0;border:0;min-width:0;outline:none}
+.vf__step.is-on{animation:vf-in .6s var(--ease) both}
+@keyframes vf-in{from{opacity:0;transform:translate3d(18px,0,0)}to{opacity:1;transform:none}}
+.vf .vf__step > * + *{margin-top:24px}
+.vf__k{float:left;width:100%;margin-bottom:18px;padding:0;font:800 11px/1.3 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
+.vf .vf__step > .vf__k + *{clear:both;margin-top:0}
+
+/* what volunteering comes with */
+.vf__perks{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 4px;padding:0}
+.vf__perk{display:flex;flex-direction:column;gap:5px;padding:14px 14px 15px;border-radius:10px;background:var(--ink);color:rgba(255,255,255,.78);font:500 12.5px/1.4 var(--f-sans)}
+.vf__perk-k{font:800 12px/1.2 var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+
+.vf__pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}
+.vf__q{margin:0;padding:0;border:0;min-width:0}
+.vf__q legend{display:block;margin-bottom:10px;padding:0;font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.vf__note{font:600 13px/1.5 var(--f-sans);color:var(--ink-2)}
+.vf__q .vf__note{margin:-4px 0 12px}
+.vf__more[hidden]{display:none}
+.vf__more{animation:vf-in .5s var(--ease) both}
+.vf .vf__more > * + *{margin-top:24px}
+
+/* single choices: the scholarship form's option rows */
+.vf__opts{display:grid;gap:10px}
+.vf__opts--row{grid-template-columns:repeat(2,minmax(0,1fr))}
+.vf__opts--chips{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.vf__opt{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;min-height:54px;padding:11px 15px;border:1.5px solid var(--rule-strong);border-radius:8px;background:#fff;font:600 15px/1.35 var(--f-sans);cursor:pointer;transition:border-color .3s var(--ease),background-color .3s var(--ease),box-shadow .3s var(--ease)}
+.vf__opt:hover{border-color:var(--ink)}
+.vf__opt input{width:19px;height:19px;margin:0;accent-color:var(--ink);cursor:pointer}
+.vf__opt small{display:block;margin-top:2px;font:600 10px/1.2 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.vf__opt:has(input:checked){border-color:var(--ink);background:rgba(31,199,190,.1);box-shadow:inset 0 0 0 1px var(--ink)}
+.vf__opt:has(input:focus-visible),.vf__role:has(input:focus-visible){outline:2px solid var(--accent-ink);outline-offset:2px}
+.vf__q[aria-invalid="true"] .vf__opt,.vf__q[aria-invalid="true"] .vf__role{border-color:#B0123E}
+
+/* roles: up to three tiles, each one lights up when chosen */
+.vf__roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vf__role{position:relative;display:flex;align-items:center;gap:12px;min-height:54px;padding:10px 14px;border:1.5px solid var(--rule-strong);border-radius:8px;background:#fff;cursor:pointer;transition:border-color .3s var(--ease),background-color .35s var(--ease),color .35s var(--ease),opacity .3s var(--ease),transform .4s var(--ease)}
+.vf__role:hover{border-color:var(--ink)}
+.vf__role input{flex:none;width:19px;height:19px;margin:0;accent-color:var(--accent);cursor:pointer}
+.vf__role-t{font:700 14px/1.3 var(--f-sans)}
+.vf__role:has(input:checked){border-color:var(--ink);background:var(--ink);color:#fff;transform:translateY(-1px)}
+.vf__role.is-off{opacity:.42;cursor:not-allowed}
+.vf__role.is-off input{cursor:not-allowed}
+.vf__note [data-vf-count]{display:inline-block;min-width:1ch;color:var(--accent-ink);font-weight:800}
+
+/* ---------- back / continue: they stay in reach at the foot of the panel ---------- */
+.vf .form__error{margin-top:22px}
+.vf__nav{position:sticky;bottom:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:clamp(26px,4vh,36px) calc(clamp(22px,4vw,48px) * -1) 0;padding:14px clamp(22px,4vw,48px);background:linear-gradient(180deg,rgba(250,250,248,0),var(--paper) 30%)}
+.vf__back{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 6px;font:700 12px/1 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+.vf__back svg{width:14px;height:14px}
+.vf__back:hover{color:var(--ink)}
+.vf__back[hidden]{display:none}
+.vf__next{margin-left:auto}
+.vf__alt{margin-top:8px}
+
+/* ---------- once it has gone ---------- */
+.vf-done{margin-top:clamp(20px,5vh,60px);outline:none;animation:vf-in .7s var(--ease) both}
+.vf-done__k{color:var(--accent-ink)}
+.vf-done__t{margin-top:16px;font-size:clamp(46px,6.4vw,80px);line-height:.98}
+.vf-done__t [data-vf-name]{color:var(--accent-ink)}
+.vf-done__p{margin-top:22px;max-width:44ch;font:500 16px/1.6 var(--f-sans);color:var(--ink-2)}
+.vf-done__list{list-style:none;margin:24px 0 32px;padding:0;border-top:1px solid var(--rule)}
+.vf-done__list li{display:flex;align-items:baseline;gap:16px;padding:16px 0;border-bottom:1px solid var(--rule);font:600 15px/1.5 var(--f-sans)}
+.vf-done__n{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);font:800 13px/1 var(--f-sans)}
+
+@media (max-width:560px){
+  .vf__perks{grid-template-columns:1fr}
+  .vf__perk{flex-direction:row;align-items:baseline;gap:10px;padding:11px 14px}
+  .vf__pair,.vf__roles{grid-template-columns:1fr}
+  .vf__opts--chips{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vf__seg span{font-size:8.5px;letter-spacing:.08em}
+}
+@media (prefers-reduced-motion:reduce){
+  .vf__step.is-on,.vf__more,.vf-done{animation:none}
+  .vf__role:has(input:checked){transform:none}
+}

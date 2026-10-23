@@ -13,8 +13,59 @@ and the gallery fix, so **where the two disagree, this one is current.**
 
 ---
 
-## 0. Root cause of the bonus failure — fixed 2026-10-23
+## 0. Root cause of the bonus failure — TWO faults, both fixed 2026-10-23
 
+### Fault 2, the one that kept it broken: an undefined function below the 401 gate
+
+`pc-bonus.php` called `pc_canonical()` and `pc_flag()` without requiring `pc-identity.php`,
+which defines both. Undefined function, PHP 8, fatal `Error`, HTTP 500 with an HTML body. The
+browser's `r.json()` threw, `bpost`'s catch reported `{ok:false, reason:'network'}`, and the
+screen said "we could not reach the registration system".
+
+**Why it survived three passes of looking directly at it:** the `pc_canonical()` call is the
+line immediately below the 401 session gate. An unauthenticated request — every probe — returns
+at the gate and never reaches it, so the endpoint answered 401 cleanly and looked healthy.
+Only a genuinely verified voter got far enough to hit the fatal.
+
+`pc-otp.php` and `pc-vote.php` call the same function and both worked throughout, which is what
+made the frontend look like the suspect. They reach it through `pc-email-otp.php`, **and both
+guard the call with `function_exists()` anyway.** `pc-bonus.php` did neither, on a line whose
+comment read "as the vote path does".
+
+`pc_flag()` matters as much: it is called on the **success** path
+(`pc_flag($voter, 'attendee_auto_matched')`). A voter whose registration actually matched would
+have fataled at the moment of success, after the lookup had done its work. Fixing only
+`pc_canonical` would have moved the failure later and made it stranger.
+
+**Proved before and after** with a temporary staging-gated probe that loaded `pc-bonus.php`'s
+old include line: `missing_with_old_includes: ["pc_canonical", "pc_flag"]`,
+`missing_after_fix: []`, lookup runs, `eb_note: "ok:156"`. Probe deleted, confirmed 404.
+
+**The check that would have caught it, and should be re-run after any include change:** for each
+entry point in `public/api`, walk its `require __DIR__ . '/...'` closure and confirm every
+`pc_*`/`ngs_*` call is defined in that closure or guarded by `function_exists()`. SQL table
+names inside `CREATE TABLE pc_votes (` are false positives. Running it now leaves one genuine
+hit outside this feature: `resume.php` calls `ngs_resume_path()`, defined nowhere. It is 403 on
+both hosts, so latent rather than active.
+
+### Why the diagnostics did not diagnose it
+
+Both were my errors and both are fixed:
+
+- A non-JSON body was reported as `network`. It is almost always a fatal, so the status now
+  comes through as `http_500`; a genuinely rejected fetch keeps `network`. The outer `.catch`
+  was also missing, so a real network failure left the spinner turning forever.
+- The staging diagnostic read `d.eb`, which the server only sends on a **successful** lookup —
+  so the line could not describe the one failure it was added for. It reads `d.eb || d.reason`
+  now and would have printed `http_500` on the first attempt.
+
+Verified against the deployed build, every failure mode now distinguishable on screen:
+`http_500`, `verify_required`, `csrf`, `network`, `ok:156` (list read, address not in it),
+`http_401` (Eventbrite rejected us).
+
+### Fault 1: the event ID constant — fixed earlier the same day
+
+This one was real too, and had to be fixed before the second could even be reached.
 `NGS_EB_EVENT_ID` was defined in `attendee-count.php`, a standalone endpoint nothing includes,
 and used in `pc-attendee.php`, which the bonus path loads instead. Undefined constant, PHP 8,
 **fatal Error**, thrown the first time the attendee index tried to build its URL. The request

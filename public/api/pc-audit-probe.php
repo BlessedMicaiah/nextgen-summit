@@ -87,6 +87,62 @@ foreach ($rows as $r) {
     ];
 }
 
+/* Would the AUTOMATIC path match this voter now, with no code at all? This calls the real
+   function the auto action calls, with the voter's own identity key. */
+$autoNow = [];
+foreach ($rows as $r) {
+    $hit = pc_eb_lookup_keys([(string) $r['voter_key']]);
+    $autoNow[] = [
+        'binding_id' => (int) $r['id'],
+        'auto_would_find_a_registration' => (bool) $hit['found'],
+        'auto_reports_unavailable' => (bool) $hit['unavailable'],
+        'auto_finds_the_same_attendee' => $hit['found']
+            && hash_equals((string) $hit['attendee_key'], (string) $r['attendee_key']),
+    ];
+}
+
+/* Are cancelled and refunded registrations actually excluded? Walk the event once and count
+   what the index builder would keep and drop. Counts only; no attendee is identified. */
+$elig = ['attending_total' => 0, 'cancelled' => 0, 'refunded' => 0, 'no_email' => 0,
+         'kept' => 0, 'distinct_emails' => 0, 'pages' => 0, 'reached_api' => false];
+$token = pc_eb_token();
+if ($token !== '' && function_exists('curl_init')) {
+    $url = 'https://www.eventbriteapi.com/v3/events/' . NGS_EB_EVENT_ID
+         . '/attendees/?status=attending';
+    $seen = [];
+    $guard = 0;
+    while ($url !== '' && $guard++ < 40) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20,
+                                CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token]]);
+        $body = curl_exec($ch);
+        $st = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($st < 200 || $st >= 300 || !is_string($body)) { break; }
+        $j = json_decode($body, true);
+        if (!is_array($j)) { break; }
+        $elig['reached_api'] = true;
+        $elig['pages']++;
+        foreach (($j['attendees'] ?? []) as $a) {
+            if (!is_array($a)) { continue; }
+            $elig['attending_total']++;
+            if (!empty($a['cancelled'])) { $elig['cancelled']++; continue; }
+            if (!empty($a['refunded'])) { $elig['refunded']++; continue; }
+            $em = (string) ($a['profile']['email'] ?? '');
+            if ($em === '' || (string) ($a['id'] ?? '') === '') { $elig['no_email']++; continue; }
+            $elig['kept']++;
+            $seen[pc_email_key($em)] = true;
+        }
+        $more = !empty($j['pagination']['has_more_items']);
+        $cont = (string) ($j['pagination']['continuation'] ?? '');
+        $url = ($more && $cont !== '')
+            ? 'https://www.eventbriteapi.com/v3/events/' . NGS_EB_EVENT_ID
+              . '/attendees/?status=attending&continuation=' . rawurlencode($cont)
+            : '';
+    }
+    $elig['distinct_emails'] = count($seen);
+}
+
 /* Could a code alone have done it? pc_email_code_send is reached only after pc_eb_lookup
    reports found, so a pending code cannot exist for an unregistered address. Report the
    shape of that table rather than asserting it. */
@@ -99,4 +155,6 @@ echo json_encode([
     'bindings' => count($rows),
     'findings' => $findings,
     'pending_code_rows' => $pending,
+    'automatic_path_now' => $autoNow,
+    'eligibility_filter' => $elig,
 ], JSON_PRETTY_PRINT);

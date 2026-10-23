@@ -1405,7 +1405,23 @@
     };
     pDlg.addEventListener('close', clearProfileVideo);
     pDlg.addEventListener('cancel', clearProfileVideo);
+    stopWhenClosed(pDlg, clearProfileVideo);
   }
+
+  /* Stop playback whenever a dialog stops being open, however that happened.
+
+     The close event is the obvious hook and it is not sufficient on its own: in at least one
+     Chromium build a programmatic .close() fires nothing at all, which would leave a pitch
+     talking behind a dismissed dialog. Watching the open attribute catches the close button,
+     the Escape key, a script call and anything else, because it watches the state rather
+     than the announcement of it. */
+  function stopWhenClosed(dialog, stop) {
+    if (!dialog || !window.MutationObserver) return;
+    new MutationObserver(function () {
+      if (!dialog.open) stop();
+    }).observe(dialog, { attributes: true, attributeFilter: ['open'] });
+  }
+  stopWhenClosed(vwr, stopPlayback);
 
   if (vwr) {
     vwr.addEventListener('close', stopPlayback);

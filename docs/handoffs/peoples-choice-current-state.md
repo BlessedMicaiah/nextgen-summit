@@ -129,6 +129,89 @@ Rotation order:
 
 ---
 
+## 0d. The +3 claim, audited against live data (2026-10-23)
+
+The first real bonus claim succeeded. It was audited from the database and the Eventbrite
+index rather than from the confirmation screen, with a temporary staging-gated probe that
+compared on the server because the comparison needs the site secret. Probe deleted, 404
+confirmed.
+
+**The bonus was legitimately earned.**
+
+| Question | Answer |
+|---|---|
+| Is the proven address a registered attendee? | **yes** — it is a key in the eligible index |
+| Is the bound attendee the record that address owns? | **yes** — HMAC match, not an arbitrary key |
+| Does the bound attendee exist in the eligible index? | **yes** |
+| Two points, to the right founder, on the right day? | **yes** — rows 8 and 9, `entrant-01`, `2026-10-23`, slots 2 and 3, both `06:01:52Z` |
+| Binding written before the points? | **yes** — `06:01:47Z`, five seconds earlier |
+| Can a code alone earn the bonus? | **no** — see below |
+
+**A code can never be enough.** `pc_email_code_send()` is reached only after `pc_eb_lookup()`
+reports `found`, and it stores the attendee key discovered at that moment. `check` binds that
+stored key. So no pending code can exist for an address that is not registered, and there is
+nothing for a correct code to bind to. Entering a valid code for an unregistered address
+fails at `lookup` with `not_found`, before any code is sent.
+
+**The second code should not have been needed.** The voting identity is itself in the index —
+the registration is under the very address already proven to vote — so the automatic path
+should have matched silently. It did not because it was fataling on the undefined
+`pc_canonical` at that moment, so the manual path was the only one that worked. Re-running the
+real `pc_eb_lookup_keys()` against that identity now returns found, and the same attendee.
+
+**Eligibility filter, walked live:** 185 attending, 0 cancelled, 0 refunded, 0 without an
+address, 156 distinct emails, 4 pages. The 185/156 gap is people holding several tickets.
+Note honestly: with no cancelled or refunded records present, that branch is correct by
+inspection and **has not been exercised against real data**.
+
+**Leaderboard:** `entrant-01` 4 valid (1 on the 22nd, 3 on the 23rd), `entrant-07` 1 valid,
+9 rows total, 4 invalidated, 2 distinct voters, 1 binding, 0 identity links.
+
+### Residual risks — real, and none of them cosmetic
+
+1. **A refund after binding keeps the entitlement.** `claim` re-reads the binding table but
+   does not re-check Eventbrite. Someone could register, bind, refund, and still hold the +2.
+   The window to Oct 28 is small and no refunds exist today, but it is a genuine gap.
+2. **One person with two addresses and two tickets can reach six points a day.** The UNIQUE
+   index stops one registration funding two voters. It does not stop one human holding two of
+   each. This is the identity limitation stated plainly, with its arithmetic.
+3. The cancelled/refunded branch is untested against real data.
+4. The Eventbrite token rotation is outstanding (section 0c).
+
+---
+
+## 0e. Interface corrections (2026-10-23)
+
+- The three-point screen said **"+3 points for"** with no name. The founder was written by the
+  vote flow, and a returning voter reaches that screen without casting a vote in the session.
+  It now comes from the claim response, `d.entrant`, the row the server read.
+- It offered **"Get your NextGen ticket"** directly under the line confirming the registration
+  that earned the bonus. Reaching that screen requires a verified registration, so the link is
+  gone from it, and the two that remain are hidden whenever the server reports a verified
+  attendee.
+- **`hidden` was not hiding a styled element.** The ticket link reported `hidden=true` and
+  rendered anyway: `.btn` sets `display:inline-flex`, an author rule, which beats the
+  browser's `[hidden]{display:none}`. The stylesheet compensated component by component, which
+  works until someone hides an element nobody wrote a rule for. `[hidden]{display:none
+  !important}` is now a base rule. A sweep of the rendered page found exactly one element in
+  that state; the phone button, which must stay hidden, was unaffected.
+
+### State matrix, verified against the deployed build
+
+| State | Screen | Ticket offer |
+|---|---|---|
+| registered, +2 waiting | `bonus-ready` | no |
+| registered, all three given | `all-done` | no |
+| not registered, +1 cast | "Want to give 2 more points?" | yes (Eventbrite) |
+| not registered, allowance spent | `all-done` | yes |
+| no proven address (phone voter) | "Which email did you register with?" | secondary |
+| registration already used | "Registration already used" | no |
+| Eventbrite unreachable | "We couldn't check just now" + `http_500` | no |
+| server fatal | same, diagnostic names it | no |
+| no vote today yet | `confirm` | no |
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

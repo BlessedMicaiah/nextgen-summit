@@ -258,6 +258,71 @@ my +2 points".
 
 ---
 
+## 0g. The Founder Feed, and the real Top 20 (2026-10-23)
+
+The gallery is now a dark cinematic feed carrying the twenty approved founders. It is a layer
+**over** the voting code: every `[data-pc-*]` hook is the one the vote flow already binds to,
+`.pce` stays on each card because `labelVoteButton()` asks `closest('.pce')` how to word
+itself, and the vote dialog's 15 steps are untouched. Nothing added can cast, count or change
+a vote — verified by clicking a live Vote button and watching it call only
+`pc-otp.php?action=status` and route to `verify`.
+
+### What the media survey actually found
+
+The source sheet's column labels are not reliable, and a HEAD request lies: Typeform rejects
+HEAD with 404 and serves GET with 200. Surveyed properly with ranged GETs and content
+sniffing:
+
+| | result |
+|---|---|
+| Images | **16 of 20** usable. 2 are PDFs (PathBridge, K8Culture), 1 missing (Credible blossom), 1 URL 404s (The Luminous Lab) |
+| Playable pitches | **16 of 20** — 11 direct mp4/mov, 3 YouTube, 2 public Google Drive |
+| Recovered | 2 YouTube ids were encoded in a PDF's **filename**; 1 was inside a `.docx` |
+| No playable pitch | Credible blossom (image), Rest, PathBridge, K8Culture (PDF decks) |
+
+Those four get an editorial story card naming the business — not a broken player and not a
+fake one. `tools/build-founders.py` re-runs the whole survey and prints the issue list.
+
+**A performance flag:** the direct videos are hot-linked from Typeform and at least one is
+3840×2160. They are not transcoded or self-hosted. Before real traffic they should be, or a
+phone on mobile data will struggle.
+
+### The contestant mapping is NOT decided
+
+`tools/founder-map.json`, `reviewed: false`. While false the page shows a staging strip saying
+the assignment is provisional. Vote rows reference `entrant-NN` and nothing else, so changing
+that file changes a name on a card and **moves no vote**. Under the current proposal
+`entrant-01` is Haptol Labs and `entrant-07` is BeforeKeys LLC — both inheriting staging test
+votes. The file records those counts where a reviewer will see them.
+
+---
+
+## 0h. The identity exposure, now demonstrated at scale
+
+By the end of 2026-10-23, `entrant-01` held **8 valid points in a single day** from **four
+distinct email identities** (3 + 1 + 3 + 1), and `pc_attendee` held **two** bindings. One
+person, four addresses. The daily maximum of three is enforced **per identity, and an email
+address is the identity.**
+
+The UNIQUE index does its job: no registration funded two voters. It was never designed to
+stop one human holding several addresses, and it does not.
+
+This is no longer a theoretical residual risk — it is the observed behaviour of the system
+under a few minutes of ordinary testing. **It is the single thing most likely to decide the
+competition incorrectly**, and it needs a decision before voting opens to the public:
+
+1. Add a second factor per vote — device or IP clustering alongside identity — accepting the
+   false positives that brings on shared networks.
+2. Require a verified NextGen registration to vote at all, not merely for the bonus.
+3. Accept it, publish the rule honestly, and have the dashboard flag same-day multi-identity
+   clusters for human review before a winner is certified.
+
+Option 3 preserves the current design and is the cheapest; it also means the published total
+is not a count of people. Whichever is chosen, the result should not be described as "one
+person, one vote" unless option 1 or 2 is implemented.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

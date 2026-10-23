@@ -660,10 +660,18 @@
          fatal error into a week of guessing. Production sends no code, so this stays hidden. */
       /* eb is only sent on a successful lookup, so the first version of this line could not
          describe the very failure it was added for. reason covers the rest. */
+      /* The reason code is kept, but no longer printed at the visitor.
+
+         "http_500" is support information, not a message for someone who came to vote; they
+         already have a plain sentence and a Try again button above it. The code now rides on
+         a data attribute, readable in developer tools by whoever is helping, and nothing
+         technical reaches the page. */
       var why = d && (d.eb || d.reason);
       $$('[data-pc-bonus-why]', vDlg).forEach(function (n) {
-        n.textContent = why ? 'Staging diagnostic: ' + why : '';
-        n.hidden = !why;
+        n.textContent = '';
+        n.hidden = true;
+        if (why) { n.setAttribute('data-why', String(why)); }
+        else { n.removeAttribute('data-why'); }
       });
       if (!d || !d.ok) { only('[data-pc-bonus-down]'); return; }
       if (d.mode !== 'daily') { only(''); return; }
@@ -1922,8 +1930,6 @@
     }
     applyFilter(searchBox ? searchBox.value : '');
     observeCards();
-    var note = $('[data-ff-provisional]');
-    if (note) note.hidden = window.NGS_FOUNDER_MAP_REVIEWED === true;
   }
 
   /* the Meet the Founders panel arrives once, as it comes into view */

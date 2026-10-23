@@ -1032,6 +1032,13 @@ main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the fi
 .ask__done[hidden]{display:none}
 .ask__done-x{margin-top:10px;font:500 16px/1.55 var(--f-sans);color:var(--ink-2);max-width:40ch}
 .ask__done-x small{display:block;margin-top:6px;font:600 13px/1.45 var(--f-sans)}
+/* the top of the FAQ: questions for the speakers, sent to the program team's form. Same title and
+   lede as the question form at the bottom, opened by the accent rule the confirmation uses */
+.speakq{margin-bottom:clamp(40px,6.5vh,64px);padding-top:24px;border-top:3px solid var(--accent)}
+.speakq__cta{margin-top:clamp(20px,3vh,28px)}
+@media (max-width:560px){.speakq__cta .btn{width:100%}}
+/* small phones: the long label tightens as the bar's button does, and wraps rather than spill */
+@media (max-width:440px){.speakq__cta .btn{white-space:normal;text-align:center;line-height:1.25;padding:12px .9em;letter-spacing:.07em}}
 @supports (interpolate-size:allow-keywords){
   .faq{interpolate-size:allow-keywords}
   .faq details::details-content{height:0;overflow:clip;transition:height .5s var(--ease),content-visibility .5s allow-discrete}

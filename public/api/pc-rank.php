@@ -33,10 +33,23 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: public, max-age=30');
 header('X-Content-Type-Options: nosniff');
 
+/* THE SWITCH.
+ *
+ * Ordering the feed by votes publishes the standings. Not the numbers -- but who is ahead
+ * of whom, which is the part that changes behaviour: a visitor who can see a leader can
+ * pile on behind one. That is a competition-policy decision, not an engineering one, so it
+ * is a stored setting an administrator changes on the dashboard, not a constant a deploy
+ * can move. Turning it off puts the feed straight back into contestant order with no code
+ * change, no release and no downtime.
+ *
+ * The order is still computed either way, because the endpoint has to answer; what the
+ * switch decides is whether the ANSWER reflects the votes. */
+$public = (string) pc_meta('rank_public', '1') === '1';
+
 $ids = array_column(pc_entrants(), 'id');
 $totals = array_fill_keys($ids, 0);
 
-$db = pc_db();
+$db = $public ? pc_db() : null;
 if ($db) {
     $day = pc_mode() === 'daily' ? null : 'all';
     /* Every valid point, the +1s and the attendee +2s alike, across the whole competition.
@@ -84,8 +97,11 @@ echo json_encode([
     'ok' => true,
     /* false while every founder is level: the page then keeps contestant order and shows no
        medals, because a podium drawn over a field of zeroes is a fabrication. */
-    'ranked' => $anyVotes && $distinct > 1,
-    'podium' => $anyVotes && $leaders === 1,
+    'ranked' => $public && $anyVotes && $distinct > 1,
+    'podium' => $public && $anyVotes && $leaders === 1,
+    /* Said plainly, so a reviewer reading the response knows whether they are looking at
+       contestant order because nobody has voted yet, or because ranking is switched off. */
+    'by_votes' => $public,
     'order' => array_values($order),
     'rank' => $ranks,
     'tiebreak' => 'contestant id ascending, applied only within equal totals',

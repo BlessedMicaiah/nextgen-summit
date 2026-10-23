@@ -514,3 +514,16 @@ html.pc-live [data-announce] { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .reel__panel.is-waiting .reel__wait { animation: none; border-top-color: rgba(255,255,255,.26); }
 }
+
+/* The stand-in when a founder submitted no image and their pitch is an embed, so there
+   is no frame of their own to lift one from. Their initials on a plate, which is honest
+   about the gap rather than dressing it with somebody else's picture. */
+.reel__plate {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; place-items: center;
+  background: linear-gradient(160deg, #141A20, #07090C);
+}
+.reel__plate .ffc__mono {
+  font: 900 clamp(58px, 17vw, 96px)/1 var(--f-sans, system-ui);
+  color: rgba(255,255,255,.24); letter-spacing: .02em;
+}

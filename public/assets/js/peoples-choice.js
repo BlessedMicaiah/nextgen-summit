@@ -719,8 +719,8 @@
       d.reason === 'number_daily' ? 'That number has asked for too many codes today.' :
       d.reason === 'ip_hourly' ? 'Too many codes requested from this connection. Try again later.' :
       d.reason === 'country' ? 'We can only text US and Canada numbers at the moment.' :
-      d.reason === 'not_allowlisted' ? 'This number is not approved for text messages on this preview.' :
-      d.reason === 'budget' ? 'The test message allowance for this preview has been used up.' :
+      d.reason === 'not_allowlisted' ? 'This number is not approved for text messages yet.' :
+      d.reason === 'budget' ? 'The message allowance has been used up for now. Please try again later.' :
       d.reason === 'phone' ? 'That does not look like a mobile number.' :
       d.reason === 'csrf' ? 'Your session expired. Close this and try again.' :
       d.reason === 'network' ? 'We could not reach the server. Check your connection and try again.' :
@@ -1548,7 +1548,13 @@
       media = '<video data-reel-video preload="none" playsinline muted loop ' +
         'poster="' + esc(poster) + '" data-src="' + esc(e.video.src) + '"></video>';
     } else if (e.video) {
-      media = '<img class="reel__still" src="' + esc(poster) + '" alt="" loading="lazy">' +
+      /* Two founders submitted no image at all and their pitch is on YouTube, so there is
+         no frame of their own to borrow either. An <img src=""> is not a neutral blank --
+         the browser resolves it to the page and draws a broken-image icon over the
+         founder's panel. They get the monogram plate instead. */
+      media = (poster
+          ? '<img class="reel__still" src="' + esc(poster) + '" alt="" loading="lazy">'
+          : '<span class="reel__plate"><span class="ffc__mono">' + esc(initials(e)) + '</span></span>') +
         '<button class="reel__play" type="button" data-reel-embed="' + e.id + '" ' +
         'aria-label="Play the pitch from ' + esc(e.company) + '">' +
         '<span>' + reelIcon('play') + '</span></button>';

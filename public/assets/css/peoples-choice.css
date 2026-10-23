@@ -566,3 +566,16 @@ body.has-pcbar .nav{top:34px}
 
 /* the spam-folder nudge: quiet, and only where a code has actually been sent */
 .pcv__hint--spam{margin-top:10px;font:500 12.5px/1.5 var(--f-sans);color:var(--v-ink-3)}
+
+/* What a vote is worth, in the column the tutorial placeholder used to occupy. Three
+   facts the rest of the page states in prose; nothing here is forthcoming. */
+.pcw__worth { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 12px; }
+.pcw__worth li {
+  display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 14px; align-items: baseline;
+  padding-top: 12px; border-top: 1px solid rgba(255,255,255,.14);
+}
+.pcw__worth li:first-child { border-top: 0; padding-top: 0; }
+.pcw__worth b {
+  font: 800 clamp(20px, 3.4vw, 26px)/1 var(--f-sans); letter-spacing: -.02em; color: var(--accent);
+}
+.pcw__worth span { font: 500 14px/1.55 var(--f-sans); color: rgba(255,255,255,.84); }

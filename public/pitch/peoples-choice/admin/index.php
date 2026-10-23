@@ -276,6 +276,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $notice = (string) pc_meta('phone_required', '1') === '1'
             ? 'Phone verification is now required to vote. The simulated sign-in is closed.'
             : 'The simulated sign-in is available again.';
+    } elseif ($authed && $action === 'rankpublic') {
+        /* Whether the public founder feed runs in vote order. Off puts it back into
+           contestant order immediately -- no deploy, no release, nothing cached longer
+           than the endpoint's thirty seconds. */
+        pc_set_meta('rank_public', ($_POST['to'] ?? '0') === '1' ? '1' : '0');
+        $notice = (string) pc_meta('rank_public', '1') === '1'
+            ? 'The founder feed now runs in vote order. Visitors can see who is ahead.'
+            : 'The founder feed is back in contestant order. Standings are private again.';
     } elseif ($authed && $action === 'seed') {
         /* Test rows, so the dashboard can be shown doing its job before any real ballot
            exists. They are votes like any other -- same table, same counting -- and they go
@@ -653,6 +661,21 @@ foreach ($standings as $r) {
         <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
           <input type="hidden" name="action" value="phonereq"><input type="hidden" name="to" value="<?= (string) pc_meta('phone_required', '1') === '1' ? '0' : '1' ?>">
           <button class="adm__btn" type="submit"><?= (string) pc_meta('phone_required', '1') === '1' ? 'Allow the simulated sign-in again' : 'Require phone verification' ?></button>
+        </form>
+      </div>
+    </section>
+
+    <section class="adm__sec">
+      <p class="adm__h">The public founder feed</p>
+      <p class="adm__p">Running order: <strong><?= (string) pc_meta('rank_public', '1') === '1' ? 'by votes, leader first' : 'contestant order' ?></strong></p>
+      <p class="adm__p">Exact totals are never published either way &mdash; but ordering the feed by votes
+        does reveal <em>who is ahead of whom</em>, and a visible leader can attract votes that
+        a hidden one would not. Medals appear only once the standings actually differ; while
+        every founder is level the feed stays in contestant order and shows none.</p>
+      <div class="adm__bar">
+        <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="rankpublic"><input type="hidden" name="to" value="<?= (string) pc_meta('rank_public', '1') === '1' ? '0' : '1' ?>">
+          <button class="adm__btn" type="submit"><?= (string) pc_meta('rank_public', '1') === '1' ? 'Hide the standings (contestant order)' : 'Show the standings (vote order)' ?></button>
         </form>
       </div>
     </section>

@@ -182,14 +182,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <li class="rv" style="--d:.30s"><span>Confirm your vote.</span></li>
           <li class="rv" style="--d:.34s"><span>Share the contestant&rsquo;s page with your friends.</span></li>
         </ol>
+        <!-- A panel reading "Tutorial video to come" is a promise the site does not keep,
+             and on launch day it reads as unfinished rather than as forthcoming. The six
+             steps beside it already explain voting. If leadership records a walkthrough,
+             the slot goes back here: .pcw__film, .pcw__frame, and the column rule in
+             peoples-choice.css are all still in place. -->
         <div class="pcw__film rv" style="--d:.2s">
-          <p class="pcw__filmk">Watch how to vote</p>
-          <div class="pcw__frame" data-pc-tutorial>
-            <div class="pcw__hold">
-              <span class="pcw__holdk">Tutorial video to come</span>
-              <span class="pcw__holdn">A short walkthrough of how voting works will appear here.</span>
-            </div>
-          </div>
+          <p class="pcw__filmk">What your vote is worth</p>
+          <ul class="pcw__worth">
+            <li><b>+1</b><span>Your daily vote, once your email is verified.</span></li>
+            <li><b>+2</b><span>For registered NextGen attendees, on the same founder.</span></li>
+            <li><b>Daily</b><span>Your allowance returns each day until voting closes on October&nbsp;28.</span></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -280,11 +284,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <span class="ff-sec__n" data-ff-count>20 founders</span>
         </div>
 
-        <!-- The provisional-mapping notice has been removed from the page at the
-             owner's request. The mapping is still unreviewed: tools/founder-map.json
-             carries reviewed:false and names which founder inherits which staging
-             test votes. Nothing about the warning was wrong; it is simply no longer
-             shown to visitors. -->
+        <!-- The provisional-mapping notice that used to sit here is gone because the
+             mapping is no longer provisional: tools/founder-map.json now carries
+             reviewed:true, and the audit found the manifest, the map and the database
+             agreeing on all twenty. What a machine cannot check is whether a photograph
+             shows the founder named beside it; that stays an editorial judgement. -->
 
         <div class="ff-tools">
           <label class="ff-search">

@@ -152,6 +152,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" href="assets/css/names.css?v=20261021-10">
 <link rel="stylesheet" href="assets/css/sponsors.css?v=20261021-10">
 <link rel="stylesheet" href="assets/css/film.css?v=20261022-20">
+<link rel="stylesheet" href="assets/css/volunteer.css?v=20261023-10">
 <script src="assets/js/liquid.js?v=20261021-10" defer></script>
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="assets/vendor/lenis-1.3.26.min.js" defer></script>
@@ -165,6 +166,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="assets/js/counter.js?v=20261021-10" defer></script>
 <script src="assets/js/speakers.js?v=20261021-10" defer></script>
 <script src="assets/js/film.js?v=20261022-20" defer></script>
+<script src="assets/js/volunteer.js?v=20261023-10" defer></script>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -843,7 +845,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- utility: get involved -->
 
-<dialog class="drawer drawer--form" id="apply-volunteer" aria-labelledby="apply-volunteer-t">
+<dialog class="drawer drawer--form drawer--vf" id="apply-volunteer" aria-labelledby="apply-volunteer-t">
   <div class="drawer__in drawer__in--form">
     <div class="drawer__top">
       <div class="drawer__lead"><p class="label" id="apply-volunteer-t">Join the team</p></div>
@@ -851,9 +853,180 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
       </button>
     </div>
-    <div class="fm">
-      <iframe class="fm__frame" data-src="https://docs.google.com/forms/d/e/1FAIpQLSccALYSEv3dRT2qAzKLVLlVIxGQlWSG-2Btk6_XM2OgRlkCDQ/viewform?embedded=true" title="Volunteer with NextGen Summit" allow="camera; microphone; autoplay; encrypted-media; fullscreen"></iframe>
-      <p class="fm__alt">Asked to sign in, or the form will not load? <a class="linkish" href="https://forms.gle/PeXXFp8gs6UwdAoTA" target="_blank" rel="noopener noreferrer">Open it in a new tab</a>.</p>
+
+    <!-- The volunteer sign-up, in the site's own design. The answers still go to the team's
+         Google Form (volunteer.js posts them to its formResponse address), so they land in the
+         same responses and sheet as before. The field names are that form's entry ids and the
+         option values are its options, character for character: change the Google Form and
+         this form has to change with it, or those answers are dropped. -->
+    <form class="vf" name="volunteer-signup" method="POST" novalidate data-vf
+      action="https://docs.google.com/forms/d/e/1FAIpQLSccALYSEv3dRT2qAzKLVLlVIxGQlWSG-2Btk6_XM2OgRlkCDQ/formResponse">
+
+      <div class="vf__head">
+        <h2 class="vf__title wm">help bring<br> nextgen to life.</h2>
+        <ol class="vf__bar" aria-hidden="true">
+          <li class="vf__seg is-on" data-vf-seg="you"><span>You</span></li>
+          <li class="vf__seg" data-vf-seg="school"><span>School</span></li>
+          <li class="vf__seg" data-vf-seg="role"><span>Role</span></li>
+          <li class="vf__seg" data-vf-seg="ride"><span>Ride</span></li>
+          <li class="vf__seg" data-vf-seg="you2"><span>Experience</span></li>
+        </ol>
+        <p class="sr" aria-live="polite" data-vf-where></p>
+      </div>
+
+      <!-- 1 · you -->
+      <fieldset class="vf__step is-on" data-vf-step="you">
+        <legend class="vf__k">Step <span data-vf-n>1</span> <span aria-hidden="true">·</span> About you</legend>
+        <ul class="vf__perks">
+          <li class="vf__perk"><span class="vf__perk-k">Free ride</span><span>Pickup 11:00 AM from campus</span></li>
+          <li class="vf__perk"><span class="vf__perk-k">Fed all day</span><span>Every meal is covered</span></li>
+          <li class="vf__perk"><span class="vf__perk-k">Free ticket</span><span>Attend the Summit on us</span></li>
+        </ul>
+        <div class="vf__pair">
+          <div class="field">
+            <label for="vf-first">First name</label>
+            <input id="vf-first" name="entry.1406927566" autocomplete="given-name" maxlength="80" required aria-describedby="vf-first-err">
+            <p class="field__err" id="vf-first-err" hidden></p>
+          </div>
+          <div class="field">
+            <label for="vf-last">Last name</label>
+            <input id="vf-last" name="entry.1985496986" autocomplete="family-name" maxlength="80" required aria-describedby="vf-last-err">
+            <p class="field__err" id="vf-last-err" hidden></p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="vf-phone">Phone number</label>
+          <input id="vf-phone" name="entry.327205865" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required aria-describedby="vf-phone-err">
+          <p class="field__err" id="vf-phone-err" hidden></p>
+        </div>
+        <fieldset class="vf__q" id="vf-adult" aria-describedby="vf-adult-err">
+          <legend>Are you over 18?</legend>
+          <div class="vf__opts vf__opts--row">
+            <label class="vf__opt"><input type="radio" name="entry.236277133" value="Yes" required><span>Yes</span></label>
+            <label class="vf__opt"><input type="radio" name="entry.236277133" value="No (I&#8217;m a minor)"><span>No, I&rsquo;m a minor</span></label>
+          </div>
+          <p class="field__err" id="vf-adult-err" hidden></p>
+        </fieldset>
+        <fieldset class="vf__q" id="vf-student" aria-describedby="vf-student-err">
+          <legend>Are you currently a student?</legend>
+          <div class="vf__opts vf__opts--row">
+            <label class="vf__opt"><input type="radio" name="entry.378545828" value="Yes" required><span>Yes</span></label>
+            <label class="vf__opt"><input type="radio" name="entry.378545828" value="No"><span>No</span></label>
+          </div>
+          <p class="field__err" id="vf-student-err" hidden></p>
+        </fieldset>
+      </fieldset>
+
+      <!-- 2 · school (students only) -->
+      <fieldset class="vf__step" data-vf-step="school" hidden>
+        <legend class="vf__k">Step <span data-vf-n>2</span> <span aria-hidden="true">·</span> Your school</legend>
+        <div class="field">
+          <label for="vf-school">What school do you attend?</label>
+          <input id="vf-school" name="entry.288488291" autocomplete="organization" maxlength="150" required aria-describedby="vf-school-err">
+          <p class="field__err" id="vf-school-err" hidden></p>
+        </div>
+        <fieldset class="vf__q" id="vf-year" aria-describedby="vf-year-err">
+          <legend>School year</legend>
+          <div class="vf__opts vf__opts--chips">
+            <label class="vf__opt"><input type="radio" name="entry.1172467852" value="Senior (High School)" required><span>Senior <small>High school</small></span></label>
+            <label class="vf__opt"><input type="radio" name="entry.1172467852" value="Freshman (University)"><span>Freshman <small>University</small></span></label>
+            <label class="vf__opt"><input type="radio" name="entry.1172467852" value="Sophomore (University)"><span>Sophomore <small>University</small></span></label>
+            <label class="vf__opt"><input type="radio" name="entry.1172467852" value="Junior (University)"><span>Junior <small>University</small></span></label>
+            <label class="vf__opt"><input type="radio" name="entry.1172467852" value="Senior (University)"><span>Senior <small>University</small></span></label>
+          </div>
+          <p class="field__err" id="vf-year-err" hidden></p>
+        </fieldset>
+      </fieldset>
+
+      <!-- 3 · role: up to three (the trailing spaces in some values are the Google Form's own) -->
+      <fieldset class="vf__step" data-vf-step="role" hidden>
+        <legend class="vf__k">Step <span data-vf-n>3</span> <span aria-hidden="true">·</span> Where you&rsquo;d like to help</legend>
+        <fieldset class="vf__q" id="vf-roles" aria-describedby="vf-roles-note vf-roles-err">
+          <legend>Pick your top three</legend>
+          <p class="vf__note" id="vf-roles-note"><span data-vf-count>0</span> of 3 chosen</p>
+          <div class="vf__roles">
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Guest Welcoming Team"><span class="vf__role-t">Guest Welcoming Team</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Safety Team"><span class="vf__role-t">Safety Team</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="VIP Special Assistance "><span class="vf__role-t">VIP Special Assistance</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Ticketing Officer"><span class="vf__role-t">Ticketing Officer</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Logistics Officer"><span class="vf__role-t">Logistics Officer</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Content Creator"><span class="vf__role-t">Content Creator</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Communication Relations "><span class="vf__role-t">Communication Relations</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Social Media Manager"><span class="vf__role-t">Social Media Manager</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Marketing Manager"><span class="vf__role-t">Marketing Manager</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Event Ambassador "><span class="vf__role-t">Event Ambassador</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Hospitality Manager "><span class="vf__role-t">Hospitality Manager</span></label>
+            <label class="vf__role"><input type="checkbox" name="entry.1569347530" value="Exhibit Officer"><span class="vf__role-t">Exhibit Officer</span></label>
+          </div>
+          <p class="field__err" id="vf-roles-err" hidden></p>
+        </fieldset>
+      </fieldset>
+
+      <!-- 4 · getting there -->
+      <fieldset class="vf__step" data-vf-step="ride" hidden>
+        <legend class="vf__k">Step <span data-vf-n>4</span> <span aria-hidden="true">·</span> Getting there</legend>
+        <fieldset class="vf__q" id="vf-ride" aria-describedby="vf-ride-err">
+          <legend>Do you need transportation?</legend>
+          <div class="vf__opts vf__opts--row">
+            <label class="vf__opt"><input type="radio" name="entry.1683348645" value="Yes" required><span>Yes, pick me up</span></label>
+            <label class="vf__opt"><input type="radio" name="entry.1683348645" value="No"><span>No, I&rsquo;ll get there</span></label>
+          </div>
+          <p class="field__err" id="vf-ride-err" hidden></p>
+        </fieldset>
+        <div class="vf__more" data-vf-if="entry.1683348645=Yes" hidden>
+          <fieldset class="vf__q" id="vf-eleven" aria-describedby="vf-eleven-err">
+            <legend>Can you be picked up at 11:00 AM?</legend>
+            <div class="vf__opts vf__opts--row">
+              <label class="vf__opt"><input type="radio" name="entry.932285107" value="Yes" required><span>Yes</span></label>
+              <label class="vf__opt"><input type="radio" name="entry.932285107" value="No"><span>No</span></label>
+            </div>
+            <p class="field__err" id="vf-eleven-err" hidden></p>
+          </fieldset>
+          <div class="field vf__more" data-vf-if="entry.932285107=No" hidden>
+            <label for="vf-time">What time could you be picked up?</label>
+            <input id="vf-time" name="entry.1399731544" maxlength="80" placeholder="For example, 12:30 PM" required aria-describedby="vf-time-err">
+            <p class="field__err" id="vf-time-err" hidden></p>
+          </div>
+        </div>
+        <p class="vf__note">Pickup spots on campus are shared with you before the event.</p>
+      </fieldset>
+
+      <!-- 5 · experience -->
+      <fieldset class="vf__step" data-vf-step="you2" hidden>
+        <legend class="vf__k">Step <span data-vf-n>5</span> <span aria-hidden="true">·</span> Experience</legend>
+        <fieldset class="vf__q" id="vf-exp" aria-describedby="vf-exp-err">
+          <legend>Have you volunteered at a conference or event before?</legend>
+          <div class="vf__opts vf__opts--row">
+            <label class="vf__opt"><input type="radio" name="entry.2126112908" value="Yes" required><span>Yes</span></label>
+            <label class="vf__opt"><input type="radio" name="entry.2126112908" value="No"><span>Not yet</span></label>
+          </div>
+          <p class="field__err" id="vf-exp-err" hidden></p>
+        </fieldset>
+        <div class="field vf__more" data-vf-if="entry.2126112908=Yes" hidden>
+          <label for="vf-what">Tell us about it <span class="field__opt">(optional)</span></label>
+          <textarea id="vf-what" name="entry.144100113" rows="4" maxlength="1000"></textarea>
+        </div>
+      </fieldset>
+
+      <p class="form__error" role="alert" tabindex="-1" hidden></p>
+      <div class="vf__nav">
+        <button class="vf__back" type="button" data-vf-back hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Back</button>
+        <button class="btn btn--lg vf__next" type="submit"><span class="btn__t" data-vf-go>Continue</span> <span class="arr" aria-hidden="true">&rarr;</span></button>
+      </div>
+      <p class="fm__alt vf__alt">Prefer Google&rsquo;s page? <a class="linkish" href="https://forms.gle/PeXXFp8gs6UwdAoTA" target="_blank" rel="noopener noreferrer">Open the sign-up form</a>.</p>
+    </form>
+
+    <!-- shown in place of the form once it has gone -->
+    <div class="vf-done" data-vf-done hidden tabindex="-1">
+      <p class="vf-done__k label">You&rsquo;re signed up</p>
+      <h2 class="vf-done__t wm">welcome to<br> the team, <span data-vf-name>friend</span>.</h2>
+      <p class="vf-done__p">Thank you for giving your time to NextGen Summit on Friday, October 30. Here is what happens next:</p>
+      <ol class="vf-done__list">
+        <li><span class="vf-done__n">1</span><span>We invite you to the volunteer training meeting.</span></li>
+        <li><span class="vf-done__n">2</span><span>At training you get the code for your free Summit ticket.</span></li>
+        <li><span class="vf-done__n">3</span><span>Before the day, we share the pickup spots and your role.</span></li>
+      </ol>
+      <button class="btn btn--lg btn--ghost" type="button" data-close>Back to the site</button>
     </div>
   </div>
 </dialog>
@@ -983,7 +1156,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </details>
       <details name="faq">
         <summary>Can I pitch my startup?<span class="faq__plus" aria-hidden="true"></span></summary>
-        <div class="faq__a"><p>If you are a founder age 29 or under, yes. Twenty semifinalists are selected and ten pitch live on October 30 for a share of $10,000. <a class="linkish" href="/pitch/">See the pitch competition</a>. Applications close <span class="dl"><span aria-hidden="true"><del class="dl__old">October 17</del><ins class="dl__new"><time datetime="2026-10-20">October 20</time></ins></span><span class="sr">October 20 (extended from October 17)</span></span>.</p></div>
+        <div class="faq__a"><p>Applications closed October 20. Twenty founders age 29 and under are through to the semifinals, the public votes October 22&ndash;28, and ten pitch live on October 30 for a share of $10,000. <a class="linkish" href="/pitch/">See the pitch competition</a>.</p></div>
       </details>
       <details name="faq">
         <summary>Can an organization partner with Next Gen?<span class="faq__plus" aria-hidden="true"></span></summary>

@@ -2562,8 +2562,9 @@
     if (empty) empty.hidden = !(needle && shown === 0);
     if (clearBtn) clearBtn.hidden = !needle;
     if (countEl) {
+      /* "1 of 20 founder" -- the plural follows the total, not the match count. */
       countEl.textContent = needle
-        ? shown + ' of ' + ENTRANTS.length + (shown === 1 ? ' founder' : ' founders')
+        ? shown + ' of ' + ENTRANTS.length + ' founders'
         : ENTRANTS.length + ' founders';
     }
     railArrows();

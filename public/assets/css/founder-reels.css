@@ -568,3 +568,18 @@ html.pc-live [data-announce] { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .reel__meet { transition: none; }
 }
+
+/* ---------- the feed does not need to be in the page as well ----------
+
+   Twenty full-height panels laid out in the document made the page 19,977px tall on a
+   phone. That is the opposite of the brief: the immersive feed IS the reading
+   experience, entered from a control, and a second copy of it stacked down the page
+   was costing a visitor fourteen thousand pixels of scrolling to reach the voting
+   rules underneath.
+
+   The panels stay in the DOM -- they are what immersive mode scrolls, and they hold
+   every vote and share hook -- they simply are not laid out until the visitor asks for
+   them. Discovery before that point is the founder rail, the search and the deck. */
+.reel:not(.is-live) .reel__track { display: none; }
+.reel:not(.is-live) .reel__up { display: none; }
+.reel:not(.is-live) { padding: 0; }

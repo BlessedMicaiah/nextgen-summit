@@ -13,8 +13,59 @@ and the gallery fix, so **where the two disagree, this one is current.**
 
 ---
 
-## 0. Root cause of the bonus failure — fixed 2026-10-23
+## 0. Root cause of the bonus failure — TWO faults, both fixed 2026-10-23
 
+### Fault 2, the one that kept it broken: an undefined function below the 401 gate
+
+`pc-bonus.php` called `pc_canonical()` and `pc_flag()` without requiring `pc-identity.php`,
+which defines both. Undefined function, PHP 8, fatal `Error`, HTTP 500 with an HTML body. The
+browser's `r.json()` threw, `bpost`'s catch reported `{ok:false, reason:'network'}`, and the
+screen said "we could not reach the registration system".
+
+**Why it survived three passes of looking directly at it:** the `pc_canonical()` call is the
+line immediately below the 401 session gate. An unauthenticated request — every probe — returns
+at the gate and never reaches it, so the endpoint answered 401 cleanly and looked healthy.
+Only a genuinely verified voter got far enough to hit the fatal.
+
+`pc-otp.php` and `pc-vote.php` call the same function and both worked throughout, which is what
+made the frontend look like the suspect. They reach it through `pc-email-otp.php`, **and both
+guard the call with `function_exists()` anyway.** `pc-bonus.php` did neither, on a line whose
+comment read "as the vote path does".
+
+`pc_flag()` matters as much: it is called on the **success** path
+(`pc_flag($voter, 'attendee_auto_matched')`). A voter whose registration actually matched would
+have fataled at the moment of success, after the lookup had done its work. Fixing only
+`pc_canonical` would have moved the failure later and made it stranger.
+
+**Proved before and after** with a temporary staging-gated probe that loaded `pc-bonus.php`'s
+old include line: `missing_with_old_includes: ["pc_canonical", "pc_flag"]`,
+`missing_after_fix: []`, lookup runs, `eb_note: "ok:156"`. Probe deleted, confirmed 404.
+
+**The check that would have caught it, and should be re-run after any include change:** for each
+entry point in `public/api`, walk its `require __DIR__ . '/...'` closure and confirm every
+`pc_*`/`ngs_*` call is defined in that closure or guarded by `function_exists()`. SQL table
+names inside `CREATE TABLE pc_votes (` are false positives. Running it now leaves one genuine
+hit outside this feature: `resume.php` calls `ngs_resume_path()`, defined nowhere. It is 403 on
+both hosts, so latent rather than active.
+
+### Why the diagnostics did not diagnose it
+
+Both were my errors and both are fixed:
+
+- A non-JSON body was reported as `network`. It is almost always a fatal, so the status now
+  comes through as `http_500`; a genuinely rejected fetch keeps `network`. The outer `.catch`
+  was also missing, so a real network failure left the spinner turning forever.
+- The staging diagnostic read `d.eb`, which the server only sends on a **successful** lookup —
+  so the line could not describe the one failure it was added for. It reads `d.eb || d.reason`
+  now and would have printed `http_500` on the first attempt.
+
+Verified against the deployed build, every failure mode now distinguishable on screen:
+`http_500`, `verify_required`, `csrf`, `network`, `ok:156` (list read, address not in it),
+`http_401` (Eventbrite rejected us).
+
+### Fault 1: the event ID constant — fixed earlier the same day
+
+This one was real too, and had to be fixed before the second could even be reached.
 `NGS_EB_EVENT_ID` was defined in `attendee-count.php`, a standalone endpoint nothing includes,
 and used in `pc-attendee.php`, which the bonus path loads instead. Undefined constant, PHP 8,
 **fatal Error**, thrown the first time the attendee index tried to build its URL. The request
@@ -37,6 +88,127 @@ records why it ended as it did: `no_token`, `no_curl`, `http_<status>`, `transpo
 on the `auto` response, **staging and localhost only**, for both the `unavailable` and
 `not_registered` cases — so a genuine "not on the list" can be told apart from a list that was
 never read. A short code and nothing else: no token, no address, no attendee.
+
+### Failures now name themselves on staging
+
+`pc-bonus.php` returns an `eb` reason code with the `auto` response on staging and localhost
+only, and the dialog prints it under the message: `Staging diagnostic: http_401`, `no_token`,
+`ok:156`, `cache_fresh:156`. Production is sent no code and the line stays hidden. This exists
+because a fatal error passed for a network outage for days, on a host with no error log.
+
+---
+
+## 0c. Eventbrite token rotation
+
+**The token was exposed in a Claude Code transcript on 2026-10-23** — a `grep` for the
+constant name printed the assignment line, value included. It must be rotated. Audit findings:
+
+- **Never in git.** `public/api/config.php` is in `.gitignore`, is untracked, appears in no
+  commit, and a `git log -S` for the value across all branches returns nothing.
+- **Exactly one file on disk holds it**: `public/api/config.php`, one line.
+- **Two readers**, both with the same `defined() ?: getenv('EVENTBRITE_TOKEN')` fallback:
+  `attendee-count.php` and `pc-attendee.php`.
+- **`release.py` puts `api/config.php` into every archive**, despite it being git-ignored. So
+  the local file is the source of truth and deploys carry it to the host.
+- **Production uses the same token** and is live: `nextgensummit.us/api/attendee-count.php`
+  serves the homepage registration counter and returned 185. Rotating without updating
+  production breaks that counter — with roughly a day of grace, since `NGS_EB_KEEP` lets the
+  last good count stand in for 86400 seconds.
+
+Rotation order:
+
+1. Create a new private token in Eventbrite. Do not revoke the old one yet.
+2. Edit the one line in local `public/api/config.php`.
+3. Staging: `python -I tools/release.py staging` then `node tools/deploy.mjs ...`. Confirm
+   with `api/attendee-count.php` and a bonus check.
+4. **Production: do NOT run a full production deploy for this.** It would replace the web root
+   and delete the untracked sponsor logos (section I). Edit `api/config.php` in place through
+   Hostinger's File Manager — one line, no deploy, no drift risk. Confirm the live counter
+   still returns a count.
+5. Only then revoke the old token in Eventbrite.
+
+---
+
+## 0d. The +3 claim, audited against live data (2026-10-23)
+
+The first real bonus claim succeeded. It was audited from the database and the Eventbrite
+index rather than from the confirmation screen, with a temporary staging-gated probe that
+compared on the server because the comparison needs the site secret. Probe deleted, 404
+confirmed.
+
+**The bonus was legitimately earned.**
+
+| Question | Answer |
+|---|---|
+| Is the proven address a registered attendee? | **yes** — it is a key in the eligible index |
+| Is the bound attendee the record that address owns? | **yes** — HMAC match, not an arbitrary key |
+| Does the bound attendee exist in the eligible index? | **yes** |
+| Two points, to the right founder, on the right day? | **yes** — rows 8 and 9, `entrant-01`, `2026-10-23`, slots 2 and 3, both `06:01:52Z` |
+| Binding written before the points? | **yes** — `06:01:47Z`, five seconds earlier |
+| Can a code alone earn the bonus? | **no** — see below |
+
+**A code can never be enough.** `pc_email_code_send()` is reached only after `pc_eb_lookup()`
+reports `found`, and it stores the attendee key discovered at that moment. `check` binds that
+stored key. So no pending code can exist for an address that is not registered, and there is
+nothing for a correct code to bind to. Entering a valid code for an unregistered address
+fails at `lookup` with `not_found`, before any code is sent.
+
+**The second code should not have been needed.** The voting identity is itself in the index —
+the registration is under the very address already proven to vote — so the automatic path
+should have matched silently. It did not because it was fataling on the undefined
+`pc_canonical` at that moment, so the manual path was the only one that worked. Re-running the
+real `pc_eb_lookup_keys()` against that identity now returns found, and the same attendee.
+
+**Eligibility filter, walked live:** 185 attending, 0 cancelled, 0 refunded, 0 without an
+address, 156 distinct emails, 4 pages. The 185/156 gap is people holding several tickets.
+Note honestly: with no cancelled or refunded records present, that branch is correct by
+inspection and **has not been exercised against real data**.
+
+**Leaderboard:** `entrant-01` 4 valid (1 on the 22nd, 3 on the 23rd), `entrant-07` 1 valid,
+9 rows total, 4 invalidated, 2 distinct voters, 1 binding, 0 identity links.
+
+### Residual risks — real, and none of them cosmetic
+
+1. **A refund after binding keeps the entitlement.** `claim` re-reads the binding table but
+   does not re-check Eventbrite. Someone could register, bind, refund, and still hold the +2.
+   The window to Oct 28 is small and no refunds exist today, but it is a genuine gap.
+2. **One person with two addresses and two tickets can reach six points a day.** The UNIQUE
+   index stops one registration funding two voters. It does not stop one human holding two of
+   each. This is the identity limitation stated plainly, with its arithmetic.
+3. The cancelled/refunded branch is untested against real data.
+4. The Eventbrite token rotation is outstanding (section 0c).
+
+---
+
+## 0e. Interface corrections (2026-10-23)
+
+- The three-point screen said **"+3 points for"** with no name. The founder was written by the
+  vote flow, and a returning voter reaches that screen without casting a vote in the session.
+  It now comes from the claim response, `d.entrant`, the row the server read.
+- It offered **"Get your NextGen ticket"** directly under the line confirming the registration
+  that earned the bonus. Reaching that screen requires a verified registration, so the link is
+  gone from it, and the two that remain are hidden whenever the server reports a verified
+  attendee.
+- **`hidden` was not hiding a styled element.** The ticket link reported `hidden=true` and
+  rendered anyway: `.btn` sets `display:inline-flex`, an author rule, which beats the
+  browser's `[hidden]{display:none}`. The stylesheet compensated component by component, which
+  works until someone hides an element nobody wrote a rule for. `[hidden]{display:none
+  !important}` is now a base rule. A sweep of the rendered page found exactly one element in
+  that state; the phone button, which must stay hidden, was unaffected.
+
+### State matrix, verified against the deployed build
+
+| State | Screen | Ticket offer |
+|---|---|---|
+| registered, +2 waiting | `bonus-ready` | no |
+| registered, all three given | `all-done` | no |
+| not registered, +1 cast | "Want to give 2 more points?" | yes (Eventbrite) |
+| not registered, allowance spent | `all-done` | yes |
+| no proven address (phone voter) | "Which email did you register with?" | secondary |
+| registration already used | "Registration already used" | no |
+| Eventbrite unreachable | "We couldn't check just now" + `http_500` | no |
+| server fatal | same, diagnostic names it | no |
+| no vote today yet | `confirm` | no |
 
 ---
 
@@ -314,6 +486,26 @@ rather than a second opinion.
   attendee roster. It needs a verified session.
 
 Index TTL 900s; code TTL 900s; 5 tries per code; 5 lookups per voter per day.
+
+---
+
+## G2. Baseline immediately before the +2 test (2026-10-23)
+
+Recorded so the bonus test can be judged against something exact rather than remembered.
+
+| | before | expected after a successful claim |
+|---|---|---|
+| `entrant-01` valid votes | 2 (one 2026-10-22, one 2026-10-23) | 4 |
+| `entrant-01` valid *today* | 1 | 3 |
+| `entrant-07` valid votes | 1 | 1, unchanged |
+| rows total / invalidated | 7 / 4 | 9 / 4 |
+| distinct voters | 2 | 2 |
+| `pc_attendee` bindings | 0 | 1 |
+| `pc_flag` rows | 1 (`email_verified`) | 2 (`+ attendee_auto_matched`) |
+| `eventbrite-emails.json` | 8293 bytes, 156 entries | unchanged or refreshed |
+
+A second claim must add no rows: `remaining` is 0 afterwards, so `claim` returns `spent`, and
+the UNIQUE index on the attendee key blocks a second binding regardless.
 
 ---
 

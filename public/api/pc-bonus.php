@@ -24,6 +24,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/pc-attendee.php';
+/* pc_canonical() lives in pc-identity.php, and this file called it without loading it.
+
+   The call sits immediately below the 401 gate, so an unauthenticated request returned before
+   reaching it and every probe looked healthy -- while every real verified voter got an
+   undefined function, a fatal, a 500 with an HTML body, and a screen that said we could not
+   reach Eventbrite. pc-otp.php and pc-vote.php both reach the same function, which is why
+   verifying and voting worked throughout; they get it by way of pc-email-otp.php, and both of
+   them guard the call with function_exists() anyway. This one did neither. */
+require_once __DIR__ . '/pc-identity.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');

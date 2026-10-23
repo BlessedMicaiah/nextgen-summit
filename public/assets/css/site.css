@@ -60,6 +60,17 @@ h1,h2,h3,p{margin:0}
 .draft-note::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
 
 /* ---------- buttons ---------- */
+/* The hidden attribute has to actually hide things.
+
+   An author rule that sets display -- .btn does, and so does every component here -- beats
+   the browser's own [hidden]{display:none}, so hidden silently stops working on anything
+   styled. This file compensates component by component (.tally[hidden], .vol[hidden],
+   .mini[hidden] and a dozen more), which works right up until someone sets hidden on an
+   element nobody wrote a rule for. That happened: the ticket link on the three-point screen
+   was hidden in JavaScript, reported itself as hidden, and stayed on screen anyway, offering
+   a ticket to someone who had just proved they held one. One rule, so it cannot happen again. */
+[hidden]{display:none !important}
+
 .btn{--h:48px;display:inline-flex;align-items:center;justify-content:center;gap:.75em;min-height:var(--h);padding:0 1.35em;border-radius:8px;background:var(--accent);color:var(--on-accent);font:700 13px/1 var(--f-sans);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;white-space:nowrap;transition:background-color .4s var(--ease),transform .6s var(--ease)}
 .btn:hover{background:var(--accent-hover)}
 .btn:active{transform:scale(.97)}

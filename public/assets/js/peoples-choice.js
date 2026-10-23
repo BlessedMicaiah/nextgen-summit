@@ -387,6 +387,11 @@
 
   /* The summary on the completion screen reports what was actually given, not a fixed three. */
   function paintSummary(d) {
+    /* Same contradiction as the bonus screens: this is where a verified attendee lands once
+       they have given all three, and it was offering to sell them the ticket they used. */
+    $$('[data-pc-tickets]', vDlg).forEach(function (n) {
+      n.hidden = !!(d && d.ticket_verified);
+    });
     var used = (d && typeof d.used === 'number') ? d.used : 0;
     var bonus = Math.max(0, used - 1);
     $$('[data-pc-sum-total]', vDlg).forEach(function (n) { n.textContent = String(used); });
@@ -495,7 +500,12 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.assign({ action: action, csrf: me.csrf }, body || {}))
     }).then(function (r) {
-      return r.json().catch(function () { return { ok: false, reason: 'network' }; });
+      /* A body that will not parse is almost always a PHP fatal, and calling that "network"
+         is what hid a 500 behind an outage message. Carry the status instead. */
+      return r.json().catch(function () { return { ok: false, reason: 'http_' + r.status }; });
+    }).catch(function () {
+      // and a rejected fetch really is the network; without this the spinner never moved
+      return { ok: false, reason: 'network' };
     });
   }
 
@@ -523,10 +533,26 @@
       });
     };
     only('[data-pc-bonus-wait]');
+    $$('[data-pc-bonus-why]', vDlg).forEach(function (n) { n.hidden = true; });
+    $$('[data-pc-tickets]', vDlg).forEach(function (n) { n.hidden = false; });
     bpost('auto').then(function (d) {
+      /* On staging the server says WHY, and this puts it on the screen rather than leaving it
+         in a response nobody reads. "We could not check" with no detail is what turned a
+         fatal error into a week of guessing. Production sends no code, so this stays hidden. */
+      /* eb is only sent on a successful lookup, so the first version of this line could not
+         describe the very failure it was added for. reason covers the rest. */
+      var why = d && (d.eb || d.reason);
+      $$('[data-pc-bonus-why]', vDlg).forEach(function (n) {
+        n.textContent = why ? 'Staging diagnostic: ' + why : '';
+        n.hidden = !why;
+      });
       if (!d || !d.ok) { only('[data-pc-bonus-down]'); return; }
       if (d.mode !== 'daily') { only(''); return; }
       if (d.status === 'verified') {
+        /* They hold a ticket. Hiding the ticket link is not decoration: a page that confirms
+           the registration in one paragraph and offers to sell them one in the next reads as
+           though the confirmation is not believed. */
+        $$('[data-pc-tickets]', vDlg).forEach(function (n) { n.hidden = true; });
         only(d.remaining > 0 ? '[data-pc-bonus-yes]' : '[data-pc-bonus-done]');
         return;
       }
@@ -981,8 +1007,17 @@
         }
         var tot = $('[data-pc-bonus-total]', vDlg);
         if (tot) tot.textContent = '+' + (d.used || 3) + ' points';
+        /* The founder comes from the server's answer -- d.entrant is the row pc-bonus.php read
+           from the database -- so the name on the screen is the one the points went to, not a
+           guess from whatever the page was last looking at. */
+        var bwho = byId[d.entrant] || pending;
+        $$('[data-pc-bonus-name]', vDlg).forEach(function (n) {
+          n.textContent = bwho ? bwho.name : 'your founder';
+        });
+        var bshare = $('[data-pc-bonus-share]', vDlg);
+        if (bshare && bwho) bshare.setAttribute('data-pc-share', bwho.id);
         var bp = $('[data-pc-bonus-done-p]', vDlg);
-        if (bp) bp.textContent = 'That is your full allowance for today. Come back tomorrow after midnight Eastern for three more.';
+        if (bp) bp.textContent = 'Your vote and NextGen attendee bonus have been counted. That is your full allowance for today — come back after midnight Eastern for three more.';
         track('bonus_claimed', { awarded: d.awarded });
         step('bonus-done');
         paintBonus();

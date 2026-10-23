@@ -1,0 +1,56 @@
+{
+  "taken": "2026-10-23T19:57:19.649911+00:00",
+  "host": "nextgensummit.us",
+  "why": "production carries changes no commit contains; a Hostinger deploy replaces the web root, so this is the copy that survives one",
+  "files": [
+    {
+      "path": "/",
+      "saved_as": "index.html__index.html",
+      "bytes": 79035,
+      "content_type": "text/html",
+      "sha256": "00ef855c521f776a2fb06dcbe9ea886979eb49a0f38ed308786ddbc9e29e482f"
+    },
+    {
+      "path": "/about/",
+      "saved_as": "about__index.html",
+      "bytes": 16034,
+      "content_type": "text/html",
+      "sha256": "26c60fda8705d9db1bb5eb0667742fda6c4ab631cec514324fd14be7d264ed69"
+    },
+    {
+      "path": "/pitch/",
+      "saved_as": "pitch__index.html",
+      "bytes": 28132,
+      "content_type": "text/html",
+      "sha256": "cd355c2ba4ced8cf61315e33dc7b2aa51c7e727e2911bf81ad79a59d99fa2ede"
+    },
+    {
+      "path": "/assets/css/film.css",
+      "saved_as": "assets__css__film.css",
+      "bytes": 22178,
+      "content_type": "text/css",
+      "sha256": "6e3a91aeedc9412f13af734fad5c87e96ab47049fef4946950938113b2298330"
+    },
+    {
+      "path": "/assets/js/film.js",
+      "saved_as": "assets__js__film.js",
+      "bytes": 26455,
+      "content_type": "application/x-javascript",
+      "sha256": "284c5a2bf05caa298ac6170ebe02af6ee8ed9ee3c6bd4c32ab1ce5f2b389b536"
+    },
+    {
+      "path": "/assets/img/sponsors/zation.png",
+      "saved_as": "assets__img__sponsors__zation.png",
+      "bytes": 12625,
+      "content_type": "image/png",
+      "sha256": "ca07404fd275024614db95e2a8ed5b34b89f74d25f87bfed9e259db680c983f9"
+    },
+    {
+      "path": "/assets/img/sponsors/simms-media.png",
+      "saved_as": "assets__img__sponsors__simms-media.png",
+      "bytes": 12582,
+      "content_type": "image/png",
+      "sha256": "55c7add9610353e300d08bb5d42df011a71ff49d72da554503e17e9d6db70544"
+    }
+  ]
+}

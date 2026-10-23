@@ -974,8 +974,14 @@
      phrase. cardHtml already draws that difference, so the labeller has to preserve it --
      otherwise the repaint on load rewrites twenty cards into the long version, which is both
      a copy change nobody asked for and a visible flicker. */
+  /* A gallery card has the founder's name beside it, so its button only needs the verb.
+     The founder card is a page of its own, so it says who the vote is for. Anywhere a
+     button carries data-pc-idle, that is the wording while voting is open; everything
+     else -- closed, already voted, not opened yet -- is still the one shared copy, so
+     there is no second place for the voting states to drift. */
   function idleLabel(b) {
-    return (STATE === 'open' && b.closest('.pce')) ? 'Vote' : COPY[STATE].vote;
+    if (STATE !== 'open') return COPY[STATE].vote;
+    return b.getAttribute('data-pc-idle') || (b.closest('.pce') ? 'Vote' : COPY[STATE].vote);
   }
 
   function labelVoteButton(b, d) {
@@ -2139,6 +2145,7 @@
 
   var deckWrap = $('[data-deck-spread]');
   var deckOpener = null;
+  var deckSettle = null;
 
   function deckSpread(gi) {
     var g = deckGroups()[gi];
@@ -2163,7 +2170,11 @@
     deckWrap.classList.remove('is-settled');
     deckWrap.classList.add('is-on');
     deckWrap.setAttribute('aria-hidden', 'false');
-    setTimeout(function () { deckWrap.classList.add('is-settled'); }, 1200);
+    /* Cancel the previous deck's backstop before arming this one. Without this, opening a
+       second deck inside 1.2s inherited the first deck's timer: measured, deck one showed
+       none of its six cards while decks two and three showed all of theirs. */
+    if (deckSettle) clearTimeout(deckSettle);
+    deckSettle = setTimeout(function () { deckWrap.classList.add('is-settled'); }, 1200);
     var x = $('[data-deck-close]', deckWrap);
     if (x) x.focus({ preventScroll: true });
     track('deck_open', { deck: gi + 1, founders: g.length });
@@ -2178,6 +2189,7 @@
 
   function deckSpreadClose() {
     if (!deckWrap || !deckWrap.classList.contains('is-on')) return;
+    if (deckSettle) { clearTimeout(deckSettle); deckSettle = null; }
     deckWrap.classList.remove('is-on');
     deckWrap.setAttribute('aria-hidden', 'true');
     if (deckOpener && deckOpener.isConnected) deckOpener.focus({ preventScroll: true });

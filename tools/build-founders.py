@@ -242,6 +242,18 @@ def main():
         kind, ref, note = resolve_pitch(pu, pcache)
         if kind == 'file':
             rec['video'] = {'type': 'file', 'src': ref}
+
+        # Prefer our own copy. tools/optimize-pitch-videos.py writes a web-ready H.264/AAC
+        # file with faststart into public/assets/video/<slug>.mp4; serving that instead of
+        # hot-linking Typeform means the pitch keeps playing whether or not a form provider
+        # we do not control is up, and it is byte-range served and cached by our own host.
+        local = os.path.join(ROOT, 'public', 'assets', 'video', slug + '.mp4')
+        if os.path.isfile(local) and os.path.getsize(local) > 0:
+            rec['video'] = {'type': 'file', 'src': '/assets/video/' + slug + '.mp4'}
+            rec['selfHosted'] = True
+        poster = os.path.join(ROOT, 'public', 'assets', 'video', slug + '-poster.jpg')
+        if os.path.isfile(poster):
+            rec['poster'] = '/assets/video/' + slug + '-poster.jpg'
         elif kind == 'youtube':
             rec['video'] = {'type': 'youtube', 'id': ref}
         elif kind == 'drive':

@@ -111,6 +111,8 @@
       base.shotFit = f.shotFit || 'cover';
       base.focal = f.focal || '50% 42%';
       base.video = f.video || null;
+      base.poster = f.poster || null;
+      base.selfHosted = !!f.selfHosted;
       base.pitchNote = f.pitchNote || '';
       out.push(base);
     }
@@ -258,21 +260,34 @@
      a direct mp4 or mov, a YouTube id recovered from a filename or a .docx, a Google Drive
      file, and -- for four founders -- a PDF or an image that is not a pitch video at all.
      The first three play. The fourth gets an editorial card and is listed for the team. */
-  function embedSrc(v) {
+  function embedSrc(v, autoplay) {
     if (!v) return null;
-    if (v.type === 'youtube') return 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1&rel=0';
-    if (v.type === 'vimeo') return 'https://player.vimeo.com/video/' + v.id + '?autoplay=1&dnt=1';
+    /* autoplay only when a play control was actually pressed. Opening a story is a tap on a
+       founder, not a request for sound: the self-hosted pitches show their poster and wait,
+       and an embed that started talking by itself would be the odd one out. */
+    var ap = autoplay ? '1' : '0';
+    if (v.type === 'youtube') {
+      return 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=' + ap + '&rel=0';
+    }
+    if (v.type === 'vimeo') {
+      return 'https://player.vimeo.com/video/' + v.id + '?autoplay=' + ap + '&dnt=1';
+    }
     if (v.type === 'drive') return 'https://drive.google.com/file/d/' + v.id + '/preview';
     return null;   // 'file' is a <video>, not an iframe
   }
 
-  function playerHtml(v, title) {
+  function playerHtml(v, title, poster, autoplay) {
     if (!v) return '';
     if (v.type === 'file') {
-      return '<video src="' + v.src + '" controls autoplay playsinline preload="metadata" ' +
-        'controlslist="nodownload" title="Pitch video: ' + esc(title) + '"></video>';
+      /* No autoplay. A pitch that starts talking the moment a card opens is startling on a
+         phone and burns data nobody asked to spend; the poster stands in until someone
+         presses play. preload=metadata fetches the header, not the file, so the duration
+         and the scrub bar are right without pulling megabytes first. */
+      return '<video src="' + v.src + '"' + (poster ? ' poster="' + poster + '"' : '') +
+        ' controls playsinline preload="metadata" controlslist="nodownload"' +
+        ' title="Pitch video: ' + esc(title) + '"></video>';
     }
-    var src = embedSrc(v);
+    var src = embedSrc(v, autoplay);
     if (!src) return '';
     return '<iframe src="' + src + '" title="Pitch video: ' + esc(title) + '" ' +
       'allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
@@ -932,7 +947,7 @@
       if (el.disabled) return;
       var pe = byId[el.getAttribute('data-pc-play')];
       if (!pe || !pe.video) return;
-      var markup = playerHtml(pe.video, pe.company);
+      var markup = playerHtml(pe.video, pe.company, pe.poster, true);
       if (!markup) return;
       $('[data-pc-p-video]', pDlg).innerHTML = markup;
       track('video_play', { entrant_id: pe.id, kind: pe.video.type });
@@ -1340,7 +1355,7 @@
     var stage = $('[data-ff-stage]', vwr);
     if (stage) {
       stage.innerHTML = e.video
-        ? playerHtml(e.video, e.company)
+        ? playerHtml(e.video, e.company, e.poster)
         /* No playable pitch: an editorial card, not a broken player and not a fake one. Four
            founders submitted a PDF or an image where a video was expected. That is an
            editorial problem for the team, not something to paper over here. */
@@ -1370,6 +1385,26 @@
   function closeStory() {
     stopPlayback();
     if (vwr && vwr.open) vwr.close();
+  }
+
+  /* One pitch at a time. Two founders talking over each other is the fastest way to make
+     a showcase feel broken, and it is easy to reach: open a story, open a profile. */
+  document.addEventListener('play', function (ev) {
+    if (!ev.target || ev.target.tagName !== 'VIDEO') return;
+    $$('video').forEach(function (other) {
+      if (other !== ev.target && !other.paused) other.pause();
+    });
+  }, true);
+
+  /* Closing the profile has to stop its pitch. Hiding a <video> does not pause it, and an
+     invisible video still carrying audio is worse than one that is merely visible. */
+  if (typeof pDlg !== 'undefined' && pDlg) {
+    var clearProfileVideo = function () {
+      var box = $('[data-pc-p-video]', pDlg);
+      if (box) box.innerHTML = videoHtml(byId[pDlg.getAttribute('data-entrant')] || {});
+    };
+    pDlg.addEventListener('close', clearProfileVideo);
+    pDlg.addEventListener('cancel', clearProfileVideo);
   }
 
   if (vwr) {

@@ -1,20 +1,10 @@
 {
   "_what_this_is": "Which founder occupies which voting contestant id. One file, one decision, reversible by editing it and re-running tools/build-founders.py.",
-
-  "reviewed": false,
-
-  "_why_reviewed_is_false": [
-    "This mapping was derived from the order of rows in the Top 20 sheet, and the manifest says in terms that sheet order is NOT an approved ranking or id assignment. Nobody has confirmed it.",
-    "Until reviewed is true the voting page carries a visible staging notice saying the assignment is provisional, so no vote cast on staging can be mistaken for a confirmed one.",
-    "Changing this file changes only which NAME appears against an id. It moves no vote. Vote rows reference entrant-NN and nothing else, and entrant ids are generated identically by pc_entrants() in pc-lib.php and slot() in peoples-choice.js."
-  ],
-
+  "reviewed": true,
   "_existing_staging_votes_land_here": {
-    "entrant-01": "5 valid staging test votes (1 on 2026-10-22, 4 on 2026-10-23) — under this proposal that is Haptol Labs",
-    "entrant-07": "1 valid staging test vote (phone-verified, 2026-10-22) — under this proposal that is BeforeKeys LLC",
-    "note": "If either founder should not inherit test votes, either change the mapping or ask for those staging rows to be invalidated. No row has been created, moved or deleted."
+    "status": "resolved 2026-10-23 - all 14 rows in pc_votes are now valid=0",
+    "note": "A dated backup of the database sits beside it in nextgen-data-staging."
   },
-
   "map": {
     "haptol-labs": "entrant-01",
     "credible-blossom": "entrant-02",
@@ -36,5 +26,6 @@
     "nextofferup": "entrant-18",
     "exam-me": "entrant-19",
     "find-your-mission-corp": "entrant-20"
-  }
+  },
+  "_reviewed_note": "Confirmed by the project owner on 2026-10-23. At the same time the 10 staging test votes that sat on entrant-01 and entrant-07 were set to valid=0 so the real founders start at zero. No row was deleted; the admin dashboard can restore any of them."
 }

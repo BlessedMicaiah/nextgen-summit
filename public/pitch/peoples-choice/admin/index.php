@@ -206,6 +206,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             . ' No SMS was sent and the budget is unchanged.';
         header('Location: ./', true, 303);
         exit;
+    } elseif ($authed && $action === 'smtptest') {
+        /* Connects, authenticates and hangs up. No message is queued and nobody receives
+           anything -- the first real email should not also be the first test of the login. */
+        $pr = pc_smtp_probe();
+        $_SESSION['flash'] = 'SMTP check: ' . ($pr['ok'] ? 'OK' : 'FAILED at ' . $pr['step'])
+            . ($pr['code'] ? ' (code ' . (int) $pr['code'] . ')' : '') . ' - ' . $pr['detail'];
+        header('Location: ./', true, 303);
+        exit;
     } elseif ($authed && $action === 'smtp') {
         /* The relay settings. The app password goes straight to the writer and is not kept,
            echoed or logged; a blank field keeps what is stored, so the sender address can be
@@ -308,8 +316,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261022-18">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261022-18">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261022-19">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261022-19">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -516,7 +524,7 @@ foreach ($standings as $r) {
 
     <section class="adm__sec">
       <p class="adm__h">Email delivery (verification codes)</p>
-      <p class="adm__p">The relay that sends voting codes. Use a <strong>Google Workspace app password</strong>, not an account password &mdash; it is scoped to this site and can be revoked on its own. Written to <code>config.smtp.php</code> in the data directory, outside the web root, and never shown back.</p>
+      <p class="adm__p"><strong>All four of host, username, app password and From address must be filled.</strong> If any one is blank, email verification stays switched off. The relay that sends voting codes. Use a <strong>Google Workspace app password</strong>, not an account password &mdash; it is scoped to this site and can be revoked on its own. Written to <code>config.smtp.php</code> in the data directory, outside the web root, and never shown back.</p>
       <?php $sm = pc_smtp_status(); ?>
       <div class="adm__table-wrap">
         <table class="adm__table"><tbody>
@@ -535,15 +543,21 @@ foreach ($standings as $r) {
         <label class="adm__label" for="se">Encryption</label>
         <input class="adm__input" id="se" name="smtp_secure" type="text" placeholder="tls" value="<?= h($sm['encryption']) ?>">
         <label class="adm__label" for="su">SMTP username (full mailbox address)</label>
-        <input class="adm__input" id="su" name="smtp_user" type="text" autocomplete="off" placeholder="<?= $sm['username'] === 'present' ? 'saved — leave blank to keep' : 'you@nextgensummit.us' ?>">
+        <input class="adm__input" id="su" name="smtp_user" type="text" autocomplete="off" placeholder="you@nextgensummit.us" value="<?= h($sm['username'] === 'NOT SET' ? '' : $sm['username']) ?>">
         <label class="adm__label" for="sw">App password</label>
-        <input class="adm__input" id="sw" name="smtp_pass" type="password" autocomplete="new-password" placeholder="<?= $sm['password'] === 'present' ? 'saved — leave blank to keep' : '16 characters from Google' ?>">
+        <input class="adm__input" id="sw" name="smtp_pass" type="password" autocomplete="new-password" placeholder="<?= $sm['password'] === 'NOT SET' ? '16 characters from Google' : 'saved — leave blank to keep' ?>">
         <label class="adm__label" for="sf">From address</label>
-        <input class="adm__input" id="sf" name="smtp_from" type="text" placeholder="<?= h($sm['from'] === 'not set' ? 'vote@nextgensummit.us' : $sm['from']) ?>">
+        <input class="adm__input" id="sf" name="smtp_from" type="text" placeholder="vote@nextgensummit.us" value="<?= h($sm['from'] === 'NOT SET' ? '' : $sm['from']) ?>">
         <label class="adm__label" for="sn">From name</label>
         <input class="adm__input" id="sn" name="smtp_name" type="text" value="<?= h($sm['from_name']) ?>">
         <button class="adm__btn adm__btn--go" type="submit">Save email settings</button>
       </form>
+      <div class="adm__bar">
+        <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="smtptest">
+          <button class="adm__btn" type="submit">Test the connection (sends nothing)</button>
+        </form>
+      </div>
     </section>
 
     <section class="adm__sec">
@@ -667,7 +681,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261022-18" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261022-19" defer></script>
 <?php endif; ?>
 </body>
 </html>

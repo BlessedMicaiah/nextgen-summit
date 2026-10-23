@@ -95,9 +95,15 @@ function pc_smtp_status(): array
         'host' => $c['host'] !== '' ? $c['host'] : 'not set',
         'port' => $c['port'],
         'encryption' => $c['secure'],
-        'username' => $c['user'] !== '' ? 'present' : 'missing',
-        'password' => $c['pass'] !== '' ? 'present' : 'missing',
-        'from' => $c['from'] !== '' ? $c['from'] : 'not set',
+        /* The username and sender are shown in full. They are not secrets -- the From
+           address is printed on every message we send -- and hiding them behind "present"
+           made an empty field indistinguishable from a filled one, which is exactly the
+           state somebody then spends an evening trying to diagnose. Only the password is
+           withheld. */
+        'username' => $c['user'] !== '' ? $c['user'] : 'NOT SET',
+        'password' => $c['pass'] !== '' ? 'present (' . strlen($c['pass']) . ' chars)' : 'NOT SET',
+        'from' => $c['from'] !== '' ? $c['from'] : 'NOT SET',
+        'ready_to_send' => pc_smtp_configured() ? 'yes' : 'NO - a required field is empty',
         'from_name' => $c['name'],
         'sockets' => function_exists('stream_socket_client') ? 'available' : 'UNAVAILABLE',
         'openssl' => extension_loaded('openssl') ? 'available' : 'UNAVAILABLE',
@@ -176,6 +182,94 @@ function pc_smtp_save(array $in): array
     }
     @chmod($path, 0600);
     return ['ok' => true];
+}
+
+
+/**
+ * Prove the relay accepts our credentials, without sending anything.
+ *
+ * Connect, greet, negotiate TLS, authenticate, hang up. No MAIL FROM, no RCPT, no DATA, so
+ * nothing is queued and nobody receives anything -- the same reasoning as the read-only Twilio
+ * probe: the first real message should not also be the first test of the login.
+ *
+ * Only the step reached and the SMTP code come back. Never the password, never the response
+ * text, which can echo the username.
+ *
+ * @return array{ok:bool,step:string,code:int,detail:string}
+ */
+function pc_smtp_probe(): array
+{
+    if (!pc_smtp_configured()) {
+        return ['ok' => false, 'step' => 'config', 'code' => 0,
+                'detail' => 'Host, username, app password and From must all be filled in first.'];
+    }
+    if (!function_exists('stream_socket_client')) {
+        return ['ok' => false, 'step' => 'sockets', 'code' => 0,
+                'detail' => 'This host cannot open outbound sockets.'];
+    }
+    $c = pc_smtp_conf();
+    $target = ($c['secure'] === 'ssl' ? 'ssl://' : '') . $c['host'] . ':' . $c['port'];
+    $ctx = stream_context_create(['ssl' => ['verify_peer' => true, 'verify_peer_name' => true]]);
+    $fp = @stream_socket_client($target, $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx);
+    if (!$fp) {
+        return ['ok' => false, 'step' => 'connect', 'code' => (int) $errno,
+                'detail' => 'Could not reach ' . $c['host'] . ' on port ' . $c['port']
+                    . '. The host may block outbound SMTP.'];
+    }
+    stream_set_timeout($fp, 15);
+    $end = function (array $r) use ($fp) {
+        @fwrite($fp, "QUIT
+");
+        @fclose($fp);
+        return $r;
+    };
+
+    $r = pc_smtp_cmd($fp, '', 220, 'greeting');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'greeting', 'code' => $r['code'],
+                     'detail' => 'The server did not greet us.']);
+    }
+    $ehlo = 'EHLO ' . (string) ($_SERVER['HTTP_HOST'] ?? 'nextgensummit.us');
+    $r = pc_smtp_cmd($fp, $ehlo, 250, 'ehlo');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'ehlo', 'code' => $r['code'],
+                     'detail' => 'The server refused the greeting.']);
+    }
+    if ($c['secure'] === 'tls') {
+        $r = pc_smtp_cmd($fp, 'STARTTLS', 220, 'starttls');
+        if (!$r['ok']) {
+            return $end(['ok' => false, 'step' => 'starttls', 'code' => $r['code'],
+                         'detail' => 'The server would not start TLS on this port.']);
+        }
+        if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            return $end(['ok' => false, 'step' => 'tls', 'code' => 0,
+                         'detail' => 'TLS negotiation failed.']);
+        }
+        $r = pc_smtp_cmd($fp, $ehlo, 250, 'ehlo2');
+        if (!$r['ok']) {
+            return $end(['ok' => false, 'step' => 'ehlo2', 'code' => $r['code'],
+                         'detail' => 'The server refused the greeting after TLS.']);
+        }
+    }
+    $r = pc_smtp_cmd($fp, 'AUTH LOGIN', 334, 'auth');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'auth', 'code' => $r['code'],
+                     'detail' => 'The server did not offer password login.']);
+    }
+    $r = pc_smtp_cmd($fp, base64_encode($c['user']), 334, 'auth_user');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'auth_user', 'code' => $r['code'],
+                     'detail' => 'The username was rejected.']);
+    }
+    $r = pc_smtp_cmd($fp, base64_encode($c['pass']), 235, 'auth_pass');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'auth_pass', 'code' => $r['code'],
+                     'detail' => 'Authentication failed. For Google this almost always means '
+                        . 'the app password is wrong, or 2-Step Verification is off on that '
+                        . 'account so the password is not an app password at all.']);
+    }
+    return $end(['ok' => true, 'step' => 'authenticated', 'code' => 235,
+                 'detail' => 'Connected, TLS negotiated and signed in. Nothing was sent.']);
 }
 
 /* ---------- the conversation ---------- */

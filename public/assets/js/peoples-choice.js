@@ -495,7 +495,12 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.assign({ action: action, csrf: me.csrf }, body || {}))
     }).then(function (r) {
-      return r.json().catch(function () { return { ok: false, reason: 'network' }; });
+      /* A body that will not parse is almost always a PHP fatal, and calling that "network"
+         is what hid a 500 behind an outage message. Carry the status instead. */
+      return r.json().catch(function () { return { ok: false, reason: 'http_' + r.status }; });
+    }).catch(function () {
+      // and a rejected fetch really is the network; without this the spinner never moved
+      return { ok: false, reason: 'network' };
     });
   }
 
@@ -528,7 +533,9 @@
       /* On staging the server says WHY, and this puts it on the screen rather than leaving it
          in a response nobody reads. "We could not check" with no detail is what turned a
          fatal error into a week of guessing. Production sends no code, so this stays hidden. */
-      var why = d && d.eb;
+      /* eb is only sent on a successful lookup, so the first version of this line could not
+         describe the very failure it was added for. reason covers the rest. */
+      var why = d && (d.eb || d.reason);
       $$('[data-pc-bonus-why]', vDlg).forEach(function (n) {
         n.textContent = why ? 'Staging diagnostic: ' + why : '';
         n.hidden = !why;

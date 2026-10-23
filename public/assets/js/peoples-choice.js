@@ -515,7 +515,8 @@
      It awards nothing. It reports what is possible; the points come from an explicit press. */
   function paintBonus() {
     var all = ['[data-pc-bonus-wait]', '[data-pc-bonus-yes]', '[data-pc-bonus-no]',
-               '[data-pc-bonus-taken]', '[data-pc-bonus-down]', '[data-pc-bonus-done]'];
+               '[data-pc-bonus-ask]', '[data-pc-bonus-taken]', '[data-pc-bonus-down]',
+               '[data-pc-bonus-done]'];
     var only = function (sel) {
       all.forEach(function (x) {
         $$(x, vDlg).forEach(function (n) { n.hidden = x !== sel; });
@@ -532,6 +533,8 @@
       /* "We could not check" is not "you are not registered", and must never be shown as it:
          a registered attendee told they are not registered does not come back. */
       if (d.status === 'unavailable') { only('[data-pc-bonus-down]'); return; }
+      /* Same principle: no address to search with is not a finding about their registration. */
+      if (d.status === 'no_email') { only('[data-pc-bonus-ask]'); return; }
       if (d.status === 'claimed_elsewhere') { only('[data-pc-bonus-taken]'); return; }
       only('[data-pc-bonus-no]');      // not registered, or no proven address to match on
     });

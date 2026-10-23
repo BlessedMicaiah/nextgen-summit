@@ -2598,8 +2598,20 @@
   function railStep(dir) {
     if (!rail) return;
     var by = Math.max(160, Math.round(rail.clientWidth * 0.8));
-    rail.scrollBy({ left: dir * by, behavior: 'smooth' });
-    setTimeout(railArrows, 420);
+    var from = rail.scrollLeft;
+    var smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (smooth && typeof rail.scrollBy === 'function') {
+      rail.scrollBy({ left: dir * by, behavior: 'smooth' });
+    }
+    /* A smooth scroll needs a compositor, and there are real conditions where it never
+       starts -- a hidden or throttled page, reduced motion, an engine that ignores the
+       option. An arrow that silently does nothing is worse than one that jumps, so if
+       nothing has moved shortly after, it moves. */
+    setTimeout(function () {
+      if (Math.abs(rail.scrollLeft - from) < 2) rail.scrollLeft = from + dir * by;
+      railArrows();
+    }, 120);
+    setTimeout(railArrows, 460);
   }
 
   if (rail) {

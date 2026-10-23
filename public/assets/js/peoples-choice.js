@@ -334,9 +334,11 @@
 
   /* The phone option is only offered when SMS can actually deliver. Hiding the fact that it is
      unavailable would send voters into a flow that cannot finish. */
+  /* The phone route is hidden in the markup while carrier approval is pending. This no longer
+     reveals it; it only keeps the wording honest if it is ever shown again. */
   function paintChannels() {
     var smsWay = $('[data-pc-sms-way]', vDlg);
-    if (!smsWay) return;
+    if (!smsWay || smsWay.hidden) return;
     var live = me.sms === 'live';
     smsWay.disabled = !live;
     smsWay.classList.toggle('is-off', !live);
@@ -346,6 +348,7 @@
         : 'Text messages are paused while we complete carrier approval';
     }
   }
+
 
   function routeFor(d, entrantId) {
     if (!d || !d.ok || !d.verified) return 'verify';
@@ -477,24 +480,26 @@
 
   /* Which of the two blocks the success screen shows: the invitation, or a note that the
      registration is already linked. Asked of the server rather than remembered locally. */
-  function paintBonus() {
-    var invite = $('[data-pc-bonus]', vDlg), have = $('[data-pc-bonus-have]', vDlg);
-    if (!invite || !have) return;
-    invite.hidden = true; have.hidden = true;
-    bpost('status').then(function (d) {
-      if (!d || !d.ok) return;
-      if (d.attendee_verified) {
-        have.hidden = false;
-        var hp = $('[data-pc-bonus-have-p]', vDlg);
-        if (hp) {
-          hp.textContent = d.remaining > 0
-            ? 'You have ' + d.remaining + ' more point' + (d.remaining === 1 ? '' : 's') +
-              ' to give today. They reset at midnight Eastern.'
-            : 'You have used all three of today’s points. They reset at midnight Eastern.';
-        }
-      } else if (d.mode === 'daily') {
-        invite.hidden = false;
+  /* Which of the bonus states to show, decided by the server's automatic check rather than by
+     asking the voter to start another verification. They proved an inbox to vote; if that same
+     inbox is on the attendee list, the entitlement is theirs and no second code is needed. */
+  function paintBonus(recheck) {
+    var all = ['[data-pc-bonus-wait]', '[data-pc-bonus-yes]', '[data-pc-bonus-no]',
+               '[data-pc-bonus-taken]', '[data-pc-bonus-down]', '[data-pc-bonus-done]'];
+    var show = function (sel) {
+      all.forEach(function (x) { var n = $(x, vDlg); if (n) n.hidden = x !== sel; });
+    };
+    show('[data-pc-bonus-wait]');
+    bpost(recheck ? 'auto' : 'auto').then(function (d) {
+      if (!d || !d.ok) { show('[data-pc-bonus-down]'); return; }
+      if (d.mode !== 'daily') { all.forEach(function (x) { var n = $(x, vDlg); if (n) n.hidden = true; }); return; }
+      if (d.status === 'verified') {
+        show(d.remaining > 0 ? '[data-pc-bonus-yes]' : '[data-pc-bonus-done]');
+        return;
       }
+      if (d.status === 'unavailable') { show('[data-pc-bonus-down]'); return; }
+      if (d.status === 'claimed_elsewhere') { show('[data-pc-bonus-taken]'); return; }
+      show('[data-pc-bonus-no]');      // not registered, or verified by phone with no address
     });
   }
 
@@ -818,6 +823,8 @@
       });
       return;
     }
+    if (t.closest('[data-pc-bonus-recheck]')) { paintBonus(true); return; }
+    if (t.closest('[data-pc-bonus-other]')) { step('bonus-email'); return; }
     if (t.closest('[data-pc-bonus-start]')) { step('bonus-email'); return; }
     if (t.closest('[data-pc-bonus-later]') || t.closest('[data-pc-bonus-cancel]')) {
       step('done'); paintBonus(); return;
@@ -868,6 +875,7 @@
         if (bp) bp.textContent = 'That is your full allowance for today. Come back tomorrow after midnight Eastern for three more.';
         track('bonus_claimed', { awarded: d.awarded });
         step('bonus-done');
+        paintBonus();
       });
       return;
     }

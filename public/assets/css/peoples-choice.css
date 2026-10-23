@@ -559,3 +559,7 @@ body.has-pcbar .nav{top:34px}
 .pcv__way2-t span{font:500 12.5px/1.45 var(--f-sans);color:var(--v-ink-2)}
 .pcv__way2-a{flex:none;color:var(--accent);font-size:17px;font-weight:700}
 .pcv__way2.is-off .pcv__way2-a{color:var(--v-ink-3)}
+
+/* the bonus states stack their actions; the ticket link is a primary action like any other */
+.pcbonus__acts .btn,.pcbonus__acts .pcv__back{width:100%}
+.pcbonus[hidden],.pcbonus--have[hidden]{display:none}

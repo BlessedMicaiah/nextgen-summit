@@ -197,6 +197,42 @@ function pc_eb_lookup(string $email): array
             'unavailable' => false];
 }
 
+
+/**
+ * Is there an eligible registration for an address we have ALREADY proven, given as hashes?
+ *
+ * Used for the automatic check after someone verifies their email to vote. No address is
+ * passed in and none is stored -- only the one-way keys the session kept.
+ *
+ * @param string[] $keys
+ * @return array{found:bool,attendee_key:?string,unavailable:bool}
+ */
+function pc_eb_lookup_keys(array $keys): array
+{
+    $idx = pc_eb_email_index();
+    if (!$idx['ok'] && $idx['stale']) {
+        return ['found' => false, 'attendee_key' => null, 'unavailable' => true];
+    }
+    foreach ($keys as $k) {
+        if (isset($idx['map'][$k])) {
+            return ['found' => true, 'attendee_key' => pc_attendee_key((string) $idx['map'][$k]),
+                    'unavailable' => false];
+        }
+    }
+    /* Somebody who bought a ticket ten minutes ago is exactly the person standing in front of
+       this screen, so a miss on a cached index is rechecked once against Eventbrite itself. */
+    if (!$idx['stale']) {
+        $idx = pc_eb_email_index(true);
+        foreach ($keys as $k) {
+            if (isset($idx['map'][$k])) {
+                return ['found' => true, 'attendee_key' => pc_attendee_key((string) $idx['map'][$k]),
+                        'unavailable' => false];
+            }
+        }
+    }
+    return ['found' => false, 'attendee_key' => null, 'unavailable' => false];
+}
+
 /* ---------- the binding ---------- */
 
 /** Which voting identity owns this registration, if any. */

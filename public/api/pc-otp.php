@@ -325,6 +325,15 @@ if ($action === 'email_check') {
     }
     $_SESSION['phone_key'] = pc_canonical($emlKey);   // the identity slot, whatever proved it
     $_SESSION['phone_mask'] = (string) ($res['mask'] ?? '');
+    /* The address this person just proved, kept as hashes rather than text.
+       Owning an inbox is proven once; asking them to prove the same inbox again to collect a
+       bonus is a step that teaches us nothing. Both spellings are stored -- the address as
+       typed and its normalised form -- because an Eventbrite record may be registered under
+       either, and matching on only one would turn a registered attendee into a stranger. */
+    $_SESSION['email_keys'] = array_values(array_unique([
+        pc_email_key($email),
+        pc_email_key(pc_email_normalise($email)),
+    ]));
     $_SESSION['channel'] = 'email';
     $_SESSION['verified_at'] = time();
     $_SESSION['ticket_verified'] = false;

@@ -1331,7 +1331,8 @@
        rather than as a bug. */
     var stageEl = $('[data-ff-stage]', vwr);
     if (stageEl) {
-      stageEl.style.setProperty('--ff-back', e.shot ? 'url("' + e.shot + '")' : 'none');
+      var usable = e.shot && e.shotFit !== 'contain';   // a logo blurs to a pale haze
+      stageEl.style.setProperty('--ff-back', usable ? 'url("' + e.shot + '")' : 'none');
     }
     var co = $('[data-ff-co]', vwr); if (co) { co.textContent = e.company; }
     var by = $('[data-ff-by]', vwr); if (by) { by.textContent = e.name; }

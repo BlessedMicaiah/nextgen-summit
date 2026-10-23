@@ -40,48 +40,87 @@
 .ph .btn--ghost{color:#fff}
 .ph [data-pc-link][hidden],.pv [data-pc-link][hidden],.pend [data-pc-link][hidden],[data-pc-soon][hidden]{display:none}
 
-/* ---------- the stage board: where the competition stands today ---------- */
-.board{--fill:50%;margin-top:clamp(22px,3.4vh,38px);padding:clamp(16px,2vw,24px) clamp(16px,2.4vw,30px) clamp(18px,2.2vw,24px);border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(11,11,15,.5);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);box-shadow:0 30px 80px -42px rgba(0,0,0,.85)}
-.board__top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 28px}
-.board__now{display:inline-flex;align-items:center;gap:12px;font:800 clamp(12.5px,1vw,15px)/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase}
-.board__pulse{position:relative;flex:none;width:10px;height:10px;border-radius:50%;background:var(--accent)}
-.board__pulse::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--accent);opacity:0;animation:board-ping 2.2s var(--ease) infinite}
-@keyframes board-ping{0%{transform:scale(.4);opacity:.9}80%,100%{transform:scale(1.5);opacity:0}}
-.board.is-over .board__pulse{background:rgba(255,255,255,.6)}
+/* ---------- the stage board: where the competition stands today ----------
+   A broadcast-style panel: status and day on the left, the clock in tiles on the right, and
+   underneath one cell per stage. Done cells are full, today's fills with its days (one notch
+   per day), later ones are hatched. Today's cell is wider, so the eye lands on it. */
+.board{position:relative;margin-top:clamp(22px,3.4vh,38px);padding:clamp(18px,2.1vw,26px) clamp(16px,2.4vw,30px) clamp(18px,2.2vw,26px);border-radius:16px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(20,20,26,.72) 0%,rgba(11,11,15,.62) 100%);
+  -webkit-backdrop-filter:blur(16px) saturate(1.25);backdrop-filter:blur(16px) saturate(1.25);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.08),0 40px 90px -44px rgba(0,0,0,.9)}
+/* the print bar along the top edge, as on the film player */
+.board::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan) 0 33.33%,var(--magenta) 33.33% 66.66%,var(--yellow) 66.66% 100%)}
+.board__top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 28px}
+
+.board__now{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-width:0}
+.board__live{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 11px 0 10px;border-radius:999px;background:var(--accent);color:var(--ink);font:800 10.5px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase}
+.board__pulse{position:relative;flex:none;width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.board__pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--ink);opacity:0;animation:board-ping 1.8s var(--ease) infinite}
+@keyframes board-ping{0%{transform:scale(.5);opacity:.8}80%,100%{transform:scale(1.5);opacity:0}}
+.board__now-t{font:800 clamp(13px,1.05vw,15.5px)/1.3 var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:#fff}
+.board__day{height:28px;display:inline-flex;align-items:center;padding:0 11px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font:700 10.5px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+.board__day[hidden]{display:none}
+.board.is-over .board__live{background:rgba(255,255,255,.16);color:#fff}
+.board.is-over .board__pulse{background:#fff}
 .board.is-over .board__pulse::after{display:none}
-.board__clock{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+
+/* the clock: four tiles */
+.board__clock{display:flex;align-items:center;gap:8px 16px}
 .board__clock[hidden]{display:none}
-.board__clock-k{font:700 10.5px/1.3 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
-.board__clock-t{display:inline-flex;gap:clamp(8px,1vw,14px)}
-.board__u{display:inline-flex;align-items:baseline}
-.board__n{font:800 clamp(24px,2.5vw,40px)/1 var(--f-sans);font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:#fff}
-.board__l{margin-left:2px;font:800 11px/1 var(--f-sans);text-transform:uppercase;color:var(--accent)}
-.board__track{position:relative;list-style:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:clamp(18px,2.6vh,26px) 0 0;padding:0}
-/* the line runs marker to marker (the middle of the first column to the middle of the last) */
-.board__track::before,.board__track::after{content:"";position:absolute;top:8px;left:10%;height:2px;border-radius:2px}
-.board__track::before{right:10%;background:rgba(255,255,255,.2)}
-.board__track::after{width:calc(var(--fill) * .8);background:linear-gradient(90deg,var(--accent),#8AF5EE);box-shadow:0 0 14px rgba(31,199,190,.6);transition:width 1.8s var(--ease) calc(var(--d,0s) + .35s)}
-.js .board.rv:not(.in) .board__track::after{width:0}
-.board__s{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
-.board__mark{position:relative;display:grid;place-items:center;width:18px;height:18px}
-.board__mark::before{content:"";width:12px;height:12px;border-radius:50%;background:#16161C;box-shadow:inset 0 0 0 2px rgba(255,255,255,.38);transition:transform .6s var(--ease)}
-.board__s.is-past .board__mark::before{background:var(--accent);box-shadow:none}
-/* a tick drawn with two borders */
-.board__s.is-past .board__mark::after{content:"";position:absolute;left:6.5px;top:4.5px;width:3.5px;height:6.5px;border:solid var(--ink);border-width:0 1.8px 1.8px 0;transform:rotate(45deg)}
-.board__s.is-now .board__mark::before{width:18px;height:18px;background:var(--accent);box-shadow:0 0 0 5px rgba(31,199,190,.22),0 0 22px rgba(31,199,190,.75);animation:board-now 2.2s var(--ease-io) infinite}
-@keyframes board-now{50%{box-shadow:0 0 0 9px rgba(31,199,190,.08),0 0 30px rgba(31,199,190,.9)}}
-.board__k{margin-top:4px;font:800 11.5px/1.2 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.58)}
-.board__v{font:600 12px/1.3 var(--f-sans);color:rgba(255,255,255,.5)}
+.board__clock-k{max-width:11.5em;text-wrap:balance;font:700 10px/1.35 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.6);text-align:right}
+.board__clock-t{display:inline-flex;align-items:flex-start;gap:5px}
+.board__u{display:flex;flex-direction:column;align-items:center;min-width:clamp(50px,4.4vw,64px);padding:9px 6px 7px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,.035) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.45)}
+.board__n{font:800 clamp(22px,2.15vw,32px)/1 var(--f-sans);font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:#fff}
+.board__u--s .board__n{color:var(--accent)}
+.board__l{margin-top:6px;font:700 8.5px/1 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.board__sep{padding-top:10px;font:800 18px/1 var(--f-sans);color:rgba(255,255,255,.26)}
+
+/* the track */
+.board__track{list-style:none;display:flex;gap:clamp(6px,.7vw,10px);margin:clamp(20px,2.8vh,28px) 0 0;padding:clamp(16px,2.2vh,22px) 0 0;border-top:1px solid rgba(255,255,255,.1)}
+.board__s{--run:0;flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:9px;transition:flex-grow .9s var(--ease)}
+.board__s.is-now{flex-grow:1.9}
+.board__head{display:flex;align-items:center;gap:8px;min-width:0}
+.board__no{flex:none;font:800 10px/1 var(--f-sans);letter-spacing:.14em;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.4)}
+.board__k{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 12px/1.2 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.board__tick{display:none;flex:none;width:14px;height:14px;padding:2px;border-radius:50%;background:var(--accent);fill:none;stroke:var(--ink);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.board__s.is-past .board__tick{display:block}
+.board__s.is-past .board__no{color:var(--accent)}
 .board__s.is-past .board__k{color:rgba(255,255,255,.86)}
+.board__s.is-now .board__no{color:var(--accent)}
 .board__s.is-now .board__k{color:#fff}
+
+.board__cell{position:relative;height:8px;border-radius:999px;overflow:hidden;background:repeating-linear-gradient(135deg,rgba(255,255,255,.09) 0 5px,rgba(255,255,255,.03) 5px 10px)}
+.board__s.is-past .board__cell,.board__s.is-now .board__cell{background:rgba(31,199,190,.16)}
+.board__run{position:absolute;inset:0;overflow:hidden;border-radius:inherit;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);transition:transform 1.2s var(--ease) calc(var(--d,0s) + .45s + var(--i,0) * .14s)}
+.board__s.is-past .board__run{transform:scaleX(1)}
+.board__s.is-now .board__run{transform:scaleX(var(--run));background:linear-gradient(90deg,var(--accent) 0%,#7DF2EA 100%);box-shadow:0 0 16px rgba(31,199,190,.7)}
+/* a sheen runs along today's fill */
+.board__s.is-now .board__run::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.55) 50%,transparent 100%);transform:translateX(-100%);animation:board-sheen 2.8s var(--ease-io) 1.8s infinite}
+@keyframes board-sheen{60%,100%{transform:translateX(100%)}}
+/* a notch for each day of today's stage */
+.board__s.is-now .board__cell::after{content:"";position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(90deg,transparent 0 calc(100% / var(--days,1) - 2px),rgba(11,11,15,.7) calc(100% / var(--days,1) - 2px) calc(100% / var(--days,1)))}
+.js .board.rv:not(.in) .board__run{transform:scaleX(0)}
+.board__v{font:600 12px/1.3 var(--f-sans);color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board__s.is-past .board__v{color:rgba(255,255,255,.66)}
 .board__s.is-now .board__v{color:var(--accent);font-weight:700}
-@media (max-width:640px){
-  .board__top{flex-direction:column;align-items:flex-start;gap:10px}
-  .board__k{font-size:9.5px;letter-spacing:.08em}
-  .board__v{font-size:10.5px}
-  .board__s:not(.is-now) .board__v{display:none}
+
+@media (max-width:860px){
+  .board__clock{width:100%;justify-content:space-between}
+  .board__clock-k{text-align:left}
 }
-
+@media (max-width:640px){
+  .board__top{flex-direction:column;align-items:flex-start}
+  .board__clock{flex-direction:column;align-items:flex-start;gap:10px}
+  .board__clock-k{max-width:none}
+  .board__clock-t{display:flex;width:100%}
+  .board__u{flex:1 1 0;min-width:0}
+  /* on a phone only today's stage keeps its words; the others are numbered cells */
+  .board__s{flex-grow:.7}
+  .board__s.is-now{flex-grow:3.2}
+  .board__s:not(.is-now) .board__k,.board__s:not(.is-now) .board__v{display:none}
+  .board__s.is-past .board__no{display:none}
+}
+
 /* ---------- the opportunity: $10K over the room ---------- */
 .opp{position:relative;display:flex;align-items:center;min-height:92vh;color:#fff;overflow:hidden;background:#0B0B0F}
 .opp__media{position:absolute;inset:0;margin:0}
@@ -247,7 +286,9 @@
   .step__dot{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
   .steps.has-active .step:not(.is-active) .step__in{opacity:1}
   .step__no{color:var(--accent-ink)}
-  .ph__beam,.pv__glow,.board__pulse::after,.board__s.is-now .board__mark::before,.step.is-now .step__dot,.step.is-now .step__tag::before{animation:none}
-  .js .board.rv:not(.in) .board__track::after{width:calc(var(--fill) * .8)}
+  .ph__beam,.pv__glow,.board__pulse::after,.board__s.is-now .board__run::after,.step.is-now .step__dot,.step.is-now .step__tag::before{animation:none}
+  .board__run{transition:none}
+  .js .board.rv:not(.in) .board__s.is-past .board__run{transform:scaleX(1)}
+  .js .board.rv:not(.in) .board__s.is-now .board__run{transform:scaleX(var(--run))}
   .js .split.rv{clip-path:none}
 }

@@ -87,13 +87,15 @@
   width: 100%; height: 100%;
   object-fit: cover;
   object-position: var(--fp, 50% 38%);
-  filter: saturate(.92) contrast(1.04) brightness(.74);
+  /* .74 took the faces into the dark. These are the only authentic images of these
+     founders we have; the point of the sequence is that you can see them. */
+  filter: saturate(.98) contrast(1.03) brightness(.95);
 }
 .fci__scene::after {
   content: ""; position: absolute; inset: 0;
   background:
-    radial-gradient(120% 86% at 50% 10%, rgba(0,0,0,0) 0%, rgba(0,0,0,.52) 76%),
-    linear-gradient(180deg, rgba(4,7,10,.5) 0%, rgba(4,7,10,.1) 40%, rgba(4,7,10,.84) 100%);
+    radial-gradient(118% 84% at 50% 14%, rgba(0,0,0,0) 0%, rgba(0,0,0,.34) 78%),
+    linear-gradient(180deg, rgba(4,7,10,.34) 0%, rgba(4,7,10,0) 34%, rgba(4,7,10,.6) 100%);
 }
 /* Each scene arrives differently: a slow push in, a wipe from the left, a rise, a
    scale back. Four moves rather than one repeated four times. */
@@ -129,6 +131,10 @@
 /* the words, over the last scene */
 .fci__words {
   position: relative; z-index: 3;
+  /* The type carries its own shade rather than relying on the whole frame being dim.
+     Lightening the photographs must not be paid for in readability. */
+  padding-block: clamp(26px, 7vw, 44px);
+  background: radial-gradient(76% 120% at 50% 50%, rgba(3,6,9,.72) 0%, rgba(3,6,9,0) 72%);
   padding: 0 clamp(22px, 7vw, 60px);
   text-align: center;
   max-width: 24em;
@@ -622,6 +628,15 @@
 .deck[data-deck].is-arrived.is-settled .deck__p,
 .deck[data-deck].is-arrived.is-settled .deck__label { animation: none; opacity: 1; transform: none; }
 .deck__spread.is-settled .deck__pick { animation: none; opacity: 1; transform: none; }
-.fci.is-settled .fci__scene--4 { opacity: 1; }
+/* Same lesson as the deck: .fci.is-playing .fci__t span:nth-child(1) out-ranks a plain
+   .fci.is-settled .fci__t span, and a stalled animation beats a declaration outright. The
+   kicker came back and the title did not, which is how it was caught. */
+.fci.is-settled .fci__scene--4,
+.fci.is-playing.is-settled .fci__scene--4 { opacity: 1; }
 .fci.is-settled .fci__k,
-.fci.is-settled .fci__t span { animation: none; opacity: 1; transform: none; filter: none; }
+.fci.is-playing.is-settled .fci__k,
+.fci.is-settled .fci__t span,
+.fci.is-playing.is-settled .fci__t span:nth-child(1),
+.fci.is-playing.is-settled .fci__t span:nth-child(2) {
+  animation: none; opacity: 1; transform: none; filter: none;
+}

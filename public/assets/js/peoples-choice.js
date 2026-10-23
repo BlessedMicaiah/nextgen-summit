@@ -523,7 +523,16 @@
       });
     };
     only('[data-pc-bonus-wait]');
+    $$('[data-pc-bonus-why]', vDlg).forEach(function (n) { n.hidden = true; });
     bpost('auto').then(function (d) {
+      /* On staging the server says WHY, and this puts it on the screen rather than leaving it
+         in a response nobody reads. "We could not check" with no detail is what turned a
+         fatal error into a week of guessing. Production sends no code, so this stays hidden. */
+      var why = d && d.eb;
+      $$('[data-pc-bonus-why]', vDlg).forEach(function (n) {
+        n.textContent = why ? 'Staging diagnostic: ' + why : '';
+        n.hidden = !why;
+      });
       if (!d || !d.ok) { only('[data-pc-bonus-down]'); return; }
       if (d.mode !== 'daily') { only(''); return; }
       if (d.status === 'verified') {

@@ -12,7 +12,10 @@ committed) and without any stored submissions. The staging build also:
   - sends X-Robots-Tag: noindex on every response,
   - keeps its own submissions in nextgen-data-staging, beside the live data, outside the web root.
 """
+import hashlib
+import io
 import os
+import re
 import subprocess
 import sys
 import zipfile
@@ -43,6 +46,63 @@ def stop(msg):
     sys.exit(1)
 
 
+def stale_stamp():
+    """Refuse to build if the assets changed but the cache stamp did not.
+
+    Every page asks for its CSS and JS with ?v=<stamp>. Visitors and the CDN key on
+    that string, so shipping changed assets under an unchanged stamp means new markup
+    arriving with the previous stylesheet -- a site that is visibly broken for anyone
+    who has been here before, and fine for everyone who has not, which is the worst
+    kind of bug to be told about.
+
+    It is an easy mistake: bump the stamp once, keep editing, deploy. It happened
+    during the launch pass and cost a round trip to notice. So the build checks rather
+    than trusting anyone to remember.
+
+    The check: hash every file under public/assets, and keep that hash in
+    tools/.asset-stamp beside the stamp it belongs to. If the hash moved and the stamp
+    did not, say so and name the fix.
+    """
+    stamp = None
+    for page in ('index.html', os.path.join('pitch', 'peoples-choice', 'index.html')):
+        f = os.path.join(PUBLIC, page)
+        if not os.path.isfile(f):
+            continue
+        m = re.search(r'\?v=(\d{8}-\d+)', io.open(f, encoding='utf-8').read())
+        if m:
+            stamp = m.group(1)
+            break
+    if not stamp:
+        return None                      # no stamp scheme here; nothing to police
+
+    h = hashlib.sha256()
+    assets = os.path.join(PUBLIC, 'assets')
+    for base, dirs, files in os.walk(assets):
+        dirs.sort()
+        for f in sorted(files):
+            if f.endswith(SKIP_EXT):
+                continue
+            path = os.path.join(base, f)
+            rel = os.path.relpath(path, assets).replace(os.sep, '/')
+            h.update(rel.encode('utf-8'))
+            with open(path, 'rb') as fh:
+                for chunk in iter(lambda: fh.read(1 << 20), b''):
+                    h.update(chunk)
+    digest = h.hexdigest()
+
+    record = os.path.join(ROOT, 'tools', '.asset-stamp')
+    was = io.open(record, encoding='utf-8').read().split() if os.path.isfile(record) else []
+    if len(was) == 2 and was[1] != digest and was[0] == stamp:
+        return '\n'.join([
+            'the assets changed but the cache stamp did not.',
+            f'  stamp is still {stamp}, and public/assets no longer hashes to what it did.',
+            '  Bump the stamp across public/ (one pass over html/php/js/css), commit, push,',
+            '  and build again. Shipping now would hand new markup to cached stylesheets.',
+        ])
+    io.open(record, 'w', encoding='utf-8', newline='\n').write(stamp + ' ' + digest + '\n')
+    return None
+
+
 def main():
     target = sys.argv[1] if len(sys.argv) > 1 else ''
     if target not in BRANCH:
@@ -59,6 +119,10 @@ def main():
         stop(f'{branch} is not identical to GitHub ({head[:7]} here, {remote[:7]} on GitHub). Push first.')
     if not os.path.isfile(os.path.join(PUBLIC, 'api', 'config.php')):
         stop('public/api/config.php is missing (private settings, never committed).')
+
+    stale = stale_stamp()
+    if stale:
+        stop(stale)
 
     os.makedirs(os.path.join(ROOT, 'release'), exist_ok=True)
     name = ('nextgensummit.us' if target == 'production' else 'staging') + f'-{head[:7]}.zip'

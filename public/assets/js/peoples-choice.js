@@ -109,6 +109,7 @@
       base.bio = f.blurb;
       base.shot = f.shot || null;
       base.shotFit = f.shotFit || 'cover';
+      base.focal = f.focal || '50% 42%';
       base.video = f.video || null;
       base.pitchNote = f.pitchNote || '';
       out.push(base);
@@ -182,8 +183,11 @@
      button or the dialog's, and that distinction decides its wording. */
   function cardHtml(e) {
     var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
+    /* Each portrait holds its own crop. A single centred crop decapitates a tall headshot,
+       and these twenty images are all different shapes. */
+    var pos = e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal) + '"';
     var shot = e.shot
-      ? '<img src="' + e.shot + '"' + fit + ' alt="' + esc(e.company) +
+      ? '<img src="' + e.shot + '"' + fit + pos + ' alt="' + esc(e.company) +
         '" loading="lazy" decoding="async">'
       : '<span class="ffc__await"><span class="ffc__mono">' + esc(initials(e)) + '</span>' +
         '<span class="ffc__awaitk">' + (e.draft ? 'Slot open' : 'Portrait to come') +
@@ -305,6 +309,10 @@
     flag.hidden = !e.draft;
     /* Attribute first, then label: the labeller compares this id against the founder the
        server says today's vote went to, so it has to be set before it reads it. */
+    var pshot = $('[data-pc-p-shot] img', pDlg) || $('.pcp__shot img', pDlg);
+    if (pshot && e.focal && e.shotFit !== 'contain') {
+      pshot.style.objectPosition = e.focal;
+    }
     var vb = $('[data-pc-p-vote]', pDlg);
     vb.setAttribute('data-pc-vote', e.id);
     labelVoteButton(vb, me);
@@ -1257,8 +1265,9 @@
 
   function bubbleHtml(e) {
     var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
+    var bpos = e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal) + '"';
     var face = e.shot
-      ? '<img src="' + e.shot + '"' + fit + ' alt="" loading="lazy" decoding="async">'
+      ? '<img src="' + e.shot + '"' + fit + bpos + ' alt="" loading="lazy" decoding="async">'
       : '<span class="ff-bub__mono">' + esc(initials(e)) + '</span>';
     return '<button class="ff-bub' + (e.video ? '' : ' ff-bub--flat') + '" type="button" ' +
       'data-ff-story="' + e.id + '" aria-label="' +
@@ -1309,11 +1318,20 @@
         return '<span class="ff-view__tick' + (k <= vwrIdx ? ' is-on' : '') + '"></span>';
       }).join('');
     }
+    var vpos = e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal) + '"';
     var av = $('[data-ff-av]', vwr);
     if (av) {
       av.innerHTML = e.shot
-        ? '<img src="' + e.shot + '"' + fit + ' alt="">'
+        ? '<img src="' + e.shot + '"' + fit + vpos + ' alt="">'
         : '<span class="ff-bub__mono" style="font-size:14px">' + esc(initials(e)) + '</span>';
+    }
+    /* The frame behind the video. Pitches arrived portrait, landscape and square, and a
+       vertical viewer has to hold all three without cropping anyone. The founder's own
+       image, blurred, fills what the video does not -- so the gap reads as deliberate
+       rather than as a bug. */
+    var stageEl = $('[data-ff-stage]', vwr);
+    if (stageEl) {
+      stageEl.style.setProperty('--ff-back', e.shot ? 'url("' + e.shot + '")' : 'none');
     }
     var co = $('[data-ff-co]', vwr); if (co) { co.textContent = e.company; }
     var by = $('[data-ff-by]', vwr); if (by) { by.textContent = e.name; }

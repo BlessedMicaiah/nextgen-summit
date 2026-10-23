@@ -422,13 +422,39 @@
   background: rgba(255,255,255,.08); border: 0; color: #fff; cursor: pointer;
   display: grid; place-items: center; font-size: 17px; line-height: 1;
 }
+/* ---------- one player, whatever shape the pitch arrived in ----------
+
+   These twenty pitches are portrait, landscape and square, between 480x854 and 3840x2160.
+   Forcing them all into one frame would crop faces off the wide ones and pillar-box the
+   tall ones against dead black. The stage keeps a steady 9:16 so every founder occupies
+   the same space, the video is contained inside it so nothing is ever cropped or stretched,
+   and the founder's own image sits blurred behind to fill what is left. */
 .ff-view__stage {
-  flex: 1; min-height: 0; position: relative; background: #000;
+  flex: 1; min-height: 0; position: relative; background: #05070A;
   display: grid; place-items: center; overflow: hidden;
 }
-.ff-view__stage video, .ff-view__stage iframe {
-  width: 100%; height: 100%; border: 0; display: block; object-fit: contain; background: #000;
+.ff-view__stage::before {
+  content: ""; position: absolute; inset: -12%;
+  background-image: var(--ff-back, none);
+  background-size: cover; background-position: center;
+  filter: blur(26px) saturate(.7) brightness(.42);
+  transform: scale(1.1);
+  opacity: .55; pointer-events: none;
 }
+.ff-view__stage::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(70% 60% at 50% 45%, transparent, rgba(5,7,10,.72));
+}
+.ff-view__stage video, .ff-view__stage iframe {
+  position: relative; z-index: 1;
+  max-width: 100%; max-height: 100%;
+  width: auto; height: auto;
+  aspect-ratio: auto;
+  border: 0; display: block; object-fit: contain; background: transparent;
+}
+/* An iframe cannot be sized to its content, so YouTube and Drive get the 9:16 box itself
+   and letterbox inside it the way their own players do. */
+.ff-view__stage iframe { width: 100%; height: 100%; }
 /* No video? Then an editorial card, not an apology. */
 .ff-view__tell {
   padding: 30px 26px; text-align: center; display: grid; gap: 14px; align-content: center;
@@ -447,7 +473,10 @@
 }
 .ff-view__acts { display: flex; gap: 9px; padding: 13px 14px calc(13px + env(safe-area-inset-bottom)); }
 .ff-view__acts .btn { flex: 1; --h: 46px; font-size: 11.5px; }
-.ff-view__body { position: relative; flex: 1; min-height: 0; display: flex; }
+.ff-view__body {
+  position: relative; flex: 1; min-height: 0; display: flex;
+  aspect-ratio: 9 / 16; max-height: 100%; margin-inline: auto; width: 100%;
+}
 .ff-view__body .ff-view__stage { flex: 1; min-width: 0; }
 .ff-view__nav {
   position: absolute; inset: 0; display: flex; z-index: 3; pointer-events: none;
@@ -459,3 +488,26 @@
   -webkit-tap-highlight-color: transparent;
 }
 .ff-view__nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: -6px; }
+
+
+/* ---------- the profile dialog's player ----------
+   Same principle, different room: a 16:9 region on the profile, with the video contained
+   inside it so a portrait pitch is never cropped to fit a landscape box. */
+[data-pc-p-video] {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #05070A;
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid; place-items: center;
+}
+[data-pc-p-video] video,
+[data-pc-p-video] iframe {
+  max-width: 100%; max-height: 100%;
+  width: auto; height: auto;
+  border: 0; display: block; background: transparent;
+}
+[data-pc-p-video] iframe { width: 100%; height: 100%; }
+
+/* The profile portrait follows the same crop its card uses, set inline per founder. */
+.pcp__shot img, [data-pc-p-shot] img { object-fit: cover; }

@@ -18,6 +18,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 680,
     "shotH": 382,
+    "focal": "50% 50%",
     "pitchNote": "direct video file"
   },
   {
@@ -47,6 +48,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1100,
     "shotH": 733,
+    "focal": "50% 45%",
     "pitchNote": "direct video file"
   },
   {
@@ -79,6 +81,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1024,
     "shotH": 1024,
+    "focal": "50% 50%",
     "pitchNote": "direct video file"
   },
   {
@@ -96,6 +99,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 825,
     "shotH": 1100,
+    "focal": "50% 22%",
     "pitchNote": "direct video file"
   },
   {
@@ -113,6 +117,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1100,
     "shotH": 660,
+    "focal": "50% 50%",
     "pitchNote": "direct video file"
   },
   {
@@ -130,6 +135,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1024,
     "shotH": 1024,
+    "focal": "50% 50%",
     "pitchNote": "direct video file"
   },
   {
@@ -141,10 +147,14 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-09",
     "shot": "/assets/img/founders/rest.webp",
     "shotFit": "cover",
-    "video": null,
+    "video": {
+      "type": "youtube",
+      "id": "C6rbn3p3CpY"
+    },
     "shotW": 1100,
     "shotH": 733,
-    "pitchNote": "a PDF, not a video"
+    "focal": "50% 45%",
+    "pitchNote": "YouTube link found inside the PDF"
   },
   {
     "slug": "pathbridge",
@@ -173,6 +183,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1044,
     "shotH": 1100,
+    "focal": "50% 35%",
     "pitchNote": "direct video file"
   },
   {
@@ -190,6 +201,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 880,
     "shotH": 1100,
+    "focal": "50% 22%",
     "pitchNote": "direct video file"
   },
   {
@@ -207,6 +219,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 280,
     "shotH": 334,
+    "focal": "50% 22%",
     "pitchNote": "YouTube id recovered from the submitted filename"
   },
   {
@@ -218,8 +231,11 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-14",
     "shot": null,
     "shotFit": "cover",
-    "video": null,
-    "pitchNote": "a PDF, not a video"
+    "video": {
+      "type": "youtube",
+      "id": "MKFA5YWMyiM"
+    },
+    "pitchNote": "YouTube link found inside the PDF"
   },
   {
     "slug": "melavyr",
@@ -236,6 +252,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 869,
     "shotH": 1100,
+    "focal": "50% 22%",
     "pitchNote": "direct video file"
   },
   {
@@ -253,6 +270,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1100,
     "shotH": 1100,
+    "focal": "50% 35%",
     "pitchNote": "Google Drive: copy_23C09532_71FE_4AF8_848E_8F01DCDCE6D0.mov"
   },
   {
@@ -270,6 +288,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1100,
     "shotH": 1100,
+    "focal": "50% 50%",
     "pitchNote": "YouTube link found inside the .docx"
   },
   {
@@ -287,6 +306,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1024,
     "shotH": 1024,
+    "focal": "50% 35%",
     "pitchNote": "YouTube id recovered from the submitted filename"
   },
   {
@@ -304,6 +324,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1100,
     "shotH": 1100,
+    "focal": "50% 35%",
     "pitchNote": "direct video file"
   },
   {
@@ -321,6 +342,7 @@ window.NGS_FOUNDERS = [
     },
     "shotW": 1100,
     "shotH": 1100,
+    "focal": "50% 35%",
     "pitchNote": "Google Drive: Introducing FYM"
   }
 ];

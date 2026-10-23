@@ -112,6 +112,16 @@ def resolve_pitch(url, cached):
             pass
         return ('document', None, 'a .docx with no resolvable video link')
     if kind == 'pdf':
+        # Read what is INSIDE it. Two founders put a working YouTube link in the body of a
+        # PDF, which a scan of filenames alone never sees -- and both of those pitches turn
+        # out to be real and playable. A PDF with no link in it stays a PDF.
+        try:
+            txt = fetch(url).decode('latin-1', 'replace')
+            m = YT.search(txt)
+            if m:
+                return ('youtube', m.group(1), 'YouTube link found inside the PDF')
+        except Exception:
+            pass
         return ('document', None, 'a PDF, not a video')
     if kind in ('png', 'jpeg', 'webp'):
         return ('image', None, 'an image was submitted where a video was expected')
@@ -124,10 +134,11 @@ def main():
         sys.exit('usage: python -I tools/build-founders.py <manifest.json>')
     data = json.load(io.open(manifest, encoding='utf-8'))
 
-    mapping, reviewed = {}, False
+    mapping, reviewed, focal_overrides = {}, False, {}
     if os.path.isfile(MAPFILE):
         _mf = json.load(io.open(MAPFILE, encoding='utf-8'))
         mapping = _mf.get('map', {})
+        focal_overrides = _mf.get('focal', {})
         reviewed = bool(_mf.get('reviewed'))
 
     os.makedirs(IMGDIR, exist_ok=True)
@@ -182,6 +193,26 @@ def main():
                         logo = any(t in fname for t in ('logo', 'branding', 'brand'))
                         rec['shotFit'] = 'contain' if logo else 'cover'
                         rec['shotW'], rec['shotH'] = im.size
+
+                        # Where to hold the crop.
+                        #
+                        # A 4:3 card showing a tall portrait centred at 50% 50% cuts the
+                        # head off: faces sit in the upper part of a headshot and the middle
+                        # of the frame is usually a chest. These are starting points chosen
+                        # from the shape of each image rather than one value applied to
+                        # twenty different people, and any of them can be overridden per
+                        # founder in tools/founder-map.json under "focal".
+                        w2, h2 = im.size
+                        ratio = w2 / float(h2) if h2 else 1
+                        if logo:
+                            rec['focal'] = '50% 50%'
+                        elif ratio < 0.85:          # tall portrait: frame the face high
+                            rec['focal'] = '50% 22%'
+                        elif ratio < 1.15:          # square-ish
+                            rec['focal'] = '50% 35%'
+                        else:                       # landscape, usually a scene or a wordmark
+                            rec['focal'] = '50% 45%'
+                        rec['focal'] = (focal_overrides.get(slug) or rec['focal'])
                     except Exception as e:
                         issues.append((c['business_name'], 'image',
                                        'could not process: ' + type(e).__name__))

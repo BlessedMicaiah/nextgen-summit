@@ -322,8 +322,16 @@
     $$('[data-pc-p-co]', pDlg).forEach(function (n) { n.textContent = e.company; });
     $$('[data-pc-p-name]', pDlg).forEach(function (n) { n.textContent = e.name; });
 
+    /* The card's corner follows the reel's: once there are standings it shows the
+       founder's position. Before that it keeps the contestant number, which on the card
+       carries a label and identifies them in a field of twenty -- it is not the bare,
+       unexplained badge leadership queried on the reel. */
     var num = $('[data-fcd-n]', pDlg);
-    if (num) num.textContent = String(e.n).padStart ? String(e.n).padStart(2, '0') : e.n;
+    var numK = $('[data-fcd-k]', pDlg);
+    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
+    if (num) num.textContent = place ? ordinal(place)
+      : (String(e.n).padStart ? String(e.n).padStart(2, '0') : e.n);
+    if (numK) numK.textContent = place ? 'Position' : 'Contestant';
 
     /* The front previews, the back explains. Every one of the twenty descriptions turned
        out to be a single sentence -- measured, not assumed -- so there is no second

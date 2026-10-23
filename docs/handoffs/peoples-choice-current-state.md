@@ -734,6 +734,65 @@ emulated. A real device pass before launch is worth the hour.
 
 ---
 
+## 0p. Leadership, 2026-10-23 evening
+
+Three asks from the Next Gen Website Devs thread, all applied and on staging.
+
+### The corner badge now carries a position, not a contestant number
+
+Leadership circled the `01` badge and asked what its utility was. It had none -- a
+visitor has no use for "entrant 01". It carries the founder's **position** now:
+
+| standing | reel panel | founder card |
+|---|---|---|
+| 1st, 2nd, 3rd | the gold / silver / bronze medal, as before | `Position - 1st` |
+| 4th and below | a plain badge: `4th`, `11th`, `20th` | `Position - 4th` |
+| no standings yet | **nothing at all** | `Contestant - 02` |
+| tied | both founders show the same ordinal | same |
+
+The top three never show both a medal and a badge. Ordinals handle the teens.
+
+**While every founder is on zero the reel badge does not render.** That is the point:
+a position nobody has earned is not a position. The card keeps its contestant number in
+that state because there it carries a label and identifies a founder in a field of
+twenty -- it is not the bare, unexplained badge that was queried. Say the word and it
+goes too.
+
+Verified against the **deployed** script, not a reimplementation: the shipped `ordinal`
+and `reelPanelHtml` were lifted out of the file served by staging and run over ranks 1
+to 20 with a tie on sixth. Correct at every one.
+
+### React is gone
+
+> "Please remove the REACT feature. Over complication."
+
+Removed: the rail button, the bottom sheet, **both** stylesheet blocks -- the rebuilt
+one and the original that had been superseded but never deleted -- the per-device store,
+the open/close/swipe/Escape handlers, and the speech-bubble icon. Nothing anywhere
+references it; the rail is Vote, Share, Sound.
+
+It was never public: nothing was posted, counted or sent, and the sheet said so. That
+honesty was the problem -- a control that saves a thought to one browser and shows it to
+nobody is a button that explains itself and then does nothing, standing beside two that
+do exactly what they say. It is in git if it ever comes back with a real store, a
+moderation queue and a report route behind it.
+
+### The hero line is leadership's wording
+
+"One verified vote a day — NextGen **ticket holders get 2 extra**", in place of "NextGen
+attendees give three".
+
+### Credible Blossom has artwork
+
+The brand sheet carries a reversed lockup on their teal; that crop is the card now.
+`tools/build-founders.py` treats a supplied `<slug>.logo.<ext>` as a wordmark rather
+than a face, because covering it to fill a 5:7 card cut the company name off at both
+ends. **Images: 19 of 20. Only K8Culture Productions is still without one** -- their
+submission is a PDF and their pitch is on YouTube, so there is no frame of their own to
+borrow either.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

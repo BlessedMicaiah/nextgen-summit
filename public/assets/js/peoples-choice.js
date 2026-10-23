@@ -1158,11 +1158,6 @@
       return;
     }
     if (t.closest('[data-reel-sound]')) { reelSetSound(reelMuted); return; }
-    if ((el = t.closest('[data-reel-comment]'))) { rcOpen(el.getAttribute('data-reel-comment')); return; }
-    if ((el = t.closest('[data-rc-chip]'))) { rcAdd(el.textContent.trim()); return; }
-    if (t.closest('[data-rc-close]')) { rcClose(); return; }
-    /* Tapping the dimmed area outside the sheet closes it, the way every bottom sheet does. */
-    if (t.closest('[data-rc-scrim]')) { rcClose(); return; }
     if (t.closest('[data-reel-restart]')) {
       var first = $$('[data-reel-panel]', reelTrack)[0];
       if (first) {
@@ -1478,40 +1473,6 @@
 
   repaintAfterVote();
 
-  /* The sheet answers Escape, a swipe down, and a tap outside, as well as its own close
-     controls. A panel that can only be dismissed one way is a panel people get stuck in. */
-  (function () {
-    var sheet = $('[data-rc]');
-    if (!sheet) return;
-    var panel = $('[data-rc-panel]', sheet);
-    var startY = null, dy = 0;
-
-    document.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Escape' && sheet.classList.contains('is-open')) {
-        ev.preventDefault();
-        rcClose();
-      }
-    });
-    if (!panel) return;
-    panel.addEventListener('touchstart', function (ev) {
-      if (panel.scrollTop > 0) return;        // let it scroll its own content first
-      startY = ev.touches[0].clientY; dy = 0;
-      panel.style.transition = 'none';
-    }, { passive: true });
-    panel.addEventListener('touchmove', function (ev) {
-      if (startY === null) return;
-      dy = Math.max(0, ev.touches[0].clientY - startY);
-      panel.style.transform = 'translateY(' + dy + 'px)';
-    }, { passive: true });
-    panel.addEventListener('touchend', function () {
-      if (startY === null) return;
-      panel.style.transition = '';
-      panel.style.transform = '';
-      if (dy > 90) rcClose();                 // a deliberate pull, not a stray finger
-      startY = null; dy = 0;
-    });
-  }());
-
   /* ---------- the founder reels ----------
 
      The scrolling half of the experience. One panel per founder, snapped against the PAGE
@@ -1532,7 +1493,6 @@
   function reelIcon(name) {
     var p = {
       vote: '<path d="M4.5 12.5l5 5 10-11" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-      comment: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.2-.6L3 21l1.8-5a8.3 8.3 0 0 1-.8-3.6 8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 7.5z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>',
       share: '<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/>',
       sound: '<path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M16 9.2a4 4 0 0 1 0 5.6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
       mute: '<path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M16.5 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
@@ -1540,6 +1500,15 @@
     }[name];
     var stroke = (name === 'share') ? ' fill="none" stroke="currentColor" stroke-width="1.9"' : '';
     return '<svg viewBox="0 0 24 24"' + stroke + ' aria-hidden="true">' + p + '</svg>';
+  }
+
+  /* 1st, 2nd, 3rd, 4th ... 11th, 12th, 13th. The teens are the whole reason this is a
+     function rather than a lookup on the last digit. */
+  function ordinal(n) {
+    n = Number(n) || 0;
+    var t = n % 100;
+    if (t >= 11 && t <= 13) return n + 'th';
+    return n + ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
   }
 
   function reelPanelHtml(e, i) {
@@ -1577,10 +1546,17 @@
     var medal = '';
     if (place >= 1 && place <= 3) {
       var words = { 1: 'Currently leading', 2: 'Currently second', 3: 'Currently third' };
-      var ord = { 1: '1st', 2: '2nd', 3: '3rd' };
       medal = '<span class="reel__medal reel__medal--' + place + '">' +
-        '<b>' + ord[place] + '</b> ' + words[place] + '</span>';
+        '<b>' + ordinal(place) + '</b> ' + words[place] + '</span>';
     }
+    /* The corner badge is the founder's POSITION, not their contestant number.
+
+       Leadership asked what the number was for and the honest answer was nothing -- a
+       visitor has no use for "entrant 01". It carries the standing instead, and when
+       there is no standing to carry, because every founder is still level, it is not
+       rendered at all rather than inventing a rank nobody has earned. The top three
+       have the medal above, so no panel states its position twice. */
+    var badge = (place > 3) ? '<span class="reel__num">' + ordinal(place) + '</span>' : '';
     return '' +
       '<li class="reel__panel' + (place && place <= 3 ? ' reel__panel--p' + place : '') +
         '" data-reel-panel="' + e.id + '" data-pc-card="' + e.id + '">' +
@@ -1596,7 +1572,7 @@
             '<span aria-hidden="true">' + reelIcon('play') + '</span></button>' +
             '<span class="reel__wait" aria-hidden="true"></span>'
           : '') +
-        '<span class="reel__num">' + e.n + '</span>' +
+        badge +
         '<div class="reel__meta">' +
           '<p class="reel__co">' + esc(e.company) + '</p>' +
           '<p class="reel__by">' + esc(e.name) + '</p>' +
@@ -1612,8 +1588,6 @@
           '<button class="reel__act reel__act--vote" type="button" data-pc-vote="' + e.id + '"' +
             (canVote ? '' : ' disabled') + '><span>' + reelIcon('vote') + '</span>' +
             '<small>' + (canVote ? 'Vote' : 'Closed') + '</small></button>' +
-          '<button class="reel__act" type="button" data-reel-comment="' + e.id + '">' +
-            '<span>' + reelIcon('comment') + '</span><small>React</small></button>' +
           '<button class="reel__act" type="button" data-pc-share="' + e.id + '">' +
             '<span>' + reelIcon('share') + '</span><small>Share</small></button>' +
           (e.video && e.video.type === 'file'
@@ -2229,56 +2203,16 @@
     }
   });
 
-  /* ---------- reactions: a prototype, and labelled as one ----------
-     Public comments need moderation, reporting, rate limiting and a story for impersonation
-     before a single one is shown to a stranger. None of that exists yet, so nothing here is
-     published or sent anywhere: a reaction is kept in this browser only, and the panel says
-     so in as many words. The shape is real so the idea can be judged; the plumbing is not. */
-  var rcEl = $('[data-rc]');
+  /* Reactions were here, and leadership has taken them out: "Please remove the REACT
+     feature. Over complication."
 
-  function rcKey(id) { return 'ngs-pc-react-' + id; }
+     They were never public -- nothing was posted, counted or sent anywhere, and the sheet
+     said as much in a note. That honesty was also the problem: a control that saves a
+     thought to one browser and shows it to nobody is a button that explains itself and
+     then does nothing, sitting beside Vote and Share, which both do exactly what they say.
 
-  var rcLastFocus = null;
-
-  function rcClose() {
-    if (!rcEl) return;
-    rcEl.classList.remove('is-open');
-    rcEl.removeAttribute('data-rc-for');
-    /* Back where they were: the reel underneath never moved, and focus returns to the
-       control that opened the sheet rather than to the top of the document. */
-    if (rcLastFocus && rcLastFocus.isConnected) {
-      try { rcLastFocus.focus({ preventScroll: true }); } catch (e) {}
-    }
-    rcLastFocus = null;
-  }
-
-  function rcOpen(id) {
-    if (!rcEl) return;
-    rcLastFocus = document.activeElement;
-    var e = byId[id];
-    if (!e) return;
-    rcEl.setAttribute('data-rc-for', id);
-    var t = $('[data-rc-title]', rcEl);
-    if (t) t.textContent = 'React to ' + e.company;
-    var list = $('[data-rc-list]', rcEl);
-    var mine = [];
-    try { mine = JSON.parse(localStorage.getItem(rcKey(id)) || '[]'); } catch (err) {}
-    list.innerHTML = mine.length
-      ? mine.map(function (m) { return '<li class="rc__item"><b>You</b>' + esc(m) + '</li>'; }).join('')
-      : '<li class="rc__item"><b>Nothing yet</b>Pick a reaction below. It stays on this device.</li>';
-    rcEl.classList.add('is-open');
-    track('reaction_open', { entrant_id: id });
-  }
-
-  function rcAdd(text) {
-    var id = rcEl && rcEl.getAttribute('data-rc-for');
-    if (!id) return;
-    var mine = [];
-    try { mine = JSON.parse(localStorage.getItem(rcKey(id)) || '[]'); } catch (err) {}
-    if (mine.indexOf(text) < 0) mine.push(text);
-    try { localStorage.setItem(rcKey(id), JSON.stringify(mine)); } catch (err) {}
-    rcOpen(id);
-  }
+     Gone from the rail, the sheet, the stylesheet and the markup. It is in git if it is
+     ever wanted back with a real store, a moderation queue and a report route behind it. */
 
   /* ---------- the Founder Feed layer ----------
 

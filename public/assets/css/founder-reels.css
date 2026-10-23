@@ -215,44 +215,10 @@
 .ffx.is-in .ffx__cue { animation: ffx-in .8s var(--ease) .4s both; }
 @keyframes ffx-in { to { opacity: 1; transform: none; } }
 
-/* ---------- the comment panel, a prototype and labelled as one ---------- */
-
-.rc { position: fixed; inset: auto 0 0 0; z-index: 60; transform: translateY(100%);
-  transition: transform .42s var(--ease); }
-.rc.is-open { transform: none; }
-.rc__in {
-  width: min(560px, 100%); margin: 0 auto;
-  background: #0C1118; border: 1px solid rgba(255,255,255,.12); border-bottom: 0;
-  border-radius: 18px 18px 0 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
-  max-height: 68svh; overflow-y: auto;
-  box-shadow: 0 -24px 60px rgba(0,0,0,.65);
-}
-.rc__grip { width: 42px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.26); margin: 0 auto 12px; }
-.rc__t { margin: 0 0 4px; font: 800 14px/1.3 var(--f-sans); color: #fff; }
-.rc__note {
-  margin: 0 0 14px; padding: 9px 11px; border-radius: 9px;
-  background: rgba(255,229,0,.08); border: 1px dashed rgba(255,229,0,.45);
-  font: 600 11.5px/1.5 var(--f-sans); color: #FFE500;
-}
-.rc__list { display: grid; gap: 9px; margin: 0 0 14px; padding: 0; list-style: none; }
-.rc__item { padding: 10px 12px; border-radius: 11px; background: rgba(255,255,255,.05);
-  font: 500 13.5px/1.45 var(--f-sans); color: rgba(255,255,255,.88); }
-.rc__item b { display: block; font: 700 11px/1.3 var(--f-sans); letter-spacing: .08em;
-  text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
-.rc__quick { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
-.rc__chip {
-  padding: 8px 12px; border-radius: 999px; cursor: pointer;
-  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
-  color: #fff; font: 600 12.5px/1 var(--f-sans);
-}
-@media (hover: hover) { .rc__chip:hover { border-color: var(--accent); color: var(--accent); } }
-.rc__close { width: 100%; margin-top: 2px; }
-
 @media (prefers-reduced-motion: reduce) {
   .reel__panel { scroll-snap-align: none; }
   .ffx__k, .ffx__t, .ffx__p, .ffx__cue { opacity: 1; transform: none; animation: none !important; }
   .ffx__cue i { animation: none; }
-  .rc { transition: none; }
   .reel__up { transition: none; }
 }
 
@@ -276,47 +242,6 @@
 .reel__panel--p1 { box-shadow: 0 0 0 1.5px rgba(255,206,92,.5), 0 30px 70px -40px rgba(0,0,0,1); }
 .reel__panel--p2 { box-shadow: 0 0 0 1.5px rgba(214,222,232,.45), 0 30px 70px -40px rgba(0,0,0,1); }
 .reel__panel--p3 { box-shadow: 0 0 0 1.5px rgba(214,158,106,.45), 0 30px 70px -40px rgba(0,0,0,1); }
-
-/* ---------- the reaction sheet, rebuilt to be easy to leave ---------- */
-/* Above the immersive feed (90), below the introduction (120) and an opened deck (130).
-   At 60 the sheet opened BEHIND a full-screen reel, which is a sheet that does not exist. */
-.rc { position: fixed; inset: 0; z-index: 110; pointer-events: none; }
-.rc__scrim {
-  position: absolute; inset: 0; background: rgba(4,6,9,.6);
-  opacity: 0; transition: opacity .34s var(--ease); pointer-events: none;
-}
-.rc.is-open { pointer-events: auto; }
-.rc.is-open .rc__scrim { opacity: 1; pointer-events: auto; }
-.rc__in {
-  position: absolute; left: 50%; bottom: 0; width: min(560px, 100%);
-  transform: translate(-50%, 100%);
-  transition: transform .4s var(--ease);
-  background: #0C1118; border: 1px solid rgba(255,255,255,.12); border-bottom: 0;
-  border-radius: 20px 20px 0 0;
-  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
-  max-height: 76svh; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  box-shadow: 0 -24px 60px rgba(0,0,0,.7);
-}
-.rc.is-open .rc__in { transform: translate(-50%, 0); }
-/* the grip is a real button, so it works for a finger, a mouse and a keyboard alike */
-.rc__grip {
-  display: block; width: 100%; padding: 8px 0 10px; background: none; border: 0; cursor: pointer;
-}
-.rc__grip span { display: block; width: 44px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.3); margin: 0 auto; }
-.rc__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
-.rc__t { margin: 0; font: 800 15px/1.3 var(--f-sans); color: #fff; }
-.rc__x {
-  flex: none; width: 36px; height: 36px; border-radius: 50%;
-  display: grid; place-items: center; cursor: pointer;
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); color: #fff;
-}
-.rc__x svg { width: 16px; height: 16px; }
-@media (hover: hover) { .rc__x:hover { background: var(--accent); color: var(--on-accent); } }
-.rc__x:focus-visible, .rc__grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.rc__done { width: 100%; margin-top: 12px; --h: 46px; font-size: 12px; }
-@media (prefers-reduced-motion: reduce) {
-  .rc__in, .rc__scrim { transition: none; }
-}
 
 /* ============================================================================
    IMMERSIVE MODE
@@ -387,8 +312,12 @@ html.pc-live [data-announce] { display: none !important; }
   .reel.is-live .reel__medal { --reel-inset: max(22px, calc(50% - 15rem)); }
   .reel.is-live .reel__meta  { left: var(--reel-inset); right: auto; max-width: 23rem; }
   .reel.is-live .reel__rail  { right: var(--reel-inset); }
-  .reel.is-live .reel__medal { left: var(--reel-inset); }
-  .reel.is-live .reel__num   { right: var(--reel-inset); }
+  /* The medal and the position badge are alternatives -- a panel shows one or the
+     other, never both -- so they sit in the same corner. The badge inherits left:14px
+     from its base rule, so pinning it by `right` as well would have stretched it the
+     whole width of the stage. */
+  .reel.is-live .reel__medal,
+  .reel.is-live .reel__num { left: var(--reel-inset); right: auto; }
 }
 
 /* Safe areas. A phone's home indicator sits over the bottom of the panel and the

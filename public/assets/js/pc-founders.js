@@ -32,12 +32,16 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 3,
     "entrant": "entrant-02",
-    "shot": null,
-    "shotFit": "cover",
+    "shot": "/assets/img/founders/credible-blossom.webp?v=1a47e5c8",
+    "shotFit": "contain",
     "video": {
       "type": "youtube",
       "id": "RbY4Zs6kPMw"
     },
+    "shotFrom": "brand mark supplied by the NextGen team",
+    "shotW": 593,
+    "shotH": 305,
+    "focal": "50% 50%",
     "pitchNote": "YouTube link supplied directly"
   },
   {

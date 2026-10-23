@@ -194,11 +194,19 @@ def main():
         # Without this a rebuild silently put the original submission back, which is exactly
         # what happened the first time two proper headshots arrived: the files were written
         # and the next build overwrote them from the cached source URL.
+        # A supplied file named <slug>.logo.<ext> is a wordmark, not a face: it gets
+        # whitespace around it instead of being cropped to fill a 5:7 card. Credible
+        # blossom sent a brand sheet rather than a headshot, and covering it cut the
+        # company name off at both ends.
         supplied = None
-        for ext in ('.jpg', '.jpeg', '.png', '.webp'):
-            cand = os.path.join(ROOT, 'docs', 'founder-images-supplied', slug + ext)
-            if os.path.isfile(cand):
-                supplied = cand
+        supplied_logo = False
+        for mark, flag in (('.logo', True), ('', False)):
+            for ext in ('.jpg', '.jpeg', '.png', '.webp'):
+                cand = os.path.join(ROOT, 'docs', 'founder-images-supplied', slug + mark + ext)
+                if os.path.isfile(cand):
+                    supplied, supplied_logo = cand, flag
+                    break
+            if supplied:
                 break
 
         iu = c.get('image_source_url')
@@ -207,7 +215,8 @@ def main():
             cpath = os.path.join(CACHE, slug + '.src')
             if supplied:
                 raw = open(supplied, 'rb').read()
-                rec['shotFrom'] = 'headshot supplied by the NextGen team'
+                rec['shotFrom'] = ('brand mark supplied by the NextGen team' if supplied_logo
+                                   else 'headshot supplied by the NextGen team')
             elif os.path.isfile(cpath):
                 raw = open(cpath, 'rb').read()
             else:
@@ -233,8 +242,8 @@ def main():
                                        + stamp(dest))
                         # a logo wants whitespace around it; a photograph wants to fill
                         fname = (supplied or iu or '').rsplit('/', 1)[-1].lower()
-                        logo = (not supplied) and any(t in fname
-                                                      for t in ('logo', 'branding', 'brand'))
+                        logo = supplied_logo or ((not supplied) and any(
+                            t in fname for t in ('logo', 'branding', 'brand')))
                         rec['shotFit'] = 'contain' if logo else 'cover'
                         rec['shotW'], rec['shotH'] = im.size
 

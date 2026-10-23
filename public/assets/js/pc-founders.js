@@ -11,15 +11,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 2,
     "entrant": "entrant-01",
-    "shot": "/assets/img/founders/haptol-labs.webp?v=8da2c096",
-    "shotFit": "contain",
+    "shot": "/assets/img/founders/haptol-labs.webp?v=d1dc7578",
+    "shotFit": "cover",
+    "logo": "/assets/img/logos/haptol-labs.webp?v=3053ac16",
     "video": {
       "type": "file",
       "src": "/assets/video/haptol-labs.mp4?v=ad280214"
     },
-    "shotW": 680,
-    "shotH": 382,
-    "focal": "50% 50%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 702,
+    "shotH": 768,
+    "focal": "50% 35%",
     "selfHosted": true,
     "poster": "/assets/video/haptol-labs-poster.jpg?v=684b9ac9",
     "pitchNote": "direct video file"
@@ -32,16 +34,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 3,
     "entrant": "entrant-02",
-    "shot": "/assets/img/founders/credible-blossom.webp?v=1a47e5c8",
-    "shotFit": "contain",
+    "shot": "/assets/img/founders/credible-blossom.webp?v=f2a9341e",
+    "shotFit": "cover",
+    "logo": "/assets/img/logos/credible-blossom.webp?v=61edd730",
     "video": {
       "type": "youtube",
       "id": "RbY4Zs6kPMw"
     },
-    "shotFrom": "brand mark supplied by the NextGen team",
-    "shotW": 593,
-    "shotH": 305,
-    "focal": "50% 50%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "pitchNote": "YouTube link supplied directly"
   },
   {
@@ -54,6 +57,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-03",
     "shot": "/assets/img/founders/sooz.webp?v=b8a456cb",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/sooz.mp4?v=857ec4fb"
@@ -75,6 +79,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-04",
     "shot": "/assets/img/founders/the-luminous-lab.webp?v=ba0794e8",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/the-luminous-lab.mp4?v=f1197d5e"
@@ -93,15 +98,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 6,
     "entrant": "entrant-05",
-    "shot": "/assets/img/founders/lookbook.webp?v=2644c394",
-    "shotFit": "contain",
+    "shot": "/assets/img/founders/lookbook.webp?v=b118c2c8",
+    "shotFit": "cover",
+    "logo": "/assets/img/logos/lookbook.webp?v=2f06559e",
     "video": {
       "type": "file",
       "src": "/assets/video/lookbook.mp4?v=3d9678b1"
     },
-    "shotW": 1024,
-    "shotH": 1024,
-    "focal": "50% 50%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 363,
+    "shotH": 384,
+    "focal": "50% 35%",
     "selfHosted": true,
     "poster": "/assets/video/lookbook-poster.jpg?v=678e3a8c",
     "pitchNote": "direct video file"
@@ -116,6 +123,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-06",
     "shot": "/assets/img/founders/ibraid.webp?v=f30dcc71",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/ibraid.mp4?v=b39a14f1"
@@ -135,15 +143,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 8,
     "entrant": "entrant-07",
-    "shot": "/assets/img/founders/beforekeys-llc.webp?v=ea69b05c",
-    "shotFit": "contain",
+    "shot": "/assets/img/founders/beforekeys-llc.webp?v=d3a7ae6b",
+    "shotFit": "cover",
+    "logo": "/assets/img/logos/beforekeys-llc.webp?v=2c8abe6e",
     "video": {
       "type": "file",
       "src": "/assets/video/beforekeys-llc.mp4?v=886db319"
     },
-    "shotW": 1100,
-    "shotH": 660,
-    "focal": "50% 50%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "selfHosted": true,
     "poster": "/assets/video/beforekeys-llc-poster.jpg?v=0cf7b12a",
     "pitchNote": "direct video file"
@@ -156,15 +166,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 9,
     "entrant": "entrant-08",
-    "shot": "/assets/img/founders/if-the-shoe-fits-itsf.webp?v=1e9014a0",
-    "shotFit": "contain",
+    "shot": "/assets/img/founders/if-the-shoe-fits-itsf.webp?v=cbafbc3e",
+    "shotFit": "cover",
+    "logo": "/assets/img/logos/if-the-shoe-fits-itsf.webp?v=518daf9a",
     "video": {
       "type": "file",
       "src": "/assets/video/if-the-shoe-fits-itsf.mp4?v=44d85951"
     },
-    "shotW": 1024,
-    "shotH": 1024,
-    "focal": "50% 50%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 983,
+    "shotH": 767,
+    "focal": "50% 45%",
     "selfHosted": true,
     "poster": "/assets/video/if-the-shoe-fits-itsf-poster.jpg?v=c67ef996",
     "pitchNote": "direct video file"
@@ -179,6 +191,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-09",
     "shot": "/assets/img/founders/rest.webp?v=7c8a9be2",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "youtube",
       "id": "C6rbn3p3CpY"
@@ -196,14 +209,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 11,
     "entrant": "entrant-10",
-    "shot": "/assets/img/founders/pathbridge.webp?v=577a2634",
+    "shot": "/assets/img/founders/pathbridge.webp?v=904ba0f1",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/pathbridge.mp4?v=3228eea5"
     },
-    "shotFrom": "frame from this founders own pitch video",
-    "focal": "50% 30%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "selfHosted": true,
     "poster": "/assets/video/pathbridge-poster.jpg?v=85c78ea6",
     "pitchNote": "Google Drive: Copy of Pitch"
@@ -218,6 +234,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-11",
     "shot": "/assets/img/founders/applytrack.webp?v=c8c23312",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/applytrack.mp4?v=89e90164"
@@ -239,6 +256,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-12",
     "shot": "/assets/img/founders/jay-s-watermelonade.webp?v=a70233e3",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/jay-s-watermelonade.mp4?v=be03c347"
@@ -260,6 +278,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-13",
     "shot": "/assets/img/founders/offguardz.webp?v=60c8125e",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "youtube",
       "id": "iyaFaszOWH0"
@@ -277,12 +296,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 15,
     "entrant": "entrant-14",
-    "shot": null,
+    "shot": "/assets/img/founders/k8culture-productions.webp?v=18610b08",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "youtube",
       "id": "MKFA5YWMyiM"
     },
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "pitchNote": "YouTube link found inside the PDF"
   },
   {
@@ -295,6 +319,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-15",
     "shot": "/assets/img/founders/melavyr.webp?v=e5245eca",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/melavyr.mp4?v=135ce63b"
@@ -316,6 +341,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-16",
     "shot": "/assets/img/founders/light.webp?v=0532a1e7",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/light.mp4?v=75e399f0"
@@ -336,15 +362,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 18,
     "entrant": "entrant-17",
-    "shot": "/assets/img/founders/beauty-boot-camp.webp?v=32a1373e",
-    "shotFit": "contain",
+    "shot": "/assets/img/founders/beauty-boot-camp.webp?v=ef01c704",
+    "shotFit": "cover",
+    "logo": "/assets/img/logos/beauty-boot-camp.webp?v=c5eb2718",
     "video": {
       "type": "youtube",
       "id": "QyB1Sly5cYk"
     },
-    "shotW": 1100,
-    "shotH": 1100,
-    "focal": "50% 50%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 471,
+    "shotH": 409,
+    "focal": "50% 45%",
     "pitchNote": "YouTube link found inside the .docx"
   },
   {
@@ -355,14 +383,16 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 19,
     "entrant": "entrant-18",
-    "shot": "/assets/img/founders/nextofferup.webp?v=e6d65f09",
+    "shot": "/assets/img/founders/nextofferup.webp?v=6c9ad8be",
     "shotFit": "cover",
+    "logo": "/assets/img/logos/nextofferup.webp?v=037ecb96",
     "video": {
       "type": "youtube",
       "id": "Diqye88F3Rw"
     },
-    "shotW": 1024,
-    "shotH": 1024,
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 1096,
+    "shotH": 1100,
     "focal": "50% 35%",
     "pitchNote": "YouTube link supplied directly"
   },
@@ -374,14 +404,16 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 20,
     "entrant": "entrant-19",
-    "shot": "/assets/img/founders/exam-me.webp?v=4599609e",
+    "shot": "/assets/img/founders/exam-me.webp?v=4c3b9304",
     "shotFit": "cover",
+    "logo": "/assets/img/logos/exam-me.webp?v=6535aa7e",
     "video": {
       "type": "file",
       "src": "/assets/video/exam-me.mp4?v=854851c5"
     },
-    "shotW": 1100,
-    "shotH": 1100,
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 939,
+    "shotH": 943,
     "focal": "50% 35%",
     "selfHosted": true,
     "poster": "/assets/video/exam-me-poster.jpg?v=d8eb76ff",
@@ -395,8 +427,9 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 21,
     "entrant": "entrant-20",
-    "shot": "/assets/img/founders/find-your-mission-corp.webp?v=fa20d8e5",
+    "shot": "/assets/img/founders/find-your-mission-corp.webp?v=83891531",
     "shotFit": "cover",
+    "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/find-your-mission-corp.mp4?v=d62f7404"

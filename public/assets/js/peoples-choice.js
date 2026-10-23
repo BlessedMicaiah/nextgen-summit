@@ -113,6 +113,10 @@
          block stays shut, not padded. */
       base.bio = f.bio || null;
       base.shot = f.shot || null;
+      /* The company mark, for the small thumbnail on the back of the card. Several of
+         these were already in the project -- they had simply been placed on the FRONT,
+         standing in for the founder's face. Nothing was re-sourced; they moved. */
+      base.logo = f.logo || null;
       base.shotFit = f.shotFit || 'cover';
       base.focal = f.focal || '50% 42%';
       base.video = f.video || null;
@@ -326,12 +330,17 @@
        founder's position. Before that it keeps the contestant number, which on the card
        carries a label and identifies them in a field of twenty -- it is not the bare,
        unexplained badge leadership queried on the reel. */
+    /* No contestant number anywhere a visitor can see it. The id still exists and is
+       still what every vote, share link and database row is keyed on -- it simply is not
+       something the public needs, and leadership asked for it gone. The corner carries
+       the founder's POSITION once there are standings, and nothing at all before then. */
+    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
+    var corner = $('.fcd__when', pDlg);
     var num = $('[data-fcd-n]', pDlg);
     var numK = $('[data-fcd-k]', pDlg);
-    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
-    if (num) num.textContent = place ? ordinal(place)
-      : (String(e.n).padStart ? String(e.n).padStart(2, '0') : e.n);
-    if (numK) numK.textContent = place ? 'Position' : 'Contestant';
+    if (corner) corner.hidden = !place;
+    if (num) num.textContent = place ? ordinal(place) : '';
+    if (numK) numK.textContent = 'Position';
 
     /* The front previews, the back explains. Every one of the twenty descriptions turned
        out to be a single sentence -- measured, not assumed -- so there is no second
@@ -363,12 +372,17 @@
     }
     if (mono) { mono.hidden = !!e.shot; mono.textContent = initials(e); }
 
+    /* Back of the card: the company's logo where one exists, the founder's own
+       photograph where one does not. A logo is contained so it keeps its proportions
+       and its whitespace; a photograph is covered and framed on its focal point. */
     var thumb = $('[data-fcd-thumb]', pDlg);
     var timg = thumb ? $('img', thumb) : null;
     if (timg) {
-      if (e.shot) { timg.src = e.shot; timg.hidden = false; }
+      var art = e.logo || e.shot;
+      if (art) { timg.src = art; timg.hidden = false; }
       else { timg.removeAttribute('src'); timg.hidden = true; }
-      thumb.classList.toggle('is-contain', e.shotFit === 'contain');
+      thumb.classList.toggle('is-contain', !!e.logo || e.shotFit === 'contain');
+      timg.alt = e.logo ? (e.company + ' logo') : '';
     }
 
     /* "The founder": shown only when there is verified copy about the person. */

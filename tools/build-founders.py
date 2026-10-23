@@ -21,6 +21,7 @@ import hashlib
 import io
 import json
 import os
+import shutil
 import re
 import sys
 import urllib.request
@@ -28,6 +29,7 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMGDIR = os.path.join(ROOT, 'public', 'assets', 'img', 'founders')
+LOGODIR = os.path.join(ROOT, 'public', 'assets', 'img', 'logos')
 JSOUT = os.path.join(ROOT, 'public', 'assets', 'js', 'pc-founders.js')
 MAPFILE = os.path.join(ROOT, 'tools', 'founder-map.json')
 CACHE = os.path.join(ROOT, 'release', '_founder-src')      # not shipped; release zips public/
@@ -186,6 +188,7 @@ def main():
             'entrant': mapping.get(slug),          # None until a human reviews the mapping
             'shot': None,
             'shotFit': 'cover',
+            'logo': None,
             'video': None,
         }
 
@@ -284,6 +287,38 @@ def main():
                 rec['shotFit'] = 'cover'
                 rec['shotFrom'] = 'frame from this founders own pitch video'
                 rec['focal'] = focal_overrides.get(slug) or '50% 30%'
+
+        # ---- the company logo, for the back of the card ----
+        #
+        # Separate from the portrait on purpose. The front of a founder card is the
+        # founder; the back carries their company's mark in the small thumbnail. Several
+        # of these logos were already in the project -- they had simply been put on the
+        # FRONT, standing in for a face. Moving them here is the whole correction: no
+        # logo was re-sourced, redrawn or invented, and a founder with no logo keeps
+        # their photograph in that slot as the documented fallback.
+        for lext in ('.webp', '.png', '.jpg', '.jpeg', '.svg'):
+            lcand = os.path.join(ROOT, 'docs', 'founder-logos-supplied', slug + lext)
+            if not os.path.isfile(lcand):
+                continue
+            try:
+                os.makedirs(LOGODIR, exist_ok=True)
+                if lext == '.svg':
+                    ldest = os.path.join(LOGODIR, slug + '.svg')
+                    shutil.copyfile(lcand, ldest)
+                    rec['logo'] = '/assets/img/logos/' + slug + '.svg' + stamp(ldest)
+                else:
+                    lim = Image.open(lcand)
+                    lim = lim.convert('RGBA') if lim.mode in ('RGBA', 'LA', 'P') else lim.convert('RGB')
+                    lw, lh = lim.size
+                    if max(lw, lh) > 640:
+                        sc = 640.0 / max(lw, lh)
+                        lim = lim.resize((int(lw * sc), int(lh * sc)), Image.LANCZOS)
+                    ldest = os.path.join(LOGODIR, slug + '.webp')
+                    lim.save(ldest, 'WEBP', quality=QUALITY, method=6)
+                    rec['logo'] = '/assets/img/logos/' + slug + '.webp' + stamp(ldest)
+            except Exception as e:
+                issues.append((c['business_name'], 'logo', 'could not process: ' + type(e).__name__))
+            break
 
         # ---- pitch ----
         pu = c.get('pitch_source_url')

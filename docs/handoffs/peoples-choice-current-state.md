@@ -38,6 +38,44 @@ on the `auto` response, **staging and localhost only**, for both the `unavailabl
 `not_registered` cases — so a genuine "not on the list" can be told apart from a list that was
 never read. A short code and nothing else: no token, no address, no attendee.
 
+### Failures now name themselves on staging
+
+`pc-bonus.php` returns an `eb` reason code with the `auto` response on staging and localhost
+only, and the dialog prints it under the message: `Staging diagnostic: http_401`, `no_token`,
+`ok:156`, `cache_fresh:156`. Production is sent no code and the line stays hidden. This exists
+because a fatal error passed for a network outage for days, on a host with no error log.
+
+---
+
+## 0c. Eventbrite token rotation
+
+**The token was exposed in a Claude Code transcript on 2026-10-23** — a `grep` for the
+constant name printed the assignment line, value included. It must be rotated. Audit findings:
+
+- **Never in git.** `public/api/config.php` is in `.gitignore`, is untracked, appears in no
+  commit, and a `git log -S` for the value across all branches returns nothing.
+- **Exactly one file on disk holds it**: `public/api/config.php`, one line.
+- **Two readers**, both with the same `defined() ?: getenv('EVENTBRITE_TOKEN')` fallback:
+  `attendee-count.php` and `pc-attendee.php`.
+- **`release.py` puts `api/config.php` into every archive**, despite it being git-ignored. So
+  the local file is the source of truth and deploys carry it to the host.
+- **Production uses the same token** and is live: `nextgensummit.us/api/attendee-count.php`
+  serves the homepage registration counter and returned 185. Rotating without updating
+  production breaks that counter — with roughly a day of grace, since `NGS_EB_KEEP` lets the
+  last good count stand in for 86400 seconds.
+
+Rotation order:
+
+1. Create a new private token in Eventbrite. Do not revoke the old one yet.
+2. Edit the one line in local `public/api/config.php`.
+3. Staging: `python -I tools/release.py staging` then `node tools/deploy.mjs ...`. Confirm
+   with `api/attendee-count.php` and a bonus check.
+4. **Production: do NOT run a full production deploy for this.** It would replace the web root
+   and delete the untracked sponsor logos (section I). Edit `api/config.php` in place through
+   Hostinger's File Manager — one line, no deploy, no drift risk. Confirm the live counter
+   still returns a count.
+5. Only then revoke the old token in Eventbrite.
+
 ---
 
 ## 0b. What is still unproven
@@ -314,6 +352,26 @@ rather than a second opinion.
   attendee roster. It needs a verified session.
 
 Index TTL 900s; code TTL 900s; 5 tries per code; 5 lookups per voter per day.
+
+---
+
+## G2. Baseline immediately before the +2 test (2026-10-23)
+
+Recorded so the bonus test can be judged against something exact rather than remembered.
+
+| | before | expected after a successful claim |
+|---|---|---|
+| `entrant-01` valid votes | 2 (one 2026-10-22, one 2026-10-23) | 4 |
+| `entrant-01` valid *today* | 1 | 3 |
+| `entrant-07` valid votes | 1 | 1, unchanged |
+| rows total / invalidated | 7 / 4 | 9 / 4 |
+| distinct voters | 2 | 2 |
+| `pc_attendee` bindings | 0 | 1 |
+| `pc_flag` rows | 1 (`email_verified`) | 2 (`+ attendee_auto_matched`) |
+| `eventbrite-emails.json` | 8293 bytes, 156 entries | unchanged or refreshed |
+
+A second claim must add no rows: `remaining` is 0 afterwards, so `claim` returns `spent`, and
+the UNIQUE index on the attendee key blocks a second binding regardless.
 
 ---
 

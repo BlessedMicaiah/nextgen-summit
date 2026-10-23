@@ -57,11 +57,28 @@ foreach ($rows as $r) {
         }
     }
 
+    /* Was a second code actually NECESSARY?
+
+       The email voting identity is 'eml:' + HMAC(normalised address), and the index is keyed
+       by 'eml:' + HMAC(address) -- the same value for a normalised address. So the voting
+       identity can be tested against the index directly, without knowing the address.
+
+       If the voting identity IS in the index, the registration is under the address already
+       proven to vote, the automatic check should have matched it, and the code added nothing.
+       If it is NOT, the registration is under a different address and the code was the only
+       way to establish ownership of it. */
+    $votingIdInIndex = isset($map[$voterKey]);
+    $sameAttendee = $votingIdInIndex
+        && hash_equals(pc_attendee_key((string) $map[$voterKey]), $attKey);
+
     $findings[] = [
         'binding_id' => (int) $r['id'],
         'bound_email_is_a_registered_attendee' => $inIndex,
         'bound_attendee_is_the_one_that_email_owns' => $matches,
         'bound_attendee_exists_in_eligible_index' => $anyAttendee,
+        'voting_identity_is_itself_a_registered_attendee' => $votingIdInIndex,
+        'second_code_was_necessary' => !$votingIdInIndex,
+        'voting_identity_maps_to_the_same_attendee' => $sameAttendee,
         'voter_channel' => explode(':', $voterKey)[0] . ':',
         'voter_has_valid_votes' => (int) $db->query(
             'SELECT COUNT(*) FROM pc_votes WHERE voter_key = ' . $db->quote($voterKey)

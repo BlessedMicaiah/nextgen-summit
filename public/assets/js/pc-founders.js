@@ -13,7 +13,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-01",
     "shot": "/assets/img/founders/haptol-labs.webp?v=d1dc7578",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/haptol-labs.webp?v=808243de",
+    "logo": "/assets/img/logos/haptol-labs.webp?v=4823df06",
     "video": {
       "type": "file",
       "src": "/assets/video/haptol-labs.mp4?v=ad280214"
@@ -36,7 +36,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-02",
     "shot": "/assets/img/founders/credible-blossom.webp?v=f2a9341e",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/credible-blossom.webp?v=f9256525",
+    "logo": "/assets/img/logos/credible-blossom.webp?v=0028a0df",
     "video": {
       "type": "youtube",
       "id": "RbY4Zs6kPMw"

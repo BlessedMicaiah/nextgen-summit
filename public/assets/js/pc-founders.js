@@ -100,7 +100,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 6,
     "entrant": "entrant-05",
-    "shot": "/assets/img/founders/lookbook.webp?v=b118c2c8",
+    "shot": "/assets/img/founders/lookbook.webp?v=fed732bc",
     "shotFit": "cover",
     "logo": "/assets/img/logos/lookbook.webp?v=b3172b33",
     "video": {
@@ -108,9 +108,9 @@ window.NGS_FOUNDERS = [
       "src": "/assets/video/lookbook.mp4?v=3d9678b1"
     },
     "shotFrom": "headshot supplied by the NextGen team",
-    "shotW": 363,
-    "shotH": 384,
-    "focal": "50% 35%",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "selfHosted": true,
     "poster": "/assets/video/lookbook-poster.jpg?v=678e3a8c",
     "pitchNote": "direct video file"

@@ -230,6 +230,33 @@ drift from what deploys. Also verified in a browser against the deployed file, d
 
 **Not tested:** the same thing from a real authenticated returning session.
 
+### The returning voter was sent to a form — fixed 2026-10-23
+
+Reopening the bonus after voting earlier showed a field asking for an email address and a
+**Send my code** button, for an inbox already proven. The automatic check was real but
+unreachable from that screen: the `voted-bonus` step's button ran `step('bonus-email')`, and
+`paintBonus()` — the automatic check — only ran on the screen shown straight after a vote.
+
+The check now starts the moment that step opens. The form survives only behind **Registered
+with a different email?**, the one case where ownership of *that* address has not been proven.
+
+Two further defects found in the same code, both real and both shipped for some time:
+
+- `bonusText()` had `return` alone on a line above its ternary. Automatic semicolon insertion
+  made it `return;`, so **every bonus error rendered the word "undefined"**. Any failure on
+  this path was silent. If a future edit touches that function, keep the expression on the
+  same line as the `return`.
+- `paintBonus()` and `bonusErr()` used `$()`. With the result blocks now on two screens only
+  the first was painted. Both walk every instance.
+
+Also fixed: the +1 row said "Phone vote" to everyone including email voters, and the server's
+`no_email` status (a voter with no proven address, so nothing to search with) was being shown
+as "not registered" — the same error as reporting an outage as a failed lookup.
+
+Verified against the deployed build, all six outcomes, zero email inputs on each: registered,
+not registered, no address on file, Eventbrite unreachable, registration already used, all
+three points given.
+
 ---
 
 ## F. Eventbrite integration

@@ -421,6 +421,7 @@
       if (to === 'all-done') paintSummary(d);
       if (to === 'confirm') { method = 'phone'; confirmStep(); return; }
       step(to);
+      if (to === 'voted-bonus') paintVotedBonus(d);
       track('vote_open', { entrant_id: id, state: to });
     });
   }
@@ -503,36 +504,67 @@
   /* Which of the bonus states to show, decided by the server's automatic check rather than by
      asking the voter to start another verification. They proved an inbox to vote; if that same
      inbox is on the attendee list, the entitlement is theirs and no second code is needed. */
-  function paintBonus(recheck) {
+  /* The automatic registration check: match the address this voter ALREADY proved against the
+     attendee list, and never ask for it a second time.
+
+     It paints every copy of the six result blocks rather than the first. Two screens carry
+     them now -- the one straight after a vote, and the one a returning voter lands on -- and
+     with $() only the first was ever painted, so the returning voter's screen stayed blank
+     and fell back to the manual form. Only the copy inside the visible step is seen.
+
+     It awards nothing. It reports what is possible; the points come from an explicit press. */
+  function paintBonus() {
     var all = ['[data-pc-bonus-wait]', '[data-pc-bonus-yes]', '[data-pc-bonus-no]',
-               '[data-pc-bonus-taken]', '[data-pc-bonus-down]', '[data-pc-bonus-done]'];
-    var show = function (sel) {
-      all.forEach(function (x) { var n = $(x, vDlg); if (n) n.hidden = x !== sel; });
+               '[data-pc-bonus-ask]', '[data-pc-bonus-taken]', '[data-pc-bonus-down]',
+               '[data-pc-bonus-done]'];
+    var only = function (sel) {
+      all.forEach(function (x) {
+        $$(x, vDlg).forEach(function (n) { n.hidden = x !== sel; });
+      });
     };
-    show('[data-pc-bonus-wait]');
-    bpost(recheck ? 'auto' : 'auto').then(function (d) {
-      if (!d || !d.ok) { show('[data-pc-bonus-down]'); return; }
-      if (d.mode !== 'daily') { all.forEach(function (x) { var n = $(x, vDlg); if (n) n.hidden = true; }); return; }
+    only('[data-pc-bonus-wait]');
+    bpost('auto').then(function (d) {
+      if (!d || !d.ok) { only('[data-pc-bonus-down]'); return; }
+      if (d.mode !== 'daily') { only(''); return; }
       if (d.status === 'verified') {
-        show(d.remaining > 0 ? '[data-pc-bonus-yes]' : '[data-pc-bonus-done]');
+        only(d.remaining > 0 ? '[data-pc-bonus-yes]' : '[data-pc-bonus-done]');
         return;
       }
-      if (d.status === 'unavailable') { show('[data-pc-bonus-down]'); return; }
-      if (d.status === 'claimed_elsewhere') { show('[data-pc-bonus-taken]'); return; }
-      show('[data-pc-bonus-no]');      // not registered, or verified by phone with no address
+      /* "We could not check" is not "you are not registered", and must never be shown as it:
+         a registered attendee told they are not registered does not come back. */
+      if (d.status === 'unavailable') { only('[data-pc-bonus-down]'); return; }
+      /* Same principle: no address to search with is not a finding about their registration. */
+      if (d.status === 'no_email') { only('[data-pc-bonus-ask]'); return; }
+      if (d.status === 'claimed_elsewhere') { only('[data-pc-bonus-taken]'); return; }
+      only('[data-pc-bonus-no]');      // not registered, or no proven address to match on
     });
   }
 
-  function bonusErr(sel, d) {
-    var e = $(sel, vDlg);
-    if (!e) return;
-    e.textContent = bonusText(d);
-    e.hidden = false;
+  /* The returning voter's screen: someone who cast their point earlier and came back for the
+     two that were waiting. The +1 row names the channel the SERVER says they used -- it was
+     hard-coded to "Phone vote", which was simply wrong for the email voters who are the
+     majority of this route -- and the registration check starts the moment the screen opens.
+     No address is asked for. One was already proven; asking again establishes nothing. */
+  function paintVotedBonus(d) {
+    var ch = (d && d.channel === 'email') ? 'Email vote'
+           : ((d && d.channel === 'sms') ? 'Phone vote' : 'Your vote');
+    $$('[data-pc-vb-channel]', vDlg).forEach(function (n) { n.textContent = ch; });
+    paintBonus();
   }
 
+  function bonusErr(sel, d) {
+    $$(sel, vDlg).forEach(function (e) {
+      e.textContent = bonusText(d);
+      e.hidden = false;
+    });
+  }
+
+  /* NOTE the shape of this return. It used to sit on a line of its own above the ternary,
+     which is valid JavaScript and completely wrong: automatic semicolon insertion turned it
+     into `return;`, so every bonus error in the system rendered the word "undefined". The
+     expression has to begin on the same line as the return. */
   function bonusText(d) {
-    return
-      d.reason === 'not_found' ? 'We could not find a NextGen Summit registration for that email. Check the address you registered with, or use the ticket link below to join us.' :
+    return d.reason === 'not_found' ? 'We could not find a NextGen Summit registration for that email. Check the address you registered with, or use the ticket link below to join us.' :
       d.reason === 'claimed' ? 'That registration has already been linked to another voter. Each registration counts once.' :
       d.reason === 'unavailable' ? 'We cannot reach the registration system right now. Your vote is safe — please try the bonus again in a few minutes.' :
       d.reason === 'mail' ? 'We could not send the email just now. Please try again in a moment.' :
@@ -612,6 +644,7 @@
           if (to === 'all-done') paintSummary(me2);
           if (to === 'other') paintOther(me2);
           step(to === 'confirm' ? 'all-done' : to);
+          if (to === 'voted-bonus') paintVotedBonus(me2);
           repaintAfterVote();
         });
         return;
@@ -902,7 +935,6 @@
     }
     if (t.closest('[data-pc-bonus-recheck]')) { paintBonus(true); return; }
     if (t.closest('[data-pc-bonus-other]')) { step('bonus-email'); return; }
-    if (t.closest('[data-pc-bonus-start]')) { step('bonus-email'); return; }
     if (t.closest('[data-pc-bonus-later]') || t.closest('[data-pc-bonus-cancel]')) {
       step('done'); paintBonus(); return;
     }
@@ -939,9 +971,10 @@
       var ce = $('[data-pc-error-ebclaim]', scope) || $('[data-pc-error-ebclaim-c]', scope);
       if (ce) ce.hidden = true;
       var b3 = t.closest('[data-pc-ebclaim]');
+      var was = b3.textContent;          // restore THIS button's wording, not a third variant
       b3.disabled = true; b3.textContent = 'Adding…';
       bpost('claim').then(function (d) {
-        b3.disabled = false; b3.textContent = 'Add my 2 points';
+        b3.disabled = false; b3.textContent = was;
         if (!d.ok) {
           if (ce) { ce.textContent = bonusText(d); ce.hidden = false; }
           return;

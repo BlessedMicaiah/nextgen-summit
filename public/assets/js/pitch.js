@@ -85,7 +85,7 @@
      2. WHERE THE COMPETITION STANDS
      The stage board in the hero carries the dates (data-from / data-to, as
      Eastern instants). Today decides which stage is "now": everything before
-     it is done, the board's line fills through the current stage as its days
+     it is done, today's cell on the board fills as the stage's days
      pass, the clock counts to whatever comes next, and the five steps further
      down take the same marks. The markup ships as voting week, so the page
      reads true without JavaScript; from October 29 it moves on by itself.
@@ -140,10 +140,23 @@
       if (tag) tag.textContent = TAGS[i < at ? 0 : i === at ? 1 : i === at + 1 ? 2 : 3];
     });
 
-    // the line runs through the markers (at 0, 25 ... 100%) and creeps along the current stage
-    var n = stages.length - 1, part = 0;
+    // today's cell fills with the share of its days gone by, one notch per day
+    var part = 0;
     if (at < stages.length) part = Math.min(1, Math.max(0, (t0 - span[at][0]) / (span[at][1] - span[at][0])));
-    board.style.setProperty('--fill', (Math.min(n, at + part * (at < n ? 1 : 0)) / n * 100).toFixed(2) + '%');
+    stages.forEach(function (s, i) {
+      var days = Math.max(1, Math.round((span[i][1] - span[i][0]) / 864e5));
+      s.style.setProperty('--i', String(i));
+      s.style.setProperty('--days', String(days));
+      s.style.setProperty('--run', i === at ? Math.max(part, .04).toFixed(3) : '0');
+    });
+    var day = $('[data-board-day]', board);
+    if (day && at < stages.length) {
+      var n = Math.max(1, Math.round((span[at][1] - span[at][0]) / 864e5));
+      day.textContent = 'Day ' + Math.min(n, Math.floor((t0 - span[at][0]) / 864e5) + 1) + ' of ' + n;
+      day.hidden = n < 2;
+    }
+    var live = $('[data-board-live]', board);
+    if (live) live.textContent = at >= stages.length ? 'Complete' : 'Live';
     board.classList.toggle('is-over', at >= stages.length);
 
     var c = COPY[Math.min(at, COPY.length - 1)];

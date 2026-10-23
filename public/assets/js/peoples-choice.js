@@ -1466,8 +1466,16 @@
 
   function watchReels() {
     if (!reelTrack) return;
-    addEventListener('scroll', reelQueue, { passive: true });
+    /* Capture on the document, not a scroll listener on window.
+
+       site.css sets overflow-x on the body, which makes the BODY the scrolling box rather
+       than the viewport. Scroll events then fire on that element and never reach window, so
+       a window listener hears nothing at all -- measured: the page moved thirteen thousand
+       pixels and the handler was called zero times. Scroll does not bubble, but it does
+       capture, so one capturing listener on the document catches it wherever it comes from. */
+    document.addEventListener('scroll', reelQueue, { passive: true, capture: true });
     addEventListener('resize', reelQueue, { passive: true });
+    addEventListener('orientationchange', reelQueue, { passive: true });
     reelSync();
   }
 

@@ -71,7 +71,7 @@ $fresh = !empty($_SESSION['phone_key']) && !empty($_SESSION['verified_at'])
 if (!$fresh) {
     pcb_out(401, ['ok' => false, 'reason' => 'verify_required']);
 }
-$voter = (string) $_SESSION['phone_key'];
+$voter = pc_canonical((string) $_SESSION['phone_key']);   // resolved now, as the vote path does
 
 if ($action !== 'status') {
     $tok = (string) ($in['csrf'] ?? '');
@@ -117,6 +117,50 @@ if ($action === 'status') {
     pcb_out(200, ['ok' => true] + pcb_state($voter));
 }
 
+/* The automatic check.
+
+   Someone who verified their email to vote has already proven they own that inbox. Asking
+   them to prove the same inbox again before handing over a bonus is a step that establishes
+   nothing and loses people. So this matches the address they ALREADY proved against the
+   Eventbrite attendee list and, if it is there, binds the entitlement without a second code.
+
+   A code is still required in exactly one case: when the registration is under a different
+   address, because then ownership of THAT address has not been proven. That distinction is
+   the whole security argument and is worth keeping clear.
+
+   It never awards anything. It reports what is possible; the points come from claim. */
+if ($action === 'auto') {
+    $st = pcb_state($voter);
+    if ($st['attendee_verified']) {
+        pcb_out(200, ['ok' => true, 'status' => 'verified'] + $st);
+    }
+    $keys = isset($_SESSION['email_keys']) && is_array($_SESSION['email_keys'])
+        ? $_SESSION['email_keys'] : [];
+    if ($keys === []) {
+        // a phone-verified voter has proven no address, so there is nothing to match on
+        pcb_out(200, ['ok' => true, 'status' => 'no_email'] + $st);
+    }
+    $hit = pc_eb_lookup_keys($keys);
+    if ($hit['unavailable']) {
+        /* Not the same thing as "not registered", and must never be reported as such: a
+           registered attendee told they are not registered will not come back. */
+        pcb_out(200, ['ok' => true, 'status' => 'unavailable'] + $st);
+    }
+    if (!$hit['found']) {
+        pcb_out(200, ['ok' => true, 'status' => 'not_registered'] + $st);
+    }
+    $owner = pc_attendee_owner((string) $hit['attendee_key']);
+    if ($owner !== null && $owner !== $voter) {
+        pcb_out(200, ['ok' => true, 'status' => 'claimed_elsewhere'] + $st);
+    }
+    $bind = pc_attendee_bind((string) $hit['attendee_key'], $voter, $keys[0]);
+    if (!$bind['ok']) {
+        pcb_out(200, ['ok' => true, 'status' => 'claimed_elsewhere'] + $st);
+    }
+    pc_flag($voter, 'attendee_auto_matched');
+    pcb_out(200, ['ok' => true, 'status' => 'verified'] + pcb_state($voter));
+}
+
 if ($action === 'lookup') {
     if (pc_attendee_verified($voter)) {
         pcb_out(200, ['ok' => true, 'already' => true] + pcb_state($voter));
@@ -140,8 +184,16 @@ if ($action === 'lookup') {
     }
     $send = pc_email_code_send($voter, $email, (string) $hit['attendee_key']);
     if (!$send['ok']) {
-        pcb_out($send['reason'] === 'too_many' ? 429 : 502,
-            ['ok' => false, 'reason' => $send['reason']]);
+        $out = ['ok' => false, 'reason' => $send['reason']];
+        /* This host keeps no error log, so a delivery failure here was a dead end: the modal
+           said "could not send" and the detail went nowhere. On a preview host the SMTP step
+           and code come back, naming the fault without naming the credentials. */
+        $h = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        if (strpos($h, 'staging.') === 0 || strpos($h, 'localhost') === 0) {
+            if (isset($send['mail_step'])) { $out['mail_step'] = $send['mail_step']; }
+            if (!empty($send['mail_code'])) { $out['mail_code'] = $send['mail_code']; }
+        }
+        pcb_out($send['reason'] === 'too_many' ? 429 : 502, $out);
     }
     pcb_out(200, ['ok' => true, 'sent' => true]);
 }

@@ -95,9 +95,15 @@ function pc_smtp_status(): array
         'host' => $c['host'] !== '' ? $c['host'] : 'not set',
         'port' => $c['port'],
         'encryption' => $c['secure'],
-        'username' => $c['user'] !== '' ? 'present' : 'missing',
-        'password' => $c['pass'] !== '' ? 'present' : 'missing',
-        'from' => $c['from'] !== '' ? $c['from'] : 'not set',
+        /* The username and sender are shown in full. They are not secrets -- the From
+           address is printed on every message we send -- and hiding them behind "present"
+           made an empty field indistinguishable from a filled one, which is exactly the
+           state somebody then spends an evening trying to diagnose. Only the password is
+           withheld. */
+        'username' => $c['user'] !== '' ? $c['user'] : 'NOT SET',
+        'password' => $c['pass'] !== '' ? 'present (' . strlen($c['pass']) . ' chars)' : 'NOT SET',
+        'from' => $c['from'] !== '' ? $c['from'] : 'NOT SET',
+        'ready_to_send' => pc_smtp_configured() ? 'yes' : 'NO - a required field is empty',
         'from_name' => $c['name'],
         'sockets' => function_exists('stream_socket_client') ? 'available' : 'UNAVAILABLE',
         'openssl' => extension_loaded('openssl') ? 'available' : 'UNAVAILABLE',
@@ -176,6 +182,170 @@ function pc_smtp_save(array $in): array
     }
     @chmod($path, 0600);
     return ['ok' => true];
+}
+
+
+/**
+ * Prove the relay accepts our credentials, without sending anything.
+ *
+ * Connect, greet, negotiate TLS, authenticate, hang up. No MAIL FROM, no RCPT, no DATA, so
+ * nothing is queued and nobody receives anything -- the same reasoning as the read-only Twilio
+ * probe: the first real message should not also be the first test of the login.
+ *
+ * Only the step reached and the SMTP code come back. Never the password, never the response
+ * text, which can echo the username.
+ *
+ * @return array{ok:bool,step:string,code:int,detail:string}
+ */
+function pc_smtp_probe(): array
+{
+    if (!pc_smtp_configured()) {
+        return ['ok' => false, 'step' => 'config', 'code' => 0,
+                'detail' => 'Host, username, app password and From must all be filled in first.'];
+    }
+    if (!function_exists('stream_socket_client')) {
+        return ['ok' => false, 'step' => 'sockets', 'code' => 0,
+                'detail' => 'This host cannot open outbound sockets.'];
+    }
+    $c = pc_smtp_conf();
+    $target = ($c['secure'] === 'ssl' ? 'ssl://' : '') . $c['host'] . ':' . $c['port'];
+    $ctx = stream_context_create(['ssl' => ['verify_peer' => true, 'verify_peer_name' => true]]);
+    $fp = @stream_socket_client($target, $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx);
+    if (!$fp) {
+        return ['ok' => false, 'step' => 'connect', 'code' => (int) $errno,
+                'detail' => 'Could not reach ' . $c['host'] . ' on port ' . $c['port']
+                    . '. The host may block outbound SMTP.'];
+    }
+    stream_set_timeout($fp, 15);
+    $end = function (array $r) use ($fp) {
+        @fwrite($fp, "QUIT
+
+");
+        @fclose($fp);
+        return $r;
+    };
+
+    $r = pc_smtp_cmd($fp, '', 220, 'greeting');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'greeting', 'code' => $r['code'],
+                     'detail' => 'The server did not greet us.']);
+    }
+    $ehlo = 'EHLO ' . (string) ($_SERVER['HTTP_HOST'] ?? 'nextgensummit.us');
+    $r = pc_smtp_cmd($fp, $ehlo, 250, 'ehlo');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'ehlo', 'code' => $r['code'],
+                     'detail' => 'The server refused the greeting.']);
+    }
+    if ($c['secure'] === 'tls') {
+        $r = pc_smtp_cmd($fp, 'STARTTLS', 220, 'starttls');
+        if (!$r['ok']) {
+            return $end(['ok' => false, 'step' => 'starttls', 'code' => $r['code'],
+                         'detail' => 'The server would not start TLS on this port.']);
+        }
+        if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            return $end(['ok' => false, 'step' => 'tls', 'code' => 0,
+                         'detail' => 'TLS negotiation failed.']);
+        }
+        $r = pc_smtp_cmd($fp, $ehlo, 250, 'ehlo2');
+        if (!$r['ok']) {
+            return $end(['ok' => false, 'step' => 'ehlo2', 'code' => $r['code'],
+                         'detail' => 'The server refused the greeting after TLS.']);
+        }
+    }
+    $r = pc_smtp_cmd($fp, 'AUTH LOGIN', 334, 'auth');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'auth', 'code' => $r['code'],
+                     'detail' => 'The server did not offer password login.']);
+    }
+    $r = pc_smtp_cmd($fp, base64_encode($c['user']), 334, 'auth_user');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'auth_user', 'code' => $r['code'],
+                     'detail' => 'The username was rejected.']);
+    }
+    $r = pc_smtp_cmd($fp, base64_encode($c['pass']), 235, 'auth_pass');
+    if (!$r['ok']) {
+        return $end(['ok' => false, 'step' => 'auth_pass', 'code' => $r['code'],
+                     'detail' => 'Authentication failed. For Google this almost always means '
+                        . 'the app password is wrong, or 2-Step Verification is off on that '
+                        . 'account so the password is not an app password at all.']);
+    }
+    return $end(['ok' => true, 'step' => 'authenticated', 'code' => 235,
+                 'detail' => 'Connected, TLS negotiated and signed in. Nothing was sent.']);
+}
+
+/* ---------- the message ----------
+   One template, two purposes. The bonus used to build its own plain message and hand it
+   to mail(); sharing this means both arrive looking like NextGen and travel the same
+   authenticated route. */
+function pc_email_code_body(string $code, string $purpose = 'vote', int $minutes = 10): array
+{
+    $isBonus = $purpose === 'bonus';
+    $head = $isBonus ? 'Your registration verification code' : 'Your voting verification code';
+    $why  = $isBonus
+        ? "Enter this code to confirm your NextGen Summit registration and unlock two extra voting points."
+        : "Enter this code to verify your email and cast your People's Choice vote.";
+    $mins = max(1, $minutes) . ' minutes';
+    $pre = 'Your NextGen Summit code is ' . $code . '. It expires in ' . $mins . '.';
+    $text = "NEXTGEN SUMMIT\n\n"
+        . "Your voting verification code\n\n"
+        . '    ' . $code . "\n\n"
+        . "Enter this code to verify your email and cast your People's Choice vote.\n\n"
+        . 'This code expires in ' . $mins . ".\n"
+        . "If you didn't request this code, you can ignore this email - no vote has been cast.\n\n"
+        . "NextGen Summit 2026\n";
+
+    $digits = '';
+    foreach (str_split($code) as $d) {
+        $digits .= '<td style="padding:0 5px"><div style="width:40px;height:52px;line-height:52px;'
+            . 'text-align:center;border-radius:9px;background:#131719;color:#ffffff;'
+            . 'font-family:Helvetica,Arial,sans-serif;font-size:26px;font-weight:700;'
+            . 'letter-spacing:0">' . $d . '</div></td>';
+    }
+
+    /* Table layout and inline styles throughout: email clients do not have a modern CSS
+       engine, and a flexbox layout here would arrive as a stack of unstyled text. */
+    $html = '<!doctype html><html><head><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>Your NextGen voting code</title></head>'
+        . '<body style="margin:0;padding:0;background:#06090A;">'
+        . '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' . $pre . '</div>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        . 'style="background:#06090A;padding:28px 14px">'
+        . '<tr><td align="center">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        . 'style="max-width:460px;background:#0E1113;border-radius:16px;'
+        . 'border:1px solid rgba(255,255,255,.1)">'
+        . '<tr><td style="height:5px;background:#1FC7BE;border-radius:16px 16px 0 0"></td></tr>'
+        . '<tr><td style="padding:30px 28px 8px">'
+        . '<p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:11px;'
+        . 'letter-spacing:3px;text-transform:uppercase;color:#1FC7BE;font-weight:700">'
+        . 'NextGen Summit</p>'
+        . '<h1 style="margin:12px 0 0;font-family:Georgia,\'Times New Roman\',serif;'
+        . 'font-size:27px;line-height:1.2;color:#ffffff;font-weight:700">'
+        . $head . '</h1>'
+        . '</td></tr>'
+        . '<tr><td align="center" style="padding:24px 20px 6px">'
+        . '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' . $digits . '</tr></table>'
+        . '</td></tr>'
+        . '<tr><td style="padding:14px 28px 4px">'
+        . '<p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:15px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.78)">'
+        . htmlspecialchars($why, ENT_QUOTES, 'UTF-8') . '</p>'
+        . '<p style="margin:14px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.55)">This code expires in ' . $mins . '.</p>'
+        . '<p style="margin:8px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.55)">'
+        . "If you didn&rsquo;t request this code you can ignore this email &mdash; no vote has been cast.</p>"
+        . '</td></tr>'
+        . '<tr><td style="padding:22px 28px 28px">'
+        . '<div style="height:1px;background:rgba(255,255,255,.12)"></div>'
+        . '<p style="margin:16px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.42)">'
+        . 'NextGen Summit 2026 &middot; Friday, October 30 &middot; Gordon Center for Performing Arts'
+        . '</p></td></tr>'
+        . '</table></td></tr></table></body></html>';
+
+    return ['html' => $html, 'text' => $text];
 }
 
 /* ---------- the conversation ---------- */

@@ -125,7 +125,10 @@ function pc_voter_identity(array $in): array
         && time() - (int) $_SESSION['verified_at'] <= 2592000;
     if ($fresh) {
         return [
-            'key' => (string) $_SESSION['phone_key'],
+            // resolved now, so a session predating an identity merge cannot vote twice
+            'key' => function_exists('pc_canonical')
+                ? pc_canonical((string) $_SESSION['phone_key'])
+                : (string) $_SESSION['phone_key'],
             'verified' => true,
             'ticket' => !empty($_SESSION['ticket_verified']),
             'csrf' => (string) ($_SESSION['csrf'] ?? ''),

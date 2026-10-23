@@ -141,6 +141,14 @@ Then upload the new `config.php` to `public_html/api/`. Replacing it also change
 - Server-side validation of every field.
 - At most 30 submissions per hour from one connection (enough for a whole class on one campus network).
 
+## Questions for the speakers
+
+The top of the FAQ drawer has an **Ask Your Speakers Anything!** button that opens the program
+team's Typeform ("NextGen Q&A", `tpD3uEWh`) in a new tab, so attendees can send questions ahead of
+the event. The program team owns the form and its answers; nothing reaches the admin page. To
+point the button at a different form, change its link in the `.speakq` section of
+`public/index.html`.
+
 ## Waitlist form fields
 
 Posted with `form-name` = `waitlist`. The admin page lists waitlist sign-ups and any earlier registrations together, with a List column telling them apart.

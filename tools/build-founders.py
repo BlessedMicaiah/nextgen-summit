@@ -89,7 +89,12 @@ def resolve_pitch(url, cached):
             return ('unavailable', None, 'Drive unreachable: ' + type(e).__name__)
         return ('drive', m.group(1), 'Google Drive: ' + (title or 'file'))
 
-    # A YouTube link hidden in the FILENAME, which is how three of these arrived.
+    # A YouTube link given outright, which is how the late submissions arrived...
+    m = YT.search(url)
+    if m:
+        return ('youtube', m.group(1), 'YouTube link supplied directly')
+
+    # ...and a YouTube link hidden in the FILENAME, which is how three of them arrived.
     m = YT.search(url.rsplit('/', 1)[-1])
     if m:
         return ('youtube', m.group(1), 'YouTube id recovered from the submitted filename')
@@ -154,6 +159,12 @@ def main():
             'name': c['founder_name'],
             'company': c['business_name'],
             'blurb': c['about_business'],
+            # The manifest describes the BUSINESS and says nothing about the founder
+            # personally. Putting the same paragraph under both "The founder" and "The
+            # project" was my doing and read as unfinished. There is no verified biography
+            # to show and inventing one is not an option, so the founder section stays empty
+            # and hidden until leadership supplies copy.
+            'bio': None,
             'sheet_row': c['sheet_row'],
             'entrant': mapping.get(slug),          # None until a human reviews the mapping
             'shot': None,
@@ -221,6 +232,16 @@ def main():
                                    'submitted as ' + k + ', not an image'))
         else:
             issues.append((c['business_name'], 'image', 'none submitted'))
+
+        # A still already recovered from this founder's own pitch, kept across rebuilds and
+        # labelled so nobody later mistakes it for a submitted headshot.
+        if not rec['shot']:
+            fallback = os.path.join(IMGDIR, slug + '.webp')
+            if os.path.isfile(fallback):
+                rec['shot'] = '/assets/img/founders/' + slug + '.webp'
+                rec['shotFit'] = 'cover'
+                rec['shotFrom'] = 'frame from this founders own pitch video'
+                rec['focal'] = focal_overrides.get(slug) or '50% 30%'
 
         # ---- pitch ----
         pu = c.get('pitch_source_url')

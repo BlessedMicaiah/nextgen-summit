@@ -49,7 +49,7 @@
     'coming-soon': { pill: 'Voting opens soon', vote: 'Voting opens soon',
       note: 'Voting has not opened. The date will be announced once leadership confirms it.' },
     'open':        { pill: 'Voting open', vote: 'Vote for this pitch',
-      note: 'One verified person, one vote a day, until October 28.' },
+      note: 'Your vote could change their future. Vote once a day through October 28!' },
     'closed':      { pill: 'Voting closed', vote: 'Voting closed',
       note: 'Voting has closed. The result is with the NextGen team.' },
     'results':     { pill: 'Results published', vote: 'Voting closed',
@@ -318,8 +318,15 @@
     $('[data-pc-p-video]', pDlg).innerHTML = videoHtml(e);
     $('[data-pc-p-name]', pDlg).textContent = e.name;
     $('[data-pc-p-co]', pDlg).textContent = e.company;
-    $('[data-pc-p-bio]', pDlg).textContent = e.bio;
-    $('[data-pc-p-sum]', pDlg).textContent = e.summary;
+    /* Two sections mean two different pieces of writing -- or one section. The manifest
+       describes the business and says nothing about the founder personally, so printing the
+       same paragraph under both headings read as unfinished. Until leadership supplies
+       founder copy the block is hidden rather than padded out. */
+    var bioEl = $('[data-pc-p-bio]', pDlg);
+    bioEl.textContent = e.bio || '';
+    var bioBlock = bioEl.closest('[data-pc-p-bio-block]') || bioEl.parentNode;
+    if (bioBlock) bioBlock.hidden = !e.bio;
+    $('[data-pc-p-sum]', pDlg).textContent = e.summary || e.blurb || '';
     var flag = $('[data-pc-p-flag]', pDlg);
     flag.hidden = !e.draft;
     /* Attribute first, then label: the labeller compares this id against the founder the
@@ -766,7 +773,7 @@
               (d.remaining === 1 ? ' more vote' : ' more votes') + ' today.';
             again.hidden = false;
           } else if (more && d.next_window) {
-            again.textContent = 'Your next daily vote unlocks after midnight Eastern.';
+            again.textContent = 'Come back tomorrow to show your support again.';
             again.hidden = false;
           } else {
             again.hidden = true;
@@ -1172,7 +1179,7 @@
         var bshare = $('[data-pc-bonus-share]', vDlg);
         if (bshare && bwho) bshare.setAttribute('data-pc-share', bwho.id);
         var bp = $('[data-pc-bonus-done-p]', vDlg);
-        if (bp) bp.textContent = 'Your vote and NextGen attendee bonus have been counted. That is your full allowance for today — come back after midnight Eastern for three more.';
+        if (bp) bp.textContent = 'Your vote and NextGen attendee bonus have been counted! Come back tomorrow to vote again and keep your favorite founder in the running.';
         track('bonus_claimed', { awarded: d.awarded });
         step('bonus-done');
         paintBonus();

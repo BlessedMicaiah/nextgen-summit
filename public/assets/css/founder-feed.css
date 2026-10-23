@@ -522,3 +522,24 @@
 
 /* The profile portrait follows the same crop its card uses, set inline per founder. */
 .pcp__shot img, [data-pc-p-shot] img { object-fit: cover; }
+
+
+/* The understated way back to a registration check.
+
+   It sits under the ticket offer and is deliberately NOT a button: leadership's note was
+   that a second large control competing with the ticket CTA gave people two shouts and no
+   clear next step. Someone who already holds a ticket knows it and will look for this; a
+   visitor who does not should see one offer. */
+.pcbonus__link {
+  display: inline-block;
+  margin: 2px auto 0;
+  padding: 8px 4px;
+  background: none; border: 0; cursor: pointer;
+  color: var(--ff-dim, #9AA6B2);
+  font: 600 13px/1.4 var(--f-sans);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(154,166,178,.45);
+}
+.pcbonus__link:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.pcbonus__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }

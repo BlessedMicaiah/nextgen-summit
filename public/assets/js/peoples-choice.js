@@ -1428,28 +1428,57 @@
     if (go && go.catch) { go.catch(function () {}); }
   }
 
-  function watchReels() {
-    if (!reelTrack || !('IntersectionObserver' in window)) return;
-    var io = new IntersectionObserver(function (rows) {
-      rows.forEach(function (r) {
-        if (r.isIntersecting && r.intersectionRatio > 0.55) {
-          if (!r.target.hasAttribute('data-reel-end')) reelActivate(r.target);
-        }
-      });
-    }, { threshold: [0, 0.55, 0.9] });
-    $$('[data-reel-panel]', reelTrack).forEach(function (p) { io.observe(p); });
+  /* Which panel is live is worked out from geometry on scroll, not from an
+     IntersectionObserver.
 
-    // the way back appears only once someone is actually inside the feed
-    var edge = new IntersectionObserver(function (rows) {
-      rows.forEach(function (r) { reel.classList.toggle('is-inside', r.isIntersecting); });
-    }, { threshold: 0.08 });
-    edge.observe(reel);
+     The observer was the obvious choice and it is the one that failed: in at least one
+     embedded Chromium it delivers no callbacks at all for a page that is not frontmost, so
+     a panel sitting 97% on screen never became active and no video was ever given a source.
+     Measuring positions against the viewport centre cannot go quiet that way, costs one
+     cheap loop over twenty elements per animation frame, and has the happy side effect of
+     being testable. */
+  var reelTick = null;
+  function reelSync() {
+    if (!reelTrack) return;
+    reelTick = null;
+    var panels = $$('[data-reel-panel]', reelTrack);
+    if (!panels.length) return;
+    var mid = window.innerHeight / 2;
+    var best = null, bestGap = Infinity, anyOn = false;
+    panels.forEach(function (p) {
+      var r = p.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < window.innerHeight) anyOn = true;
+      // only a panel genuinely holding the middle of the screen counts as the live one
+      if (r.top > mid || r.bottom < mid) return;
+      var gap = Math.abs((r.top + r.bottom) / 2 - mid);
+      if (gap < bestGap) { bestGap = gap; best = p; }
+    });
+    if (reel) reel.classList.toggle('is-inside', anyOn);
+    if (best && best.hasAttribute('data-reel-end')) { reelActivate(null); return; }
+    if (best) reelActivate(best);
+    else if (!anyOn) reelActivate(null);
+  }
+
+  function reelQueue() {
+    if (reelTick) return;
+    reelTick = requestAnimationFrame(reelSync);
+  }
+
+  function watchReels() {
+    if (!reelTrack) return;
+    addEventListener('scroll', reelQueue, { passive: true });
+    addEventListener('resize', reelQueue, { passive: true });
+    reelSync();
   }
 
   function reelGoTo(id, smooth) {
     var panel = $('[data-reel-panel="' + id + '"]', reelTrack);
     if (!panel) return false;
     panel.scrollIntoView({ behavior: smooth === false ? 'auto' : 'smooth', block: 'center' });
+    /* A smooth scroll lands some time after this returns, so nudge the check again once it
+       has had a chance to finish rather than reading a position mid-flight. */
+    setTimeout(reelQueue, 60);
+    setTimeout(reelQueue, 700);
     return true;
   }
 

@@ -192,10 +192,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 11,
     "entrant": "entrant-10",
-    "shot": null,
+    "shot": "/assets/img/founders/pathbridge.webp",
     "shotFit": "cover",
-    "video": null,
-    "pitchNote": "a PDF, not a video"
+    "video": {
+      "type": "file",
+      "src": "/assets/video/pathbridge.mp4"
+    },
+    "shotFrom": "frame from this founders own pitch video",
+    "focal": "50% 30%",
+    "selfHosted": true,
+    "poster": "/assets/video/pathbridge-poster.jpg",
+    "pitchNote": "Google Drive: Copy of Pitch"
   },
   {
     "slug": "applytrack",

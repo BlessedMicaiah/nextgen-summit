@@ -1,10 +1,18 @@
-/* NextGen Summit — People's Choice Award.  STAGING PREVIEW.
+/* NextGen Summit — People's Choice Award.
 
-   What is real here: the gallery, the profile, the deep links, the share sheet, the video
-   facade, the voting states and the whole shape of the vote journey. What is NOT real: the
-   vote itself. There is no account, no server and no ballot. "Verification" accepts anything,
-   and the one-vote guard is a sessionStorage key, which stops the same tab voting twice and
-   stops nothing else. It is a drawing of the flow, not the flow.
+   This file used to say that none of it was real -- no server, no account, and a one-vote
+   guard that was a sessionStorage key. That is no longer true and the note is worth keeping
+   as history, because every line of it has since been replaced by something that is.
+
+   The vote is real: cast by pc-vote.php, stored, and limited by a unique index in the
+   database. Verification is real: a code by SMS or email, checked on the server. The daily
+   allowance, who the voter backed today, and whether a bonus is waiting are all answered by
+   pc-otp.php and never by this file. What remains a facade is the lineup -- ENTRANTS below is
+   placeholder until the approved finalists land.
+
+   The rule this file must not break: the page may ask the server what is true, and may draw
+   it. It may not decide it. Anything it believes about a voter that the server did not just
+   tell it is a bug, and the last one cost a voter the only route to two of their points.
 
    Everything a visitor sees is driven by the two blocks at the top: STATE decides which of the
    four voting states the page is in, and ENTRANTS is the lineup. Both are meant to be replaced
@@ -86,18 +94,18 @@
     try { (window.dataLayer = window.dataLayer || []).push(d); } catch (e) {}
   }
 
-  /* ---------- 4. the simulated ballot ----------
-     One key in sessionStorage. It makes the second vote in this tab behave the way a second
-     vote should, which is all a prototype can honestly do. It is not duplicate-vote
-     prevention: a new tab, a private window or a different browser starts again, and that is
-     exactly why the real thing needs an account and a unique index in the database. */
-  var BALLOT = 'ngs-pc-simulated-ballot';
-  function ballot() {
-    try { return JSON.parse(sessionStorage.getItem(BALLOT) || 'null'); } catch (e) { return null; }
-  }
-  function keepBallot(id) {
-    try { sessionStorage.setItem(BALLOT, JSON.stringify({ entrant: id, at: Date.now() })); } catch (e) {}
-  }
+  /* ---------- 4. no local ballot ----------
+     There was a sessionStorage key here, written on a successful vote and read to decide what
+     the page should show. It is gone, and its absence is the fix.
+
+     A note the page writes to itself is not evidence. It said less than the truth -- a new
+     tab, a private window or a cleared session and the page believed nobody had voted -- and,
+     worse, it was read as though it said MORE: "a ballot exists" was turned into "there is
+     nothing further to do", which disabled every card including the one with two bonus points
+     waiting behind it. Enforcement was always the unique index on the server; the only thing
+     this key ever added was a second, wrong opinion.
+
+     Everything the interface now shows about this voter comes from refreshMe(). */
 
   /* Who the voter is, as far as this prototype can tell. The email path uses what was typed;
      the Google path mints a pseudo-identity and keeps it, so at least the same browser is the
@@ -199,8 +207,6 @@
   }
 
   function paintProfile(e) {
-    var canVote = STATE === 'open';
-    var voted = ballot();
     $('[data-pc-p-video]', pDlg).innerHTML = videoHtml(e);
     $('[data-pc-p-name]', pDlg).textContent = e.name;
     $('[data-pc-p-co]', pDlg).textContent = e.company;
@@ -208,10 +214,11 @@
     $('[data-pc-p-sum]', pDlg).textContent = e.summary;
     var flag = $('[data-pc-p-flag]', pDlg);
     flag.hidden = !e.draft;
+    /* Attribute first, then label: the labeller compares this id against the founder the
+       server says today's vote went to, so it has to be set before it reads it. */
     var vb = $('[data-pc-p-vote]', pDlg);
-    vb.textContent = voted ? 'You have already voted' : COPY[STATE].vote;
-    vb.disabled = !canVote || !!voted;
     vb.setAttribute('data-pc-vote', e.id);
+    labelVoteButton(vb, me);
     var ext = $('[data-pc-p-ext]', pDlg);
     ext.hidden = !e.videoUrl;
     if (e.videoUrl) $('a', ext).href = e.videoUrl;
@@ -360,6 +367,24 @@
     return 'all-done';
   }
 
+  /* The "you backed someone else today" screen, including the way out of it.
+
+     The onward button appears only when something is actually waiting on their own founder.
+     Offering it otherwise would be a promise the next screen breaks, and that is worse than
+     not offering it at all. */
+  function paintOther(d) {
+    var who = d ? byId[d.today_entrant] : null;
+    $$('[data-pc-other-for]', vDlg).forEach(function (n) {
+      n.textContent = who ? who.name : 'another founder';
+    });
+    var go = $('[data-pc-other-go]', vDlg);
+    if (!go) return;
+    var waiting = !!(d && (d.bonus_claimable || d.bonus_eligible));
+    go.hidden = !who || !waiting;
+    go.textContent = 'Go to my vote & +2 bonus';
+    go.setAttribute('data-pc-other-go', who ? who.id : '');
+  }
+
   /* The summary on the completion screen reports what was actually given, not a fixed three. */
   function paintSummary(d) {
     var used = (d && typeof d.used === 'number') ? d.used : 0;
@@ -392,12 +417,7 @@
     refreshMe().then(function (d) {
       paintChannels();
       var to = routeFor(d, id);
-      if (to === 'other') {
-        var who = byId[d.today_entrant];
-        $$('[data-pc-other-for]', vDlg).forEach(function (n) {
-          n.textContent = who ? who.name : 'another founder';
-        });
-      }
+      if (to === 'other') paintOther(d);
       if (to === 'all-done') paintSummary(d);
       if (to === 'confirm') { method = 'phone'; confirmStep(); return; }
       step(to);
@@ -552,7 +572,6 @@
     }).then(function (d) {
       if (btn) { btn.disabled = false; btn.textContent = 'Confirm my vote'; }
       if (d && d.ok) {
-        keepBallot(who.id);
         var nameEl = $('[data-pc-done-name]', vDlg);
         if (nameEl) nameEl.textContent = who.name;
         var forEl = $('[data-pc-done-for]', vDlg);
@@ -591,12 +610,7 @@
         refreshMe().then(function (me2) {
           var to = routeFor(me2, who.id);
           if (to === 'all-done') paintSummary(me2);
-          if (to === 'other') {
-            var o = byId[me2.today_entrant];
-            $$('[data-pc-other-for]', vDlg).forEach(function (n) {
-              n.textContent = o ? o.name : 'another founder';
-            });
-          }
+          if (to === 'other') paintOther(me2);
           step(to === 'confirm' ? 'all-done' : to);
           repaintAfterVote();
         });
@@ -618,12 +632,50 @@
     });
   }
 
-  function repaintAfterVote() {
+  /* The gallery, painted from the SERVER's account of the day rather than a note the page
+     wrote to itself.
+
+     This used to disable every vote button the moment a ballot existed locally, and label
+     them all "You have already voted" -- including the founder the vote went to. True of the
+     regular point and wrong about everything else: it walled off the one card that still had
+     two bonus points waiting behind it, leaving no way back in. The dialog had already been
+     taught to route on server state; the gallery in front of it had not, and the gallery is
+     what people actually look at.
+
+     The founder who received today's vote keeps a live button. Everyone else is told the
+     daily vote is spent, and every profile stays open and shareable either way. */
+  function labelVoteButton(b, d) {
+    var id = b.getAttribute('data-pc-vote');
+    var today = (d && d.verified) ? (d.today_entrant || null) : null;
+    if (STATE !== 'open') { b.disabled = true; b.textContent = COPY[STATE].vote; return; }
+    if (!today) { b.disabled = false; b.textContent = COPY[STATE].vote; return; }
+    if (id === today) {
+      /* The founder today's vote went to. Never disabled: this is the way back into the
+         bonus, and the only door to it. */
+      var bonusOpen = !!(d.bonus_claimable || d.bonus_eligible);
+      var used = typeof d.used === 'number' ? d.used : 1;
+      b.disabled = false;
+      b.textContent = bonusOpen ? 'View my vote & +2 bonus'
+        : 'View my ' + used + (used === 1 ? ' point' : ' points');
+    } else {
+      /* Every other founder. Still live, deliberately: a disabled button says "no" and
+         nothing else, while this one opens a screen that says where today's points went and
+         offers the way back to them. Opening it records nothing. */
+      b.disabled = false;
+      b.textContent = 'Today’s vote is used';
+    }
+  }
+
+  function paintVoteButtons(d) {
     $$('[data-pc-vote]').forEach(function (b) {
-      if (b.closest('[data-pc-step]')) return;
-      b.disabled = true;
-      b.textContent = 'You have already voted';
+      if (b.closest('[data-pc-step]')) return;   // the dialog's own buttons route themselves
+      labelVoteButton(b, d);
     });
+  }
+
+  /* Ask the server, then paint. */
+  function repaintAfterVote() {
+    return refreshMe().then(paintVoteButtons);
   }
 
   /* ---------- 8. the share sheet ---------- */
@@ -680,6 +732,13 @@
       $('[data-pc-p-video]', pDlg).innerHTML =
         '<iframe src="' + src + '" title="Pitch video: ' + pe.name + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
       track('video_play', { entrant_id: pe.id });
+      return;
+    }
+    /* Must be tested BEFORE [data-pc-vote]: this button sits inside the vote dialog and
+       re-enters the flow on a different founder, which is exactly what openVote does. */
+    if ((el = t.closest('[data-pc-other-go]'))) {
+      var mine = el.getAttribute('data-pc-other-go');
+      if (mine) openVote(mine);
       return;
     }
     if ((el = t.closest('[data-pc-vote]'))) {
@@ -954,7 +1013,7 @@
   }
   startClock();
 
-  if (ballot()) repaintAfterVote();
+  repaintAfterVote();
 
   /* A shared link opens straight onto that pitch -- either a contestant's own page, where the
      server left the id on the window, or a #fragment on the gallery. */
@@ -983,7 +1042,7 @@
         STATE = d.state;
         grid.innerHTML = ENTRANTS.map(cardHtml).join('');
         paintFurniture();
-        if (ballot()) repaintAfterVote();
+        repaintAfterVote();
       })
       .catch(function () {});
   }

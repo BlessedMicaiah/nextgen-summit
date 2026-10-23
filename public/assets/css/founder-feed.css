@@ -329,7 +329,10 @@
   font: 0/0 a; color: transparent;
 }
 .ffc__open:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 18px; }
-.ffc__num, .ffc__pitch, .ffc__acts { position: relative; z-index: 2; }
+/* Only the action row needs lifting above the full-card open button. The number and the
+   pitch badge are already absolutely placed, and listing them here re-declared them as
+   relative, which dropped both into the content flow at the top-left corner. */
+.ffc__acts { position: relative; z-index: 2; }
 .ffc__acts { pointer-events: auto; }
 
 .ff-empty {

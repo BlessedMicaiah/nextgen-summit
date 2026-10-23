@@ -28,6 +28,14 @@ require_once __DIR__ . '/pc-attendee.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
+/** Staging and local only. Production says nothing about its internals. */
+function pcb_preview_host(): bool
+{
+    $h = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    return strpos($h, 'staging.') === 0 || strpos($h, 'localhost') === 0
+        || strpos($h, '127.0.0.1') === 0;
+}
+
 function pcb_out(int $code, array $body): void
 {
     http_response_code($code);
@@ -143,11 +151,24 @@ if ($action === 'auto') {
     $hit = pc_eb_lookup_keys($keys);
     if ($hit['unavailable']) {
         /* Not the same thing as "not registered", and must never be reported as such: a
-           registered attendee told they are not registered will not come back. */
-        pcb_out(200, ['ok' => true, 'status' => 'unavailable'] + $st);
+           registered attendee told they are not registered will not come back.
+
+           On a preview host say WHY. This screen reported an outage for weeks while the real
+           fault was an undefined constant fataling the request, and there was no log on this
+           host to say otherwise. The code names the failure and nothing else -- no token, no
+           address, no attendee. */
+        $out = ['ok' => true, 'status' => 'unavailable'] + $st;
+        if (pcb_preview_host()) {
+            $out['eb'] = pc_eb_note();
+        }
+        pcb_out(200, $out);
     }
     if (!$hit['found']) {
-        pcb_out(200, ['ok' => true, 'status' => 'not_registered'] + $st);
+        $out = ['ok' => true, 'status' => 'not_registered'] + $st;
+        if (pcb_preview_host()) {
+            $out['eb'] = pc_eb_note();     // e.g. "ok:185" -- the list was read, the address is not in it
+        }
+        pcb_out(200, $out);
     }
     $owner = pc_attendee_owner((string) $hit['attendee_key']);
     if ($owner !== null && $owner !== $voter) {

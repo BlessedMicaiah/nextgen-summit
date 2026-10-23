@@ -91,6 +91,23 @@ function pc_eb_token(): string
     return trim((string) getenv('EVENTBRITE_TOKEN'));
 }
 
+/**
+ * Why the last index build ended as it did -- 'no_token', 'http_401', 'bad_json', 'ok:185'.
+ *
+ * Diagnostics, and deliberately the dullest possible kind: a short code, never a token, never
+ * an address, never an attendee. This host keeps no error log, so without something like it a
+ * failure here is a dead end -- which is exactly what the undefined-constant fatal was. The
+ * code is only ever shown on a preview host; see pc-bonus.php.
+ */
+function pc_eb_note(?string $set = null): string
+{
+    static $note = '';
+    if ($set !== null) {
+        $note = $set;
+    }
+    return $note;
+}
+
 function pc_eb_index_file(): string
 {
     return ngs_data_dir() . '/eventbrite-emails.json';
@@ -114,12 +131,14 @@ function pc_eb_email_index(bool $force = false): array
         }
     }
     if (!$force && $age < PC_EB_INDEX_TTL) {
+        pc_eb_note('cache_fresh:' . count($have));
         return ['ok' => true, 'map' => $have, 'stale' => false];
     }
 
     $token = pc_eb_token();
     if ($token === '' || !function_exists('curl_init')) {
         // keep serving whatever we had rather than telling a real attendee they are not one
+        pc_eb_note($token === '' ? 'no_token' : 'no_curl');
         return ['ok' => $have !== [], 'map' => $have, 'stale' => true];
     }
 
@@ -137,10 +156,12 @@ function pc_eb_email_index(bool $force = false): array
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         if ($status < 200 || $status >= 300 || !is_string($body)) {
+            pc_eb_note($status > 0 ? ('http_' . $status) : 'transport_failed');
             return ['ok' => $have !== [], 'map' => $have, 'stale' => true];
         }
         $j = json_decode($body, true);
         if (!is_array($j)) {
+            pc_eb_note('bad_json');
             return ['ok' => $have !== [], 'map' => $have, 'stale' => true];
         }
         foreach (($j['attendees'] ?? []) as $a) {
@@ -163,11 +184,16 @@ function pc_eb_email_index(bool $force = false): array
             : '';
     }
 
+    /* A cache that will not write is a slow lookup, not a failed one: the map in hand is good
+       and gets used either way. Worth naming, though, because every check would re-walk the
+       whole attendee list and nobody would know why it was slow. */
+    $wrote = false;
     $tmp = $file . '.new';
     if (@file_put_contents($tmp, json_encode(['ts' => time(), 'map' => $map]), LOCK_EX) !== false) {
         @chmod($tmp, 0600);
-        @rename($tmp, $file);
+        $wrote = @rename($tmp, $file);
     }
+    pc_eb_note(($wrote ? 'ok:' : 'ok_nocache:') . count($map));
     return ['ok' => true, 'map' => $map, 'stale' => false];
 }
 

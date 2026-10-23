@@ -11,6 +11,17 @@ if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__
 
 require __DIR__ . '/config.php';
 
+/* The Eventbrite event every attendee question is asked about.
+
+   It lived in attendee-count.php, which is a standalone endpoint nothing includes. The bonus
+   path reads the same event through pc-attendee.php and never loaded that file, so the
+   constant was simply undefined there -- a fatal Error in PHP 8, thrown the first time the
+   attendee index tried to build its URL. The request died, the browser got no JSON, and the
+   screen reported "we could not reach the registration system", which was a true description
+   of the symptom and a wrong description of the cause. One definition, somewhere both chains
+   already load, is the fix. */
+const NGS_EB_EVENT_ID = '1999190304016';
+
 const NGS_KINDS = ['waitlist', 'registration', 'volunteer', 'partner', 'question', 'scholarship'];
 
 function ngs_text(array $src, string $key, int $max): string

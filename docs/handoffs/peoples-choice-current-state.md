@@ -793,6 +793,86 @@ borrow either.
 
 ---
 
+## 0q. The launch-readiness pass (2026-10-23, evening)
+
+### Contestant numbers: gone, not hidden
+
+The last one was `.ffc__num`, the small circle in the corner of each tile in the lower
+gallery. Markup and stylesheet both deleted. Internal ids are untouched and still key
+every vote row, share link and API call. Verified on staging: no element matches
+`.ffc__num`, and no text matching `contestant 0?\d` appears anywhere on the page.
+
+### The duplicate gallery is gone
+
+"Every founder" was a second, scroll-heavy copy of the same twenty people sitting under
+the cards that already carried them. Its search and its count moved up to the founder
+rail first, so nothing was lost.
+
+**A trap worth recording:** the script opened with
+`var grid = $('[data-pc-grid]'); if (!grid) return;`. Deleting the gallery without that
+line would have stopped the whole People's Choice script -- voting included -- on a page
+that still looked perfectly fine.
+
+### The page was twice as long as it needed to be
+
+19,977px on a 375px phone. The immersive feed is the reading experience and it is
+entered from a control, but the same twenty full-height panels were ALSO laid out in the
+document, costing about fourteen thousand pixels of scrolling to reach the voting rules
+underneath. The panels stay in the DOM -- they are what immersive mode scrolls, and they
+carry every vote and share hook -- they are simply not laid out until someone asks for
+them. **19,977px to 4,501px, about 5.5 screens.**
+
+### Standings are live, and they are in POINTS
+
+`pc-rank.php` publishes per-founder point totals and the count of distinct verified
+identities behind them. They are deliberately two numbers: an attendee's single choice
+is worth three points, so calling points "votes" would overstate how many people backed
+a founder. The reels, bubbles, deck and card all read the one list.
+
+The refresh is split by risk:
+
+- **numbers** are written into the badges already on screen, every 45 seconds, only
+  while the tab is visible. The endpoint caches 30s, so it is about one request a minute
+  per reader.
+- **order** is rebuilt only when the visitor is demonstrably not mid-anything: no card
+  or vote dialog open, not inside the immersive feed, nothing playing. Re-sorting under
+  someone watching a pitch would take the founder away from them over a stranger's vote.
+  It waits instead.
+
+Proven against the **deployed** script, not a reimplementation: level field renders no
+place and no points at all; with real standings the top three get a medal reading
+"1st 40 points", fourth and below a badge reading "4th - 34 points", tied founders both
+read "6th", the card corner reports the voter count separately, and the word "vote"
+never appears in a points badge.
+
+### Search, on the surface the founders are on
+
+Filters the founder rail; Enter opens the first match. Forgiving about case, spacing and
+accents, so "metayer" finds Metayer. Clearing restores the standings order. There is no
+second directory to search, which was the point.
+
+### Desktop
+
+Rail arrows for a mouse, shown only to a fine pointer and only when there is something
+off the end; arrow keys move along the rail. The explore cue asks the DEVICE, not the
+screen width -- "Click" where there is a cursor, "Tap" where there is a touchscreen --
+because a touch laptop is both. Bright footage is framed rather than dimmed: a defined
+edge, a soft falloff into the dark surround, and a highlight trim too small to change a
+face.
+
+### Verified on staging at ?v=20261023-71
+
+No console errors. No horizontal overflow at 375px. All twenty panels present, feed
+enters full-bleed at 375x812, swipe, card, flip and exit all intact, video silent on
+exit. `/`, `/about/`, `/pitch/`, `/pitch/peoples-choice/` and `/tickets/` all 200, and
+the staging data directory still 404s over HTTP.
+
+**Nothing was cast and no code was sent.** Voting was checked by probing the gates:
+`pc-vote.php` and `pc-bonus.php` both answer `401 verify_required` unauthenticated, and
+every point total was still zero afterwards.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

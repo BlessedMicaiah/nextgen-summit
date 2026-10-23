@@ -1476,6 +1476,22 @@
     document.addEventListener('scroll', reelQueue, { passive: true, capture: true });
     addEventListener('resize', reelQueue, { passive: true });
     addEventListener('orientationchange', reelQueue, { passive: true });
+
+    /* And a slow heartbeat, because neither of the event-driven routes can be relied on.
+
+       Measured in this build: IntersectionObserver delivers no callbacks for a page that is
+       not frontmost, and a programmatic scroll dispatches no scroll event at all -- not on
+       window, not capturing on the document. Both are environment quirks rather than
+       mistakes in the page, and a real browser fires both. But a feed whose video only
+       starts if an event turns up is a feed that silently does nothing when one does not.
+
+       Four checks a second over twenty rectangles is nothing, it stops while the tab is
+       hidden, and it means the behaviour depends on where the panels ARE rather than on
+       being told that they moved. */
+    setInterval(function () {
+      if (!document.hidden) reelQueue();
+    }, 250);
+
     reelSync();
   }
 

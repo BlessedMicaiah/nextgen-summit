@@ -13,21 +13,44 @@ and the gallery fix, so **where the two disagree, this one is current.**
 
 ---
 
-## 0. The one thing blocking launch
+## 0. Root cause of the bonus failure — fixed 2026-10-23
 
-**The +2 Eventbrite bonus has never completed, end to end, for anybody.** `pc_attendee` holds
-zero bindings. Every part of it is built and deployed; no real voter has yet travelled the
-whole path. Until one has, the bonus is unproven, not working.
+`NGS_EB_EVENT_ID` was defined in `attendee-count.php`, a standalone endpoint nothing includes,
+and used in `pc-attendee.php`, which the bonus path loads instead. Undefined constant, PHP 8,
+**fatal Error**, thrown the first time the attendee index tried to build its URL. The request
+died with no JSON, the browser's catch produced `{ok:false}`, and the screen said "we couldn't
+reach the registration system" — a true description of the symptom and a wrong one of the
+cause. Eventbrite was never contacted, which is also why `eventbrite-emails.json` never
+appeared.
 
-The immediate cause is small and identifiable: `eventbrite-emails.json`, the hashed-email →
-attendee-id index, **does not exist in the staging data directory.** It is built on demand by
-`pc_eb_email_index()`, which is only reached from the bonus check, which needs a verified
-voting session. Nobody with a verified session has reached it since the code deployed.
+The evidence fit exactly: `attendee-count.php` kept working throughout, because it is the file
+that holds the definition.
 
-Nothing suggests it is broken. Eventbrite is reachable from staging and the token is valid —
-`api/attendee-count.php` returned 185 attendees when checked, and the count cache was rewritten
-hours earlier. The index should build on the first real bonus check, in roughly two API pages.
-**That first check is the test.** It needs a verified voter, so it needs the user.
+The constant now lives in `_lib.php`, which both chains already require, and the duplicate is
+gone. **Verified on staging: the index builds, 156 entries, cache written, `attendee-count.php`
+still returns 185.** The gap is people holding several tickets — 157 distinct names — not
+dropped records, because the map is keyed by hashed email so one address is one entry.
+
+Because this host keeps no error log, which is what made the fault invisible, the builder now
+records why it ended as it did: `no_token`, `no_curl`, `http_<status>`, `transport_failed`,
+`bad_json`, `ok:<n>`, `ok_nocache:<n>`, `cache_fresh:<n>`. `pc-bonus.php` returns it as `eb`
+on the `auto` response, **staging and localhost only**, for both the `unavailable` and
+`not_registered` cases — so a genuine "not on the list" can be told apart from a list that was
+never read. A short code and nothing else: no token, no address, no attendee.
+
+---
+
+## 0b. What is still unproven
+
+**The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero
+bindings. The two faults that stopped it are fixed and the pieces are verified individually —
+the index builds, the routing reaches the automatic check, all six outcomes render — but no
+real voter has yet travelled the whole path and claimed two points. Until one has, treat the
+bonus as unproven rather than working.
+
+What remains untested is the join between the parts: whether a verified voter's stored email
+hash actually matches an entry in the index, and whether `claim` writes the two rows. That
+needs a verified session, so it needs the user.
 
 ---
 

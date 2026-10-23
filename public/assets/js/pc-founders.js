@@ -316,9 +316,10 @@ window.NGS_FOUNDERS = [
       "type": "file",
       "src": "/assets/video/light.mp4"
     },
-    "shotW": 1100,
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 782,
     "shotH": 1100,
-    "focal": "50% 35%",
+    "focal": "50% 24%",
     "selfHosted": true,
     "poster": "/assets/video/light-poster.jpg",
     "pitchNote": "Google Drive: copy_23C09532_71FE_4AF8_848E_8F01DCDCE6D0.mov"
@@ -396,9 +397,10 @@ window.NGS_FOUNDERS = [
       "type": "file",
       "src": "/assets/video/find-your-mission-corp.mp4"
     },
-    "shotW": 1100,
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 931,
     "shotH": 1100,
-    "focal": "50% 35%",
+    "focal": "50% 42%",
     "selfHosted": true,
     "poster": "/assets/video/find-your-mission-corp-poster.jpg",
     "pitchNote": "Google Drive: Introducing FYM"

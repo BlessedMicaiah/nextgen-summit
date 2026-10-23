@@ -173,11 +173,25 @@ def main():
         }
 
         # ---- image ----
+        # A photograph sent in later by leadership wins over whatever the form captured.
+        # Without this a rebuild silently put the original submission back, which is exactly
+        # what happened the first time two proper headshots arrived: the files were written
+        # and the next build overwrote them from the cached source URL.
+        supplied = None
+        for ext in ('.jpg', '.jpeg', '.png', '.webp'):
+            cand = os.path.join(ROOT, 'docs', 'founder-images-supplied', slug + ext)
+            if os.path.isfile(cand):
+                supplied = cand
+                break
+
         iu = c.get('image_source_url')
-        if iu:
+        if supplied or iu:
             raw = None
             cpath = os.path.join(CACHE, slug + '.src')
-            if os.path.isfile(cpath):
+            if supplied:
+                raw = open(supplied, 'rb').read()
+                rec['shotFrom'] = 'headshot supplied by the NextGen team'
+            elif os.path.isfile(cpath):
                 raw = open(cpath, 'rb').read()
             else:
                 try:
@@ -200,8 +214,9 @@ def main():
                         im.save(dest, 'WEBP', quality=QUALITY, method=6)
                         rec['shot'] = '/assets/img/founders/' + slug + '.webp'
                         # a logo wants whitespace around it; a photograph wants to fill
-                        fname = iu.rsplit('/', 1)[-1].lower()
-                        logo = any(t in fname for t in ('logo', 'branding', 'brand'))
+                        fname = (supplied or iu or '').rsplit('/', 1)[-1].lower()
+                        logo = (not supplied) and any(t in fname
+                                                      for t in ('logo', 'branding', 'brand'))
                         rec['shotFit'] = 'contain' if logo else 'cover'
                         rec['shotW'], rec['shotH'] = im.size
 

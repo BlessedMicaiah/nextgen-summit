@@ -646,6 +646,94 @@ profile. The feed is panel-based, not edge-to-edge.
 
 ---
 
+## 0o. The launch pass (2026-10-23, later)
+
+Launch mechanics, the blockers and the deployment sequence now live in their own
+document: **`docs/handoffs/peoples-choice-launch-plan.md`**. Read that before any
+production work. What follows is only what changed in the product.
+
+### The experience
+
+- **Immersive mode.** The feed becomes a fixed full-viewport scroller when a visitor
+  asks for it: one founder per screen, mandatory snapping, `scroll-snap-stop: always`
+  so one swipe moves one founder. The in-page feed underneath is unchanged -- nobody is
+  dropped into a scroller they did not choose, which was the original objection and
+  still is. Out: the exit button, Escape, and the browser's Back button, which is a
+  pushed history entry rather than a trick.
+- **Meet the Founders** is a door now, not a scroll cue. The bubbles fly in from
+  alternating sides, staggered, once, and latch -- the brief was explicit that drifting
+  up and down the page must not set them flying again.
+- **The introduction.** Four scenes built at runtime from the founders' own submitted
+  images and frames of their own pitches. No stock photography, no invented event
+  picture. Around six seconds, skippable from the first frame, once a session, and a
+  single held frame under reduced motion. Choosing a founder never replays it.
+- **The founder card** is the speaker card from the main microsite, carrying founders:
+  the same morph out of whatever was tapped, the same turn, the same way out. The turn
+  control is the only thing that flips it, so reaching for Vote cannot spin the card
+  away. Watch the pitch returns to the feed rather than opening a second player, so
+  there is exactly one place a pitch can be playing.
+- **The ending** is twenty cards sweeping into three decks of 6/6/8, cut from the same
+  order the feed runs in. Every founder appears exactly once -- asserted in the code,
+  not assumed. Open a deck, pick anyone, and their pitch plays.
+- Tap to hold, a spinner only when the footage actually makes someone wait, a progress
+  bar, and a one-time swipe hint.
+
+### Found by measuring, and fixed
+
+1. **The founder card could not be closed** when the page was not being composited: the
+   close waited on an animation's `onfinish`, and animations do not finish for a page
+   that is hidden or throttled. A card whose only exit depends on an animation is a card
+   that can trap someone. There is a hard backstop now.
+2. **Three entrances hid their own content.** The deck, the opened deck and the
+   introduction all start at `opacity: 0` and are carried to 1 by a keyframe animation
+   with `fill-mode: both`. When the animation does not run, the content stays at the
+   first frame forever. Measured: the deck arrived with its title, its labels and all
+   twenty cards invisible and only the two buttons showing. Each has a backstop now --
+   and the backstop had to out-rank the animation's own selector, because a stalled
+   animation beats a plain declaration. The introduction showed its kicker and swallowed
+   its title for exactly that reason, which is how the pattern was caught twice.
+3. **The deck ran to 1174px in an 812px panel** on a phone, putting the title above the
+   screen and both buttons below it. Three stacks side by side now, smaller.
+4. **The swipe hint landed on the founder's own name.**
+5. **`fromManifest` copied the business blurb into the biography**, so "The founder" and
+   "The project" printed the same paragraph. That was the duplication the previous pass
+   thought it had fixed in `paintProfile`; the data was overwriting it upstream. The
+   biography is now only ever the manifest's own, and the manifest has none for any of
+   the twenty, so the block stays shut.
+6. **Two founders got a broken-image icon.** Credible blossom and K8Culture submitted no
+   portrait and their pitches are embeds, so there is no frame of their own to borrow;
+   the panel asked for `<img src="">`, which a browser resolves to the page itself. They
+   get their initials on a plate.
+7. **A tablet was being treated as a big phone** -- the caption ran 685px across at
+   768 wide. The centred stage starts at 700px now, not 900.
+8. **The build can no longer ship changed assets under an unchanged cache stamp.** I made
+   that mistake during this pass and spent a round trip finding it: a breakpoint change
+   that was demonstrably on the server would not apply in the browser. `release.py` now
+   hashes `public/assets`, keeps the hash beside the stamp, and refuses the build if the
+   hash moved and the stamp did not. Proven by test.
+
+### Tested, and what was not
+
+Twenty-one steps of the founder journey were exercised against the deployed staging
+build, not against a local copy: the bubbles, the introduction and skipping it,
+full-screen entry, swiping, playback and sound, the reaction sheet opening and closing
+six ways, founder-specific sharing, the card and its turn, returning to the same reel at
+the same scroll position, the deck arriving, all three decks opening, picking a founder
+and landing on them, and leaving. Layout was measured at 360x740, 375x812, 768x1024 and
+1440x900 -- no horizontal scroll, no overlap, the deck fits at every one.
+
+The vote path was opened and closed but **nothing was cast and no code was sent**.
+Endpoint gates were probed unauthenticated instead: `pc-vote.php` and `pc-bonus.php`
+both answer `401 verify_required`, and the standings were identical before and after.
+
+**Not verified here:** the animations themselves. This pane freezes the compositor, so
+smooth scrolling, the card's rotation and the scene transitions could not be watched --
+their DOM state was checked instead, and the backstops above exist precisely because of
+it. Real iPhone Safari and real Android Chrome have not been used; the sizes above are
+emulated. A real device pass before launch is worth the hour.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

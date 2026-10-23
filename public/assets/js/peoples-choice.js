@@ -382,6 +382,9 @@
       if (art) { timg.src = art; timg.hidden = false; }
       else { timg.removeAttribute('src'); timg.hidden = true; }
       thumb.classList.toggle('is-contain', !!e.logo || e.shotFit === 'contain');
+      /* A logo sits in a square; a founder's photograph keeps the 3:4 it was shot in.
+         Every logo panel is the same size, the same padding and the same corner. */
+      thumb.classList.toggle('is-logo', !!e.logo);
       timg.alt = e.logo ? (e.company + ' logo') : '';
     }
 

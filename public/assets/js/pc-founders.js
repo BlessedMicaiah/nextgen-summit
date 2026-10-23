@@ -13,7 +13,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-01",
     "shot": "/assets/img/founders/haptol-labs.webp?v=d1dc7578",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/haptol-labs.webp?v=3053ac16",
+    "logo": "/assets/img/logos/haptol-labs.webp?v=808243de",
     "video": {
       "type": "file",
       "src": "/assets/video/haptol-labs.mp4?v=ad280214"
@@ -36,7 +36,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-02",
     "shot": "/assets/img/founders/credible-blossom.webp?v=f2a9341e",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/credible-blossom.webp?v=61edd730",
+    "logo": "/assets/img/logos/credible-blossom.webp?v=f9256525",
     "video": {
       "type": "youtube",
       "id": "RbY4Zs6kPMw"
@@ -100,7 +100,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-05",
     "shot": "/assets/img/founders/lookbook.webp?v=b118c2c8",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/lookbook.webp?v=2f06559e",
+    "logo": "/assets/img/logos/lookbook.webp?v=b3172b33",
     "video": {
       "type": "file",
       "src": "/assets/video/lookbook.mp4?v=3d9678b1"
@@ -145,7 +145,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-07",
     "shot": "/assets/img/founders/beforekeys-llc.webp?v=d3a7ae6b",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/beforekeys-llc.webp?v=2c8abe6e",
+    "logo": "/assets/img/logos/beforekeys-llc.webp?v=1de3b5d4",
     "video": {
       "type": "file",
       "src": "/assets/video/beforekeys-llc.mp4?v=886db319"
@@ -168,7 +168,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-08",
     "shot": "/assets/img/founders/if-the-shoe-fits-itsf.webp?v=cbafbc3e",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/if-the-shoe-fits-itsf.webp?v=518daf9a",
+    "logo": "/assets/img/logos/if-the-shoe-fits-itsf.webp?v=8a4a7d65",
     "video": {
       "type": "file",
       "src": "/assets/video/if-the-shoe-fits-itsf.mp4?v=44d85951"
@@ -364,7 +364,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-17",
     "shot": "/assets/img/founders/beauty-boot-camp.webp?v=ef01c704",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/beauty-boot-camp.webp?v=c5eb2718",
+    "logo": "/assets/img/logos/beauty-boot-camp.webp?v=7e50ae25",
     "video": {
       "type": "youtube",
       "id": "QyB1Sly5cYk"
@@ -385,7 +385,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-18",
     "shot": "/assets/img/founders/nextofferup.webp?v=6c9ad8be",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/nextofferup.webp?v=037ecb96",
+    "logo": "/assets/img/logos/nextofferup.webp?v=6d77b1d7",
     "video": {
       "type": "youtube",
       "id": "Diqye88F3Rw"
@@ -406,7 +406,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-19",
     "shot": "/assets/img/founders/exam-me.webp?v=4c3b9304",
     "shotFit": "cover",
-    "logo": "/assets/img/logos/exam-me.webp?v=6535aa7e",
+    "logo": "/assets/img/logos/exam-me.webp?v=5bca3118",
     "video": {
       "type": "file",
       "src": "/assets/video/exam-me.mp4?v=854851c5"

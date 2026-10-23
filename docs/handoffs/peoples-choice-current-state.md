@@ -212,6 +212,52 @@ inspection and **has not been exercised against real data**.
 
 ---
 
+## 0f. Two screenshots, two voters (2026-10-23)
+
+A voter was shown "get your NextGen ticket" while the diagnostic read `ok:156`, after a `+3`
+had succeeded earlier the same day. Those are **two different voting identities**, and each
+screen was correct for the voter looking at it.
+
+| | V6 | V7 |
+|---|---|---|
+| first seen | 02:32:59Z | 06:29:25Z |
+| valid votes today | 3 | 1 |
+| identity in the attendee index | **yes** | **no** |
+| auto check finds a registration | **yes** | **no** |
+| attendee binding | **yes** | no |
+
+`ok:156` is the honest answer in both cases: the list was read, and V7's address is not in it.
+A genuine non-match, not a matching bug, and "Registered with a different email?" is the
+right door for it. Verified per identity with a temporary staging-gated probe that reported
+booleans only, no addresses. Probe deleted, 404 confirmed.
+
+**This demonstrated residual risk 2 live.** `entrant-01` now holds **four valid points on one
+day** — three from V6, one from V7, one person with two addresses. The daily maximum of three
+is enforced **per identity, and an email address is the identity**. The UNIQUE index stops one
+registration funding two voters; nothing stops one human holding two addresses. Phone↔email
+linking exists (`pc_identity_link`) but only fires when someone verifies both channels in one
+session, so two email identities never converge. **This is the single largest integrity
+exposure before launch** and leadership should hear it in those terms.
+
+### Contradictions corrected on the post-vote screen
+
+- **"That is your allowance for today. Come back after midnight Eastern to vote again"** sat
+  directly above an offer of two more points. A spent allowance at the +1 tier is not a spent
+  allowance. It now reads "Your next daily vote unlocks after midnight Eastern" — about the
+  regular vote only — and the bonus speaks for itself.
+- **Two "Get your NextGen ticket" buttons on one screen.** The generic one in the action row
+  is gone; the contextual one inside the bonus block stays, shown only to an unregistered
+  voter and pointed straight at the event.
+- Heading now names what was counted; the invitation states the opportunity instead of asking
+  a question, and no longer repeats itself.
+
+Verified on the deployed build by driving the real vote flow with the network stubbed, so
+nothing was recorded: unregistered voter → one ticket CTA, correct heading, non-contradictory
+midnight line; registered voter → zero ticket CTAs, "You're registered for NextGen!", "Give
+my +2 points".
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

@@ -34,7 +34,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 3,
     "entrant": "entrant-02",
-    "shot": "/assets/img/founders/credible-blossom.webp?v=f2a9341e",
+    "shot": "/assets/img/founders/credible-blossom.webp?v=8d696455",
     "shotFit": "cover",
     "logo": "/assets/img/logos/credible-blossom.webp?v=0028a0df",
     "video": {
@@ -57,7 +57,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-03",
     "shot": "/assets/img/founders/sooz.webp?v=b8a456cb",
     "shotFit": "cover",
-    "logo": null,
+    "logo": "/assets/img/logos/sooz.webp?v=221b6206",
     "video": {
       "type": "file",
       "src": "/assets/video/sooz.mp4?v=857ec4fb"
@@ -77,15 +77,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 5,
     "entrant": "entrant-04",
-    "shot": "/assets/img/founders/the-luminous-lab.webp?v=ba0794e8",
+    "shot": "/assets/img/founders/the-luminous-lab.webp?v=5b217a38",
     "shotFit": "cover",
     "logo": null,
     "video": {
       "type": "file",
       "src": "/assets/video/the-luminous-lab.mp4?v=f1197d5e"
     },
-    "shotFrom": "frame from this founders own pitch video",
-    "focal": "50% 30%",
+    "shotFrom": "headshot supplied by the NextGen team",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "selfHosted": true,
     "poster": "/assets/video/the-luminous-lab-poster.jpg?v=8174f404",
     "pitchNote": "direct video file"
@@ -298,7 +300,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-14",
     "shot": "/assets/img/founders/k8culture-productions.webp?v=18610b08",
     "shotFit": "cover",
-    "logo": null,
+    "logo": "/assets/img/logos/k8culture-productions.webp?v=8264640d",
     "video": {
       "type": "youtube",
       "id": "MKFA5YWMyiM"
@@ -341,7 +343,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-16",
     "shot": "/assets/img/founders/light.webp?v=0532a1e7",
     "shotFit": "cover",
-    "logo": null,
+    "logo": "/assets/img/logos/light.webp?v=db0b2a52",
     "video": {
       "type": "file",
       "src": "/assets/video/light.mp4?v=75e399f0"
@@ -429,7 +431,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-20",
     "shot": "/assets/img/founders/find-your-mission-corp.webp?v=83891531",
     "shotFit": "cover",
-    "logo": null,
+    "logo": "/assets/img/logos/find-your-mission-corp.webp?v=1889deab",
     "video": {
       "type": "file",
       "src": "/assets/video/find-your-mission-corp.mp4?v=d62f7404"

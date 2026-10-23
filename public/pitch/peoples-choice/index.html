@@ -44,19 +44,32 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preload" as="image" href="/assets/img/pitch-hero-m-900.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="/assets/img/pitch-hero-1600.jpg" imagesrcset="/assets/img/pitch-hero-1200.jpg 1200w, /assets/img/pitch-hero-1600.jpg 1600w, /assets/img/pitch-hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261022-34">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261022-34">
-<link rel="stylesheet" href="/assets/css/peoples-choice.css?v=20261022-34">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261022-35">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261022-35">
+<link rel="stylesheet" href="/assets/css/peoples-choice.css?v=20261022-35">
+<link rel="stylesheet" href="/assets/css/founder-feed.css?v=20261022-35">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261022-34" defer></script>
-<script src="/assets/js/announce.js?v=20261022-34" defer></script>
-<script src="/assets/js/depart.js?v=20261022-34" defer></script>
-<script src="/assets/js/forms.js?v=20261022-34" defer></script>
-<script src="/assets/js/peoples-choice.js?v=20261022-34" defer></script>
+<script src="/assets/js/site.js?v=20261022-35" defer></script>
+<script src="/assets/js/announce.js?v=20261022-35" defer></script>
+<script src="/assets/js/depart.js?v=20261022-35" defer></script>
+<script src="/assets/js/forms.js?v=20261022-35" defer></script>
+<script src="/assets/js/pc-founders.js?v=20261022-35" defer></script>
+<script src="/assets/js/peoples-choice.js?v=20261022-35" defer></script>
 </head>
 <body>
+<!-- The opening reveal. One turquoise signal, the wordmark, card silhouettes, gone in about
+     a second and a half. Shown once per tab, removed by script on load, and reduced to an
+     instant by the stylesheet for anyone who asked for less motion. -->
+<div class="ff-boot" data-ff-boot aria-hidden="true">
+  <span class="ff-boot__cards" aria-hidden="true">
+    <i style="left:14%;animation-delay:.06s"></i><i style="left:31%;animation-delay:.16s"></i>
+    <i style="left:48%;animation-delay:.02s"></i><i style="left:65%;animation-delay:.2s"></i>
+    <i style="left:82%;animation-delay:.11s"></i>
+  </span>
+  <span class="ff-boot__mark">nextgen<em>.</em><span class="ff-boot__scan"></span></span>
+</div>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PRVSWFBN"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -180,16 +193,78 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <!-- ==================== the twenty ==================== -->
-  <section class="pcg" id="gallery" data-nav="paper" aria-labelledby="pcg-title">
-    <div class="pcg__in">
-      <div class="pcg__head">
-        <div>
-          <p class="label rv">The semifinalists</p>
-          <h2 class="pcg__title wm rv" id="pcg-title" style="--d:.1s">twenty pitches.</h2>
+  <!-- ==================== the founder feed ====================
+       The dark stage the twenty founders stand on. Everything inside keeps the [data-pc-*]
+       hooks the voting code already binds to; what changed is the surface, not the wiring. -->
+  <section class="ff" id="gallery" data-nav="photo" aria-labelledby="ff-title">
+    <div class="ff__wrap">
+
+      <header class="ff-hero">
+        <p class="ff-hero__kicker">The Top 20 &middot; People&rsquo;s Choice</p>
+        <h2 class="ff-hero__t" id="ff-title">The next generation<br>is building <em>something.</em></h2>
+        <p class="ff-hero__lede">Twenty founders. Twenty ideas. Watch a pitch, read the story,
+          and send one of them to the live final. One verified vote a day &mdash; NextGen
+          attendees give three.</p>
+
+        <!-- Real numbers only. The founder count and the rule are facts; the status line is
+             whatever the server says about this visitor, and nothing is shown before it has
+             said it. There is no leaderboard here: totals stay private while voting is open. -->
+        <div class="ff-stats">
+          <div class="ff-stat">
+            <span class="ff-stat__v">20</span>
+            <span class="ff-stat__k">Founders competing</span>
+          </div>
+          <div class="ff-stat">
+            <span class="ff-stat__v"><span data-ff-pitches>&mdash;</span></span>
+            <span class="ff-stat__k">Pitches to watch</span>
+          </div>
+          <div class="ff-stat">
+            <span class="ff-stat__v">1<em>+2</em></span>
+            <span class="ff-stat__k">Points a day, attendees</span>
+          </div>
+          <div class="ff-stat ff-stat--live">
+            <span class="ff-stat__v" data-ff-status style="font-size:clamp(15px,2vw,19px);line-height:1.3">Voting status</span>
+            <span class="ff-stat__k">Where you stand</span>
+          </div>
         </div>
-        <p class="pcg__note rv" style="--d:.2s">Every semifinalist is on this page. Open a card to read the project, watch the pitch and cast your vote.</p>
-      </div>
-      <ul class="pcg__grid" data-pc-grid></ul>
+      </header>
+
+      <!-- ==================== founder stories ==================== -->
+      <section class="ff-stories" aria-labelledby="ff-stories-t">
+        <div class="ff-sec">
+          <h3 class="ff-sec__t" id="ff-stories-t">Founder stories</h3>
+          <span class="ff-sec__n">Tap a founder</span>
+        </div>
+        <div class="ff-rail" data-ff-rail role="list"
+          aria-label="Founder stories. Use the arrow keys inside a story to move between founders."></div>
+      </section>
+
+      <!-- ==================== the feed ==================== -->
+      <section class="ff-feed" aria-labelledby="ff-feed-t">
+        <div class="ff-sec">
+          <h3 class="ff-sec__t" id="ff-feed-t">Every founder</h3>
+          <span class="ff-sec__n" data-ff-count>20 founders</span>
+        </div>
+
+        <!-- Staging only. Hidden the moment tools/founder-map.json is marked reviewed. -->
+        <p class="ff-provisional" data-ff-provisional hidden>
+          <strong>Staging note:</strong> which founder sits on which contestant id is still
+          provisional &mdash; it came from the order of rows in the Top&nbsp;20 sheet and has
+          not been reviewed. Votes cast here are test votes until it is confirmed.
+        </p>
+
+        <div class="ff-tools">
+          <label class="ff-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <span class="sr">Search founders and businesses</span>
+            <input type="search" data-ff-search placeholder="Search a founder or business" autocomplete="off">
+          </label>
+        </div>
+
+        <ul class="ff-grid" data-pc-grid></ul>
+        <p class="ff-empty" data-ff-empty hidden>No founder matches that search.</p>
+      </section>
+
     </div>
   </section>
 
@@ -224,6 +299,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
 </main>
+
+<!-- ==================== the story viewer ====================
+     Its own dialog, deliberately: the vote dialog is a tested flow and this does not reach
+     into it. Closing or stepping away empties the stage, which is what actually stops a
+     video rather than merely hiding it. -->
+<dialog class="ff-view" data-ff-viewer aria-label="Founder story">
+  <div class="ff-view__in">
+    <div class="ff-view__bar" data-ff-ticks aria-hidden="true"></div>
+    <div class="ff-view__head">
+      <span class="ff-view__av" data-ff-av aria-hidden="true"></span>
+      <span class="ff-view__who">
+        <span class="ff-view__co" data-ff-co></span>
+        <span class="ff-view__by" data-ff-by></span>
+      </span>
+      <button class="ff-view__x" type="button" data-ff-close aria-label="Close">&times;</button>
+    </div>
+    <div class="ff-view__stage" data-ff-stage>
+      <div class="ff-view__nav">
+        <button type="button" data-ff-prev>Previous founder</button>
+        <button type="button" data-ff-next>Next founder</button>
+      </div>
+    </div>
+    <div class="ff-view__acts">
+      <button class="btn btn--ghost" type="button" data-ff-share data-pc-share>Share</button>
+      <button class="btn" type="button" data-ff-profile>Explore founder</button>
+    </div>
+  </div>
+</dialog>
 
 <!-- ==================== the profile ==================== -->
 <dialog class="pcp" data-pc-profile aria-label="Semifinalist">

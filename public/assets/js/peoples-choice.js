@@ -73,13 +73,53 @@
       blurb: 'A one-line description of the venture appears here once the semifinalist is approved.',
       bio: 'Founder biography to be supplied by the NextGen Summit team. Nothing in this slot describes a real person.',
       summary: 'Project summary to be supplied by the NextGen Summit team.',
-      shot: null,            // '/assets/img/pitch/entrant-01.jpg'
-      video: null,           // { type: 'youtube' | 'vimeo', id: '...' }
-      videoUrl: null         // the plain link, used when the embed cannot load
+      shot: null,
+      shotFit: 'cover',
+      video: null,
+      videoUrl: null
     };
   }
-  var ENTRANTS = [];
-  for (var i = 1; i <= 20; i++) ENTRANTS.push(slot(i));
+
+  /* The real Top 20, written by tools/build-founders.py from the approved manifest and
+     loaded as pc-founders.js before this file.
+
+     The contestant id is NOT derived here. It comes from tools/founder-map.json, which a
+     human reviews, because vote rows reference entrant-NN and an id invented from a
+     spreadsheet's row order would quietly re-point votes at a different founder. A founder
+     with no id keeps their placeholder slot and is visible but not votable.
+
+     Nothing here is invented: a founder with no usable portrait gets a monogram, and one
+     with no playable pitch gets an editorial card. Neither is dressed up as the real thing. */
+  function fromManifest() {
+    var src = window.NGS_FOUNDERS;
+    if (!src || !src.length) return null;
+    var byEntrant = {};
+    src.forEach(function (f) { if (f.entrant) byEntrant[f.entrant] = f; });
+    var out = [];
+    for (var i = 1; i <= 20; i++) {
+      var base = slot(i);
+      var f = byEntrant[base.id];
+      if (!f) { out.push(base); continue; }
+      base.draft = false;
+      base.slug = f.slug;
+      base.name = f.name;
+      base.company = f.company;
+      base.blurb = f.blurb;
+      base.summary = f.blurb;
+      base.bio = f.blurb;
+      base.shot = f.shot || null;
+      base.shotFit = f.shotFit || 'cover';
+      base.video = f.video || null;
+      base.pitchNote = f.pitchNote || '';
+      out.push(base);
+    }
+    return out;
+  }
+  var ENTRANTS = fromManifest();
+  if (!ENTRANTS) {
+    ENTRANTS = [];
+    for (var i = 1; i <= 20; i++) ENTRANTS.push(slot(i));
+  }
 
   var byId = {};
   ENTRANTS.forEach(function (e) { byId[e.id] = e; });
@@ -134,37 +174,57 @@
     return e.draft ? e.n : e.name.split(/\s+/).map(function (w) { return w[0]; }).slice(0, 2).join('');
   }
 
+  /* The feed card.
+
+     Every [data-pc-*] hook is the one the voting code already looks for -- open, watch,
+     share, vote -- so the card is a new surface over unchanged wiring. The .pce class stays
+     on the <li> because labelVoteButton() asks closest('.pce') whether a button is a gallery
+     button or the dialog's, and that distinction decides its wording. */
   function cardHtml(e) {
+    var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
     var shot = e.shot
-      ? '<img src="' + e.shot + '" alt="' + e.name + '" loading="lazy" decoding="async" width="640" height="480">'
-      : '<span class="pce__await"><span class="pce__await-n">' + initials(e) + '</span>' +
-        '<span class="pce__await-k">Portrait to come</span></span>';
-    var voteLabel = COPY[STATE].vote;
+      ? '<img src="' + e.shot + '"' + fit + ' alt="' + esc(e.company) +
+        '" loading="lazy" decoding="async">'
+      : '<span class="ffc__await"><span class="ffc__mono">' + esc(initials(e)) + '</span>' +
+        '<span class="ffc__awaitk">' + (e.draft ? 'Slot open' : 'Portrait to come') +
+        '</span></span>';
     var canVote = STATE === 'open';
     return '' +
-      '<li class="pce' + (e.draft ? ' pce--draft' : '') + '" data-pc-card="' + e.id + '">' +
-        '<button class="pce__open" type="button" data-pc-open="' + e.id + '">' +
-          'Open ' + e.name + '</button>' +
-        '<span class="pce__num">' + e.n + '</span>' +
-        '<button class="pce__share" type="button" data-pc-share="' + e.id + '" ' +
-          'aria-label="Share ' + e.name + '">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">' +
-          '<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/>' +
-          '<path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg></button>' +
-        '<span class="pce__shot">' + shot + '</span>' +
-        '<span class="pce__body">' +
-          (e.draft ? '<span class="pce__flag">Placeholder slot</span>' : '') +
-          '<span class="pce__co">' + e.company + '</span>' +
-          '<span class="pce__name">' + e.name + '</span>' +
-          '<span class="pce__blurb">' + e.blurb + '</span>' +
-          '<span class="pce__acts">' +
-            '<button class="btn btn--ghost" type="button" data-pc-watch="' + e.id + '">Watch pitch</button>' +
+      '<li class="pce ffc" data-pc-card="' + e.id + '" data-ff-slug="' + esc(e.slug || e.id) + '">' +
+        '<button class="ffc__open" type="button" data-pc-open="' + e.id + '">' +
+          'Open ' + esc(e.name) + '</button>' +
+        '<span class="ffc__shot">' + shot +
+          '<span class="ffc__num">' + e.n + '</span>' +
+          (e.video
+            ? '<span class="ffc__pitch">' + playIcon() + 'Pitch</span>'
+            : '') +
+        '</span>' +
+        '<span class="ffc__body">' +
+          '<p class="ffc__co">' + esc(e.company) + '</p>' +
+          '<p class="ffc__by">' + esc(e.name) + '</p>' +
+          '<p class="ffc__blurb">' + esc(e.blurb) + '</p>' +
+          '<span class="ffc__acts">' +
+            (e.video
+              ? '<button class="btn btn--ghost" type="button" data-pc-watch="' + e.id +
+                '">Watch pitch</button>'
+              : '<button class="btn btn--ghost" type="button" data-pc-open="' + e.id +
+                '">Read more</button>') +
             '<button class="btn" type="button" data-pc-vote="' + e.id + '"' +
-              (canVote ? '' : ' disabled') + '>' + (canVote ? 'Vote' : voteLabel) + '</button>' +
+              (canVote ? '' : ' disabled') + '>' + (canVote ? 'Vote' : COPY[STATE].vote) +
+              '</button>' +
+            '<button class="ffc__icon" type="button" data-pc-share="' + e.id + '" ' +
+              'aria-label="Share ' + esc(e.company) + '">' + shareIcon() + '</button>' +
           '</span>' +
         '</span>' +
       '</li>';
   }
+
+  function shareIcon() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+      'aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/>' +
+      '<circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg>';
+  }
+
 
   grid.innerHTML = ENTRANTS.map(cardHtml).join('');
   $$('[data-pc-count]').forEach(function (n) { n.textContent = ENTRANTS.length; });
@@ -189,11 +249,39 @@
   /* Built only when someone asks for it, so twenty profiles cost no third-party request until
      a pitch is actually watched. youtube-nocookie and vimeo's dnt flag keep the player from
      profiling the viewer for us. */
+  /* Four kinds of pitch arrived, because the submission form accepted whatever was to hand:
+     a direct mp4 or mov, a YouTube id recovered from a filename or a .docx, a Google Drive
+     file, and -- for four founders -- a PDF or an image that is not a pitch video at all.
+     The first three play. The fourth gets an editorial card and is listed for the team. */
   function embedSrc(v) {
+    if (!v) return null;
     if (v.type === 'youtube') return 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1&rel=0';
     if (v.type === 'vimeo') return 'https://player.vimeo.com/video/' + v.id + '?autoplay=1&dnt=1';
-    return null;
+    if (v.type === 'drive') return 'https://drive.google.com/file/d/' + v.id + '/preview';
+    return null;   // 'file' is a <video>, not an iframe
   }
+
+  function playerHtml(v, title) {
+    if (!v) return '';
+    if (v.type === 'file') {
+      return '<video src="' + v.src + '" controls autoplay playsinline preload="metadata" ' +
+        'controlslist="nodownload" title="Pitch video: ' + esc(title) + '"></video>';
+    }
+    var src = embedSrc(v);
+    if (!src) return '';
+    return '<iframe src="' + src + '" title="Pitch video: ' + esc(title) + '" ' +
+      'allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+  }
+
+  /* Founder copy is real text from the manifest and goes into innerHTML, so it is escaped
+     here rather than trusted. An apostrophe in a business name should not be able to end an
+     attribute. */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
 
   /* Each contestant has a page of their own, so a shared link lands on them rather than on a
      fragment of the gallery -- which also means the preview card a messaging app draws is
@@ -752,7 +840,29 @@
     }
   }
 
+  /* "Where you stand", in a line, from the server's account of this visitor and nothing
+     else. Before the server has answered it says what the rule is rather than guessing at a
+     status, because a wrong guess here is the whole class of bug this page has been fighting. */
+  function paintStatus(d) {
+    var el = $('[data-ff-status]');
+    if (!el) return;
+    var txt;
+    if (STATE !== 'open') {
+      txt = COPY[STATE].pill;
+    } else if (!d || !d.verified) {
+      txt = 'Verify once to vote';
+    } else if (typeof d.remaining === 'number' && d.remaining > 0) {
+      txt = d.remaining + (d.remaining === 1 ? ' point to give' : ' points to give');
+    } else if (d.bonus_eligible) {
+      txt = '+2 bonus available';
+    } else {
+      txt = 'Allowance given today';
+    }
+    el.textContent = txt;
+  }
+
   function paintVoteButtons(d) {
+    paintStatus(d);
     $$('[data-pc-vote]').forEach(function (b) {
       if (b.closest('[data-pc-step]')) return;   // the dialog's own buttons route themselves
       labelVoteButton(b, d);
@@ -813,13 +923,25 @@
       if (el.disabled) return;
       var pe = byId[el.getAttribute('data-pc-play')];
       if (!pe || !pe.video) return;
-      var src = embedSrc(pe.video);
-      if (!src) return;
-      $('[data-pc-p-video]', pDlg).innerHTML =
-        '<iframe src="' + src + '" title="Pitch video: ' + pe.name + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
-      track('video_play', { entrant_id: pe.id });
+      var markup = playerHtml(pe.video, pe.company);
+      if (!markup) return;
+      $('[data-pc-p-video]', pDlg).innerHTML = markup;
+      track('video_play', { entrant_id: pe.id, kind: pe.video.type });
       return;
     }
+    if ((el = t.closest('[data-ff-story]'))) {
+      openStory(el.getAttribute('data-ff-story')); return;
+    }
+    if (t.closest('[data-ff-next]')) { stepStory(1); return; }
+    if (t.closest('[data-ff-prev]')) { stepStory(-1); return; }
+    if (t.closest('[data-ff-close]')) { closeStory(); return; }
+    if ((el = t.closest('[data-ff-profile]'))) {
+      var pid = el.getAttribute('data-ff-profile');
+      closeStory();
+      if (byId[pid]) openProfile(pid);
+      return;
+    }
+
     /* Must be tested BEFORE [data-pc-vote]: this button sits inside the vote dialog and
        re-enters the flow on a different founder, which is exactly what openVote does. */
     if ((el = t.closest('[data-pc-other-go]'))) {
@@ -1109,6 +1231,209 @@
   startClock();
 
   repaintAfterVote();
+
+  /* ---------- the Founder Feed layer ----------
+
+     Stories, the story viewer, search and the opening reveal. All of it sits ON TOP of the
+     voting code: it opens the same profile dialog, calls the same openProfile(), and shares
+     through the same handler. Nothing here can cast, count or change a vote.
+
+     It is also entirely optional. If the markup for a piece is absent, that piece quietly
+     does nothing and the rest still works. */
+
+  var rail = $('[data-ff-rail]');
+  var vwr = $('[data-ff-viewer]');
+  var vwrIdx = -1;
+
+  /* Who appears in the stories row, and in what order. Founders with a playable pitch come
+     first, because a pitch is what the row promises. Everyone is in it regardless: being
+     left out would read as being out of the competition. */
+  function storyOrder() {
+    var withVideo = ENTRANTS.filter(function (e) { return e.video; });
+    var without = ENTRANTS.filter(function (e) { return !e.video; });
+    return withVideo.concat(without);
+  }
+
+  function bubbleHtml(e) {
+    var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
+    var face = e.shot
+      ? '<img src="' + e.shot + '"' + fit + ' alt="" loading="lazy" decoding="async">'
+      : '<span class="ff-bub__mono">' + esc(initials(e)) + '</span>';
+    return '<button class="ff-bub' + (e.video ? '' : ' ff-bub--flat') + '" type="button" ' +
+      'data-ff-story="' + e.id + '" aria-label="' +
+      (e.video ? 'Watch the pitch from ' : 'Read about ') + esc(e.company) + '">' +
+      '<span class="ff-bub__ring"><span class="ff-bub__in">' + face + '</span>' +
+      (e.video ? '<span class="ff-bub__play" aria-hidden="true">' + playIcon() + '</span>' : '') +
+      '</span>' +
+      '<span class="ff-bub__n">' + esc(e.company) + '</span></button>';
+  }
+
+  function paintStories() {
+    if (!rail) return;
+    rail.innerHTML = storyOrder().map(bubbleHtml).join('');
+  }
+
+  /* ---------- the story viewer ---------- */
+
+  function stopPlayback() {
+    if (!vwr) return;
+    var stage = $('[data-ff-stage]', vwr);
+    if (stage) stage.innerHTML = '';   /* removing the node is what actually stops the audio */
+  }
+
+  function openStory(id) {
+    if (!vwr) return;
+    var order = storyOrder();
+    var i = -1;
+    order.forEach(function (e, k) { if (e.id === id) i = k; });
+    if (i < 0) return;
+    vwrIdx = i;
+    paintStory();
+    if (!vwr.open) {
+      if (typeof vwr.showModal === 'function') vwr.showModal();
+      else vwr.setAttribute('open', '');
+    }
+    track('story_open', { entrant_id: id });
+  }
+
+  function paintStory() {
+    var order = storyOrder();
+    var e = order[vwrIdx];
+    if (!e) return;
+    var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
+
+    var ticks = $('[data-ff-ticks]', vwr);
+    if (ticks) {
+      ticks.innerHTML = order.map(function (_, k) {
+        return '<span class="ff-view__tick' + (k <= vwrIdx ? ' is-on' : '') + '"></span>';
+      }).join('');
+    }
+    var av = $('[data-ff-av]', vwr);
+    if (av) {
+      av.innerHTML = e.shot
+        ? '<img src="' + e.shot + '"' + fit + ' alt="">'
+        : '<span class="ff-bub__mono" style="font-size:14px">' + esc(initials(e)) + '</span>';
+    }
+    var co = $('[data-ff-co]', vwr); if (co) { co.textContent = e.company; }
+    var by = $('[data-ff-by]', vwr); if (by) { by.textContent = e.name; }
+
+    var stage = $('[data-ff-stage]', vwr);
+    if (stage) {
+      stage.innerHTML = e.video
+        ? playerHtml(e.video, e.company)
+        /* No playable pitch: an editorial card, not a broken player and not a fake one. Four
+           founders submitted a PDF or an image where a video was expected. That is an
+           editorial problem for the team, not something to paper over here. */
+        : '<div class="ff-view__tell">' +
+            '<span class="ff-view__tell-k">Founder story</span>' +
+            '<p class="ff-view__tell-co">' + esc(e.company) + '</p>' +
+            '<p class="ff-view__tell-p">' + esc(e.blurb) + '</p>' +
+            '<p class="ff-view__tell-p" style="color:var(--accent)">' + esc(e.name) + '</p>' +
+          '</div>';
+    }
+    var go = $('[data-ff-profile]', vwr);
+    if (go) go.setAttribute('data-ff-profile', e.id);
+    var sh = $('[data-ff-share]', vwr);
+    if (sh) sh.setAttribute('data-pc-share', e.id);
+  }
+
+  function stepStory(d) {
+    var order = storyOrder();
+    var next = vwrIdx + d;
+    if (next < 0) return;
+    if (next >= order.length) { closeStory(); return; }
+    stopPlayback();
+    vwrIdx = next;
+    paintStory();
+  }
+
+  function closeStory() {
+    stopPlayback();
+    if (vwr && vwr.open) vwr.close();
+  }
+
+  if (vwr) {
+    vwr.addEventListener('close', stopPlayback);
+    vwr.addEventListener('cancel', stopPlayback);
+    document.addEventListener('keydown', function (ev) {
+      if (!vwr.open) return;
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); stepStory(1); }
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); stepStory(-1); }
+    });
+  }
+
+  /* ---------- search ---------- */
+
+  var searchBox = $('[data-ff-search]');
+  var countEl = $('[data-ff-count]');
+
+  function applyFilter(q) {
+    q = (q || '').trim().toLowerCase();
+    var shown = 0;
+    $$('[data-pc-card]', grid).forEach(function (li) {
+      var e = byId[li.getAttribute('data-pc-card')];
+      var hit = !q || !e ||
+        (e.company + ' ' + e.name + ' ' + (e.blurb || '')).toLowerCase().indexOf(q) >= 0;
+      li.hidden = !hit;
+      if (hit) shown++;
+    });
+    var empty = $('[data-ff-empty]');
+    if (empty) empty.hidden = shown !== 0;
+    if (countEl) {
+      countEl.textContent = q ? shown + ' of ' + ENTRANTS.length : ENTRANTS.length + ' founders';
+    }
+  }
+
+  if (searchBox) {
+    searchBox.addEventListener('input', function () { applyFilter(searchBox.value); });
+  }
+
+  /* ---------- cards arriving ---------- */
+
+  function observeCards() {
+    if (!('IntersectionObserver' in window)) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var io = new IntersectionObserver(function (rows) {
+      rows.forEach(function (r) {
+        if (r.isIntersecting) { r.target.classList.add('is-in'); io.unobserve(r.target); }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.04 });
+    $$('[data-pc-card]', grid).forEach(function (n) { io.observe(n); });
+  }
+
+  /* ---------- the opening reveal ----------
+     Once per tab, and never in front of a page that is already there. */
+  function boot() {
+    var b = $('[data-ff-boot]');
+    if (!b) return;
+    var seen = false;
+    try { seen = sessionStorage.getItem('ngs-ff-boot') === '1'; } catch (e) {}
+    if (seen) { b.remove(); return; }
+    try { sessionStorage.setItem('ngs-ff-boot', '1'); } catch (e) {}
+    var kill = function () { if (b && b.parentNode) b.remove(); };
+    setTimeout(kill, 1800);
+    b.addEventListener('animationend', function (ev) {
+      if (ev.animationName === 'ff-boot-out') kill();
+    });
+  }
+
+  function paintFeedFurniture() {
+    paintStories();
+    var pc = $('[data-ff-pitches]');
+    if (pc) {
+      /* The honest number: how many of the twenty submitted something that actually plays.
+         Four sent a PDF or an image, and saying twenty here would be a small lie that the
+         stories row would immediately expose. */
+      pc.textContent = String(ENTRANTS.filter(function (e) { return e.video; }).length);
+    }
+    applyFilter(searchBox ? searchBox.value : '');
+    observeCards();
+    var note = $('[data-ff-provisional]');
+    if (note) note.hidden = window.NGS_FOUNDER_MAP_REVIEWED === true;
+  }
+
+  boot();
+  paintFeedFurniture();
 
   /* A shared link opens straight onto that pitch -- either a contestant's own page, where the
      server left the id on the window, or a #fragment on the gallery. */

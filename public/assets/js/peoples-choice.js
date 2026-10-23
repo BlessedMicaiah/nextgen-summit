@@ -655,21 +655,31 @@
   function labelVoteButton(b, d) {
     var id = b.getAttribute('data-pc-vote');
     var today = (d && d.verified) ? (d.today_entrant || null) : null;
-    if (STATE !== 'open') { b.disabled = true; b.textContent = idleLabel(b); return; }
-    if (!today) { b.disabled = false; b.textContent = idleLabel(b); return; }
+    if (STATE !== 'open') {
+      b.disabled = true; b.classList.remove('btn--ghost'); b.textContent = idleLabel(b); return;
+    }
+    if (!today) {
+      b.disabled = false; b.classList.remove('btn--ghost'); b.textContent = idleLabel(b); return;
+    }
     if (id === today) {
       /* The founder today's vote went to. Never disabled: this is the way back into the
-         bonus, and the only door to it. */
+         bonus, and the only door to it. Solid, because on a page of twenty cards it is now
+         the only thing a voter can usefully press. */
       var bonusOpen = !!(d.bonus_claimable || d.bonus_eligible);
       var used = typeof d.used === 'number' ? d.used : 1;
       b.disabled = false;
+      b.classList.remove('btn--ghost');
       b.textContent = bonusOpen ? 'View my vote & +2 bonus'
         : 'View my ' + used + (used === 1 ? ' point' : ' points');
     } else {
       /* Every other founder. Still live, deliberately: a disabled button says "no" and
          nothing else, while this one opens a screen that says where today's points went and
-         offers the way back to them. Opening it records nothing. */
+         offers the way back to them. Opening it records nothing.
+
+         Outlined rather than solid. Live is not the same as inviting, and nineteen solid
+         buttons shouting a statement of fact would bury the one that is an actual offer. */
       b.disabled = false;
+      b.classList.add('btn--ghost');
       b.textContent = 'Today’s vote is used';
     }
   }

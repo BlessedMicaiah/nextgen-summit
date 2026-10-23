@@ -1459,8 +1459,18 @@
     else if (!anyOn) reelActivate(null);
   }
 
+  /* Coalesce to one check per frame, but never let a pending frame become a permanent lock.
+
+     This held the whole feed shut. requestAnimationFrame does not run for a page that is
+     hidden or occluded, so the first call latched a handle that would never resolve, the
+     guard saw a pending tick forever after, and every later request returned immediately.
+     That is not only a test-rig problem: a visitor who changes tab part-way down the feed
+     would come back to a reel that had quietly stopped deciding which panel was live.
+
+     Cancelling the outstanding frame instead of refusing the new one keeps the coalescing
+     and removes the trap. */
   function reelQueue() {
-    if (reelTick) return;
+    if (reelTick) { cancelAnimationFrame(reelTick); }
     reelTick = requestAnimationFrame(reelSync);
   }
 
@@ -1489,7 +1499,8 @@
        hidden, and it means the behaviour depends on where the panels ARE rather than on
        being told that they moved. */
     setInterval(function () {
-      if (!document.hidden) reelQueue();
+      // straight to the work: rAF is one of the two things that goes quiet here
+      if (!document.hidden) reelSync();
     }, 250);
 
     reelSync();

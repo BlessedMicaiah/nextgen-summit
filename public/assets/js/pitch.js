@@ -12,7 +12,7 @@
   /* ======================================================================
      1. THE FIVE STEPS
      Whichever step is nearest the reading line is the active one, and every
-     step above it is marked done so the rail reads as progress rather than
+     step above it is marked done so the list reads as progress rather than
      as five separate rows. On a pointer device hover and keyboard focus
      take over, the same way the audience cards behave on the home page.
      One rAF-throttled passive listener, only while the list is on screen.
@@ -147,6 +147,9 @@
       var days = Math.max(1, Math.round((span[i][1] - span[i][0]) / 864e5));
       s.style.setProperty('--i', String(i));
       s.style.setProperty('--days', String(days));
+      s.style.setProperty('--run', i === at ? Math.max(part, .04).toFixed(3) : '0');
+    });
+    steps.forEach(function (s, i) {
       s.style.setProperty('--run', i === at ? Math.max(part, .04).toFixed(3) : '0');
     });
     var day = $('[data-board-day]', board);

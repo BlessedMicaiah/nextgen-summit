@@ -462,10 +462,15 @@ on demand, no page overflow, no console errors, all 20 vote buttons wired to the
 | Founder | Outcome |
 |---|---|
 | **Credible blossom** / Annrita Karu | **Recovered.** The forwarded YouTube Short is hers - confirmed by the video's own title, "Elevator pitch for credible blossom", not by who sent it |
-| **PathBridge** / Benedicta Dankwa | **Still blocked.** Her PDFs carry `/URI` link annotations (invisible to a text scan) pointing at two real Drive folders, correctly named "1 minute Pitch" and "Headshot/Logo". **Both require sign-in.** Needs sharing set to anyone-with-the-link, or a direct file link |
+| **PathBridge** / Benedicta Dankwa | **Recovered 2026-10-23.** A direct file link succeeded where the folders failed. The folders in her PDFs genuinely required sign-in; the single file is public, and the only obstacle was Google's large-file interstitial - a confirmation form whose parameters sit in hidden inputs, not a permission wall. Source was **HEVC 4K, 344.5 MB for 60 seconds**; transcoded to H.264 720p, **14.0 MB**. Her card portrait is a frame from the same pitch, labelled as such, since her image submission is a PDF |
 | **The Luminous Lab** / Ariel Laura Métayer | **Image recovered** from a frame of her own pitch, recorded in the data as `shotFrom` so nobody mistakes it for a submitted headshot |
 
-Images 17 of 20. Monograms remain for Credible blossom, PathBridge and K8Culture Productions.
+**All 20 founders now have a playable pitch.** Images 18 of 20 - only Credible blossom and
+K8Culture Productions still show a monogram, and K8Culture's pitch is on YouTube so there is
+no local frame to borrow for them.
+
+Media library after Benedicta's: **493.9 MB of originals to 100.6 MB served, 80% smaller.**
+Her file alone accounts for 330.6 MB of that saving.
 
 ### Poster frames: the real cause of the framing complaints
 

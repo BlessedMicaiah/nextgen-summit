@@ -241,8 +241,19 @@
   position: relative; aspect-ratio: 4 / 3; background: #0E131A; overflow: hidden;
 }
 .ffc__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* A logo needs air and a light ground; a photograph needs neither. */
-.ffc__shot img.is-contain { object-fit: contain; padding: 14%; background: #fff; }
+/* A logo needs air and a light ground, because several of these are dark marks on
+   transparency and would simply vanish on the dark card. But a full-bleed white rectangle
+   is a hole punched in the page, so the mark sits on a rounded plate inside the card
+   instead -- it reads as a brand, not as a missing image. */
+.ffc__shot img.is-contain {
+  object-fit: contain;
+  width: 68%; height: 68%;
+  margin: 16% auto;
+  padding: 5%;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -22px rgba(0,0,0,.9);
+}
 .ffc__shot::after {
   content: ""; position: absolute; inset: auto 0 0 0; height: 55%;
   background: linear-gradient(180deg, transparent, rgba(6,8,11,.86));

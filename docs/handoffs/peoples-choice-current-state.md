@@ -381,6 +381,80 @@ paused pitch shows black rather than a thumbnail, and a phone on mobile data wil
 
 ---
 
+## 0j. Media inventory and deployment (2026-10-23)
+
+### Mapping: reviewed and confirmed
+
+`tools/founder-map.json` now carries `reviewed: true`. The audit found the manifest, the map
+and the database agreeing: twenty unique ids, no duplicates, no vote row on an id no founder
+holds, no name or slug drift, no image filename mismatched to its founder. **What it cannot
+establish is whether a photograph actually depicts the founder named beside it, or whether a
+pitch is that founder speaking.** Those are editorial checks, not machine ones.
+
+On approval, the ten staging test votes on `entrant-01` and `entrant-07` were set to
+`valid = 0`. **All 14 rows remain** - nothing deleted, each carrying a note explaining why it
+was set aside, and the dashboard's invalidate control restores any of them. A dated backup was
+uploaded beside the live database first, and the result read back from the server. Real
+founders now start at zero.
+
+### Video: self-hosted
+
+| | |
+|---|---|
+| Playable pitches | **18 of 20** |
+| Self-hosted on our server | **13** |
+| YouTube embeds (not ours to download) | 5 |
+| No pitch at all | 2 - Credible blossom, PathBridge |
+| Total size | **149.4 MB to 86.6 MB, 42% smaller** |
+| Poster frames | 13, taken 15% in |
+
+Every source was **already** H.264/AAC, so nothing had to be converted to play at all. What
+justified a pass was delivery size against the ~460px the player actually draws. A first run
+made three files *larger* - they were already efficiently encoded, and CRF alone will spend
+more bits than the source did - so `tools/optimize-pitch-videos.py` now carries a bitrate cap
+and **a guard that discards any re-encode bigger than its source**, falling back to a lossless
+container copy. Six re-encoded, two remuxed from `.mov`, five copied untouched. Nothing
+upscaled, no aspect ratio altered. The worst offender was a 720p pitch carrying 9.56 Mbps:
+71.1 MB to 14.2 MB on its own.
+
+**Serving:** `/assets/video/<slug>.mp4` and `<slug>-poster.jpg`, confirmed on staging as
+`206 Partial Content`, `video/mp4`, byte-range enabled, seven-day cache.
+
+**The deploy constraint, which matters:** a Hostinger deploy replaces the web root, so
+anything not in the archive is removed. The videos therefore live in the repository and ship
+in the release zip, which is now **117.5 MB**, about twelve upload chunks. That is the price
+of self-hosting under this deploy model; uploading videos separately does not survive the
+next deploy.
+
+### Player
+
+Posters before playback; autoplay only where a play control was pressed (`autoplay=0` on
+embeds opened from a story); one video at a time, enforced in the capture phase; playback
+stops on *any* close path. The last one needed a MutationObserver on the dialog's `open`
+attribute, because in this Chromium build a programmatic `.close()` fires neither `close` nor
+`cancel`. The X button and Escape were always fine, but the gap was real.
+
+Verified on the deployed build: landscape 1280x720 and portrait 1080x1920 both fit the stage
+exactly (375x666 inside 375x666 on a 375px phone), posters present, paused before play, plays
+on demand, no page overflow, no console errors, all 20 vote buttons wired to their own id.
+
+### Local media
+
+`~/Downloads/NextGen_Top20_Media` - 790 MB: 20 contestant folders with source files,
+`optimized/pitch.mp4`, `optimized/poster.jpg` and `info.json`; 20 per-contestant ZIPs;
+`NextGen_Top20_Media_ALL.zip` (262.8 MB, verified); `download_report.csv`;
+`media_manifest.csv`. Re-runnable: validated files are kept, not re-fetched.
+
+### Still outstanding
+
+- **Credible blossom** submitted a photograph where a video was expected, and no image at all.
+- **PathBridge** submitted PDFs pointing at Google Drive *folders* a human must open.
+- **The Luminous Lab**'s image URL returns 404; the card shows a monogram.
+- A smaller mobile rendition is possible but not built; the single tier is sized for the
+  460px player.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

@@ -639,13 +639,22 @@
            the approved one-vote rule it would be a lie, so it stays hidden. */
         var again = $('[data-pc-done-again]', vDlg);
         if (again) {
+          /* This line is about the REGULAR vote and must say so.
+
+             It used to read "That is your allowance for today" to anyone whose daily point
+             was spent -- including the voter standing one click away from two bonus points,
+             with the offer of them printed directly underneath. The two statements
+             contradicted each other on the same screen, and the flat one came first.
+
+             A spent allowance at the +1 tier is not a spent allowance. Say when the next
+             regular vote unlocks, and leave the bonus to speak for itself. */
           var more = d.mode === 'daily' && typeof d.remaining === 'number';
           if (more && d.remaining > 0) {
             again.textContent = 'You have ' + d.remaining +
               (d.remaining === 1 ? ' more vote' : ' more votes') + ' today.';
             again.hidden = false;
           } else if (more && d.next_window) {
-            again.textContent = 'That is your allowance for today. Come back after midnight Eastern to vote again.';
+            again.textContent = 'Your next daily vote unlocks after midnight Eastern.';
             again.hidden = false;
           } else {
             again.hidden = true;

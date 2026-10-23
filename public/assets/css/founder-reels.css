@@ -278,7 +278,9 @@
 .reel__panel--p3 { box-shadow: 0 0 0 1.5px rgba(214,158,106,.45), 0 30px 70px -40px rgba(0,0,0,1); }
 
 /* ---------- the reaction sheet, rebuilt to be easy to leave ---------- */
-.rc { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+/* Above the immersive feed (90), below the introduction (120) and an opened deck (130).
+   At 60 the sheet opened BEHIND a full-screen reel, which is a sheet that does not exist. */
+.rc { position: fixed; inset: 0; z-index: 110; pointer-events: none; }
 .rc__scrim {
   position: absolute; inset: 0; background: rgba(4,6,9,.6);
   opacity: 0; transition: opacity .34s var(--ease); pointer-events: none;
@@ -314,4 +316,201 @@
 .rc__done { width: 100%; margin-top: 12px; --h: 46px; font-size: 12px; }
 @media (prefers-reduced-motion: reduce) {
   .rc__in, .rc__scrim { transition: none; }
+}
+
+/* ============================================================================
+   IMMERSIVE MODE
+   ============================================================================
+
+   The feed above is the in-page version: panels under the viewport, proximity
+   snapping, the rest of the website still around them. It was built that way on
+   purpose -- a nested scroller that fills the screen holds a visitor until it runs
+   out, and that is the trapped feeling we ruled out.
+
+   Immersive mode answers the other half of the brief without reintroducing the trap:
+   the visitor ENTERS it deliberately, from a control, and the way out is on screen
+   the whole time. The same panels, the same markup, the same geometry-driven
+   activation -- promoted to a fixed full-viewport scroller with mandatory snapping.
+   One founder on screen, edge to edge, exactly one per swipe.
+
+   dvh, not vh: on a phone vh includes the browser's own collapsing bars, so a 100vh
+   panel is taller than the screen and mandatory snapping fights the address bar. */
+
+html.pc-live, html.pc-live body { overflow: hidden !important; height: 100%; }
+/* the website's own furniture steps aside; it is not part of this experience */
+html.pc-live .nav,
+html.pc-live .foot,
+html.pc-live .skip,
+html.pc-live [data-announce] { display: none !important; }
+
+.reel.is-live {
+  position: fixed; inset: 0; z-index: 90;
+  margin: 0; padding: 0;
+  background: #000;
+  overflow-y: auto; overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.reel.is-live::-webkit-scrollbar { width: 0; height: 0; }
+
+/* The sticky Back chip belongs to the in-page feed; immersive mode has the exit button
+   in the corner instead, and two ways back would just be two things to read. */
+.reel.is-live .reel__up { display: none; }
+
+.reel.is-live .reel__panel {
+  height: 100dvh;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;      /* one founder per swipe, never two */
+  scroll-margin-top: 0;
+}
+@media (min-width: 900px) {
+  /* Desktop is not a phone stretched wide. The footage keeps a phone-shaped stage in
+     the middle of a dark room, which is how a vertical feed is meant to be read. */
+  .reel.is-live .reel__panel { height: 100dvh; }
+  .reel.is-live .reel__media { inset: 0 max(0px, calc(50% - 15.5rem)); }
+  .reel.is-live .reel__back  { inset: -14%; }
+  .reel.is-live .reel__meta,
+  .reel.is-live .reel__rail,
+  .reel.is-live .reel__medal { --reel-inset: max(22px, calc(50% - 15rem)); }
+  .reel.is-live .reel__meta  { left: var(--reel-inset); right: auto; max-width: 23rem; }
+  .reel.is-live .reel__rail  { right: var(--reel-inset); }
+  .reel.is-live .reel__medal { left: var(--reel-inset); }
+  .reel.is-live .reel__num   { right: var(--reel-inset); }
+}
+
+/* Safe areas. A phone's home indicator sits over the bottom of the panel and the
+   notch over the top, so the furniture is inset rather than the panel shrunk --
+   the video still runs the full height behind them. */
+.reel.is-live .reel__meta { padding-bottom: max(18px, calc(14px + env(safe-area-inset-bottom))); }
+.reel.is-live .reel__rail { bottom: max(96px, calc(92px + env(safe-area-inset-bottom))); }
+.reel.is-live .reel__medal { top: max(62px, calc(54px + env(safe-area-inset-top))); }
+.reel.is-live .reel__num { top: max(62px, calc(54px + env(safe-area-inset-top))); }
+
+/* ---- landscape footage on a tall screen ----
+
+   Eleven of these pitches were filmed wide. Contained in a 9:19.5 phone they draw a band
+   about a quarter of the screen high, and the first version left the rest near-black --
+   which reads as a broken player rather than as staging. Cropping is not the answer: it
+   is the founder's face that would go.
+
+   So the ground behind the clip is made to carry the frame. The founder's own poster,
+   blurred and lifted out of the dark, with a vignette pulling the eye back to the middle
+   and a soft bar of light behind the clip itself. The clip is untouched; the room it
+   sits in is dressed. */
+.reel.is-live .reel__back {
+  filter: blur(46px) saturate(1.12) brightness(.74);
+  transform: scale(1.22);
+}
+.reel.is-live .reel__panel::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    /* a band of light where a wide clip lands, so it sits on something */
+    linear-gradient(180deg, rgba(0,0,0,0) 18%, rgba(255,255,255,.055) 34%, rgba(255,255,255,.055) 56%, rgba(0,0,0,0) 72%),
+    radial-gradient(84% 40% at 50% 42%, rgba(57,216,200,.11) 0%, rgba(57,216,200,0) 72%),
+    /* a light vignette, not a blackout: the point is to keep the eye in the middle,
+       not to put the poster back in the dark it was just lifted out of */
+    radial-gradient(142% 86% at 50% 42%, rgba(0,0,0,0) 46%, rgba(2,4,6,.52) 100%);
+}
+/* Wide footage is lifted clear of the caption, so the empty space reads as a margin
+   above a clip rather than as a hole the clip is floating in. The class is set from the
+   file's own dimensions once its header arrives -- never from the extension. */
+.reel.is-live .reel__panel.is-wide .reel__media { inset: 0 0 19% 0; }
+@media (min-width: 900px) {
+  .reel.is-live .reel__panel.is-wide .reel__media { inset: 0 max(0px, calc(50% - 15.5rem)) 13% ; }
+}
+
+/* ---- the exit, and the progress of the feed ---- */
+.reel__bar {
+  position: fixed; z-index: 94;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  right: max(10px, env(safe-area-inset-right));
+  display: none; align-items: center; gap: 12px;
+  pointer-events: none;
+}
+.reel.is-live ~ .reel__bar, .reel__bar.is-on { display: flex; }
+.reel__exit {
+  pointer-events: auto;
+  display: inline-grid; place-items: center;
+  width: 40px; height: 40px; flex: 0 0 auto;
+  border: 0; border-radius: 999px; padding: 0;
+  background: rgba(8,10,14,.56); color: #fff;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.17);
+  cursor: pointer;
+}
+.reel__exit svg { width: 17px; height: 17px; }
+.reel__exit:hover { background: rgba(8,10,14,.8); }
+.reel__ticks {
+  display: flex; gap: 3px; flex: 1 1 auto; min-width: 0;
+  height: 3px; border-radius: 999px; overflow: hidden;
+}
+.reel__ticks i {
+  flex: 1 1 0; min-width: 0; border-radius: 999px;
+  background: rgba(255,255,255,.26);
+  transition: background-color .3s var(--ease, ease);
+}
+.reel__ticks i.is-seen { background: rgba(255,255,255,.52); }
+.reel__ticks i.is-on { background: #fff; }
+.reel__of {
+  pointer-events: none; flex: 0 0 auto;
+  font: 800 10px/1 var(--f-sans, system-ui); letter-spacing: .16em;
+  text-transform: uppercase; color: rgba(255,255,255,.76);
+  text-shadow: 0 1px 10px rgba(0,0,0,.8);
+}
+
+/* A one-time hint that this swipes, on the first panel only, gone after a scroll. */
+/* Clear of BOTH the caption and the action rail. At the bottom of the panel it landed on
+   top of the founder's own name, which is not a hint, it is a mess: the caption block
+   starts around 147px up and the rail occupies the right-hand 76px, so the hint sits in
+   the gap that is left. */
+.reel__hint {
+  position: absolute; z-index: 9; left: 16px; right: 78px;
+  bottom: max(166px, calc(162px + env(safe-area-inset-bottom)));
+  display: grid; justify-items: center; gap: 6px;
+  pointer-events: none; text-align: center;
+  font: 700 10.5px/1 var(--f-sans, system-ui); letter-spacing: .2em;
+  text-transform: uppercase; color: rgba(255,255,255,.82);
+  text-shadow: 0 1px 12px rgba(0,0,0,.9);
+  transition: opacity .4s var(--ease, ease);
+}
+.reel__hint i { display: block; width: 18px; height: 18px; animation: reel-nudge 1.8s ease-in-out infinite; }
+.reel__hint i svg { width: 100%; height: 100%; }
+.reel.is-moved .reel__hint { opacity: 0; }
+@keyframes reel-nudge { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+@media (prefers-reduced-motion: reduce) { .reel__hint i { animation: none; } }
+
+/* A tap anywhere on the footage pauses it, the way a reel does. */
+.reel__tap {
+  position: absolute; inset: 0; z-index: 3;
+  border: 0; padding: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.reel__tap span {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  opacity: 0; transition: opacity .22s var(--ease, ease);
+}
+.reel__tap span svg { width: 68px; height: 68px; color: #fff; filter: drop-shadow(0 6px 24px rgba(0,0,0,.7)); }
+.reel__panel.is-held .reel__tap span { opacity: .96; }
+
+/* the spinner that only appears if the footage actually makes someone wait */
+.reel__wait {
+  position: absolute; z-index: 5; left: 50%; top: 50%;
+  width: 34px; height: 34px; margin: -17px 0 0 -17px;
+  border-radius: 999px; pointer-events: none; opacity: 0;
+  border: 2px solid rgba(255,255,255,.26); border-top-color: #fff;
+  transition: opacity .2s var(--ease, ease);
+}
+.reel__panel.is-waiting .reel__wait { opacity: 1; animation: reel-spin .8s linear infinite; }
+@keyframes reel-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .reel__panel.is-waiting .reel__wait { animation: none; border-top-color: rgba(255,255,255,.26); }
 }

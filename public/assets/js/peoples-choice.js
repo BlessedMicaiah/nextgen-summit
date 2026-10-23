@@ -106,7 +106,12 @@
       base.company = f.company;
       base.blurb = f.blurb;
       base.summary = f.blurb;
-      base.bio = f.blurb;
+      /* The biography is whatever the manifest actually carries, and for all twenty that
+         is nothing: the submission form asked about the BUSINESS. Copying the business
+         description in here is what printed one paragraph under both "The founder" and
+         "The project" and made the card read as unfinished. No founder copy means the
+         block stays shut, not padded. */
+      base.bio = f.bio || null;
       base.shot = f.shot || null;
       base.shotFit = f.shotFit || 'cover';
       base.focal = f.focal || '50% 42%';
@@ -240,16 +245,6 @@
   var pDlg = $('[data-pc-profile]');
   var opener = null;
 
-  function videoHtml(e) {
-    if (!e.video) {
-      return '<button class="pcp__poster" type="button" data-pc-play disabled>' +
-        '<span class="pcp__play" aria-hidden="true">' + playIcon() + '</span>' +
-        '<span class="pcp__posterk">Pitch video to come</span></button>';
-    }
-    return '<button class="pcp__poster" type="button" data-pc-play="' + e.id + '">' +
-      '<span class="pcp__play" aria-hidden="true">' + playIcon() + '</span>' +
-      '<span class="pcp__posterk">Play the pitch</span></button>';
-  }
   function playIcon() {
     return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
   }
@@ -314,58 +309,194 @@
     return via ? u + '?s=' + via : u;
   }
 
+  /* The founder card, painted into the speaker-card markup.
+
+     Two faces, two different pieces of writing. The manifest describes the BUSINESS and
+     says nothing about the person, so "The founder" is hidden rather than filled with the
+     project copy a second time -- printing one paragraph under both headings is what made
+     the old profile read as unfinished, and inventing a biography is not an option. Where
+     the portrait is a frame lifted from the founder's own pitch the card says so. */
   function paintProfile(e) {
-    $('[data-pc-p-video]', pDlg).innerHTML = videoHtml(e);
-    $('[data-pc-p-name]', pDlg).textContent = e.name;
-    $('[data-pc-p-co]', pDlg).textContent = e.company;
-    /* Two sections mean two different pieces of writing -- or one section. The manifest
-       describes the business and says nothing about the founder personally, so printing the
-       same paragraph under both headings read as unfinished. Until leadership supplies
-       founder copy the block is hidden rather than padded out. */
+    /* Company and founder name appear on both faces, so they are set by selector across
+       the whole dialog rather than once each. */
+    $$('[data-pc-p-co]', pDlg).forEach(function (n) { n.textContent = e.company; });
+    $$('[data-pc-p-name]', pDlg).forEach(function (n) { n.textContent = e.name; });
+
+    var num = $('[data-fcd-n]', pDlg);
+    if (num) num.textContent = String(e.n).padStart ? String(e.n).padStart(2, '0') : e.n;
+
+    /* The front previews, the back explains. Every one of the twenty descriptions turned
+       out to be a single sentence -- measured, not assumed -- so there is no second
+       sentence to hold back. The front therefore shows the same copy clamped to two
+       lines, which reads as the preview it is, and the back gives it in full.
+
+       What is NOT duplicated any more is "The founder" against "The project": the
+       biography is only ever the manifest's own, and the manifest has none. */
+    var blurb = $('[data-fcd-blurb]', pDlg);
+    if (blurb) blurb.textContent = e.blurb || '';
+
+    /* the portrait, and an honest monogram when there is no portrait to show */
+    var shot = $('[data-pc-p-shot]', pDlg);
+    var img = shot ? $('img', shot) : null;
+    var mono = $('[data-fcd-mono]', pDlg);
+    if (img) {
+      if (e.shot) {
+        img.src = e.shot;
+        img.alt = e.company + ' - ' + e.name;
+        img.hidden = false;
+        if (e.shotFit !== 'contain' && e.focal) img.style.objectPosition = e.focal;
+        else img.style.objectPosition = '';
+        shot.classList.toggle('is-contain', e.shotFit === 'contain');
+      } else {
+        img.removeAttribute('src');
+        img.hidden = true;
+        shot.classList.remove('is-contain');
+      }
+    }
+    if (mono) { mono.hidden = !!e.shot; mono.textContent = initials(e); }
+
+    var thumb = $('[data-fcd-thumb]', pDlg);
+    var timg = thumb ? $('img', thumb) : null;
+    if (timg) {
+      if (e.shot) { timg.src = e.shot; timg.hidden = false; }
+      else { timg.removeAttribute('src'); timg.hidden = true; }
+      thumb.classList.toggle('is-contain', e.shotFit === 'contain');
+    }
+
+    /* "The founder": shown only when there is verified copy about the person. */
     var bioEl = $('[data-pc-p-bio]', pDlg);
-    bioEl.textContent = e.bio || '';
-    var bioBlock = bioEl.closest('[data-pc-p-bio-block]') || bioEl.parentNode;
-    if (bioBlock) bioBlock.hidden = !e.bio;
+    if (bioEl) {
+      bioEl.textContent = e.bio || '';
+      var bioBlock = bioEl.closest('[data-pc-p-bio-block]') || bioEl.parentNode;
+      if (bioBlock) bioBlock.hidden = !e.bio;
+    }
     $('[data-pc-p-sum]', pDlg).textContent = e.summary || e.blurb || '';
+
     var flag = $('[data-pc-p-flag]', pDlg);
-    flag.hidden = !e.draft;
+    if (flag) flag.hidden = !e.draft;
+
+    /* Watch the pitch returns to this founder in the feed rather than opening a second
+       player inside the card. One place where the pitches play, so closing the card always
+       puts the visitor back where the video is. */
+    var watch = $('[data-fcd-watch]', pDlg);
+    if (watch) {
+      watch.setAttribute('data-fcd-watch', e.id);
+      watch.hidden = !e.video;
+    }
+
     /* Attribute first, then label: the labeller compares this id against the founder the
        server says today's vote went to, so it has to be set before it reads it. */
-    var pshot = $('[data-pc-p-shot] img', pDlg) || $('.pcp__shot img', pDlg);
-    if (pshot && e.focal && e.shotFit !== 'contain') {
-      pshot.style.objectPosition = e.focal;
-    }
     var vb = $('[data-pc-p-vote]', pDlg);
     vb.setAttribute('data-pc-vote', e.id);
     labelVoteButton(vb, me);
+
     var ext = $('[data-pc-p-ext]', pDlg);
     ext.hidden = !e.videoUrl;
     if (e.videoUrl) $('a', ext).href = e.videoUrl;
     $('[data-pc-p-share]', pDlg).setAttribute('data-pc-share', e.id);
     pDlg.setAttribute('data-entrant', e.id);
+    pDlg.setAttribute('aria-label', e.company + ', ' + e.name);
+  }
+
+  /* ---- the turn ----
+     The stylesheet does the rotating and decides which face is on screen; this keeps the
+     reading order and the tab order honest about which one that is. Lifted from
+     speakers.js so the two card systems behave identically. */
+  var fcdFront = $('[data-fcd-front]', pDlg);
+  var fcdBack = $('[data-fcd-back]', pDlg);
+
+  function fcdFace(isBack) {
+    pDlg.classList.toggle('is-back', isBack);
+    if (!fcdFront || !fcdBack) return;
+    fcdFront.setAttribute('aria-hidden', String(isBack));
+    fcdBack.setAttribute('aria-hidden', String(!isBack));
+    $$('a,button', isBack ? fcdFront : fcdBack).forEach(function (n) { n.setAttribute('tabindex', '-1'); });
+    $$('a,button', isBack ? fcdBack : fcdFront).forEach(function (n) { n.removeAttribute('tabindex'); });
+  }
+
+  /* The card grows out of whatever was tapped and shrinks back into it on the way out --
+     the same morph the speaker deck uses. The centre is read from the screen, the width
+     from layout, and both faces are 5:7 so one scale fits. */
+  var fcdIn = $('.fcd__in', pDlg);
+  var fcdCanMorph = !matchMedia('(prefers-reduced-motion: reduce)').matches
+    && fcdIn && typeof fcdIn.animate === 'function';
+  var fcdLeaving = false;
+
+  function fcdSlot(btn) {
+    var a = btn.getBoundingClientRect(), b = fcdIn.getBoundingClientRect();
+    if (!a.width || !b.width) return 'none';
+    return 'translate(' + ((a.left + a.width / 2) - (b.left + b.width / 2)) + 'px,' +
+      ((a.top + a.height / 2) - (b.top + b.height / 2)) + 'px) scale(' +
+      (a.width / (b.width || 1)) + ')';
   }
 
   function openProfile(id, viaHash) {
     var e = byId[id];
     if (!e) return;
     paintProfile(e);
+    fcdLeaving = false;
+    fcdFace(false);                                    // every opening starts on the front
+    var morph = fcdCanMorph && opener && opener.isConnected && !pDlg.open;
+    pDlg.classList.toggle('is-morph', !!morph);
     if (!pDlg.open) {
       if (typeof pDlg.showModal === 'function') pDlg.showModal();
       else pDlg.setAttribute('open', '');
     }
-    if (!viaHash && location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+    if (morph) {
+      fcdIn.animate([{ transform: fcdSlot(opener) }, { transform: 'none' }],
+        { duration: 620, easing: 'cubic-bezier(.16,1,.3,1)' });
+    }
+    /* Inside the immersive feed the hash is the feed's business, not the card's: rewriting
+       it here would fight the deep link the visitor arrived on. */
+    if (!viaHash && !reelLive && location.hash !== '#' + id) {
+      history.replaceState(history.state, '', '#' + id);
+    }
     track('profile_view', { entrant_id: id, entrant_slot: e.n });
   }
 
   function closeProfile() {
-    if (pDlg.open) pDlg.close();
+    if (!pDlg.open || fcdLeaving) return;
+    if (!fcdCanMorph || !opener || !opener.isConnected) { pDlg.close(); return; }
+    fcdLeaving = true;
+    pDlg.classList.add('is-closing');
+    var shut = function () { if (pDlg.open) pDlg.close(); };
+    var run = fcdIn.animate([{ transform: 'none' }, { transform: fcdSlot(opener) }],
+      { duration: 420, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+    run.onfinish = run.oncancel = shut;
+    /* And a hard backstop. An animation only finishes if the page is being composited,
+       and a page that is hidden, occluded or throttled is not -- measured here: the card
+       stayed open because onfinish never arrived. A card whose only exit depends on an
+       animation completing is a card that can trap someone, so the close happens on time
+       whether the animation got there or not. */
+    setTimeout(shut, 520);
   }
 
+  /* Escape leaves the same way the close button does, so the card still shrinks back into
+     the thing it came out of rather than vanishing. */
+  pDlg.addEventListener('cancel', function (ev) {
+    if (!fcdCanMorph || fcdLeaving) return;
+    ev.preventDefault();
+    closeProfile();
+  });
+
   pDlg.addEventListener('close', function () {
-    $('[data-pc-p-video]', pDlg).innerHTML = '';        // stop any player that is running
-    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    fcdFace(false);                                    // reset for the next one
+    if (fcdIn && fcdIn.getAnimations) fcdIn.getAnimations().forEach(function (a) { a.cancel(); });
+    pDlg.classList.remove('is-closing', 'is-morph');
+    fcdLeaving = false;
+    /* The hash belongs to the feed while the feed is open. */
+    if (!reelLive && location.hash) {
+      history.replaceState(history.state, '', location.pathname + location.search);
+    }
     if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     opener = null;
+  });
+
+  /* The card itself never closes the dialog; the area outside it does. */
+  pDlg.addEventListener('click', function (ev) {
+    if (!ev.target.closest) return;
+    if (ev.target.closest('.fcd__in')) return;
+    closeProfile();
   });
 
   /* ---------- 7. the vote flow ---------- */
@@ -973,22 +1104,32 @@
     if ((el = t.closest('[data-pc-open]'))) {
       opener = el; openProfile(el.getAttribute('data-pc-open')); return;
     }
+    /* Watch the pitch, from anywhere: the feed is where the pitches play, so this takes
+       the visitor there rather than opening a second player somewhere else. */
     if ((el = t.closest('[data-pc-watch]'))) {
-      opener = el;
-      var wid = el.getAttribute('data-pc-watch');
-      openProfile(wid);
-      var poster = $('[data-pc-play]', pDlg);
-      if (poster && !poster.disabled) poster.click();
+      reelOpenAt(el.getAttribute('data-pc-watch'));
       return;
     }
-    if ((el = t.closest('[data-pc-play]'))) {
-      if (el.disabled) return;
-      var pe = byId[el.getAttribute('data-pc-play')];
-      if (!pe || !pe.video) return;
-      var markup = playerHtml(pe.video, pe.company, pe.poster, true);
-      if (!markup) return;
-      $('[data-pc-p-video]', pDlg).innerHTML = markup;
-      track('video_play', { entrant_id: pe.id, kind: pe.video.type });
+    if ((el = t.closest('[data-fcd-watch]'))) {
+      var fwid = el.getAttribute('data-fcd-watch');
+      closeProfile();
+      reelOpenAt(fwid);
+      return;
+    }
+    if (t.closest('[data-fcd-turn]')) {
+      fcdFace(!pDlg.classList.contains('is-back'));
+      return;
+    }
+    if (t.closest('[data-ff-enter]')) { enterExperience(); return; }
+    if (t.closest('[data-fci-skip]')) { introEnd(true); return; }
+    if (t.closest('[data-reel-exit]')) { reelExit(); return; }
+    if (t.closest('[data-reel-tap]')) { reelToggle(); return; }
+    if ((el = t.closest('[data-deck-open]'))) { deckSpread(+el.getAttribute('data-deck-open')); return; }
+    if (t.closest('[data-deck-close]')) { deckSpreadClose(); return; }
+    if ((el = t.closest('[data-deck-pick]'))) {
+      var did = el.getAttribute('data-deck-pick');
+      deckSpreadClose();
+      reelOpenAt(did);
       return;
     }
     if ((el = t.closest('[data-ff-story]'))) {
@@ -996,7 +1137,7 @@
          two competing ways to browse the same twenty founders. It now drops the visitor at
          that founder inside the feed. */
       var sid = el.getAttribute('data-ff-story');
-      if (!reelGoTo(sid)) openProfile(sid);
+      reelOpenAt(sid);
       track('story_jump', { entrant_id: sid });
       return;
     }
@@ -1018,10 +1159,15 @@
     if (t.closest('[data-rc-scrim]')) { rcClose(); return; }
     if (t.closest('[data-reel-restart]')) {
       var first = $$('[data-reel-panel]', reelTrack)[0];
-      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (first) {
+        if (reelLive && reel) reel.scrollTo({ top: first.offsetTop, behavior: 'smooth' });
+        else first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(reelQueue, 700);
+      }
       return;
     }
     if (t.closest('[data-reel-top]') || t.closest('[data-reel-up]')) {
+      if (reelLive) { reelExit(); return; }
       var top = $('#gallery');
       if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
@@ -1390,7 +1536,7 @@
     return '<svg viewBox="0 0 24 24"' + stroke + ' aria-hidden="true">' + p + '</svg>';
   }
 
-  function reelPanelHtml(e) {
+  function reelPanelHtml(e, i) {
     var poster = e.poster || e.shot || '';
     var canVote = STATE === 'open';
     /* The media is decided here and not guessed at playback: a founder with a file plays
@@ -1430,6 +1576,14 @@
         (poster ? '<span class="reel__back" style="background-image:url(&quot;' + esc(poster) + '&quot;)"></span>' : '') +
         '<span class="reel__media">' + media + '</span>' +
         '<span class="reel__scrim"></span>' +
+        /* A tap anywhere on the footage holds it, the way a reel does. Only for the
+           pitches we serve ourselves -- an embed owns its own surface and putting a
+           transparent button over it would just break YouTube's controls. */
+        (e.video && e.video.type === 'file'
+          ? '<button class="reel__tap" type="button" data-reel-tap aria-label="Pause or resume this pitch">' +
+            '<span aria-hidden="true">' + reelIcon('play') + '</span></button>' +
+            '<span class="reel__wait" aria-hidden="true"></span>'
+          : '') +
         '<span class="reel__num">' + e.n + '</span>' +
         '<div class="reel__meta">' +
           '<p class="reel__co">' + esc(e.company) + '</p>' +
@@ -1437,6 +1591,11 @@
           '<p class="reel__blurb">' + esc(e.blurb) + '</p>' +
           '<button class="reel__meet" type="button" data-pc-open="' + e.id + '">Tap to meet the founder</button>' +
         '</div>' +
+        (i === 0
+          ? '<span class="reel__hint" aria-hidden="true">Swipe for the next' +
+            '<i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+            'stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m-6-6 6 6 6-6"/></svg></i></span>'
+          : '') +
         '<div class="reel__rail">' +
           '<button class="reel__act reel__act--vote" type="button" data-pc-vote="' + e.id + '"' +
             (canVote ? '' : ' disabled') + '><span>' + reelIcon('vote') + '</span>' +
@@ -1453,16 +1612,78 @@
       '</li>';
   }
 
-  function reelEndHtml() {
+  /* ---------- the ending: twenty cards, three decks ----------
+
+     The last panel of the feed. A line saying "you have finished watching" is a dead end;
+     this is the way back in. The three groups are 6 / 6 / 8 and are cut from the SAME
+     order the feed runs in, so when real standings exist the first deck holds the
+     founders currently ahead -- and every founder appears in exactly one deck, which is
+     asserted below rather than assumed. */
+  var DECK_SIZES = [6, 6, 8];
+  var DECK_NAMES = ['Deck one', 'Deck two', 'Deck three'];
+
+  function deckGroups() {
+    var all = reelOrder();
+    var out = [];
+    var at = 0;
+    DECK_SIZES.forEach(function (n) { out.push(all.slice(at, at + n)); at += n; });
+    /* Anything left over -- which would mean the lineup is no longer twenty -- goes into
+       the last deck rather than being silently dropped. A founder missing from the ending
+       is worse than a deck of nine. */
+    if (at < all.length) out[out.length - 1] = out[out.length - 1].concat(all.slice(at));
+    return out;
+  }
+
+  function deckCardFace(e, i) {
+    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
+    var rank = (place >= 1 && place <= 3)
+      ? '<span class="deck__rank deck__rank--' + place + '">' + ({ 1: '1st', 2: '2nd', 3: '3rd' }[place]) + '</span>'
+      : '';
+    var art = e.shot
+      ? '<img src="' + esc(e.shot) + '" alt="" loading="lazy" decoding="async"' +
+        (e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal || '50% 26%') + '"') + '>'
+      : '<span class="deck__mono">' + esc(initials(e)) + '</span>';
+    return rank + art + deckCardFaceText(e);
+  }
+
+  function deckPanelHtml() {
+    var groups = deckGroups();
+    var flown = 0;
+    var stacks = groups.map(function (g, gi) {
+      /* The cards fly in from alternating sides and from below, each a little later than
+         the one before, and land in the stack they belong to. */
+      var cards = g.map(function (e, i) {
+        var side = ((flown + i) % 2) ? 1 : -1;
+        var vars = '--i:' + i + ';--d:' + (flown + i) +
+          ';--r:' + (gi === 1 ? -1 : 1) +
+          ';--fx:' + (side * (104 + ((flown + i) % 3) * 16)) + 'vw' +
+          ';--fy:' + (18 + ((flown + i) % 4) * 7) + 'vh' +
+          ';--fr:' + (side * (18 + ((flown + i) % 5) * 5)) + 'deg';
+        return '<span class="deck__card' + (e.shotFit === 'contain' ? ' deck__card--logo' : '') +
+          '" style="' + vars + '">' + deckCardFace(e, i) + '</span>';
+      }).reverse().join('');          // first founder on top of the stack
+      flown += g.length;
+      return '' +
+        '<li class="deck__stack">' +
+          '<button class="deck__open" type="button" data-deck-open="' + gi + '" ' +
+            'aria-label="Open ' + esc(DECK_NAMES[gi]) + ', ' + g.length + ' founders">' +
+            '<span class="deck__fan">' + cards + '</span>' +
+            '<span class="deck__label"><b>' + esc(DECK_NAMES[gi]) + '</b>' +
+              '<span>' + g.length + ' founders</span></span>' +
+          '</button>' +
+        '</li>';
+    }).join('');
+
     return '' +
-      '<li class="reel__panel reel__end" data-reel-end>' +
-        '<p class="reel__end-k">That’s all twenty</p>' +
-        '<h3 class="reel__end-t">You’ve met the founders.</h3>' +
-        '<p class="reel__end-p">Now help shape what happens next. One vote a day, every day, ' +
-          'until October 28.</p>' +
-        '<div class="reel__end-acts">' +
-          '<button class="btn btn--lg" type="button" data-reel-restart>Explore the founders again</button>' +
-          '<button class="btn btn--lg btn--ghost" type="button" data-reel-top>Back to People’s Choice</button>' +
+      '<li class="reel__panel deck" data-reel-end data-deck>' +
+        '<p class="deck__k">The NextGen deck</p>' +
+        '<h3 class="deck__t">20 founders.<br>20 bold ideas.</h3>' +
+        '<p class="deck__p">Find the one that inspires you. Open a deck and pick a founder to ' +
+          'watch their pitch again.</p>' +
+        '<ul class="deck__stacks">' + stacks + '</ul>' +
+        '<div class="deck__foot">' +
+          '<button class="btn btn--lg" type="button" data-reel-restart>Start from the first pitch</button>' +
+          '<button class="btn btn--lg btn--ghost" type="button" data-reel-top>Back to People&rsquo;s Choice</button>' +
         '</div>' +
       '</li>';
   }
@@ -1484,7 +1705,7 @@
   function paintReels() {
     if (!reelTrack) return;
     var order = reelOrder();
-    reelTrack.innerHTML = order.map(reelPanelHtml).join('') + reelEndHtml();
+    reelTrack.innerHTML = order.map(reelPanelHtml).join('') + deckPanelHtml();
     watchReels();
   }
 
@@ -1526,6 +1747,15 @@
     var v = $('[data-reel-video]', panel);
     if (!v) return;
     v.muted = reelMuted;
+    /* Wide footage on a tall screen needs a different composition from portrait footage,
+       and the only honest way to know which is which is to ask the file. Once the header
+       is in, the panel says so and the stylesheet lifts the clip clear of the caption. */
+    var shape = function () {
+      if (!v.videoWidth || !v.videoHeight) return;
+      panel.classList.toggle('is-wide', (v.videoWidth / v.videoHeight) > 1.2);
+    };
+    if (v.readyState >= 1) shape();
+    else v.addEventListener('loadedmetadata', shape, { once: true });
     /* Muted autoplay is what phones allow. If this browser refuses anyway the poster is
        already there and the play control is one tap away, which is the same screen either
        way -- no error, no apology. */
@@ -1563,8 +1793,18 @@
        card, the gap between two panels, or the page scrolled past the feed entirely. The
        earlier version only stopped when no panel was on screen AT ALL, which left the last
        pitch playing underneath the closing card. */
-    if (best && best.hasAttribute('data-reel-end')) { reelActivate(null); return; }
+    /* The deck is deliberately NOT in the panel list: it is not a founder, and counting
+       it would make a twenty-founder feed twenty-one long in the progress bar and in the
+       preload arithmetic. So its arrival is decided from its own rectangle rather than by
+       asking which panel holds the centre -- which is why the earlier data-reel-end test
+       here could never fire. */
+    var end = $('[data-reel-end]', reelTrack);
+    if (end) {
+      var er = end.getBoundingClientRect();
+      if (er.top < window.innerHeight * 0.72 && er.bottom > 0) deckArrive(end);
+    }
     reelActivate(best || null);
+    reelProgress(best || null);
   }
 
   /* Coalesce to one check per frame, but never let a pending frame become a permanent lock.
@@ -1617,6 +1857,22 @@
   function reelGoTo(id, smooth) {
     var panel = $('[data-reel-panel="' + id + '"]', reelTrack);
     if (!panel) return false;
+    /* Immersive mode scrolls its own box. scrollIntoView would work, but setting scrollTop
+       directly lands exactly on the snap position instead of near it, which matters when
+       snapping is mandatory: a landing a few pixels out leaves the browser to decide, and
+       it sometimes decides on the panel above. */
+    if (reelLive && reel) {
+      if (smooth === false || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        reel.scrollTop = panel.offsetTop;
+      } else if (typeof reel.scrollTo === 'function') {
+        reel.scrollTo({ top: panel.offsetTop, behavior: 'smooth' });
+      } else {
+        reel.scrollTop = panel.offsetTop;
+      }
+      setTimeout(reelQueue, 60);
+      setTimeout(reelQueue, 700);
+      return true;
+    }
     panel.scrollIntoView({ behavior: smooth === false ? 'auto' : 'smooth', block: 'center' });
     /* A smooth scroll lands some time after this returns, so nudge the check again once it
        has had a chance to finish rather than reading a position mid-flight. */
@@ -1633,6 +1889,327 @@
       $('span', b).innerHTML = reelIcon(reelMuted ? 'mute' : 'sound');
     });
   }
+
+  /* ---------- immersive mode ----------
+
+     The feed above is the in-page version, and it stays: panels under the viewport,
+     proximity snapping, the website still around them. That was a deliberate choice --
+     a full-screen scroller a visitor falls into is a trap, and this page has voting at
+     the bottom of it.
+
+     Immersive mode answers the other half without reintroducing the trap. The visitor
+     ENTERS it from a control, the way out sits in the corner the whole time, Escape
+     works, and so does the browser's own Back button. Same panels, same markup, same
+     geometry-driven activation; the only difference is that the section becomes a fixed
+     full-viewport scroller with mandatory snapping, so exactly one founder is on screen
+     and one swipe moves exactly one founder. */
+
+  var reelBar = $('[data-reel-bar]');
+  var reelLive = false;
+  var reelReturn = 0;        // where the page was before we took it over
+  var reelHeld = false;      // paused by a tap, rather than by scrolling away
+
+  function reelEnter(id) {
+    if (!reel || !reelTrack) return false;
+    if (reelLive) { if (id) reelGoTo(id, false); return true; }
+    reelLive = true;
+    reelHeld = false;
+    reelReturn = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    document.documentElement.classList.add('pc-live');
+    reel.classList.add('is-live');
+    reel.classList.remove('is-moved');
+    if (reelBar) { reelBar.hidden = false; reelBar.classList.add('is-on'); }
+    reelTicks();
+    /* Land on the founder asked for, with no visible travel: scrollTop rather than a
+       smooth scroll, because nobody asked to watch the feed scroll to the start. */
+    var panel = id ? $('[data-reel-panel="' + id + '"]', reelTrack) : null;
+    reel.scrollTop = panel ? panel.offsetTop : 0;
+    /* Back leaves the feed instead of leaving the website. */
+    try { history.pushState({ pcReel: 1 }, '', location.pathname + location.search + (id ? '#' + id : '')); } catch (e) {}
+    reelQueue();
+    setTimeout(reelQueue, 80);
+    track('reel_enter', { entrant_id: id || null });
+    return true;
+  }
+
+  function reelExit(viaPop) {
+    if (!reelLive) return;
+    reelLive = false;
+    reelHeld = false;
+    document.documentElement.classList.remove('pc-live');
+    reel.classList.remove('is-live');
+    if (reelBar) { reelBar.hidden = true; reelBar.classList.remove('is-on'); }
+    /* Silence first, then put the page back. Leaving the feed must stop the sound, and
+       the sync pass that follows decides for itself whether an in-flow panel is live. */
+    $$('[data-reel-video]', reelTrack).forEach(function (v) { try { v.pause(); } catch (e) {} });
+    $$('[data-reel-panel]', reelTrack).forEach(function (p) { p.classList.remove('is-held', 'is-waiting'); });
+    reelActive = null;
+    window.scrollTo(0, reelReturn);
+    if (!viaPop) {
+      try { if (history.state && history.state.pcReel) history.back(); } catch (e) {}
+    }
+    reelQueue();
+    track('reel_exit', {});
+  }
+
+  /* Open the feed at one founder, from a bubble, a card, a share link or the deck.
+     No introduction here on purpose: the brief is explicit that choosing another
+     founder must not replay it. */
+  function reelOpenAt(id) {
+    if (!byId[id]) return false;
+    if (!reelEnter(id)) { if (!reelGoTo(id)) openProfile(id); }
+    return true;
+  }
+
+  addEventListener('popstate', function () {
+    if (reelLive) reelExit(true);
+  });
+
+  /* ---------- the progress of the feed ---------- */
+  function reelTicks() {
+    var box = $('[data-reel-ticks]');
+    if (!box) return;
+    var n = $$('[data-reel-panel]', reelTrack).length;
+    var out = '';
+    for (var i = 0; i < n; i++) out += '<i></i>';
+    box.innerHTML = out;
+  }
+
+  function reelProgress(panel) {
+    if (!reelLive) return;
+    var panels = $$('[data-reel-panel]', reelTrack);
+    var at = panel ? panels.indexOf(panel) : -1;
+    var ticks = $$('i', $('[data-reel-ticks]') || document.createElement('div'));
+    ticks.forEach(function (t, i) {
+      t.classList.toggle('is-on', i === at);
+      t.classList.toggle('is-seen', at >= 0 && i < at);
+    });
+    var of = $('[data-reel-of]');
+    if (of) of.textContent = at >= 0 ? (at + 1) + ' / ' + panels.length : 'The deck';
+    if (at > 0) reel.classList.add('is-moved');       // the swipe hint has done its job
+  }
+
+  /* ---------- tap to hold, and a spinner only if there is a wait ---------- */
+  function reelToggle() {
+    if (!reelActive) return;
+    var v = $('[data-reel-video]', reelActive);
+    if (!v) return;
+    if (v.paused) {
+      reelHeld = false;
+      reelActive.classList.remove('is-held');
+      var go = v.play();
+      if (go && go.catch) go.catch(function () {});
+    } else {
+      reelHeld = true;
+      v.pause();
+      reelActive.classList.add('is-held');
+    }
+  }
+
+  /* Media events do not bubble, so they are caught on the way down instead. One pair of
+     listeners for the whole track rather than two per video. */
+  if (reelTrack) {
+    ['waiting', 'stalled'].forEach(function (ev) {
+      reelTrack.addEventListener(ev, function (e) {
+        var p = e.target.closest ? e.target.closest('[data-reel-panel]') : null;
+        if (p) p.classList.add('is-waiting');
+      }, true);
+    });
+    ['playing', 'canplay', 'error', 'pause'].forEach(function (ev) {
+      reelTrack.addEventListener(ev, function (e) {
+        var p = e.target.closest ? e.target.closest('[data-reel-panel]') : null;
+        if (p) p.classList.remove('is-waiting');
+      }, true);
+    });
+  }
+
+  /* ---------- the cinematic introduction ----------
+
+     Four scenes, then a title, then the first pitch. Every frame is a founder's own
+     submitted image or a frame from their own pitch video -- there is no stock
+     photography here and no invented event picture, because a made-up photograph of a
+     NextGen stage would be a lie told in the first six seconds.
+
+     Shown once a session, skippable from the first frame, and reduced to a single held
+     frame for anyone who asks for less motion. */
+  var fci = $('[data-fci]');
+  var introThen = null;
+  var introTimer = null;
+
+  function introSources() {
+    /* Posters first: they are frames of a founder mid-pitch, which is exactly the
+       material the brief asks for. Portraits fill in behind them. Logos are skipped --
+       a logo is not a person presenting an idea. */
+    var seen = {};
+    var out = [];
+    ENTRANTS.forEach(function (e) {
+      if (e.poster && !seen[e.poster]) { seen[e.poster] = 1; out.push({ src: e.poster, fp: '50% 34%' }); }
+    });
+    ENTRANTS.forEach(function (e) {
+      if (e.shot && e.shotFit !== 'contain' && !seen[e.shot]) {
+        seen[e.shot] = 1; out.push({ src: e.shot, fp: e.focal || '50% 30%' });
+      }
+    });
+    if (!out.length) return [];
+    /* Four, spread across the list rather than the first four, so the sequence does not
+       open on four founders who happen to sit together in the running order. */
+    var pick = [];
+    var step = Math.max(1, Math.floor(out.length / 4));
+    for (var i = 0; i < 4; i++) pick.push(out[(i * step) % out.length]);
+    return pick;
+  }
+
+  function introPlay(then) {
+    var stage = fci ? $('[data-fci-stage]', fci) : null;
+    var scenes = introSources();
+    if (!fci || !stage || scenes.length < 2) { if (then) then(); return; }
+    stage.innerHTML = scenes.map(function (sc, i) {
+      return '<span class="fci__scene fci__scene--' + (i + 1) + '">' +
+        '<img src="' + esc(sc.src) + '" alt="" decoding="async" style="--fp:' + esc(sc.fp) + '">' +
+        '</span>';
+    }).join('');
+    introThen = then || null;
+    fci.classList.add('is-on');
+    fci.setAttribute('aria-hidden', 'false');
+    var skip = $('[data-fci-skip]', fci);
+    if (skip) skip.focus({ preventScroll: true });
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      /* No sequence at all: the last frame and the title, held long enough to read. */
+      fci.classList.add('is-still');
+      introTimer = setTimeout(function () { introEnd(); }, 2000);
+    } else {
+      fci.classList.add('is-playing');
+      introTimer = setTimeout(function () { introEnd(); }, 7500);
+      /* And a check that the film is actually running. If the first scene is still fully
+         transparent a beat after it was told to appear, this browser is not animating --
+         so the sequence collapses to the held frame and the title rather than showing a
+         black rectangle for seven seconds. */
+      setTimeout(function () {
+        if (!fci.classList.contains('is-on')) return;
+        var first = $('.fci__scene--1', fci);
+        if (first && parseFloat(getComputedStyle(first).opacity) < 0.02) {
+          fci.classList.add('is-settled');
+          if (introTimer) clearTimeout(introTimer);
+          introTimer = setTimeout(function () { introEnd(); }, 1800);
+        }
+      }, 650);
+    }
+    try { sessionStorage.setItem('ngs-pc-intro', '1'); } catch (e) {}
+    track('intro_play', {});
+  }
+
+  function introEnd(skipped) {
+    if (introTimer) { clearTimeout(introTimer); introTimer = null; }
+    if (fci) {
+      fci.classList.remove('is-on', 'is-playing', 'is-still', 'is-settled');
+      fci.setAttribute('aria-hidden', 'true');
+      var stage = $('[data-fci-stage]', fci);
+      if (stage) stage.innerHTML = '';          // release the images
+    }
+    var then = introThen;
+    introThen = null;
+    if (skipped) track('intro_skip', {});
+    if (then) then();
+  }
+
+  /* The front door: Meet the Founders -> the introduction -> the first pitch.
+     A returning visitor goes straight in; the film is a welcome, not a toll. */
+  function enterExperience() {
+    var seen = false;
+    try { seen = sessionStorage.getItem('ngs-pc-intro') === '1'; } catch (e) {}
+    if (seen) { reelEnter(null); return; }
+    introPlay(function () { reelEnter(null); });
+  }
+
+  /* ---------- the deck ---------- */
+  function deckArrive(panel) {
+    if (!panel || panel.classList.contains('is-arrived')) return;
+    panel.classList.add('is-arrived');
+    /* The longest card waits 19 x 45ms before it starts and runs for 900ms. Shortly
+       after that everything should be in place -- and if the animation never ran at all,
+       this is what puts the deck on screen regardless. */
+    setTimeout(function () { panel.classList.add('is-settled'); }, 2100);
+  }
+
+  var deckWrap = $('[data-deck-spread]');
+  var deckOpener = null;
+
+  function deckSpread(gi) {
+    var g = deckGroups()[gi];
+    var grid = deckWrap ? $('[data-deck-grid]', deckWrap) : null;
+    if (!g || !grid) return;
+    deckOpener = document.activeElement;
+    grid.innerHTML = g.map(function (e, i) {
+      var art = e.shot
+        ? '<img src="' + esc(e.shot) + '" alt="" loading="lazy" decoding="async"' +
+          (e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal || '50% 26%') + '"') + '>'
+        : '<span class="deck__mono">' + esc(initials(e)) + '</span>';
+      return '<li><button class="deck__pick' + (e.shotFit === 'contain' ? ' deck__pick--logo' : '') +
+        '" type="button" data-deck-pick="' + e.id + '" ' +
+        'style="--d:' + i + ';--sr:' + (((i % 2) ? 1 : -1) * 5) + 'deg" ' +
+        'aria-label="Watch the pitch from ' + esc(e.company) + ', ' + esc(e.name) + '">' +
+        art + deckCardFaceText(e) + '</button></li>';
+    }).join('');
+    var t = $('[data-deck-spread-t]', deckWrap);
+    var n = $('[data-deck-spread-n]', deckWrap);
+    if (t) t.textContent = DECK_NAMES[gi];
+    if (n) n.textContent = g.length + ' founders - tap to watch';
+    deckWrap.classList.remove('is-settled');
+    deckWrap.classList.add('is-on');
+    deckWrap.setAttribute('aria-hidden', 'false');
+    setTimeout(function () { deckWrap.classList.add('is-settled'); }, 1200);
+    var x = $('[data-deck-close]', deckWrap);
+    if (x) x.focus({ preventScroll: true });
+    track('deck_open', { deck: gi + 1, founders: g.length });
+  }
+
+  function deckCardFaceText(e) {
+    return '<span class="deck__face">' +
+      '<p class="deck__co">' + esc(e.company) + '</p>' +
+      '<p class="deck__by">' + esc(e.name) + '</p>' +
+      '</span>';
+  }
+
+  function deckSpreadClose() {
+    if (!deckWrap || !deckWrap.classList.contains('is-on')) return;
+    deckWrap.classList.remove('is-on');
+    deckWrap.setAttribute('aria-hidden', 'true');
+    if (deckOpener && deckOpener.isConnected) deckOpener.focus({ preventScroll: true });
+    deckOpener = null;
+  }
+
+  /* ---------- one keyboard route out of everything ----------
+     Innermost first: the spread sits over the deck, which sits inside the feed. The
+     card is a <dialog> and handles its own Escape. */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Escape' && ev.key !== 'Esc') return;
+    if (deckWrap && deckWrap.classList.contains('is-on')) { deckSpreadClose(); return; }
+    if (fci && fci.classList.contains('is-on')) { introEnd(true); return; }
+    if (reelLive && !pDlg.open) { reelExit(); return; }
+  });
+
+  /* Arrow keys and the space bar inside the feed, for anyone not using a touchscreen. */
+  document.addEventListener('keydown', function (ev) {
+    if (!reelLive || pDlg.open) return;
+    if (deckWrap && deckWrap.classList.contains('is-on')) return;
+    var tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    var panels = $$('[data-reel-panel]', reelTrack);
+    var at = reelActive ? panels.indexOf(reelActive) : -1;
+    if (ev.key === 'ArrowDown' || ev.key === 'PageDown') {
+      ev.preventDefault();
+      if (at >= 0 && panels[at + 1]) reelGoTo(panels[at + 1].getAttribute('data-reel-panel'));
+      else if (at === panels.length - 1) reel.scrollTo({ top: reel.scrollHeight, behavior: 'smooth' });
+    } else if (ev.key === 'ArrowUp' || ev.key === 'PageUp') {
+      ev.preventDefault();
+      if (at > 0) reelGoTo(panels[at - 1].getAttribute('data-reel-panel'));
+    } else if (ev.key === ' ' || ev.key === 'Spacebar') {
+      if (ev.target === document.body || (ev.target && ev.target.hasAttribute('data-reel-tap'))) {
+        ev.preventDefault();
+        reelToggle();
+      }
+    }
+  });
 
   /* ---------- reactions: a prototype, and labelled as one ----------
      Public comments need moderation, reporting, rate limiting and a story for impersonation
@@ -1725,6 +2302,44 @@
   function paintStories() {
     if (!rail) return;
     rail.innerHTML = storyOrder().map(bubbleHtml).join('');
+    bubbleEntrance();
+  }
+
+  /* The bubbles fly in from alternating sides, staggered, and settle.
+
+     Latched on purpose. The brief is explicit that this must not re-trigger whenever
+     somebody drifts a little up or down the page, so the class goes on once and the
+     watcher is dropped -- there is no route back to the hidden state. */
+  function bubbleEntrance() {
+    if (!rail) return;
+    rail.setAttribute('data-enter', '');
+    $$('.ff-bub', rail).forEach(function (b, i) {
+      /* alternating sides, and a little further out every other card for depth */
+      var side = (i % 2) ? 1 : -1;
+      b.style.setProperty('--bx', (side * (54 + (i % 3) * 20)) + 'px');
+      b.style.setProperty('--bd', (i * 55) + 'ms');
+    });
+    if (rail.classList.contains('is-in')) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      rail.classList.add('is-in');
+      return;
+    }
+    var fired = false;
+    var fire = function () {
+      if (fired) return;
+      var r = rail.getBoundingClientRect();
+      if (r.top > innerHeight * 0.88 || r.bottom < 0) return;
+      fired = true;
+      rail.classList.add('is-in');
+      document.removeEventListener('scroll', fire, true);
+      clearInterval(beat);
+    };
+    document.addEventListener('scroll', fire, { passive: true, capture: true });
+    /* Same reason as the feed: in this environment neither IntersectionObserver nor a
+       window scroll listener can be relied on, so position is read on a slow heartbeat
+       as well. It stops the moment the bubbles have flown. */
+    var beat = setInterval(fire, 220);
+    fire();
   }
 
   /* ---------- the story viewer ---------- */
@@ -1825,17 +2440,10 @@
     });
   }, true);
 
-  /* Closing the profile has to stop its pitch. Hiding a <video> does not pause it, and an
-     invisible video still carrying audio is worse than one that is merely visible. */
-  if (typeof pDlg !== 'undefined' && pDlg) {
-    var clearProfileVideo = function () {
-      var box = $('[data-pc-p-video]', pDlg);
-      if (box) box.innerHTML = videoHtml(byId[pDlg.getAttribute('data-entrant')] || {});
-    };
-    pDlg.addEventListener('close', clearProfileVideo);
-    pDlg.addEventListener('cancel', clearProfileVideo);
-    stopWhenClosed(pDlg, clearProfileVideo);
-  }
+  /* The founder card no longer carries a player of its own -- Watch the pitch takes the
+     visitor to the feed, so there is exactly one place a pitch can be playing and closing
+     the card cannot leave audio running behind it. The guard that used to empty the card's
+     player went with the player. */
 
   /* Stop playback whenever a dialog stops being open, however that happened.
 

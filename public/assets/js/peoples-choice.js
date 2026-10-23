@@ -644,11 +644,19 @@
 
      The founder who received today's vote keeps a live button. Everyone else is told the
      daily vote is spent, and every profile stays open and shareable either way. */
+  /* A card's button is small and says "Vote"; the profile's is full width and says the whole
+     phrase. cardHtml already draws that difference, so the labeller has to preserve it --
+     otherwise the repaint on load rewrites twenty cards into the long version, which is both
+     a copy change nobody asked for and a visible flicker. */
+  function idleLabel(b) {
+    return (STATE === 'open' && b.closest('.pce')) ? 'Vote' : COPY[STATE].vote;
+  }
+
   function labelVoteButton(b, d) {
     var id = b.getAttribute('data-pc-vote');
     var today = (d && d.verified) ? (d.today_entrant || null) : null;
-    if (STATE !== 'open') { b.disabled = true; b.textContent = COPY[STATE].vote; return; }
-    if (!today) { b.disabled = false; b.textContent = COPY[STATE].vote; return; }
+    if (STATE !== 'open') { b.disabled = true; b.textContent = idleLabel(b); return; }
+    if (!today) { b.disabled = false; b.textContent = idleLabel(b); return; }
     if (id === today) {
       /* The founder today's vote went to. Never disabled: this is the way back into the
          bonus, and the only door to it. */

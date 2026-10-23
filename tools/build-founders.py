@@ -17,6 +17,7 @@ human; this script reads it and refuses to invent one.
 
 Downloads land in a directory of their own and are only ever read as bytes.
 """
+import hashlib
 import io
 import json
 import os
@@ -34,6 +35,22 @@ CACHE = os.path.join(ROOT, 'release', '_founder-src')      # not shipped; releas
 UA = 'Mozilla/5.0 (compatible; NextGenSummitBuild/1.0)'
 LONG_EDGE = 1100
 QUALITY = 82
+
+
+def stamp(path):
+    """A short content hash for a media URL.
+
+    Founder images, posters and videos are served with a seven-day cache header and their
+    URLs carried no version, so replacing a photograph changed the file on the server and
+    nothing at all for anyone who had already seen the page -- for a week, which is past the
+    voting deadline. A hash of the bytes means a changed file gets a new URL and an unchanged
+    one keeps its cache.
+    """
+    try:
+        h = hashlib.sha1(open(path, 'rb').read()).hexdigest()[:8]
+        return '?v=' + h
+    except Exception:
+        return ''
 
 
 def slugify(s):
@@ -212,7 +229,8 @@ def main():
                             im = im.resize((int(w * s), int(h * s)), Image.LANCZOS)
                         dest = os.path.join(IMGDIR, slug + '.webp')
                         im.save(dest, 'WEBP', quality=QUALITY, method=6)
-                        rec['shot'] = '/assets/img/founders/' + slug + '.webp'
+                        rec['shot'] = ('/assets/img/founders/' + slug + '.webp'
+                                       + stamp(dest))
                         # a logo wants whitespace around it; a photograph wants to fill
                         fname = (supplied or iu or '').rsplit('/', 1)[-1].lower()
                         logo = (not supplied) and any(t in fname
@@ -253,7 +271,7 @@ def main():
         if not rec['shot']:
             fallback = os.path.join(IMGDIR, slug + '.webp')
             if os.path.isfile(fallback):
-                rec['shot'] = '/assets/img/founders/' + slug + '.webp'
+                rec['shot'] = ('/assets/img/founders/' + slug + '.webp' + stamp(fallback))
                 rec['shotFit'] = 'cover'
                 rec['shotFrom'] = 'frame from this founders own pitch video'
                 rec['focal'] = focal_overrides.get(slug) or '50% 30%'
@@ -285,11 +303,12 @@ def main():
         # we do not control is up, and it is byte-range served and cached by our own host.
         local = os.path.join(ROOT, 'public', 'assets', 'video', slug + '.mp4')
         if os.path.isfile(local) and os.path.getsize(local) > 0:
-            rec['video'] = {'type': 'file', 'src': '/assets/video/' + slug + '.mp4'}
+            rec['video'] = {'type': 'file',
+                            'src': '/assets/video/' + slug + '.mp4' + stamp(local)}
             rec['selfHosted'] = True
         poster = os.path.join(ROOT, 'public', 'assets', 'video', slug + '-poster.jpg')
         if os.path.isfile(poster):
-            rec['poster'] = '/assets/video/' + slug + '-poster.jpg'
+            rec['poster'] = '/assets/video/' + slug + '-poster.jpg' + stamp(poster)
         elif kind == 'youtube':
             rec['video'] = {'type': 'youtube', 'id': ref}
         elif kind == 'drive':

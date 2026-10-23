@@ -11,17 +11,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 2,
     "entrant": "entrant-01",
-    "shot": "/assets/img/founders/haptol-labs.webp",
+    "shot": "/assets/img/founders/haptol-labs.webp?v=8da2c096",
     "shotFit": "contain",
     "video": {
       "type": "file",
-      "src": "/assets/video/haptol-labs.mp4"
+      "src": "/assets/video/haptol-labs.mp4?v=ad280214"
     },
     "shotW": 680,
     "shotH": 382,
     "focal": "50% 50%",
     "selfHosted": true,
-    "poster": "/assets/video/haptol-labs-poster.jpg",
+    "poster": "/assets/video/haptol-labs-poster.jpg?v=684b9ac9",
     "pitchNote": "direct video file"
   },
   {
@@ -48,17 +48,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 4,
     "entrant": "entrant-03",
-    "shot": "/assets/img/founders/sooz.webp",
+    "shot": "/assets/img/founders/sooz.webp?v=b8a456cb",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/sooz.mp4"
+      "src": "/assets/video/sooz.mp4?v=857ec4fb"
     },
     "shotW": 1100,
     "shotH": 733,
     "focal": "50% 45%",
     "selfHosted": true,
-    "poster": "/assets/video/sooz-poster.jpg",
+    "poster": "/assets/video/sooz-poster.jpg?v=26ee5ecf",
     "pitchNote": "direct video file"
   },
   {
@@ -69,16 +69,16 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 5,
     "entrant": "entrant-04",
-    "shot": "/assets/img/founders/the-luminous-lab.webp",
+    "shot": "/assets/img/founders/the-luminous-lab.webp?v=ba0794e8",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/the-luminous-lab.mp4"
+      "src": "/assets/video/the-luminous-lab.mp4?v=f1197d5e"
     },
     "shotFrom": "frame from this founders own pitch video",
     "focal": "50% 30%",
     "selfHosted": true,
-    "poster": "/assets/video/the-luminous-lab-poster.jpg",
+    "poster": "/assets/video/the-luminous-lab-poster.jpg?v=8174f404",
     "pitchNote": "direct video file"
   },
   {
@@ -89,17 +89,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 6,
     "entrant": "entrant-05",
-    "shot": "/assets/img/founders/lookbook.webp",
+    "shot": "/assets/img/founders/lookbook.webp?v=2644c394",
     "shotFit": "contain",
     "video": {
       "type": "file",
-      "src": "/assets/video/lookbook.mp4"
+      "src": "/assets/video/lookbook.mp4?v=3d9678b1"
     },
     "shotW": 1024,
     "shotH": 1024,
     "focal": "50% 50%",
     "selfHosted": true,
-    "poster": "/assets/video/lookbook-poster.jpg",
+    "poster": "/assets/video/lookbook-poster.jpg?v=678e3a8c",
     "pitchNote": "direct video file"
   },
   {
@@ -110,17 +110,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 7,
     "entrant": "entrant-06",
-    "shot": "/assets/img/founders/ibraid.webp",
+    "shot": "/assets/img/founders/ibraid.webp?v=f30dcc71",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/ibraid.mp4"
+      "src": "/assets/video/ibraid.mp4?v=b39a14f1"
     },
     "shotW": 825,
     "shotH": 1100,
     "focal": "50% 22%",
     "selfHosted": true,
-    "poster": "/assets/video/ibraid-poster.jpg",
+    "poster": "/assets/video/ibraid-poster.jpg?v=5c86c76a",
     "pitchNote": "direct video file"
   },
   {
@@ -131,17 +131,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 8,
     "entrant": "entrant-07",
-    "shot": "/assets/img/founders/beforekeys-llc.webp",
+    "shot": "/assets/img/founders/beforekeys-llc.webp?v=ea69b05c",
     "shotFit": "contain",
     "video": {
       "type": "file",
-      "src": "/assets/video/beforekeys-llc.mp4"
+      "src": "/assets/video/beforekeys-llc.mp4?v=886db319"
     },
     "shotW": 1100,
     "shotH": 660,
     "focal": "50% 50%",
     "selfHosted": true,
-    "poster": "/assets/video/beforekeys-llc-poster.jpg",
+    "poster": "/assets/video/beforekeys-llc-poster.jpg?v=0cf7b12a",
     "pitchNote": "direct video file"
   },
   {
@@ -152,17 +152,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 9,
     "entrant": "entrant-08",
-    "shot": "/assets/img/founders/if-the-shoe-fits-itsf.webp",
+    "shot": "/assets/img/founders/if-the-shoe-fits-itsf.webp?v=1e9014a0",
     "shotFit": "contain",
     "video": {
       "type": "file",
-      "src": "/assets/video/if-the-shoe-fits-itsf.mp4"
+      "src": "/assets/video/if-the-shoe-fits-itsf.mp4?v=44d85951"
     },
     "shotW": 1024,
     "shotH": 1024,
     "focal": "50% 50%",
     "selfHosted": true,
-    "poster": "/assets/video/if-the-shoe-fits-itsf-poster.jpg",
+    "poster": "/assets/video/if-the-shoe-fits-itsf-poster.jpg?v=c67ef996",
     "pitchNote": "direct video file"
   },
   {
@@ -173,7 +173,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 10,
     "entrant": "entrant-09",
-    "shot": "/assets/img/founders/rest.webp",
+    "shot": "/assets/img/founders/rest.webp?v=7c8a9be2",
     "shotFit": "cover",
     "video": {
       "type": "youtube",
@@ -192,16 +192,16 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 11,
     "entrant": "entrant-10",
-    "shot": "/assets/img/founders/pathbridge.webp",
+    "shot": "/assets/img/founders/pathbridge.webp?v=577a2634",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/pathbridge.mp4"
+      "src": "/assets/video/pathbridge.mp4?v=3228eea5"
     },
     "shotFrom": "frame from this founders own pitch video",
     "focal": "50% 30%",
     "selfHosted": true,
-    "poster": "/assets/video/pathbridge-poster.jpg",
+    "poster": "/assets/video/pathbridge-poster.jpg?v=85c78ea6",
     "pitchNote": "Google Drive: Copy of Pitch"
   },
   {
@@ -212,17 +212,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 12,
     "entrant": "entrant-11",
-    "shot": "/assets/img/founders/applytrack.webp",
+    "shot": "/assets/img/founders/applytrack.webp?v=c8c23312",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/applytrack.mp4"
+      "src": "/assets/video/applytrack.mp4?v=89e90164"
     },
     "shotW": 1044,
     "shotH": 1100,
     "focal": "50% 35%",
     "selfHosted": true,
-    "poster": "/assets/video/applytrack-poster.jpg",
+    "poster": "/assets/video/applytrack-poster.jpg?v=7d0bf6d4",
     "pitchNote": "direct video file"
   },
   {
@@ -233,17 +233,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 13,
     "entrant": "entrant-12",
-    "shot": "/assets/img/founders/jay-s-watermelonade.webp",
+    "shot": "/assets/img/founders/jay-s-watermelonade.webp?v=a70233e3",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/jay-s-watermelonade.mp4"
+      "src": "/assets/video/jay-s-watermelonade.mp4?v=be03c347"
     },
     "shotW": 880,
     "shotH": 1100,
     "focal": "50% 22%",
     "selfHosted": true,
-    "poster": "/assets/video/jay-s-watermelonade-poster.jpg",
+    "poster": "/assets/video/jay-s-watermelonade-poster.jpg?v=b4b25713",
     "pitchNote": "direct video file"
   },
   {
@@ -254,7 +254,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 14,
     "entrant": "entrant-13",
-    "shot": "/assets/img/founders/offguardz.webp",
+    "shot": "/assets/img/founders/offguardz.webp?v=60c8125e",
     "shotFit": "cover",
     "video": {
       "type": "youtube",
@@ -289,17 +289,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 16,
     "entrant": "entrant-15",
-    "shot": "/assets/img/founders/melavyr.webp",
+    "shot": "/assets/img/founders/melavyr.webp?v=e5245eca",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/melavyr.mp4"
+      "src": "/assets/video/melavyr.mp4?v=135ce63b"
     },
     "shotW": 869,
     "shotH": 1100,
     "focal": "50% 22%",
     "selfHosted": true,
-    "poster": "/assets/video/melavyr-poster.jpg",
+    "poster": "/assets/video/melavyr-poster.jpg?v=75ae3312",
     "pitchNote": "direct video file"
   },
   {
@@ -310,18 +310,18 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 17,
     "entrant": "entrant-16",
-    "shot": "/assets/img/founders/light.webp",
+    "shot": "/assets/img/founders/light.webp?v=0532a1e7",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/light.mp4"
+      "src": "/assets/video/light.mp4?v=75e399f0"
     },
     "shotFrom": "headshot supplied by the NextGen team",
     "shotW": 782,
     "shotH": 1100,
     "focal": "50% 24%",
     "selfHosted": true,
-    "poster": "/assets/video/light-poster.jpg",
+    "poster": "/assets/video/light-poster.jpg?v=05038d3a",
     "pitchNote": "Google Drive: copy_23C09532_71FE_4AF8_848E_8F01DCDCE6D0.mov"
   },
   {
@@ -332,7 +332,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 18,
     "entrant": "entrant-17",
-    "shot": "/assets/img/founders/beauty-boot-camp.webp",
+    "shot": "/assets/img/founders/beauty-boot-camp.webp?v=32a1373e",
     "shotFit": "contain",
     "video": {
       "type": "youtube",
@@ -351,7 +351,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 19,
     "entrant": "entrant-18",
-    "shot": "/assets/img/founders/nextofferup.webp",
+    "shot": "/assets/img/founders/nextofferup.webp?v=e6d65f09",
     "shotFit": "cover",
     "video": {
       "type": "youtube",
@@ -370,17 +370,17 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 20,
     "entrant": "entrant-19",
-    "shot": "/assets/img/founders/exam-me.webp",
+    "shot": "/assets/img/founders/exam-me.webp?v=4599609e",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/exam-me.mp4"
+      "src": "/assets/video/exam-me.mp4?v=854851c5"
     },
     "shotW": 1100,
     "shotH": 1100,
     "focal": "50% 35%",
     "selfHosted": true,
-    "poster": "/assets/video/exam-me-poster.jpg",
+    "poster": "/assets/video/exam-me-poster.jpg?v=d8eb76ff",
     "pitchNote": "direct video file"
   },
   {
@@ -391,18 +391,18 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 21,
     "entrant": "entrant-20",
-    "shot": "/assets/img/founders/find-your-mission-corp.webp",
+    "shot": "/assets/img/founders/find-your-mission-corp.webp?v=fa20d8e5",
     "shotFit": "cover",
     "video": {
       "type": "file",
-      "src": "/assets/video/find-your-mission-corp.mp4"
+      "src": "/assets/video/find-your-mission-corp.mp4?v=d62f7404"
     },
     "shotFrom": "headshot supplied by the NextGen team",
     "shotW": 931,
     "shotH": 1100,
     "focal": "50% 42%",
     "selfHosted": true,
-    "poster": "/assets/video/find-your-mission-corp-poster.jpg",
+    "poster": "/assets/video/find-your-mission-corp-poster.jpg?v=00848525",
     "pitchNote": "Google Drive: Introducing FYM"
   }
 ];

@@ -455,6 +455,60 @@ on demand, no page overflow, no console errors, all 20 vote buttons wired to the
 
 ---
 
+## 0k. Leadership feedback pass (2026-10-23)
+
+### Media recovered: 19 of 20 pitches now play
+
+| Founder | Outcome |
+|---|---|
+| **Credible blossom** / Annrita Karu | **Recovered.** The forwarded YouTube Short is hers - confirmed by the video's own title, "Elevator pitch for credible blossom", not by who sent it |
+| **PathBridge** / Benedicta Dankwa | **Still blocked.** Her PDFs carry `/URI` link annotations (invisible to a text scan) pointing at two real Drive folders, correctly named "1 minute Pitch" and "Headshot/Logo". **Both require sign-in.** Needs sharing set to anyone-with-the-link, or a direct file link |
+| **The Luminous Lab** / Ariel Laura Métayer | **Image recovered** from a frame of her own pitch, recorded in the data as `shotFrom` so nobody mistakes it for a submitted headshot |
+
+Images 17 of 20. Monograms remain for Credible blossom, PathBridge and K8Culture Productions.
+
+### Poster frames: the real cause of the framing complaints
+
+It was never CSS, aspect ratio or player positioning - those were measured correct. The first
+version took a frame **15% into every video**, which is a guess, and on these pitches it
+guessed badly. `tools/pick-posters.py` now samples candidates across each pitch and scores
+them on detail, edge energy, exposure and a centre bias, with ffmpeg's own `thumbnail` filter
+offered as an extra candidate.
+
+- **Melavyr, BeforeKeys, The Luminous Lab** - transformed. Each opens on the founder's face
+  instead of a wall, ceiling lights, or a dark frame.
+- **Exam.Me** - better, and still limited. Her footage places her small in the lower third
+  under a large expanse of wall. **No choice of frame fixes the composition of a recording**,
+  and a flattering thumbnail would be a claim about the footage that is not true.
+
+A subject-aware crop tightens a poster when the person is small in frame. It finds people by
+**skin tone, not edges** - an edge detector was tried first and was beaten by exactly what it
+needed to ignore, since a suspended ceiling is a grid of hard lines that outscores the speaker
+beneath it. **Posters only; the video is never cropped.**
+
+### Profile content
+
+"The founder" and "The project" were printing the same paragraph - my doing, from assigning
+the same blurb to both fields. The submissions describe the **business** and say nothing about
+the person, so the founder block is now hidden until leadership supplies copy, rather than
+padded with a duplicate. No biography was invented.
+
+**The Luminous Lab / Kainema is not a mapping error.** Row 5 of the sheet carries business
+name "The Luminous Lab" and an about-text that begins "Kainema is...". Both came from the same
+submission. It is the founder's own copy naming a different product, and it needs an editorial
+decision, not a code fix.
+
+### Copy applied
+
+Intro line; one "Verify & vote" in the opening popup (the three-panel chooser read as a third
+voting option beside the +1 and +2); the email step; celebratory +1 and +3 headings; the +3
+body. The unregistered bonus area is **one offer again** - a single ticket CTA with the
+"already have a ticket" route demoted to a quiet text link. Dropping the big Check Again
+button loses nothing: the server forces a fresh attendee index whenever a lookup misses, so
+verifying an address **is** the recheck.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

@@ -961,7 +961,37 @@
       return;
     }
     if ((el = t.closest('[data-ff-story]'))) {
-      openStory(el.getAttribute('data-ff-story')); return;
+      /* One journey, not two. The bubble used to open a separate story viewer, which meant
+         two competing ways to browse the same twenty founders. It now drops the visitor at
+         that founder inside the feed. */
+      var sid = el.getAttribute('data-ff-story');
+      if (!reelGoTo(sid)) openProfile(sid);
+      track('story_jump', { entrant_id: sid });
+      return;
+    }
+    if ((el = t.closest('[data-reel-embed]'))) {
+      var rid = el.getAttribute('data-reel-embed');
+      var re = byId[rid];
+      var host = el.closest('.reel__media');
+      if (re && re.video && host) {
+        host.innerHTML = playerHtml(re.video, re.company, re.poster, true);
+        track('video_play', { entrant_id: rid, kind: re.video.type });
+      }
+      return;
+    }
+    if (t.closest('[data-reel-sound]')) { reelSetSound(reelMuted); return; }
+    if ((el = t.closest('[data-reel-comment]'))) { rcOpen(el.getAttribute('data-reel-comment')); return; }
+    if ((el = t.closest('[data-rc-chip]'))) { rcAdd(el.textContent.trim()); return; }
+    if (t.closest('[data-rc-close]')) { if (rcEl) rcEl.classList.remove('is-open'); return; }
+    if (t.closest('[data-reel-restart]')) {
+      var first = $$('[data-reel-panel]', reelTrack)[0];
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (t.closest('[data-reel-top]') || t.closest('[data-reel-up]')) {
+      var top = $('#gallery');
+      if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
     }
     if (t.closest('[data-ff-next]')) { stepStory(1); return; }
     if (t.closest('[data-ff-prev]')) { stepStory(-1); return; }
@@ -1263,6 +1293,211 @@
 
   repaintAfterVote();
 
+  /* ---------- the founder reels ----------
+
+     The scrolling half of the experience. One panel per founder, snapped against the PAGE
+     rather than a nested scroller, because a scroller of its own would hold the visitor
+     until it ran out and the brief rules that out. Snapping is proximity, not mandatory, so
+     a deliberate flick carries straight through into the rest of the page.
+
+     What it does NOT do is cast, count or change a vote. The vote control here carries the
+     same [data-pc-vote] the gallery card does and lands in the same dialog and the same
+     verified flow. */
+
+  var reel = $('[data-reel]');
+  var reelTrack = $('[data-reel-track]');
+  var reelMuted = true;
+  var reelActive = null;
+
+  function reelIcon(name) {
+    var p = {
+      vote: '<path d="M4.5 12.5l5 5 10-11" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+      comment: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.2-.6L3 21l1.8-5a8.3 8.3 0 0 1-.8-3.6 8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 7.5z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>',
+      share: '<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/>',
+      sound: '<path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M16 9.2a4 4 0 0 1 0 5.6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+      mute: '<path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M16.5 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+      play: '<path d="M8 5.2v13.6L19 12z" fill="currentColor"/>'
+    }[name];
+    var stroke = (name === 'share') ? ' fill="none" stroke="currentColor" stroke-width="1.9"' : '';
+    return '<svg viewBox="0 0 24 24"' + stroke + ' aria-hidden="true">' + p + '</svg>';
+  }
+
+  function reelPanelHtml(e) {
+    var poster = e.poster || e.shot || '';
+    var canVote = STATE === 'open';
+    /* The media is decided here and not guessed at playback: a founder with a file plays
+       inline, one on YouTube gets its embed behind a play control so nothing third-party
+       loads until asked, and one with no pitch at all gets their portrait and their words
+       rather than a broken frame. */
+    var media;
+    if (e.video && e.video.type === 'file') {
+      media = '<video data-reel-video preload="none" playsinline muted loop ' +
+        'poster="' + esc(poster) + '" data-src="' + esc(e.video.src) + '"></video>';
+    } else if (e.video) {
+      media = '<img class="reel__still" src="' + esc(poster) + '" alt="" loading="lazy">' +
+        '<button class="reel__play" type="button" data-reel-embed="' + e.id + '" ' +
+        'aria-label="Play the pitch from ' + esc(e.company) + '">' +
+        '<span>' + reelIcon('play') + '</span></button>';
+    } else {
+      media = poster
+        ? '<img class="reel__still" src="' + esc(poster) + '" alt="" loading="lazy">'
+        : '<span class="ffc__await"><span class="ffc__mono">' + esc(initials(e)) + '</span></span>';
+    }
+    return '' +
+      '<li class="reel__panel" data-reel-panel="' + e.id + '" data-pc-card="' + e.id + '">' +
+        (poster ? '<span class="reel__back" style="background-image:url(&quot;' + esc(poster) + '&quot;)"></span>' : '') +
+        '<span class="reel__media">' + media + '</span>' +
+        '<span class="reel__scrim"></span>' +
+        '<span class="reel__num">' + e.n + '</span>' +
+        '<div class="reel__meta">' +
+          '<p class="reel__co">' + esc(e.company) + '</p>' +
+          '<p class="reel__by">' + esc(e.name) + '</p>' +
+          '<p class="reel__blurb">' + esc(e.blurb) + '</p>' +
+          '<button class="reel__meet" type="button" data-pc-open="' + e.id + '">Tap to meet the founder</button>' +
+        '</div>' +
+        '<div class="reel__rail">' +
+          '<button class="reel__act reel__act--vote" type="button" data-pc-vote="' + e.id + '"' +
+            (canVote ? '' : ' disabled') + '><span>' + reelIcon('vote') + '</span>' +
+            '<small>' + (canVote ? 'Vote' : 'Closed') + '</small></button>' +
+          '<button class="reel__act" type="button" data-reel-comment="' + e.id + '">' +
+            '<span>' + reelIcon('comment') + '</span><small>React</small></button>' +
+          '<button class="reel__act" type="button" data-pc-share="' + e.id + '">' +
+            '<span>' + reelIcon('share') + '</span><small>Share</small></button>' +
+          (e.video && e.video.type === 'file'
+            ? '<button class="reel__act" type="button" data-reel-sound>' +
+              '<span>' + reelIcon('mute') + '</span><small>Sound</small></button>'
+            : '') +
+        '</div>' +
+      '</li>';
+  }
+
+  function reelEndHtml() {
+    return '' +
+      '<li class="reel__panel reel__end" data-reel-end>' +
+        '<p class="reel__end-k">That’s all twenty</p>' +
+        '<h3 class="reel__end-t">You’ve met the founders.</h3>' +
+        '<p class="reel__end-p">Now help shape what happens next. One vote a day, every day, ' +
+          'until October 28.</p>' +
+        '<div class="reel__end-acts">' +
+          '<button class="btn btn--lg" type="button" data-reel-restart>Explore the founders again</button>' +
+          '<button class="btn btn--lg btn--ghost" type="button" data-reel-top>Back to People’s Choice</button>' +
+        '</div>' +
+      '</li>';
+  }
+
+  function paintReels() {
+    if (!reelTrack) return;
+    reelTrack.innerHTML = ENTRANTS.map(reelPanelHtml).join('') + reelEndHtml();
+    watchReels();
+  }
+
+  /* Only the panel in view plays, and only its neighbours are even given a src. Twenty
+     videos asked for at once would be a bill the visitor never agreed to. */
+  function reelLoadNear(idx) {
+    var panels = $$('[data-reel-panel]', reelTrack);
+    panels.forEach(function (p, i) {
+      var v = $('[data-reel-video]', p);
+      if (!v) return;
+      var near = Math.abs(i - idx) <= 1;
+      if (near && !v.src && v.getAttribute('data-src')) {
+        v.src = v.getAttribute('data-src');
+        v.preload = 'metadata';
+      } else if (!near && v.src && Math.abs(i - idx) > 2) {
+        // let go of the ones well out of reach so memory does not creep on a long scroll
+        try { v.pause(); v.removeAttribute('src'); v.load(); } catch (err) {}
+      }
+    });
+  }
+
+  function reelActivate(panel) {
+    if (reelActive === panel) return;
+    $$('[data-reel-video]', reelTrack).forEach(function (v) {
+      if (!panel || v !== $('[data-reel-video]', panel)) { try { v.pause(); } catch (e) {} }
+    });
+    reelActive = panel;
+    if (!panel) return;
+    var panels = $$('[data-reel-panel]', reelTrack);
+    reelLoadNear(panels.indexOf(panel));
+    var v = $('[data-reel-video]', panel);
+    if (!v) return;
+    v.muted = reelMuted;
+    /* Muted autoplay is what phones allow. If this browser refuses anyway the poster is
+       already there and the play control is one tap away, which is the same screen either
+       way -- no error, no apology. */
+    var go = v.play();
+    if (go && go.catch) { go.catch(function () {}); }
+  }
+
+  function watchReels() {
+    if (!reelTrack || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (rows) {
+      rows.forEach(function (r) {
+        if (r.isIntersecting && r.intersectionRatio > 0.55) {
+          if (!r.target.hasAttribute('data-reel-end')) reelActivate(r.target);
+        }
+      });
+    }, { threshold: [0, 0.55, 0.9] });
+    $$('[data-reel-panel]', reelTrack).forEach(function (p) { io.observe(p); });
+
+    // the way back appears only once someone is actually inside the feed
+    var edge = new IntersectionObserver(function (rows) {
+      rows.forEach(function (r) { reel.classList.toggle('is-inside', r.isIntersecting); });
+    }, { threshold: 0.08 });
+    edge.observe(reel);
+  }
+
+  function reelGoTo(id, smooth) {
+    var panel = $('[data-reel-panel="' + id + '"]', reelTrack);
+    if (!panel) return false;
+    panel.scrollIntoView({ behavior: smooth === false ? 'auto' : 'smooth', block: 'center' });
+    return true;
+  }
+
+  function reelSetSound(on) {
+    reelMuted = !on;
+    $$('[data-reel-video]', reelTrack).forEach(function (v) { v.muted = reelMuted; });
+    $$('[data-reel-sound]').forEach(function (b) {
+      b.classList.toggle('reel__act--on', !reelMuted);
+      $('span', b).innerHTML = reelIcon(reelMuted ? 'mute' : 'sound');
+    });
+  }
+
+  /* ---------- reactions: a prototype, and labelled as one ----------
+     Public comments need moderation, reporting, rate limiting and a story for impersonation
+     before a single one is shown to a stranger. None of that exists yet, so nothing here is
+     published or sent anywhere: a reaction is kept in this browser only, and the panel says
+     so in as many words. The shape is real so the idea can be judged; the plumbing is not. */
+  var rcEl = $('[data-rc]');
+
+  function rcKey(id) { return 'ngs-pc-react-' + id; }
+
+  function rcOpen(id) {
+    if (!rcEl) return;
+    var e = byId[id];
+    if (!e) return;
+    rcEl.setAttribute('data-rc-for', id);
+    var t = $('[data-rc-title]', rcEl);
+    if (t) t.textContent = 'React to ' + e.company;
+    var list = $('[data-rc-list]', rcEl);
+    var mine = [];
+    try { mine = JSON.parse(localStorage.getItem(rcKey(id)) || '[]'); } catch (err) {}
+    list.innerHTML = mine.length
+      ? mine.map(function (m) { return '<li class="rc__item"><b>You</b>' + esc(m) + '</li>'; }).join('')
+      : '<li class="rc__item"><b>Nothing yet</b>Pick a reaction below. It stays on this device.</li>';
+    rcEl.classList.add('is-open');
+    track('reaction_open', { entrant_id: id });
+  }
+
+  function rcAdd(text) {
+    var id = rcEl && rcEl.getAttribute('data-rc-for');
+    if (!id) return;
+    var mine = [];
+    try { mine = JSON.parse(localStorage.getItem(rcKey(id)) || '[]'); } catch (err) {}
+    if (mine.indexOf(text) < 0) mine.push(text);
+    try { localStorage.setItem(rcKey(id), JSON.stringify(mine)); } catch (err) {}
+    rcOpen(id);
+  }
+
   /* ---------- the Founder Feed layer ----------
 
      Stories, the story viewer, search and the opening reveal. All of it sits ON TOP of the
@@ -1497,6 +1732,7 @@
 
   function paintFeedFurniture() {
     paintStories();
+    paintReels();
     var pc = $('[data-ff-pitches]');
     if (pc) {
       /* The honest number: how many of the twenty submitted something that actually plays.
@@ -1510,6 +1746,22 @@
     if (note) note.hidden = window.NGS_FOUNDER_MAP_REVIEWED === true;
   }
 
+  /* the Meet the Founders panel arrives once, as it comes into view */
+  (function () {
+    var x = $('[data-ffx]');
+    if (!x) return;
+    if (!('IntersectionObserver' in window)
+        || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      x.classList.add('is-in');
+      return;
+    }
+    new IntersectionObserver(function (rows, obs) {
+      rows.forEach(function (r) {
+        if (r.isIntersecting) { r.target.classList.add('is-in'); obs.unobserve(r.target); }
+      });
+    }, { threshold: 0.3 }).observe(x);
+  }());
+
   boot();
   paintFeedFurniture();
 
@@ -1521,6 +1773,7 @@
   }
   addEventListener('hashchange', fromHash);
   if (window.__pcOpen && byId[window.__pcOpen]) {
+    reelGoTo(window.__pcOpen, false);
     openProfile(window.__pcOpen, true);
     track('entrant_link_visit', { entrant_id: window.__pcOpen, source: window.__pcSource || 'direct' });
   } else {

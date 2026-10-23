@@ -1,0 +1,257 @@
+/* NextGen Founder Reels — the scrolling half of the People's Choice experience.
+
+   Two decisions shape everything here.
+
+   THE PAGE DOES THE SCROLLING. The panels are not inside their own scroll container; they
+   snap against the page itself, with proximity rather than mandatory. A nested scroller
+   would hold the visitor until it ran out, which is the trapped feeling the brief rules
+   out, and proximity means a deliberate flick still carries straight past the feed into the
+   rest of the page. Each panel is a little under the viewport so the next one shows at the
+   edge -- that sliver is the only hint anyone needs that this scrolls.
+
+   THE FOOTAGE IS NOT CROPPED. Twenty founders filmed in portrait, landscape and square, and
+   a reel that fills the screen with every one of them would have to cut faces off the wide
+   ones. The video is contained and the founder's own poster sits blurred behind it, so the
+   letterboxing reads as staging rather than as a mistake. */
+
+.reel {
+  --reel-h: 88svh;
+  position: relative;
+  padding: 0 0 clamp(40px, 7vw, 80px);
+}
+.reel__track { list-style: none; margin: 0; padding: 0; }
+
+.reel__panel {
+  position: relative;
+  height: var(--reel-h);
+  min-height: 460px;
+  margin: 0 auto clamp(14px, 2.4vw, 26px);
+  width: min(560px, 100%);
+  border-radius: 20px;
+  overflow: hidden;
+  background: #05070A;
+  scroll-snap-align: center;
+  scroll-margin-top: calc(var(--nav-h, 72px) + 10px);
+  box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 30px 70px -40px rgba(0,0,0,1);
+  isolation: isolate;
+}
+@media (min-width: 900px) {
+  /* Desktop is not the phone feed stretched wide. The panel keeps a sane reading width and
+     the surrounding space is left alone rather than filled for the sake of it. */
+  .reel { --reel-h: 80svh; }
+  .reel__panel { width: min(520px, 100%); }
+}
+
+/* the blurred ground, from this founder's own poster */
+.reel__back {
+  position: absolute; inset: -14%;
+  background-size: cover; background-position: center;
+  filter: blur(30px) saturate(.75) brightness(.4);
+  transform: scale(1.08);
+  z-index: 0; pointer-events: none;
+}
+.reel__media {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; place-items: center;
+}
+.reel__media video,
+.reel__media iframe,
+.reel__media .reel__still {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  border: 0; display: block; background: transparent;
+}
+.reel__media .reel__still { object-fit: contain; }
+
+/* the darkening that makes white text legible over any frame */
+.reel__scrim {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(5,7,10,.55) 0%, rgba(5,7,10,0) 22%),
+    linear-gradient(0deg, rgba(5,7,10,.88) 0%, rgba(5,7,10,.4) 26%, rgba(5,7,10,0) 52%);
+}
+
+.reel__num {
+  position: absolute; left: 14px; top: 14px; z-index: 4;
+  min-width: 30px; height: 26px; padding: 0 9px;
+  display: inline-grid; place-items: center; border-radius: 999px;
+  background: rgba(5,7,10,.62); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.2);
+  font: 800 11px/1 var(--f-sans); letter-spacing: .08em; color: #fff;
+}
+
+/* the play affordance, for when autoplay is refused or the pitch is an embed */
+.reel__play {
+  position: absolute; inset: 0; z-index: 5;
+  display: grid; place-items: center;
+  background: none; border: 0; cursor: pointer; color: #fff;
+}
+.reel__play span {
+  width: 68px; height: 68px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(8,12,16,.6); backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,.5);
+  transition: transform .3s var(--ease), background-color .3s var(--ease);
+}
+.reel__play svg { width: 24px; height: 24px; margin-left: 3px; }
+@media (hover: hover) { .reel__play:hover span { transform: scale(1.07); background: rgba(31,199,190,.9); color: #06161A; } }
+
+/* ---------- the words ---------- */
+
+.reel__meta {
+  position: absolute; left: 0; right: 68px; bottom: 0; z-index: 6;
+  padding: 0 16px 18px;
+  display: grid; gap: 5px;
+}
+.reel__co {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(22px, 5.4vw, 30px); line-height: 1.04; letter-spacing: -.02em;
+  color: #fff;
+}
+.reel__by { margin: 0; font: 700 12.5px/1.3 var(--f-sans); letter-spacing: .06em; color: var(--accent); }
+.reel__blurb {
+  margin: 3px 0 0; font: 500 13.5px/1.5 var(--f-sans); color: rgba(255,255,255,.84);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.reel__meet {
+  justify-self: start; margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 7px;
+  background: none; border: 0; padding: 6px 0; cursor: pointer;
+  color: #fff; font: 800 11.5px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+}
+.reel__meet::after {
+  content: ""; width: 16px; height: 1.5px; background: var(--accent);
+  transition: width .3s var(--ease);
+}
+@media (hover: hover) { .reel__meet:hover::after { width: 28px; } }
+
+/* ---------- the rail ---------- */
+
+.reel__rail {
+  position: absolute; right: 8px; bottom: 16px; z-index: 7;
+  display: grid; gap: 14px; justify-items: center;
+}
+.reel__act {
+  display: grid; gap: 4px; justify-items: center;
+  background: none; border: 0; padding: 2px; cursor: pointer; color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+.reel__act span:first-child {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(8,12,16,.55); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.18);
+  transition: background-color .3s var(--ease), transform .3s var(--ease), color .3s var(--ease);
+}
+.reel__act svg { width: 21px; height: 21px; }
+.reel__act small { font: 700 9.5px/1 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+@media (hover: hover) { .reel__act:hover span:first-child { background: rgba(31,199,190,.9); color: #06161A; transform: scale(1.06); } }
+.reel__act:focus-visible span:first-child { outline: 2px solid var(--accent); outline-offset: 3px; }
+.reel__act--vote span:first-child { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.reel__act--vote[disabled] { opacity: .45; cursor: default; }
+.reel__act--on span:first-child { background: rgba(31,199,190,.92); color: #06161A; }
+
+/* ---------- the way back ---------- */
+
+.reel__up {
+  position: sticky; top: calc(var(--nav-h, 72px) + 8px); z-index: 20;
+  display: block; margin: 0 auto clamp(10px, 2vw, 16px);
+  padding: 8px 15px; border-radius: 999px; cursor: pointer;
+  background: rgba(8,12,16,.72); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.2); color: #fff;
+  font: 700 11px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
+  transition: opacity .35s var(--ease), transform .35s var(--ease);
+}
+.reel.is-inside .reel__up { opacity: 1; transform: none; pointer-events: auto; }
+@media (hover: hover) { .reel__up:hover { background: var(--accent); color: var(--on-accent); } }
+
+/* ---------- the end ---------- */
+
+.reel__end {
+  display: grid; place-content: center; gap: 14px; text-align: center;
+  padding: 34px 24px;
+  background:
+    radial-gradient(80% 60% at 50% 18%, rgba(31,199,190,.18), transparent 70%), #080C11;
+}
+.reel__end-k { margin: 0; font: 700 11px/1 var(--f-sans); letter-spacing: .22em; text-transform: uppercase; color: var(--accent); }
+.reel__end-t {
+  margin: 0; font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(28px, 6.4vw, 40px); line-height: 1.02; letter-spacing: -.03em; color: #fff;
+}
+.reel__end-p { margin: 0; font: 500 15px/1.6 var(--f-sans); color: var(--ff-dim, #9AA6B2); max-width: 36ch; }
+.reel__end-acts { display: grid; gap: 9px; margin-top: 6px; }
+.reel__end-acts .btn { --h: 46px; font-size: 11.5px; }
+
+/* ---------- the transition into all of it ---------- */
+
+.ffx { padding: clamp(46px, 9vw, 96px) 0 clamp(18px, 3vw, 34px); text-align: center; }
+.ffx__k {
+  margin: 0 0 14px; font: 700 11px/1 var(--f-sans); letter-spacing: .24em;
+  text-transform: uppercase; color: var(--accent);
+}
+.ffx__t {
+  margin: 0 auto; max-width: 20ch;
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(30px, 6.6vw, 56px); line-height: 1.02; letter-spacing: -.03em; color: #fff;
+  text-wrap: balance;
+}
+.ffx__p { margin: 16px auto 0; max-width: 42ch; font: 500 clamp(15px,2vw,17px)/1.6 var(--f-sans); color: var(--ff-dim, #9AA6B2); }
+.ffx__cue {
+  margin: 26px 0 0; display: inline-flex; align-items: center; gap: 10px;
+  font: 700 11px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(255,255,255,.72);
+}
+.ffx__cue i { display: block; animation: ffx-nudge 2.2s var(--ease) infinite; font-style: normal; }
+@keyframes ffx-nudge { 0%,100% { transform: translateY(0); opacity: .6 } 50% { transform: translateY(5px); opacity: 1 } }
+
+/* things arrive as they come into view, once */
+.ffx__k, .ffx__t, .ffx__p, .ffx__cue { opacity: 0; transform: translateY(14px); }
+.ffx.is-in .ffx__k { animation: ffx-in .7s var(--ease) .02s both; }
+.ffx.is-in .ffx__t { animation: ffx-in .8s var(--ease) .12s both; }
+.ffx.is-in .ffx__p { animation: ffx-in .8s var(--ease) .26s both; }
+.ffx.is-in .ffx__cue { animation: ffx-in .8s var(--ease) .4s both; }
+@keyframes ffx-in { to { opacity: 1; transform: none; } }
+
+/* ---------- the comment panel, a prototype and labelled as one ---------- */
+
+.rc { position: fixed; inset: auto 0 0 0; z-index: 60; transform: translateY(100%);
+  transition: transform .42s var(--ease); }
+.rc.is-open { transform: none; }
+.rc__in {
+  width: min(560px, 100%); margin: 0 auto;
+  background: #0C1118; border: 1px solid rgba(255,255,255,.12); border-bottom: 0;
+  border-radius: 18px 18px 0 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+  max-height: 68svh; overflow-y: auto;
+  box-shadow: 0 -24px 60px rgba(0,0,0,.65);
+}
+.rc__grip { width: 42px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.26); margin: 0 auto 12px; }
+.rc__t { margin: 0 0 4px; font: 800 14px/1.3 var(--f-sans); color: #fff; }
+.rc__note {
+  margin: 0 0 14px; padding: 9px 11px; border-radius: 9px;
+  background: rgba(255,229,0,.08); border: 1px dashed rgba(255,229,0,.45);
+  font: 600 11.5px/1.5 var(--f-sans); color: #FFE500;
+}
+.rc__list { display: grid; gap: 9px; margin: 0 0 14px; padding: 0; list-style: none; }
+.rc__item { padding: 10px 12px; border-radius: 11px; background: rgba(255,255,255,.05);
+  font: 500 13.5px/1.45 var(--f-sans); color: rgba(255,255,255,.88); }
+.rc__item b { display: block; font: 700 11px/1.3 var(--f-sans); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+.rc__quick { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.rc__chip {
+  padding: 8px 12px; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+  color: #fff; font: 600 12.5px/1 var(--f-sans);
+}
+@media (hover: hover) { .rc__chip:hover { border-color: var(--accent); color: var(--accent); } }
+.rc__close { width: 100%; margin-top: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reel__panel { scroll-snap-align: none; }
+  .ffx__k, .ffx__t, .ffx__p, .ffx__cue { opacity: 1; transform: none; animation: none !important; }
+  .ffx__cue i { animation: none; }
+  .rc { transition: none; }
+  .reel__up { transition: none; }
+}

@@ -580,6 +580,72 @@ scrolling. A real browser runs both.
 
 ---
 
+## 0m. Vote-ordered reels, the reaction sheet, and launch readiness (2026-10-23)
+
+### Ranking
+
+`public/api/pc-rank.php` orders the feed by valid points, leader first, counting +1s and
+attendee +2s alike and excluding invalidated and simulated rows. It publishes the **order**
+and withholds the **totals** -- ordering already discloses relative standing, and returning
+counts would hand the whole leaderboard to anyone opening developer tools.
+
+Ties share a rank and the next rank skips. Within a tie: contestant id ascending -- arbitrary,
+but stable, documented and identical for every visitor. The order is fetched **once per page
+load**; re-sorting mid-watch would move a founder out from under someone because a stranger
+voted.
+
+**Right now `ranked` is false and no medals render, because every founder has zero valid
+points** after the approved invalidation. "1st - currently leading" over a field of zeroes
+would be a plain lie. Verified with a stubbed standing: the feed reorders, medals appear on
+the top three only, all 20 remain, vote buttons stay bound to their own founder.
+
+**This needs an explicit decision.** Ordering the feed by votes *publishes the leaderboard
+implicitly* and reverses the earlier deliberate choice that totals and ranks stay private
+while voting is open. It can also drive bandwagon voting. Leadership asked for it; they
+should know they are reversing that.
+
+### The reaction sheet
+
+Rebuilt as a bottom sheet with six ways out, all verified: X button, scrim tap, grip, Escape,
+Done button, swipe down past 90px. Scroll position preserved in every case and the reel keeps
+playing underneath. Still device-only, stated in one line rather than a warning block.
+
+### Public staging strings removed
+
+`Staging diagnostic: http_500` no longer reaches the page (the code rides on a data attribute
+for support); the tutorial panel no longer says "Staging placeholder"; dead code for the
+removed provisional strip is gone. Everything still matching /staging/i is a source comment.
+
+---
+
+## 0n. Launch readiness
+
+**BLOCKING**
+
+1. **Eventbrite token not rotated.** I exposed it in a transcript on 2026-10-23. Rotation plan
+   is in section 0c; production shares the token and serves the live homepage counter.
+2. **Production deploy would delete untracked sponsor assets.** `zation.png`, `simms-media.png`
+   exist on the live server and in no commit; a deploy replaces the web root.
+3. **People's Choice is not on production at all** - the page and API 404 there. Going live is
+   a first deploy of the whole subsystem: data directory, config files and database included.
+4. **Identity amplification.** One person with several email addresses gets a full allowance
+   each. Demonstrated: four identities put 8 points on one founder in a day. Needs a decision,
+   not a code fix (options in section 0h).
+5. **Ranked feed sign-off** - see above.
+
+**NON-BLOCKING**
+
+- Headshots missing for Credible blossom and K8Culture Productions (monograms shown).
+- No founder biographies, so "The founder" stays hidden.
+- The Luminous Lab / Kainema naming.
+- A refund after binding keeps the +2 entitlement.
+
+**NOT BUILT from the master brief**, and not claimed: the cinematic photo intro, the
+three-deck ending, true full-viewport reels, and the speaker-card flip on the expanded
+profile. The feed is panel-based, not edge-to-edge.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

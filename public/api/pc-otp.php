@@ -74,9 +74,21 @@ function pc_session_verified(): bool
     return true;
 }
 
+/* Resolved on every read, not frozen at verification.
+
+   Linking two identities MOVES the losing side's votes onto the survivor. A session opened
+   before that merge still holds the old key, so counting its allowance under that key found
+   nothing and would have handed the same person a second vote for the day -- the link
+   intended to close the duplicate-vote hole would have opened a narrower one. Asking who this
+   key belongs to NOW costs one indexed lookup and removes the whole class of problem. */
 function pc_session_key(): ?string
 {
-    return pc_session_verified() ? (string) $_SESSION['phone_key'] : null;
+    if (!pc_session_verified()) {
+        return null;
+    }
+    return function_exists('pc_canonical')
+        ? pc_canonical((string) $_SESSION['phone_key'])
+        : (string) $_SESSION['phone_key'];
 }
 
 function pc_csrf_ok(array $in): bool

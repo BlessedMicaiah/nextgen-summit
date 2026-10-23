@@ -71,7 +71,7 @@ $fresh = !empty($_SESSION['phone_key']) && !empty($_SESSION['verified_at'])
 if (!$fresh) {
     pcb_out(401, ['ok' => false, 'reason' => 'verify_required']);
 }
-$voter = (string) $_SESSION['phone_key'];
+$voter = pc_canonical((string) $_SESSION['phone_key']);   // resolved now, as the vote path does
 
 if ($action !== 'status') {
     $tok = (string) ($in['csrf'] ?? '');

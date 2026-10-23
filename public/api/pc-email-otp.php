@@ -138,7 +138,7 @@ function pc_email_otp_start(string $email): array
     }
 
     $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    $body = pc_email_code_body($code, 'vote');
+    $body = pc_email_code_body($code, 'vote', (int) (PC_EMAIL_CODE_TTL / 60));
     $sent = pc_mail_send($email, 'Your NextGen Voting Verification Code', $body['html'], $body['text']);
     if (!$sent['ok']) {
         pc_email_note($ident, 'failed', false);

@@ -277,19 +277,20 @@ function pc_smtp_probe(): array
    One template, two purposes. The bonus used to build its own plain message and hand it
    to mail(); sharing this means both arrive looking like NextGen and travel the same
    authenticated route. */
-function pc_email_code_body(string $code, string $purpose = 'vote'): array
+function pc_email_code_body(string $code, string $purpose = 'vote', int $minutes = 10): array
 {
     $isBonus = $purpose === 'bonus';
     $head = $isBonus ? 'Your registration verification code' : 'Your voting verification code';
     $why  = $isBonus
         ? "Enter this code to confirm your NextGen Summit registration and unlock two extra voting points."
         : "Enter this code to verify your email and cast your People's Choice vote.";
-    $pre = 'Your NextGen Summit code is ' . $code . '. It expires in 10 minutes.';
+    $mins = max(1, $minutes) . ' minutes';
+    $pre = 'Your NextGen Summit code is ' . $code . '. It expires in ' . $mins . '.';
     $text = "NEXTGEN SUMMIT\n\n"
         . "Your voting verification code\n\n"
         . '    ' . $code . "\n\n"
         . "Enter this code to verify your email and cast your People's Choice vote.\n\n"
-        . "This code expires in 10 minutes.\n"
+        . 'This code expires in ' . $mins . ".\n"
         . "If you didn't request this code, you can ignore this email - no vote has been cast.\n\n"
         . "NextGen Summit 2026\n";
 
@@ -331,7 +332,7 @@ function pc_email_code_body(string $code, string $purpose = 'vote'): array
         . 'line-height:1.6;color:rgba(255,255,255,.78)">'
         . htmlspecialchars($why, ENT_QUOTES, 'UTF-8') . '</p>'
         . '<p style="margin:14px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;'
-        . 'line-height:1.6;color:rgba(255,255,255,.55)">This code expires in 10 minutes.</p>'
+        . 'line-height:1.6;color:rgba(255,255,255,.55)">This code expires in ' . $mins . '.</p>'
         . '<p style="margin:8px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;'
         . 'line-height:1.6;color:rgba(255,255,255,.55)">'
         . "If you didn&rsquo;t request this code you can ignore this email &mdash; no vote has been cast.</p>"

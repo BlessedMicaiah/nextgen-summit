@@ -334,7 +334,7 @@ function pc_email_code_send(string $voterKey, string $email, string $attendeeKey
     if (!pc_smtp_configured()) {
         return ['ok' => false, 'reason' => 'mail_not_configured'];
     }
-    $body = pc_email_code_body($code, 'bonus');
+    $body = pc_email_code_body($code, 'bonus', (int) (PC_EB_CODE_TTL / 60));
     $sent = pc_mail_send($email, 'Your NextGen Registration Verification Code',
                          $body['html'], $body['text']);
     if (!$sent['ok']) {

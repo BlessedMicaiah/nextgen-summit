@@ -47,14 +47,15 @@ header('X-Content-Type-Options: nosniff');
 $public = (string) pc_meta('rank_public', '1') === '1';
 
 $ids = array_column(pc_entrants(), 'id');
-$totals = array_fill_keys($ids, 0);
+$totals = array_fill_keys($ids, 0);     // POINTS: a +1 and each attendee +2 is its own row
+$voters = array_fill_keys($ids, 0);     // PEOPLE: distinct verified identities
 
 $db = $public ? pc_db() : null;
 if ($db) {
     $day = pc_mode() === 'daily' ? null : 'all';
     /* Every valid point, the +1s and the attendee +2s alike, across the whole competition.
        Each bonus point is its own row, so counting rows counts points. */
-    $sql = 'SELECT entrant_id, COUNT(*) n FROM pc_votes
+    $sql = 'SELECT entrant_id, COUNT(*) n, COUNT(DISTINCT voter_key) v FROM pc_votes
             WHERE competition = ? AND valid = 1 AND simulated = 0
             GROUP BY entrant_id';
     $s = $db->prepare($sql);
@@ -63,6 +64,7 @@ if ($db) {
         $id = (string) $row['entrant_id'];
         if (array_key_exists($id, $totals)) {
             $totals[$id] = (int) $row['n'];
+            $voters[$id] = (int) $row['v'];
         }
     }
 }
@@ -104,7 +106,14 @@ echo json_encode([
     'by_votes' => $public,
     'order' => array_values($order),
     'rank' => $ranks,
+    /* POINTS, published at leadership's explicit instruction, and named as points
+       rather than votes because they are not the same number: a verified attendee's
+       single choice is worth three. `voters` is how many distinct verified identities
+       backed that founder, so neither figure can be mistaken for the other. No voter is
+       identifiable from either -- they are counts, nothing more. */
+    'points' => $public ? $totals : null,
+    'voters' => $public ? $voters : null,
+    'points_are_not_votes' => 'a point is a point; an attendee casts three of them at once',
     'tiebreak' => 'contestant id ascending, applied only within equal totals',
-    'counts_withheld' => 'ordering is published; per-founder totals are not',
     'generated' => gmdate('c'),
 ]);

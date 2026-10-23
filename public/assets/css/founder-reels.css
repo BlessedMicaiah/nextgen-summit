@@ -457,7 +457,114 @@ html.pc-live [data-announce] { display: none !important; }
   display: grid; place-items: center;
   background: linear-gradient(160deg, #141A20, #07090C);
 }
-.reel__plate .ffc__mono {
+.reel__plate .reel__mono {
   font: 900 clamp(58px, 17vw, 96px)/1 var(--f-sans, system-ui);
   color: rgba(255,255,255,.24); letter-spacing: .02em;
+}
+
+/* ===========================================================================
+   DESKTOP UX: the rail, the affordance, and bright footage
+   =========================================================================== */
+
+/* ---------- the founder rail, for a mouse ----------
+   A phone swipes this. A desktop should not have to, so it gets arrows -- shown only
+   when there is something off the end to reach, and only to a fine pointer, because a
+   touch device already has the better gesture. */
+.ff-railwrap { position: relative; }
+.ff-nav {
+  position: absolute; top: 50%; z-index: 4;
+  transform: translateY(-50%);
+  display: grid; place-items: center;
+  width: 42px; height: 42px; padding: 0;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(10,14,18,.86); color: #fff;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 10px 26px -12px rgba(0,0,0,1);
+  transition: background-color .25s var(--ease), transform .25s var(--ease);
+}
+.ff-nav svg { width: 17px; height: 17px; }
+.ff-nav--prev { left: -6px; }
+.ff-nav--next { right: -6px; }
+@media (hover: hover) {
+  .ff-nav:hover { background: var(--accent); color: #06161A; transform: translateY(-50%) scale(1.06); }
+}
+.ff-nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* a touch device keeps the swipe and loses the furniture */
+@media (hover: none), (pointer: coarse) { .ff-nav { display: none !important; } }
+
+/* the clear control, beside the search field */
+.ff-tools { display: flex; align-items: center; gap: 10px; }
+.ff-clear {
+  flex: none; display: grid; place-items: center;
+  width: 38px; height: 38px; padding: 0;
+  border: 1px solid var(--ff-edge-2, rgba(255,255,255,.16));
+  border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--ff-dim, rgba(255,255,255,.66));
+}
+.ff-clear svg { width: 15px; height: 15px; }
+@media (hover: hover) { .ff-clear:hover { color: var(--accent); border-color: var(--accent); } }
+.ff-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- "click to explore", and a card that looks like one ----------
+   The cue used to read "Tap to meet the founder" on every device, including the ones
+   without a touchscreen. It now says what the visitor's own device can do, and the
+   whole caption lights up on hover so the card reads as one target rather than a
+   paragraph with a link somewhere in it. */
+.reel__meet {
+  display: inline-flex; align-items: center; gap: 9px;
+  transition: color .22s var(--ease), gap .22s var(--ease);
+}
+.reel__meet::after {
+  content: ""; width: 15px; height: 15px; flex: none;
+  background: currentColor;
+  -webkit-mask: var(--arrow) center / contain no-repeat;
+  mask: var(--arrow) center / contain no-repeat;
+  --arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h12m-5-6 6 6-6 6"/></svg>');
+}
+@media (hover: hover) {
+  .reel__panel:hover .reel__meet { color: var(--accent); gap: 13px; }
+  .reel__meet:hover { color: var(--accent); }
+}
+.reel__meet:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* On a pointer device the caption block is itself the way in, so the cursor says so
+   and the plate lifts very slightly under the pointer. */
+@media (hover: hover) and (pointer: fine) {
+  .reel__meta { cursor: pointer; }
+  .reel__panel:hover .reel__meta {
+    background: linear-gradient(0deg, rgba(57,216,200,.09) 0%, rgba(57,216,200,0) 68%);
+  }
+}
+
+/* ---------- bright footage on a big screen ----------
+   Several pitches were filmed against white walls and studio lighting. On a phone they
+   are fine; on a 1440px screen the clip becomes a slab of glare in a dark room, and the
+   caption over it loses contrast.
+
+   The fix is framing, not dimming. The clip keeps its own exposure -- a barely-there
+   trim of the very brightest highlights, far too small to change a face -- and gains a
+   defined edge and a soft falloff into the dark surround, which is what stops it
+   reading as a hole cut in the page. */
+@media (min-width: 700px) {
+  .reel.is-live .reel__media video,
+  .reel.is-live .reel__media iframe,
+  .reel.is-live .reel__media .reel__still {
+    filter: brightness(.965) contrast(1.035) saturate(1.02);
+  }
+  /* the edge, and the falloff: drawn over the clip's box, never over its middle */
+  .reel.is-live .reel__media::after {
+    content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.085),
+      inset 0 0 64px 24px rgba(4,7,10,.30),
+      0 28px 80px -36px rgba(0,0,0,.9);
+    border-radius: 14px;
+  }
+  .reel.is-live .reel__media { border-radius: 14px; overflow: hidden; }
+  /* and the ground behind it comes down a little, so the clip is the brightest thing
+     on screen rather than competing with its own blurred copy */
+  .reel.is-live .reel__back { filter: blur(48px) saturate(1.04) brightness(.56); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reel__meet { transition: none; }
 }

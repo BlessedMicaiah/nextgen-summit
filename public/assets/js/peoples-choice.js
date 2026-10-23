@@ -178,62 +178,21 @@
     return v;
   }
 
-  /* ---------- 5. the gallery ---------- */
-  var grid = $('[data-pc-grid]');
-  if (!grid) return;
+  /* ---------- 5. the founders ----------
+     There is no second gallery any more, so there is no grid to find and nothing to bail
+     out over. This guard used to read `if (!grid) return`, which with the grid removed
+     would have stopped the entire People's Choice script -- voting included -- on a page
+     that looked perfectly fine. */
 
   function initials(e) {
     return e.draft ? e.n : e.name.split(/\s+/).map(function (w) { return w[0]; }).slice(0, 2).join('');
   }
 
-  /* The feed card.
-
-     Every [data-pc-*] hook is the one the voting code already looks for -- open, watch,
-     share, vote -- so the card is a new surface over unchanged wiring. The .pce class stays
-     on the <li> because labelVoteButton() asks closest('.pce') whether a button is a gallery
-     button or the dialog's, and that distinction decides its wording. */
-  function cardHtml(e) {
-    var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
-    /* Each portrait holds its own crop. A single centred crop decapitates a tall headshot,
-       and these twenty images are all different shapes. */
-    var pos = e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal) + '"';
-    var shot = e.shot
-      ? '<img src="' + e.shot + '"' + fit + pos + ' alt="' + esc(e.company) +
-        '" loading="lazy" decoding="async">'
-      : '<span class="ffc__await"><span class="ffc__mono">' + esc(initials(e)) + '</span>' +
-        '<span class="ffc__awaitk">' + (e.draft ? 'Slot open' : 'Portrait to come') +
-        '</span></span>';
-    var canVote = STATE === 'open';
-    return '' +
-      '<li class="pce ffc' + (e.shot && e.shotFit !== 'contain' ? ' ffc--photo' : '') +
-        '" data-pc-card="' + e.id + '" data-ff-slug="' + esc(e.slug || e.id) + '">' +
-        '<button class="ffc__open" type="button" data-pc-open="' + e.id + '">' +
-          'Open ' + esc(e.name) + '</button>' +
-        '<span class="ffc__shot">' + shot +
-          '<span class="ffc__num">' + e.n + '</span>' +
-          (e.video
-            ? '<span class="ffc__pitch">' + playIcon() + 'Pitch</span>'
-            : '') +
-        '</span>' +
-        '<span class="ffc__body">' +
-          '<p class="ffc__co">' + esc(e.company) + '</p>' +
-          '<p class="ffc__by">' + esc(e.name) + '</p>' +
-          '<p class="ffc__blurb">' + esc(e.blurb) + '</p>' +
-          '<span class="ffc__acts">' +
-            (e.video
-              ? '<button class="btn btn--ghost" type="button" data-pc-watch="' + e.id +
-                '">Watch pitch</button>'
-              : '<button class="btn btn--ghost" type="button" data-pc-open="' + e.id +
-                '">Read more</button>') +
-            '<button class="btn" type="button" data-pc-vote="' + e.id + '"' +
-              (canVote ? '' : ' disabled') + '>' + (canVote ? 'Vote' : COPY[STATE].vote) +
-              '</button>' +
-            '<button class="ffc__icon" type="button" data-pc-share="' + e.id + '" ' +
-              'aria-label="Share ' + esc(e.company) + '">' + shareIcon() + '</button>' +
-          '</span>' +
-        '</span>' +
-      '</li>';
-  }
+  /* The gallery card is gone with the gallery it filled. It carried the last arbitrary
+     contestant number on the site -- the small circle in the corner of each tile -- and
+     that markup and its styling are deleted rather than hidden. Founders are identified
+     by their name and their company. The only number a visitor sees now is a position
+     earned from counted points. */
 
   function shareIcon() {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
@@ -242,7 +201,6 @@
   }
 
 
-  grid.innerHTML = ENTRANTS.map(cardHtml).join('');
   $$('[data-pc-count]').forEach(function (n) { n.textContent = ENTRANTS.length; });
 
   /* ---------- 6. the profile ---------- */
@@ -334,13 +292,13 @@
        still what every vote, share link and database row is keyed on -- it simply is not
        something the public needs, and leadership asked for it gone. The corner carries
        the founder's POSITION once there are standings, and nothing at all before then. */
-    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
+    var cst = standing(e);
     var corner = $('.fcd__when', pDlg);
     var num = $('[data-fcd-n]', pDlg);
     var numK = $('[data-fcd-k]', pDlg);
-    if (corner) corner.hidden = !place;
-    if (num) num.textContent = place ? ordinal(place) : '';
-    if (numK) numK.textContent = 'Position';
+    if (corner) corner.hidden = !cst;
+    if (num) num.textContent = cst ? cst.label : '';
+    if (numK) numK.textContent = cst && cst.detail ? cst.detail : 'Position';
 
     /* The front previews, the back explains. Every one of the twenty descriptions turned
        out to be a single sentence -- measured, not assumed -- so there is no second
@@ -1135,6 +1093,16 @@
     if ((el = t.closest('[data-pc-open]'))) {
       opener = el; openProfile(el.getAttribute('data-pc-open')); return;
     }
+    /* The whole caption opens the card on a pointer device, which is what the cursor
+       and the hover state already promise. Not on touch: there the caption sits under
+       a thumb that is trying to scroll. */
+    if ((el = t.closest('.reel__meta'))) {
+      if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        var mp = el.closest('[data-reel-panel]');
+        var mid = mp && mp.getAttribute('data-reel-panel');
+        if (mid && byId[mid]) { opener = el; openProfile(mid); return; }
+      }
+    }
     /* Watch the pitch, from anywhere: the feed is where the pitches play, so this takes
        the visitor there rather than opening a second player somewhere else. */
     if ((el = t.closest('[data-pc-watch]'))) {
@@ -1152,6 +1120,13 @@
       return;
     }
     if (t.closest('[data-ff-enter]')) { enterExperience(); return; }
+    if (t.closest('[data-ff-clear]')) {
+      if (searchBox) { searchBox.value = ''; searchBox.focus(); }
+      applyFilter('');
+      return;
+    }
+    if (t.closest('[data-ff-prev]')) { railStep(-1); return; }
+    if (t.closest('[data-ff-next-rail]')) { railStep(1); return; }
     if (t.closest('[data-fci-skip]')) { introEnd(true); return; }
     if (t.closest('[data-reel-exit]')) { reelExit(); return; }
     if (t.closest('[data-reel-tap]')) { reelToggle(); return; }
@@ -1479,7 +1454,6 @@
         if (!closed) {
           closed = true;
           STATE = 'closed';
-          grid.innerHTML = ENTRANTS.map(cardHtml).join('');
           paintFurniture();
           track('voting_closed_locally');
         }
@@ -1515,6 +1489,13 @@
   var reelMuted = true;
   var reelActive = null;
 
+  /* "Tap" on a device with no touchscreen is an instruction the visitor cannot follow.
+     Asked of the device rather than the screen width, because a touch laptop is both. */
+  function exploreWord() {
+    var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    return fine ? 'Click to explore this founder' : 'Tap to explore this founder';
+  }
+
   function reelIcon(name) {
     var p = {
       vote: '<path d="M4.5 12.5l5 5 10-11" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -1536,6 +1517,31 @@
     return n + ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
   }
 
+  /* What a founder's standing says, if it says anything.
+
+     Returns null when the server reports no meaningful standings -- which is the case
+     until real voting separates anybody -- so every caller renders nothing rather than
+     a place nobody has earned. */
+  function standing(e) {
+    if (!RANK || !RANK.ranked || !RANK.rank) return null;
+    var place = RANK.rank[e.id];
+    if (!place) return null;
+    var pts = (RANK.points && RANK.points[e.id] != null) ? RANK.points[e.id] : null;
+    var people = (RANK.voters && RANK.voters[e.id] != null) ? RANK.voters[e.id] : null;
+    return {
+      place: place,
+      ordinal: ordinal(place),
+      points: pts,
+      voters: people,
+      /* "points", not "votes": an attendee casts one choice worth three points, so the
+         two numbers are different and saying either one for the other is wrong. */
+      label: pts == null ? ordinal(place)
+        : ordinal(place) + ' · ' + pts + (pts === 1 ? ' point' : ' points'),
+      detail: (people == null) ? '' :
+        people + (people === 1 ? ' voter' : ' voters')
+    };
+  }
+
   function reelPanelHtml(e, i) {
     var poster = e.poster || e.shot || '';
     var canVote = STATE === 'open';
@@ -1554,25 +1560,26 @@
          founder's panel. They get the monogram plate instead. */
       media = (poster
           ? '<img class="reel__still" src="' + esc(poster) + '" alt="" loading="lazy">'
-          : '<span class="reel__plate"><span class="ffc__mono">' + esc(initials(e)) + '</span></span>') +
+          : '<span class="reel__plate"><span class="reel__mono">' + esc(initials(e)) + '</span></span>') +
         '<button class="reel__play" type="button" data-reel-embed="' + e.id + '" ' +
         'aria-label="Play the pitch from ' + esc(e.company) + '">' +
         '<span>' + reelIcon('play') + '</span></button>';
     } else {
       media = poster
         ? '<img class="reel__still" src="' + esc(poster) + '" alt="" loading="lazy">'
-        : '<span class="ffc__await"><span class="ffc__mono">' + esc(initials(e)) + '</span></span>';
+        : '<span class="reel__plate"><span class="reel__mono">' + esc(initials(e)) + '</span></span>';
     }
     /* A medal is a claim about the standings, so it only appears when the standings
        support one. With every founder level -- which is the case until real voting starts --
        RANK.ranked is false and nothing is shown, because "currently leading" over a field of
        zeroes would simply be untrue. Tied founders share a rank and get the same badge. */
-    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
+    var st = standing(e);
+    var place = st ? st.place : 0;
     var medal = '';
-    if (place >= 1 && place <= 3) {
-      var words = { 1: 'Currently leading', 2: 'Currently second', 3: 'Currently third' };
-      medal = '<span class="reel__medal reel__medal--' + place + '">' +
-        '<b>' + ordinal(place) + '</b> ' + words[place] + '</span>';
+    if (st && place <= 3) {
+      medal = '<span class="reel__medal reel__medal--' + place + '" data-reel-standing="' + e.id + '">' +
+        '<b>' + st.ordinal + '</b> ' + (st.points == null ? 'place'
+          : st.points + (st.points === 1 ? ' point' : ' points')) + '</span>';
     }
     /* The corner badge is the founder's POSITION, not their contestant number.
 
@@ -1581,7 +1588,9 @@
        there is no standing to carry, because every founder is still level, it is not
        rendered at all rather than inventing a rank nobody has earned. The top three
        have the medal above, so no panel states its position twice. */
-    var badge = (place > 3) ? '<span class="reel__num">' + ordinal(place) + '</span>' : '';
+    var badge = (st && place > 3)
+      ? '<span class="reel__num" data-reel-standing="' + e.id + '">' + st.label + '</span>'
+      : '';
     return '' +
       '<li class="reel__panel' + (place && place <= 3 ? ' reel__panel--p' + place : '') +
         '" data-reel-panel="' + e.id + '" data-pc-card="' + e.id + '">' +
@@ -1602,7 +1611,7 @@
           '<p class="reel__co">' + esc(e.company) + '</p>' +
           '<p class="reel__by">' + esc(e.name) + '</p>' +
           '<p class="reel__blurb">' + esc(e.blurb) + '</p>' +
-          '<button class="reel__meet" type="button" data-pc-open="' + e.id + '">Tap to meet the founder</button>' +
+          '<button class="reel__meet" type="button" data-pc-open="' + e.id + '">' + exploreWord() + '</button>' +
         '</div>' +
         (i === 0
           ? '<span class="reel__hint" aria-hidden="true">Swipe for the next' +
@@ -1646,9 +1655,10 @@
   }
 
   function deckCardFace(e, i) {
-    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
-    var rank = (place >= 1 && place <= 3)
-      ? '<span class="deck__rank deck__rank--' + place + '">' + ({ 1: '1st', 2: '2nd', 3: '3rd' }[place]) + '</span>'
+    var dst = standing(e);
+    var place = dst ? dst.place : 0;
+    var rank = (dst && place <= 3)
+      ? '<span class="deck__rank deck__rank--' + place + '">' + dst.ordinal + '</span>'
       : '';
     var art = e.shot
       ? '<img src="' + esc(e.shot) + '" alt="" loading="lazy" decoding="async"' +
@@ -1726,6 +1736,72 @@
       .then(function (d) { if (d && d.ok) RANK = d; })
       .catch(function () {})
       .then(function () { if (then) then(); });
+  }
+
+  /* ---------- keeping the standings current ----------
+
+     Every 45 seconds, and only while the tab is being looked at. The endpoint caches for
+     30, so this is one cheap request a minute per reader and no busier when the page is
+     left open in a background tab.
+
+     What arrives is applied in two different ways, because they carry different risks:
+
+       THE NUMBERS are written straight into the badges that are already on screen. A
+       founder's point total changing under a reader costs them nothing.
+
+       THE ORDER is only rebuilt when the visitor is demonstrably not in the middle of
+       something -- no dialog open, not inside the immersive feed, nothing playing. The
+       feed re-sorting under someone watching a pitch would take the founder away from
+       them because a stranger voted somewhere else. When it is not safe, the new order
+       waits; the next time they leave the feed or reload, it is there. */
+  var rankTimer = null;
+
+  function standingsText(id) {
+    var e = byId[id];
+    return e ? standing(e) : null;
+  }
+
+  function repaintStandings() {
+    $$('[data-reel-standing]').forEach(function (n) {
+      var st = standingsText(n.getAttribute('data-reel-standing'));
+      if (!st) { n.hidden = true; return; }
+      n.hidden = false;
+      if (n.classList.contains('reel__medal')) {
+        n.innerHTML = '<b>' + esc(st.ordinal) + '</b> ' +
+          (st.points == null ? 'place' : esc(String(st.points)) +
+            (st.points === 1 ? ' point' : ' points'));
+      } else {
+        n.textContent = st.label;
+      }
+    });
+    if (pDlg.open) {
+      var cur = byId[pDlg.getAttribute('data-entrant')];
+      if (cur) paintProfile(cur);
+    }
+  }
+
+  function safeToReorder() {
+    if (reelLive) return false;                       // they are inside the feed
+    if (pDlg.open || (vDlg && vDlg.open)) return false;  // a card or the vote flow is open
+    if (deckWrap && deckWrap.classList.contains('is-on')) return false;
+    if ($$('[data-reel-video]', reelTrack).some(function (v) { return !v.paused; })) return false;
+    return true;
+  }
+
+  function watchStandings() {
+    if (rankTimer) clearInterval(rankTimer);
+    rankTimer = setInterval(function () {
+      if (document.hidden) return;
+      var before = RANK && RANK.order ? RANK.order.join(',') : '';
+      loadRanking(function () {
+        var after = RANK && RANK.order ? RANK.order.join(',') : '';
+        repaintStandings();
+        if (after !== before && safeToReorder()) {
+          paintReels();
+          paintStories();
+        }
+      });
+    }, 45000);
   }
 
   /* Only the panel in view plays, and only its neighbours are even given a src. Twenty
@@ -2255,6 +2331,12 @@
   /* Who appears in the stories row, and in what order. Founders with a playable pitch come
      first, because a pitch is what the row promises. Everyone is in it regardless: being
      left out would read as being out of the competition. */
+  /* The bubbles run in the same order as everything else. One authoritative list from
+     one endpoint, so the rail, the reels and the deck can never disagree. */
+  function storyOrderRanked() {
+    return reelOrder();
+  }
+
   function storyOrder() {
     var withVideo = ENTRANTS.filter(function (e) { return e.video; });
     var without = ENTRANTS.filter(function (e) { return !e.video; });
@@ -2278,7 +2360,7 @@
 
   function paintStories() {
     if (!rail) return;
-    rail.innerHTML = storyOrder().map(bubbleHtml).join('');
+    rail.innerHTML = storyOrderRanked().map(bubbleHtml).join('');
     bubbleEntrance();
   }
 
@@ -2447,43 +2529,92 @@
     });
   }
 
-  /* ---------- search ---------- */
+  /* ---------- search ----------
+
+     It filters the founder rail, which is the surface the founders are actually on. There
+     is no second directory to search any more, and building one was never the point: the
+     brief was less scrolling, not another list.
+
+     Matching is forgiving on case, spacing and accents, because a visitor typing
+     "metayer" should find Metayer. Clearing restores the standings order.  */
 
   var searchBox = $('[data-ff-search]');
+  var clearBtn = $('[data-ff-clear]');
   var countEl = $('[data-ff-count]');
 
+  function fold(t) {
+    t = String(t == null ? '' : t).toLowerCase();
+    if (t.normalize) t = t.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return t.replace(/\s+/g, ' ').trim();
+  }
+
   function applyFilter(q) {
-    q = (q || '').trim().toLowerCase();
+    var needle = fold(q);
     var shown = 0;
-    $$('[data-pc-card]', grid).forEach(function (li) {
-      var e = byId[li.getAttribute('data-pc-card')];
-      var hit = !q || !e ||
-        (e.company + ' ' + e.name + ' ' + (e.blurb || '')).toLowerCase().indexOf(q) >= 0;
-      li.hidden = !hit;
+    $$('[data-ff-story]', rail).forEach(function (b) {
+      var e = byId[b.getAttribute('data-ff-story')];
+      var hay = e ? fold(e.company + ' ' + e.name) : '';
+      var hit = !needle || hay.indexOf(needle) >= 0;
+      b.hidden = !hit;
       if (hit) shown++;
     });
     var empty = $('[data-ff-empty]');
-    if (empty) empty.hidden = shown !== 0;
+    if (empty) empty.hidden = !(needle && shown === 0);
+    if (clearBtn) clearBtn.hidden = !needle;
     if (countEl) {
-      countEl.textContent = q ? shown + ' of ' + ENTRANTS.length : ENTRANTS.length + ' founders';
+      countEl.textContent = needle
+        ? shown + ' of ' + ENTRANTS.length + (shown === 1 ? ' founder' : ' founders')
+        : ENTRANTS.length + ' founders';
     }
+    railArrows();
   }
 
   if (searchBox) {
     searchBox.addEventListener('input', function () { applyFilter(searchBox.value); });
+    /* Enter on a single match goes straight to that founder's pitch, which is the whole
+       reason someone searched. */
+    searchBox.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      var hit = $$('[data-ff-story]', rail).filter(function (b) { return !b.hidden; });
+      if (hit.length) reelOpenAt(hit[0].getAttribute('data-ff-story'));
+    });
   }
 
-  /* ---------- cards arriving ---------- */
+  /* ---------- the rail, for a mouse ----------
+     A phone swipes this; a desktop should not have to. Arrows appear only when there is
+     something off either end, and they move by roughly a screenful of bubbles. */
+  function railArrows() {
+    if (!rail) return;
+    var prev = $('[data-ff-prev]'), next = $('[data-ff-next-rail]');
+    if (!prev || !next) return;
+    var over = rail.scrollWidth - rail.clientWidth;
+    var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    prev.hidden = !fine || over < 8 || rail.scrollLeft < 8;
+    next.hidden = !fine || over < 8 || rail.scrollLeft > over - 8;
+  }
 
-  function observeCards() {
-    if (!('IntersectionObserver' in window)) return;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var io = new IntersectionObserver(function (rows) {
-      rows.forEach(function (r) {
-        if (r.isIntersecting) { r.target.classList.add('is-in'); io.unobserve(r.target); }
-      });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.04 });
-    $$('[data-pc-card]', grid).forEach(function (n) { io.observe(n); });
+  function railStep(dir) {
+    if (!rail) return;
+    var by = Math.max(160, Math.round(rail.clientWidth * 0.8));
+    rail.scrollBy({ left: dir * by, behavior: 'smooth' });
+    setTimeout(railArrows, 420);
+  }
+
+  if (rail) {
+    rail.addEventListener('scroll', railArrows, { passive: true });
+    addEventListener('resize', railArrows, { passive: true });
+    /* Left and right move along the rail when a bubble has focus, so the row is
+       reachable without a mouse or a swipe. */
+    rail.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'ArrowRight' && ev.key !== 'ArrowLeft') return;
+      var all = $$('[data-ff-story]', rail).filter(function (b) { return !b.hidden; });
+      var at = all.indexOf(document.activeElement);
+      if (at < 0) return;
+      ev.preventDefault();
+      var to = all[at + (ev.key === 'ArrowRight' ? 1 : -1)];
+      if (to) { to.focus(); to.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); }
+    });
   }
 
   /* ---------- the opening reveal ----------
@@ -2505,7 +2636,11 @@
   function paintFeedFurniture() {
     paintStories();
     paintReels();                       // contestant order, so the feed exists immediately
-    loadRanking(function () { paintReels(); });   // then re-laid in vote order, once
+    loadRanking(function () {           // then re-laid in standings order
+      paintReels();
+      paintStories();
+      watchStandings();
+    });
     var pc = $('[data-ff-pitches]');
     if (pc) {
       /* The honest number: how many of the twenty submitted something that actually plays.
@@ -2514,7 +2649,6 @@
       pc.textContent = String(ENTRANTS.filter(function (e) { return e.video; }).length);
     }
     applyFilter(searchBox ? searchBox.value : '');
-    observeCards();
   }
 
   /* the Meet the Founders panel arrives once, as it comes into view */
@@ -2562,7 +2696,7 @@
         if (d.mode && d.mode !== MODE) { MODE = d.mode; paintFurniture(); }
         if (STATES.indexOf(d.state) < 0 || d.state === STATE) return;
         STATE = d.state;
-        grid.innerHTML = ENTRANTS.map(cardHtml).join('');
+        paintReels();
         paintFurniture();
         repaintAfterVote();
       })

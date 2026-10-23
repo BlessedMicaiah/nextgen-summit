@@ -44,21 +44,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preload" as="image" href="/assets/img/pitch-hero-m-900.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="/assets/img/pitch-hero-1600.jpg" imagesrcset="/assets/img/pitch-hero-1200.jpg 1200w, /assets/img/pitch-hero-1600.jpg 1600w, /assets/img/pitch-hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261023-68">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261023-68">
-<link rel="stylesheet" href="/assets/css/peoples-choice.css?v=20261023-68">
-<link rel="stylesheet" href="/assets/css/founder-feed.css?v=20261023-68">
-<link rel="stylesheet" href="/assets/css/founder-reels.css?v=20261023-68">
-<link rel="stylesheet" href="/assets/css/founder-stage.css?v=20261023-68">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261023-69">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261023-69">
+<link rel="stylesheet" href="/assets/css/peoples-choice.css?v=20261023-69">
+<link rel="stylesheet" href="/assets/css/founder-feed.css?v=20261023-69">
+<link rel="stylesheet" href="/assets/css/founder-reels.css?v=20261023-69">
+<link rel="stylesheet" href="/assets/css/founder-stage.css?v=20261023-69">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261023-68" defer></script>
-<script src="/assets/js/announce.js?v=20261023-68" defer></script>
-<script src="/assets/js/depart.js?v=20261023-68" defer></script>
-<script src="/assets/js/forms.js?v=20261023-68" defer></script>
-<script src="/assets/js/pc-founders.js?v=20261023-68" defer></script>
-<script src="/assets/js/peoples-choice.js?v=20261023-68" defer></script>
+<script src="/assets/js/site.js?v=20261023-69" defer></script>
+<script src="/assets/js/announce.js?v=20261023-69" defer></script>
+<script src="/assets/js/depart.js?v=20261023-69" defer></script>
+<script src="/assets/js/forms.js?v=20261023-69" defer></script>
+<script src="/assets/js/pc-founders.js?v=20261023-69" defer></script>
+<script src="/assets/js/peoples-choice.js?v=20261023-69" defer></script>
 </head>
 <body>
 <!-- The opening reveal. One turquoise signal, the wordmark, card silhouettes, gone in about
@@ -239,11 +239,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- ==================== founder stories ==================== -->
       <section class="ff-stories" aria-labelledby="ff-stories-t">
         <div class="ff-sec">
-          <h3 class="ff-sec__t" id="ff-stories-t">Founder stories</h3>
-          <span class="ff-sec__n">Tap a founder</span>
+          <h3 class="ff-sec__t" id="ff-stories-t">The founders</h3>
+          <span class="ff-sec__n" data-ff-count>20 founders</span>
         </div>
-        <div class="ff-rail" data-ff-rail role="list"
-          aria-label="Founder stories. Use the arrow keys inside a story to move between founders."></div>
+
+        <!-- Search sits WITH the founders rather than over a second copy of them. Typing
+             filters this rail; choosing a result opens that founder's pitch. -->
+        <div class="ff-tools">
+          <label class="ff-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <span class="sr">Search founders and businesses</span>
+            <input type="search" data-ff-search placeholder="Search a founder or business" autocomplete="off"
+              aria-describedby="ff-search-note">
+          </label>
+          <button class="ff-clear" type="button" data-ff-clear hidden aria-label="Clear the search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <p class="sr" id="ff-search-note">Matching founders stay in the row below; the rest are hidden until the search is cleared.</p>
+
+        <div class="ff-railwrap">
+          <button class="ff-nav ff-nav--prev" type="button" data-ff-prev hidden aria-label="Previous founders">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="ff-rail" data-ff-rail role="list" aria-label="The twenty founders"></div>
+          <button class="ff-nav ff-nav--next" type="button" data-ff-next-rail hidden aria-label="More founders">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <p class="ff-empty" data-ff-empty hidden>No founder matches that search.</p>
       </section>
 
       <!-- ==================== meet the founders ==================== -->
@@ -277,30 +301,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="reel__of" data-reel-of aria-live="polite"></span>
       </div>
 
-      <!-- ==================== the feed ==================== -->
-      <section class="ff-feed" aria-labelledby="ff-feed-t">
-        <div class="ff-sec">
-          <h3 class="ff-sec__t" id="ff-feed-t">Every founder</h3>
-          <span class="ff-sec__n" data-ff-count>20 founders</span>
-        </div>
-
-        <!-- The provisional-mapping notice that used to sit here is gone because the
-             mapping is no longer provisional: tools/founder-map.json now carries
-             reviewed:true, and the audit found the manifest, the map and the database
-             agreeing on all twenty. What a machine cannot check is whether a photograph
-             shows the founder named beside it; that stays an editorial judgement. -->
-
-        <div class="ff-tools">
-          <label class="ff-search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-            <span class="sr">Search founders and businesses</span>
-            <input type="search" data-ff-search placeholder="Search a founder or business" autocomplete="off">
-          </label>
-        </div>
-
-        <ul class="ff-grid" data-pc-grid></ul>
-        <p class="ff-empty" data-ff-empty hidden>No founder matches that search.</p>
-      </section>
+      <!-- The lower "Every founder" gallery is gone. It was a second, scroll-heavy copy
+           of the same twenty people, below the cards that already carry them. Its search
+           and its count moved up into the founders section above, which is now the one
+           place a visitor discovers, watches, votes and shares. -->
 
     </div>
   </section>

@@ -183,7 +183,11 @@
 
 /* ---------- the feed ---------- */
 
-.ff-feed { padding: clamp(18px, 3vw, 30px) 0 clamp(60px, 9vw, 110px); }
+/* The lower gallery is gone, and so are the card styles that drew it -- including
+   .ffc__num, the little numbered circle in each tile's corner. That was the last
+   arbitrary contestant number on the site; it is deleted, not hidden.
+
+   The search keeps its appearance and moves up to sit with the founder rail. */
 
 .ff-tools {
   display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
@@ -203,137 +207,6 @@
 .ff-search input::placeholder { color: var(--ff-dimmer); }
 .ff-search:focus-within { border-color: var(--accent); }
 .ff-count { font: 600 12px/1 var(--f-sans); letter-spacing: .1em; color: var(--ff-dimmer); }
-
-.ff-grid {
-  list-style: none; margin: 0; padding: 0;
-  display: grid; gap: clamp(16px, 2.2vw, 26px);
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-}
-@media (min-width: 1040px) {
-  /* Desktop is not the phone feed stretched wide: the first card takes a double column and
-     reads as the opening spread of a magazine. */
-  .ff-grid { grid-template-columns: repeat(3, 1fr); }
-  /* Only a founder with an actual photograph leads the spread. A logo blown up to double
-     width is a white rectangle where a person should be, and the founder whose turn it is
-     to lead is decided by the contestant order, not by who happens to have good artwork. */
-  .ff-grid > li:first-child.ffc--photo { grid-column: span 2; }
-  .ff-grid > li:first-child.ffc--photo .ffc__shot { aspect-ratio: 16 / 10; }
-}
-
-/* The card. Dimensional edge, dark face, portrait doing the talking. */
-.ffc {
-  position: relative; display: flex; flex-direction: column;
-  background: linear-gradient(180deg, var(--ff-card-2), var(--ff-card));
-  border: 1px solid var(--ff-edge);
-  border-radius: 18px; overflow: hidden;
-  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 18px 40px -24px rgba(0,0,0,.9);
-  transition: transform .5s var(--ease), border-color .5s var(--ease),
-              box-shadow .5s var(--ease);
-}
-@media (hover: hover) {
-  .ffc:hover {
-    transform: translateY(-4px);
-    border-color: var(--ff-edge-2);
-    box-shadow: 0 1px 0 rgba(255,255,255,.07) inset, 0 28px 54px -26px rgba(0,0,0,1);
-  }
-}
-.ffc.is-in { animation: ff-rise .7s var(--ease) both; }
-@keyframes ff-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-
-.ffc__shot {
-  position: relative; aspect-ratio: 4 / 3; background: #0E131A; overflow: hidden;
-}
-.ffc__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* A logo needs air and a light ground, because several of these are dark marks on
-   transparency and would simply vanish on the dark card. But a full-bleed white rectangle
-   is a hole punched in the page, so the mark sits on a rounded plate inside the card
-   instead -- it reads as a brand, not as a missing image. */
-.ffc__shot img.is-contain {
-  object-fit: contain;
-  width: 68%; height: 68%;
-  margin: 16% auto;
-  padding: 5%;
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 18px 40px -22px rgba(0,0,0,.9);
-}
-.ffc__shot::after {
-  content: ""; position: absolute; inset: auto 0 0 0; height: 55%;
-  background: linear-gradient(180deg, transparent, rgba(6,8,11,.86));
-  pointer-events: none;
-}
-.ffc__shot img.is-contain ~ .ffc__shot-veil { display: none; }
-
-.ffc__await {
-  position: absolute; inset: 0; display: grid; place-items: center; gap: 6px;
-  align-content: center;
-  background:
-    radial-gradient(70% 60% at 50% 30%, rgba(31,199,190,.14), transparent 70%), #0E131A;
-}
-.ffc__mono {
-  font-family: var(--f-display); font-weight: 900; font-size: clamp(40px, 7vw, 62px);
-  letter-spacing: -.03em; color: var(--accent); line-height: 1;
-}
-.ffc__awaitk {
-  font: 700 10px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
-  color: var(--ff-dimmer);
-}
-
-.ffc__num {
-  position: absolute; left: 14px; top: 14px; z-index: 2;
-  min-width: 30px; height: 26px; padding: 0 9px;
-  display: inline-grid; place-items: center;
-  border-radius: 999px;
-  background: rgba(6,8,11,.62); backdrop-filter: blur(6px);
-  border: 1px solid var(--ff-edge-2);
-  font: 800 11px/1 var(--f-sans); letter-spacing: .08em; color: #fff;
-}
-.ffc__pitch {
-  position: absolute; right: 14px; top: 14px; z-index: 2;
-  display: inline-flex; align-items: center; gap: 6px;
-  height: 26px; padding: 0 10px; border-radius: 999px;
-  background: rgba(31,199,190,.92); color: #06080B;
-  font: 800 10px/1 var(--f-sans); letter-spacing: .1em; text-transform: uppercase;
-}
-.ffc__pitch svg { width: 9px; height: 9px; }
-
-.ffc__body { display: flex; flex-direction: column; gap: 9px; padding: 18px 18px 18px; flex: 1; }
-.ffc__co {
-  font-family: var(--f-display); font-weight: 900;
-  font-size: clamp(21px, 2.5vw, 27px); line-height: 1.05; letter-spacing: -.02em;
-  color: #fff; margin: 0;
-  text-wrap: balance;
-}
-.ffc__by { font: 600 12px/1.3 var(--f-sans); letter-spacing: .06em; color: var(--accent); margin: 0; }
-.ffc__blurb {
-  margin: 2px 0 0; font: 500 14px/1.55 var(--f-sans); color: var(--ff-dim);
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-.ffc__acts { display: flex; gap: 9px; margin-top: auto; padding-top: 14px; }
-.ffc__acts .btn { flex: 1; --h: 42px; font-size: 11.5px; letter-spacing: .09em; }
-.ffc__acts .btn--ghost { color: var(--ff-text); }
-.ffc__icon {
-  flex: 0 0 42px; width: 42px; height: 42px; border-radius: 8px;
-  display: grid; place-items: center;
-  background: transparent; color: var(--ff-dim);
-  border: 1.5px solid var(--ff-edge-2); cursor: pointer;
-  transition: color .3s var(--ease), border-color .3s var(--ease);
-}
-.ffc__icon svg { width: 17px; height: 17px; }
-@media (hover: hover) { .ffc__icon:hover { color: var(--accent); border-color: var(--accent); } }
-
-/* The whole card opens the profile; the buttons inside it keep their own jobs. */
-.ffc__open {
-  position: absolute; inset: 0; z-index: 1;
-  background: none; border: 0; cursor: pointer;
-  font: 0/0 a; color: transparent;
-}
-.ffc__open:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 18px; }
-/* Only the action row needs lifting above the full-card open button. The number and the
-   pitch badge are already absolutely placed, and listing them here re-declared them as
-   relative, which dropped both into the content flow at the top-left corner. */
-.ffc__acts { position: relative; z-index: 2; }
-.ffc__acts { pointer-events: auto; }
 
 .ff-empty {
   padding: 48px 8px; text-align: center; color: var(--ff-dim);
@@ -387,8 +260,7 @@
 @media (prefers-reduced-motion: reduce) {
   .ff-boot { animation: ff-boot-out .01s linear both; }
   .ff-boot__mark, .ff-boot__scan, .ff-boot__cards i { animation-duration: .01s; }
-  .ffc.is-in { animation: none; }
-  .ffc, .ff-bub__ring { transition: none; }
+  .ff-bub__ring { transition: none; }
 }
 
 /* ---------- the story viewer ---------- */

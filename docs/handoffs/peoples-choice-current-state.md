@@ -514,6 +514,72 @@ verifying an address **is** the recheck.
 
 ---
 
+## 0l. Navigation and the Reels pass (2026-10-23)
+
+### Navigation
+
+People's Choice is now in the utility bar on seven pages and the menu drawer on all eight.
+On the page itself the bar marks it as current and restores Pitch Competition as the link
+back up. Before this the only way in was a link inside the Pitch Competition page or the URL.
+
+### The feed
+
+One panel per founder, snapped against the **page** rather than a scroller of its own, with
+`proximity` not `mandatory`. That is the whole difference between a feed and a trap: a nested
+scroller holds the visitor until it runs out, and proximity means a deliberate flick carries
+straight through into the rest of the page. Panels sit a little under the viewport so the
+next shows at the edge.
+
+Footage is never cropped to fit. Video is contained; the founder's own poster sits blurred
+behind. Only the panel holding the viewport centre plays, muted; only its neighbours are
+given a `src` at all, and panels well out of reach release theirs.
+
+The bubbles are now shortcuts **into** the feed rather than a second way to browse the same
+twenty founders, and a shared link lands on that founder in the feed before opening their
+profile.
+
+### Four bugs found here, in order, each hiding the next
+
+1. **IntersectionObserver delivers nothing** for a page that is not frontmost. A freshly
+   created observer saw nothing either, so it was the API and not the wiring.
+2. **Scroll events never reach `window`** — `site.css` sets `overflow-x` on the body, which
+   makes the body the scrolling box. Measured: the page moved 13,448px, the handler ran zero
+   times. Scroll does not bubble but it does capture.
+3. **A pending `requestAnimationFrame` locked the feed shut.** `reelQueue` refused a new
+   check while one was pending, and rAF does not run for an occluded page, so the first call
+   latched a handle that never resolved and every later request returned immediately. **This
+   one is a real user-facing bug, not a test artefact**: anyone changing tab mid-feed would
+   return to a reel that had silently stopped. Cancel the outstanding frame rather than
+   refusing the new one.
+4. **`labelVoteButton` wiped the reel's vote icon**, dropping "Vote for this pitch" across a
+   founder's face, because it writes with `textContent` and the rail reuses the same hook.
+   The rail has its own labeller now, same server state, said in the space it has.
+
+A quarter-second heartbeat calls the work directly so activation never depends on an event
+arriving. Twenty rectangles four times a second, stopped while the tab is hidden.
+
+**Verified on staging:** one video at a time (`melavyr.mp4` then `light.mp4`, never both),
+lazy loading at 2 of 14, silence at the end card and on leaving the feed, sound toggle,
+reaction sheet, the back chip, and the icon rail intact.
+
+### Reactions are a prototype and say so on screen
+
+Public comments need moderation, reporting, rate limiting and an answer for impersonation
+before one is shown to a stranger. None exists, so nothing is published, sent or counted: a
+reaction is kept in that browser alone and the panel states it in a yellow note. Production
+would need a store, a moderation queue, per-IP rate limits, a report route and a display-name
+policy. **Not built, deliberately.**
+
+### What this environment could not verify
+
+Smooth `scrollIntoView` and CSS opacity transitions both depend on the compositor, which is
+frozen for an occluded pane, so the bubble-to-feed *animation* and the back chip's fade could
+not be exercised here. The underlying state was verified directly instead: the chip's rule
+applies (`pointer-events` from it takes effect) and jumps land correctly with instant
+scrolling. A real browser runs both.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

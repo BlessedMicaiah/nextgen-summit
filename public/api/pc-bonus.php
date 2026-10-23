@@ -140,8 +140,16 @@ if ($action === 'lookup') {
     }
     $send = pc_email_code_send($voter, $email, (string) $hit['attendee_key']);
     if (!$send['ok']) {
-        pcb_out($send['reason'] === 'too_many' ? 429 : 502,
-            ['ok' => false, 'reason' => $send['reason']]);
+        $out = ['ok' => false, 'reason' => $send['reason']];
+        /* This host keeps no error log, so a delivery failure here was a dead end: the modal
+           said "could not send" and the detail went nowhere. On a preview host the SMTP step
+           and code come back, naming the fault without naming the credentials. */
+        $h = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        if (strpos($h, 'staging.') === 0 || strpos($h, 'localhost') === 0) {
+            if (isset($send['mail_step'])) { $out['mail_step'] = $send['mail_step']; }
+            if (!empty($send['mail_code'])) { $out['mail_code'] = $send['mail_code']; }
+        }
+        pcb_out($send['reason'] === 'too_many' ? 429 : 502, $out);
     }
     pcb_out(200, ['ok' => true, 'sent' => true]);
 }

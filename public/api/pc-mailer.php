@@ -218,7 +218,8 @@ function pc_smtp_probe(): array
     }
     stream_set_timeout($fp, 15);
     $end = function (array $r) use ($fp) {
-        @fwrite($fp, "QUIT
+        @fwrite($fp, "QUIT
+
 ");
         @fclose($fp);
         return $r;
@@ -270,6 +271,80 @@ function pc_smtp_probe(): array
     }
     return $end(['ok' => true, 'step' => 'authenticated', 'code' => 235,
                  'detail' => 'Connected, TLS negotiated and signed in. Nothing was sent.']);
+}
+
+/* ---------- the message ----------
+   One template, two purposes. The bonus used to build its own plain message and hand it
+   to mail(); sharing this means both arrive looking like NextGen and travel the same
+   authenticated route. */
+function pc_email_code_body(string $code, string $purpose = 'vote'): array
+{
+    $isBonus = $purpose === 'bonus';
+    $head = $isBonus ? 'Your registration verification code' : 'Your voting verification code';
+    $why  = $isBonus
+        ? "Enter this code to confirm your NextGen Summit registration and unlock two extra voting points."
+        : "Enter this code to verify your email and cast your People's Choice vote.";
+    $pre = 'Your NextGen Summit code is ' . $code . '. It expires in 10 minutes.';
+    $text = "NEXTGEN SUMMIT\n\n"
+        . "Your voting verification code\n\n"
+        . '    ' . $code . "\n\n"
+        . "Enter this code to verify your email and cast your People's Choice vote.\n\n"
+        . "This code expires in 10 minutes.\n"
+        . "If you didn't request this code, you can ignore this email - no vote has been cast.\n\n"
+        . "NextGen Summit 2026\n";
+
+    $digits = '';
+    foreach (str_split($code) as $d) {
+        $digits .= '<td style="padding:0 5px"><div style="width:40px;height:52px;line-height:52px;'
+            . 'text-align:center;border-radius:9px;background:#131719;color:#ffffff;'
+            . 'font-family:Helvetica,Arial,sans-serif;font-size:26px;font-weight:700;'
+            . 'letter-spacing:0">' . $d . '</div></td>';
+    }
+
+    /* Table layout and inline styles throughout: email clients do not have a modern CSS
+       engine, and a flexbox layout here would arrive as a stack of unstyled text. */
+    $html = '<!doctype html><html><head><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>Your NextGen voting code</title></head>'
+        . '<body style="margin:0;padding:0;background:#06090A;">'
+        . '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' . $pre . '</div>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        . 'style="background:#06090A;padding:28px 14px">'
+        . '<tr><td align="center">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        . 'style="max-width:460px;background:#0E1113;border-radius:16px;'
+        . 'border:1px solid rgba(255,255,255,.1)">'
+        . '<tr><td style="height:5px;background:#1FC7BE;border-radius:16px 16px 0 0"></td></tr>'
+        . '<tr><td style="padding:30px 28px 8px">'
+        . '<p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:11px;'
+        . 'letter-spacing:3px;text-transform:uppercase;color:#1FC7BE;font-weight:700">'
+        . 'NextGen Summit</p>'
+        . '<h1 style="margin:12px 0 0;font-family:Georgia,\'Times New Roman\',serif;'
+        . 'font-size:27px;line-height:1.2;color:#ffffff;font-weight:700">'
+        . $head . '</h1>'
+        . '</td></tr>'
+        . '<tr><td align="center" style="padding:24px 20px 6px">'
+        . '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' . $digits . '</tr></table>'
+        . '</td></tr>'
+        . '<tr><td style="padding:14px 28px 4px">'
+        . '<p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:15px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.78)">'
+        . htmlspecialchars($why, ENT_QUOTES, 'UTF-8') . '</p>'
+        . '<p style="margin:14px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.55)">This code expires in 10 minutes.</p>'
+        . '<p style="margin:8px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.55)">'
+        . "If you didn&rsquo;t request this code you can ignore this email &mdash; no vote has been cast.</p>"
+        . '</td></tr>'
+        . '<tr><td style="padding:22px 28px 28px">'
+        . '<div style="height:1px;background:rgba(255,255,255,.12)"></div>'
+        . '<p style="margin:16px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;'
+        . 'line-height:1.6;color:rgba(255,255,255,.42)">'
+        . 'NextGen Summit 2026 &middot; Friday, October 30 &middot; Gordon Center for Performing Arts'
+        . '</p></td></tr>'
+        . '</table></td></tr></table></body></html>';
+
+    return ['html' => $html, 'text' => $text];
 }
 
 /* ---------- the conversation ---------- */

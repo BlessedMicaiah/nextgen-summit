@@ -30,6 +30,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/pc-rules.php';
+require_once __DIR__ . '/pc-mailer.php';   // the relay and the branded template
 
 const PC_EB_INDEX_TTL = 900;          // rebuild the lookup index at most every 15 minutes
 const PC_EB_CODE_TTL = 900;           // an email code is good for fifteen minutes
@@ -285,28 +286,27 @@ function pc_email_code_send(string $voterKey, string $email, string $attendeeKey
     $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     $hash = hash_hmac('sha256', $code, NGS_SECRET);
 
-    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'nextgensummit.us');
-    $from = 'no-reply@' . preg_replace('/^staging\./', '', $host);
-    $subject = 'Your NextGen Summit verification code';
-    $body = "Here is your NextGen Summit verification code:\n\n    " . $code . "\n\n"
-        . "Enter it on the People's Choice voting page to add two bonus points for the founder\n"
-        . "you are supporting. The code expires in fifteen minutes.\n\n"
-        . "If you did not ask for this, you can ignore this message. Nothing has been added to\n"
-        . "your registration and no points have been awarded.\n";
-    $headers = [
-        'From: NextGen Summit <' . $from . '>',
-        'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8',
-    ];
-    $sent = false;
-    try {
-        $sent = @mail($email, $subject, $body, implode("\r\n", $headers), '-f' . $from);
-    } catch (Throwable $e) {
-        $sent = false;
+    /* THE SAME RELAY THE VOTING CODE USES.
+
+       This was written before the SMTP mailer existed and still handed its message to PHP's
+       mail(), which on this host goes out unsigned from a shared MTA and does not arrive.
+       Only the voting path was migrated, so the bonus has been silently failing to deliver
+       ever since -- the lookup worked, the code was stored, and the email went nowhere.
+
+       Nothing here needed rebuilding: the relay and the branded template already existed and
+       the bonus simply was not using them. */
+    if (!pc_smtp_configured()) {
+        return ['ok' => false, 'reason' => 'mail_not_configured'];
     }
-    if (!$sent) {
-        error_log("People's Choice: attendee verification email was not accepted for delivery.");
-        return ['ok' => false, 'reason' => 'mail'];
+    $body = pc_email_code_body($code, 'bonus');
+    $sent = pc_mail_send($email, 'Your NextGen Registration Verification Code',
+                         $body['html'], $body['text']);
+    if (!$sent['ok']) {
+        error_log("People's Choice: attendee verification email not accepted ("
+            . ($sent['error'] ?? '?') . ').');
+        return ['ok' => false, 'reason' => 'mail',
+                'mail_step' => $sent['step'] ?? ($sent['error'] ?? ''),
+                'mail_code' => $sent['code'] ?? 0];
     }
 
     // one live attempt per voter at a time: the newest code is the only valid one

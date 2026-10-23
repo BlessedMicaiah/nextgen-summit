@@ -1454,9 +1454,12 @@
       if (gap < bestGap) { bestGap = gap; best = p; }
     });
     if (reel) reel.classList.toggle('is-inside', anyOn);
+    /* Nothing holding the middle of the screen means nothing should be talking: the end
+       card, the gap between two panels, or the page scrolled past the feed entirely. The
+       earlier version only stopped when no panel was on screen AT ALL, which left the last
+       pitch playing underneath the closing card. */
     if (best && best.hasAttribute('data-reel-end')) { reelActivate(null); return; }
-    if (best) reelActivate(best);
-    else if (!anyOn) reelActivate(null);
+    reelActivate(best || null);
   }
 
   /* Coalesce to one check per frame, but never let a pending frame become a permanent lock.

@@ -323,6 +323,64 @@ person, one vote" unless option 1 or 2 is implemented.
 
 ---
 
+## 0i. Media retrieval and the presentation pass (2026-10-23)
+
+`tools/fetch-top20-media.py` downloads, verifies, organises and archives every submission to
+`~/Downloads/NextGen_Top20_Media`. Local only: no upload, no site change, no Sheet edit, no
+credential handling. It reads the public manifest rather than re-reading the Sheet, because
+the manifest already carries the resolved hyperlink targets and omits the applicants' email
+and phone columns by construction — so no private field can reach a filename, a ZIP or the
+report. Re-run it any time; validated files are kept and not fetched again.
+
+**Result: 532 MB, 20 folders, 21 verified ZIPs, `download_report.csv`, `download_summary.txt`.**
+
+| | |
+|---|---|
+| Images downloaded and read | 17 |
+| Playable videos verified | 13 direct files |
+| Supporting documents | 8 |
+| Images missing | 2 (Credible blossom none submitted; The Luminous Lab URL 404s) |
+
+**Two pitches were recovered by reading inside the PDFs**, which a scan of filenames alone
+never sees: Rest and K8Culture Productions both put a working YouTube link in the document
+body. With those, **18 of 20 founders have a playable pitch** (11 direct files, 5 YouTube,
+2 Google Drive). The two without are Credible blossom, who submitted a photograph where a
+video was expected, and PathBridge, whose PDFs point at Drive *folders* a human must open.
+
+Validation is real, not assumed: content sniffing by magic bytes rather than by column label
+or extension, HTML login/error pages rejected, images opened and verified with PIL, and MP4
+duration and pixel size read from the container's `mvhd`/`tkhd` atoms — **ffprobe and ffmpeg
+are not installed on this machine**, so codec inspection, any re-encoding and poster-frame
+generation remain outstanding.
+
+### Presentation
+
+- **Focal points.** A 4:3 card centred at 50% 50% takes the top off a tall headshot. Each
+  image now carries its own `object-position`, derived from its shape (22% down for tall
+  portraits, 35% square, 45% landscape), overridable per founder under `"focal"` in
+  `tools/founder-map.json`. Cards, story bubbles, the viewer avatar and the profile portrait
+  all read the same value.
+- **Logos are not cropped like people.** `contain`, on a rounded plate inside the dark card.
+- **One player, three shapes.** The story stage holds a steady 9:16; the player is pinned to
+  that box and `object-fit: contain` letterboxes it, with the founder's photograph blurred
+  behind to fill the rest. Verified at 3840×2160 landscape, 1080×1920 and 480×854 portrait,
+  and YouTube: **every one renders 460×662 inside a 460×662 stage.** The profile dialog uses
+  the same principle at 16:9.
+- Two sizing bugs were found and fixed by measuring, not by eye: intrinsic sizing let a
+  portrait pitch overflow 818px into a 662px stage, and a centred grid item's `height:100%`
+  had nothing definite to resolve against.
+- **The staging note is removed from the page.** The mapping it warned about is still
+  unreviewed; `founder-map.json` keeps `reviewed:false` and records which founder inherits
+  which staging test votes.
+
+### Still outstanding
+
+Videos are hot-linked from Typeform and not transcoded — at least one is 4K. Install ffmpeg
+to produce web-ready H.264/AAC copies and poster frames, then self-host them; until then a
+paused pitch shows black rather than a thumbnail, and a phone on mobile data will struggle.
+
+---
+
 ## 0b. What is still unproven
 
 **The +2 Eventbrite bonus has still never completed, end to end.** `pc_attendee` holds zero

@@ -255,3 +255,63 @@
   .rc { transition: none; }
   .reel__up { transition: none; }
 }
+
+
+/* ---------- the podium ----------
+   Accents, not different designs. A medal only renders when the server says the standings
+   support one; see pc-rank.php. */
+.reel__medal {
+  position: absolute; left: 50%; top: 14px; z-index: 8;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  padding: 7px 14px; border-radius: 999px;
+  background: rgba(5,7,10,.72); backdrop-filter: blur(8px);
+  font: 700 10px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+  color: #fff;
+}
+.reel__medal b { font: 900 12px/1 var(--f-display); letter-spacing: 0; }
+.reel__medal--1 { border: 1px solid rgba(255,206,92,.85); color: #FFE08A; box-shadow: 0 0 24px -6px rgba(255,206,92,.6); }
+.reel__medal--2 { border: 1px solid rgba(214,222,232,.8); color: #E6ECF3; box-shadow: 0 0 22px -8px rgba(214,222,232,.5); }
+.reel__medal--3 { border: 1px solid rgba(214,158,106,.85); color: #F0C094; box-shadow: 0 0 22px -8px rgba(214,158,106,.5); }
+.reel__panel--p1 { box-shadow: 0 0 0 1.5px rgba(255,206,92,.5), 0 30px 70px -40px rgba(0,0,0,1); }
+.reel__panel--p2 { box-shadow: 0 0 0 1.5px rgba(214,222,232,.45), 0 30px 70px -40px rgba(0,0,0,1); }
+.reel__panel--p3 { box-shadow: 0 0 0 1.5px rgba(214,158,106,.45), 0 30px 70px -40px rgba(0,0,0,1); }
+
+/* ---------- the reaction sheet, rebuilt to be easy to leave ---------- */
+.rc { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.rc__scrim {
+  position: absolute; inset: 0; background: rgba(4,6,9,.6);
+  opacity: 0; transition: opacity .34s var(--ease); pointer-events: none;
+}
+.rc.is-open { pointer-events: auto; }
+.rc.is-open .rc__scrim { opacity: 1; pointer-events: auto; }
+.rc__in {
+  position: absolute; left: 50%; bottom: 0; width: min(560px, 100%);
+  transform: translate(-50%, 100%);
+  transition: transform .4s var(--ease);
+  background: #0C1118; border: 1px solid rgba(255,255,255,.12); border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  max-height: 76svh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  box-shadow: 0 -24px 60px rgba(0,0,0,.7);
+}
+.rc.is-open .rc__in { transform: translate(-50%, 0); }
+/* the grip is a real button, so it works for a finger, a mouse and a keyboard alike */
+.rc__grip {
+  display: block; width: 100%; padding: 8px 0 10px; background: none; border: 0; cursor: pointer;
+}
+.rc__grip span { display: block; width: 44px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.3); margin: 0 auto; }
+.rc__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.rc__t { margin: 0; font: 800 15px/1.3 var(--f-sans); color: #fff; }
+.rc__x {
+  flex: none; width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); color: #fff;
+}
+.rc__x svg { width: 16px; height: 16px; }
+@media (hover: hover) { .rc__x:hover { background: var(--accent); color: var(--on-accent); } }
+.rc__x:focus-visible, .rc__grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rc__done { width: 100%; margin-top: 12px; --h: 46px; font-size: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .rc__in, .rc__scrim { transition: none; }
+}

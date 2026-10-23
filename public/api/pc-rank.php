@@ -1,0 +1,94 @@
+<?php
+/* People's Choice — the running order of the founder feed.
+ *
+ * Leadership asked for the reels to run in vote order, leader first. This answers that and
+ * deliberately answers nothing more.
+ *
+ * WHAT IT RETURNS AND WHAT IT WITHHOLDS
+ *
+ * The order, and a rank per founder. NOT the totals. Ordering already discloses relative
+ * standing, which is as far as this needs to go; the numbers themselves stay where they have
+ * always been, on the dashboard. Returning counts here would publish the whole leaderboard to
+ * anyone who opened developer tools, and nobody asked for that.
+ *
+ * TIES ARE TOLD THE TRUTH
+ *
+ * Founders on equal points share a rank: two leaders are both rank 1 and there is no rank 2.
+ * `podium` is true only when the leader genuinely stands alone above the field. Today every
+ * valid total is zero, so `ranked` is false, the order falls back to contestant number, and
+ * the page shows no medals at all -- because "currently leading" would be a lie when nobody
+ * has a single vote.
+ *
+ * Within a tie the order is by contestant id ascending. That is arbitrary but it is stable,
+ * documented, and the same for every visitor, which is the most a tiebreak can honestly be.
+ *
+ * Only valid rows count. Invalidated and simulated rows are excluded, exactly as the
+ * dashboard excludes them.
+ */
+declare(strict_types=1);
+
+require __DIR__ . '/pc-rules.php';
+
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: public, max-age=30');
+header('X-Content-Type-Options: nosniff');
+
+$ids = array_column(pc_entrants(), 'id');
+$totals = array_fill_keys($ids, 0);
+
+$db = pc_db();
+if ($db) {
+    $day = pc_mode() === 'daily' ? null : 'all';
+    /* Every valid point, the +1s and the attendee +2s alike, across the whole competition.
+       Each bonus point is its own row, so counting rows counts points. */
+    $sql = 'SELECT entrant_id, COUNT(*) n FROM pc_votes
+            WHERE competition = ? AND valid = 1 AND simulated = 0
+            GROUP BY entrant_id';
+    $s = $db->prepare($sql);
+    $s->execute([PC_COMPETITION]);
+    foreach ($s->fetchAll() as $row) {
+        $id = (string) $row['entrant_id'];
+        if (array_key_exists($id, $totals)) {
+            $totals[$id] = (int) $row['n'];
+        }
+    }
+}
+
+$order = $ids;
+usort($order, static function ($a, $b) use ($totals) {
+    if ($totals[$a] !== $totals[$b]) {
+        return $totals[$b] <=> $totals[$a];   // more points first
+    }
+    return strcmp($a, $b);                     // stable, documented tiebreak
+});
+
+/* Competition ranking: equal totals share a rank and the next rank skips accordingly. */
+$ranks = [];
+$place = 0;
+$seen = 0;
+$last = null;
+foreach ($order as $id) {
+    $seen++;
+    if ($last === null || $totals[$id] !== $last) {
+        $place = $seen;
+        $last = $totals[$id];
+    }
+    $ranks[$id] = $place;
+}
+
+$distinct = count(array_unique(array_values($totals)));
+$anyVotes = array_sum($totals) > 0;
+$leaders = count(array_filter($ranks, static fn($r) => $r === 1));
+
+echo json_encode([
+    'ok' => true,
+    /* false while every founder is level: the page then keeps contestant order and shows no
+       medals, because a podium drawn over a field of zeroes is a fabrication. */
+    'ranked' => $anyVotes && $distinct > 1,
+    'podium' => $anyVotes && $leaders === 1,
+    'order' => array_values($order),
+    'rank' => $ranks,
+    'tiebreak' => 'contestant id ascending, applied only within equal totals',
+    'counts_withheld' => 'ordering is published; per-founder totals are not',
+    'generated' => gmdate('c'),
+]);

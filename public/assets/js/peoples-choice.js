@@ -1005,7 +1005,9 @@
     if (t.closest('[data-reel-sound]')) { reelSetSound(reelMuted); return; }
     if ((el = t.closest('[data-reel-comment]'))) { rcOpen(el.getAttribute('data-reel-comment')); return; }
     if ((el = t.closest('[data-rc-chip]'))) { rcAdd(el.textContent.trim()); return; }
-    if (t.closest('[data-rc-close]')) { if (rcEl) rcEl.classList.remove('is-open'); return; }
+    if (t.closest('[data-rc-close]')) { rcClose(); return; }
+    /* Tapping the dimmed area outside the sheet closes it, the way every bottom sheet does. */
+    if (t.closest('[data-rc-scrim]')) { rcClose(); return; }
     if (t.closest('[data-reel-restart]')) {
       var first = $$('[data-reel-panel]', reelTrack)[0];
       if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1316,6 +1318,40 @@
 
   repaintAfterVote();
 
+  /* The sheet answers Escape, a swipe down, and a tap outside, as well as its own close
+     controls. A panel that can only be dismissed one way is a panel people get stuck in. */
+  (function () {
+    var sheet = $('[data-rc]');
+    if (!sheet) return;
+    var panel = $('[data-rc-panel]', sheet);
+    var startY = null, dy = 0;
+
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && sheet.classList.contains('is-open')) {
+        ev.preventDefault();
+        rcClose();
+      }
+    });
+    if (!panel) return;
+    panel.addEventListener('touchstart', function (ev) {
+      if (panel.scrollTop > 0) return;        // let it scroll its own content first
+      startY = ev.touches[0].clientY; dy = 0;
+      panel.style.transition = 'none';
+    }, { passive: true });
+    panel.addEventListener('touchmove', function (ev) {
+      if (startY === null) return;
+      dy = Math.max(0, ev.touches[0].clientY - startY);
+      panel.style.transform = 'translateY(' + dy + 'px)';
+    }, { passive: true });
+    panel.addEventListener('touchend', function () {
+      if (startY === null) return;
+      panel.style.transition = '';
+      panel.style.transform = '';
+      if (dy > 90) rcClose();                 // a deliberate pull, not a stray finger
+      startY = null; dy = 0;
+    });
+  }());
+
   /* ---------- the founder reels ----------
 
      The scrolling half of the experience. One panel per founder, snapped against the PAGE
@@ -1328,6 +1364,7 @@
      verified flow. */
 
   var reel = $('[data-reel]');
+  var RANK = null;          // the server's running order, fetched once per page load
   var reelTrack = $('[data-reel-track]');
   var reelMuted = true;
   var reelActive = null;
@@ -1366,8 +1403,22 @@
         ? '<img class="reel__still" src="' + esc(poster) + '" alt="" loading="lazy">'
         : '<span class="ffc__await"><span class="ffc__mono">' + esc(initials(e)) + '</span></span>';
     }
+    /* A medal is a claim about the standings, so it only appears when the standings
+       support one. With every founder level -- which is the case until real voting starts --
+       RANK.ranked is false and nothing is shown, because "currently leading" over a field of
+       zeroes would simply be untrue. Tied founders share a rank and get the same badge. */
+    var place = (RANK && RANK.ranked && RANK.rank) ? RANK.rank[e.id] : 0;
+    var medal = '';
+    if (place >= 1 && place <= 3) {
+      var words = { 1: 'Currently leading', 2: 'Currently second', 3: 'Currently third' };
+      var ord = { 1: '1st', 2: '2nd', 3: '3rd' };
+      medal = '<span class="reel__medal reel__medal--' + place + '">' +
+        '<b>' + ord[place] + '</b> ' + words[place] + '</span>';
+    }
     return '' +
-      '<li class="reel__panel" data-reel-panel="' + e.id + '" data-pc-card="' + e.id + '">' +
+      '<li class="reel__panel' + (place && place <= 3 ? ' reel__panel--p' + place : '') +
+        '" data-reel-panel="' + e.id + '" data-pc-card="' + e.id + '">' +
+        medal +
         (poster ? '<span class="reel__back" style="background-image:url(&quot;' + esc(poster) + '&quot;)"></span>' : '') +
         '<span class="reel__media">' + media + '</span>' +
         '<span class="reel__scrim"></span>' +
@@ -1408,10 +1459,33 @@
       '</li>';
   }
 
+  /* The order the feed runs in.
+
+     Leader first, from the server's own count of valid points. Fetched ONCE per page load
+     and then left alone: re-sorting under someone who is halfway through watching would
+     move the founder out from under them because a stranger voted. A refresh picks up the
+     new order, which is what the brief asks for and all it asks for. */
+  function reelOrder() {
+    if (!RANK || !RANK.order) return ENTRANTS.slice();
+    var out = [];
+    RANK.order.forEach(function (id) { if (byId[id]) out.push(byId[id]); });
+    ENTRANTS.forEach(function (e) { if (out.indexOf(e) < 0) out.push(e); });
+    return out;
+  }
+
   function paintReels() {
     if (!reelTrack) return;
-    reelTrack.innerHTML = ENTRANTS.map(reelPanelHtml).join('') + reelEndHtml();
+    var order = reelOrder();
+    reelTrack.innerHTML = order.map(reelPanelHtml).join('') + reelEndHtml();
     watchReels();
+  }
+
+  function loadRanking(then) {
+    fetch('/api/pc-rank.php', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.ok) RANK = d; })
+      .catch(function () {})
+      .then(function () { if (then) then(); });
   }
 
   /* Only the panel in view plays, and only its neighbours are even given a src. Twenty
@@ -1561,8 +1635,23 @@
 
   function rcKey(id) { return 'ngs-pc-react-' + id; }
 
+  var rcLastFocus = null;
+
+  function rcClose() {
+    if (!rcEl) return;
+    rcEl.classList.remove('is-open');
+    rcEl.removeAttribute('data-rc-for');
+    /* Back where they were: the reel underneath never moved, and focus returns to the
+       control that opened the sheet rather than to the top of the document. */
+    if (rcLastFocus && rcLastFocus.isConnected) {
+      try { rcLastFocus.focus({ preventScroll: true }); } catch (e) {}
+    }
+    rcLastFocus = null;
+  }
+
   function rcOpen(id) {
     if (!rcEl) return;
+    rcLastFocus = document.activeElement;
     var e = byId[id];
     if (!e) return;
     rcEl.setAttribute('data-rc-for', id);
@@ -1822,7 +1911,8 @@
 
   function paintFeedFurniture() {
     paintStories();
-    paintReels();
+    paintReels();                       // contestant order, so the feed exists immediately
+    loadRanking(function () { paintReels(); });   // then re-laid in vote order, once
     var pc = $('[data-ff-pitches]');
     if (pc) {
       /* The honest number: how many of the twenty submitted something that actually plays.

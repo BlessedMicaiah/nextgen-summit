@@ -371,9 +371,14 @@ html.pc-live [data-announce] { display: none !important; }
   scroll-snap-stop: always;      /* one founder per swipe, never two */
   scroll-margin-top: 0;
 }
-@media (min-width: 900px) {
-  /* Desktop is not a phone stretched wide. The footage keeps a phone-shaped stage in
-     the middle of a dark room, which is how a vertical feed is meant to be read. */
+@media (min-width: 700px) {
+  /* Anything wider than a phone is not a phone stretched wide. The footage keeps a
+     phone-shaped stage in the middle of a dark room, which is how a vertical feed is
+     meant to be read.
+
+     700, not 900: measured on a 768-wide tablet the old breakpoint left the caption
+     running 685px across, which is about twice a comfortable line. A tablet in portrait
+     is a big screen, not a big phone. */
   .reel.is-live .reel__panel { height: 100dvh; }
   .reel.is-live .reel__media { inset: 0 max(0px, calc(50% - 15.5rem)); }
   .reel.is-live .reel__back  { inset: -14%; }
@@ -423,7 +428,7 @@ html.pc-live [data-announce] { display: none !important; }
    above a clip rather than as a hole the clip is floating in. The class is set from the
    file's own dimensions once its header arrives -- never from the extension. */
 .reel.is-live .reel__panel.is-wide .reel__media { inset: 0 0 19% 0; }
-@media (min-width: 900px) {
+@media (min-width: 700px) {
   .reel.is-live .reel__panel.is-wide .reel__media { inset: 0 max(0px, calc(50% - 15.5rem)) 13% ; }
 }
 

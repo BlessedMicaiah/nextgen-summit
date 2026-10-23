@@ -892,10 +892,33 @@
     el.textContent = txt;
   }
 
+  /* The reel's vote control is an icon above a one-word label, not a wide button with a
+     sentence in it. Writing the gallery wording into it with textContent wiped the icon and
+     dropped "Vote for this pitch" across the founder's face. It gets the same server-driven
+     STATE, said in the space it actually has. */
+  function labelReelVote(b, d) {
+    var small = $('small', b);
+    if (!small) return;
+    var id = b.getAttribute('data-pc-vote');
+    var today = (d && d.verified) ? (d.today_entrant || null) : null;
+    if (STATE !== 'open') { b.disabled = true; small.textContent = 'Closed'; return; }
+    if (!today) { b.disabled = false; small.textContent = 'Vote'; return; }
+    if (id === today) {
+      b.disabled = false;
+      b.classList.add('reel__act--on');
+      small.textContent = (d.bonus_claimable || d.bonus_eligible) ? '+2 bonus' : 'Voted';
+    } else {
+      b.disabled = false;
+      b.classList.remove('reel__act--on');
+      small.textContent = 'Used';
+    }
+  }
+
   function paintVoteButtons(d) {
     paintStatus(d);
     $$('[data-pc-vote]').forEach(function (b) {
       if (b.closest('[data-pc-step]')) return;   // the dialog's own buttons route themselves
+      if (b.closest('.reel__rail')) { labelReelVote(b, d); return; }
       labelVoteButton(b, d);
     });
   }

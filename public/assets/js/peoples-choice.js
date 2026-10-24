@@ -1751,20 +1751,30 @@
     'entrant-13'    // Offguardz
   ];
 
-  /* The curated running order. The nine leadership did not name keep their contestant order
-     behind the eleven that were, so the sequence is fully determined rather than partly
-     arbitrary -- and adding an id to EDITORIAL is the only edit needed to move someone. */
-  function reelOrder() {
+  /* The curated running order, kept and currently NOT USED.
+
+     It was built to leadership's eleven-name sequence and then stood down the same day:
+     voting had started, and once it has, an order that ignores it is a running order that
+     disagrees with the scoreboard beside it. The pitches follow the votes again.
+
+     Left here, intact, because it is a decision rather than dead code -- restoring it is
+     changing one word in reelOrder below, not rebuilding anything. */
+  function editorialOrder() {
     var out = [];
     EDITORIAL.forEach(function (id) { if (byId[id]) out.push(byId[id]); });
     ENTRANTS.forEach(function (e) { if (out.indexOf(e) < 0) out.push(e); });
     return out;
   }
 
-  /* The leaderboard: whoever the server says is ahead. Falls back to the editorial order
+  /* Both the pitches and the rail now run on votes. */
+  function reelOrder() {
+    return voteOrder();
+  }
+
+  /* The leaderboard: whoever the server says is ahead. Falls back to the curated order
      when no ranking has arrived, so the rail is never empty and never invents a winner. */
   function voteOrder() {
-    if (!RANK || !RANK.order) return reelOrder();
+    if (!RANK || !RANK.order) return editorialOrder();
     var out = [];
     RANK.order.forEach(function (id) { if (byId[id]) out.push(byId[id]); });
     ENTRANTS.forEach(function (e) { if (out.indexOf(e) < 0) out.push(e); });

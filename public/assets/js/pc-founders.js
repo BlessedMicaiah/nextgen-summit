@@ -258,7 +258,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-12",
     "shot": "/assets/img/founders/jay-s-watermelonade.webp?v=a70233e3",
     "shotFit": "cover",
-    "logo": null,
+    "logo": "/assets/img/logos/jay-s-watermelonade.webp?v=c422b610",
     "video": {
       "type": "file",
       "src": "/assets/video/jay-s-watermelonade.mp4?v=be03c347"

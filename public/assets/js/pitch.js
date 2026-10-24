@@ -186,8 +186,98 @@
     });
   }
 
+  /* ---------- the competition board ----------
+
+     This markup shipped without a driver, so the clock sat on "--Days : --Hrs" for as long
+     as the page has been live and the timeline bars never filled.
+
+     The deadline comes from the People's Choice API rather than a date typed in here,
+     because that endpoint is what actually decides whether a vote is accepted. If the two
+     disagreed, the page would be counting down to the wrong moment -- and the one on the
+     page is the one people plan around. The dates in the markup are the fallback for when
+     the endpoint cannot be reached. */
+  function initBoard() {
+    var board = document.querySelector('[data-board]');
+    if (!board) return;
+
+    var cells = {
+      d: board.querySelector('[data-c="d"]'),
+      h: board.querySelector('[data-c="h"]'),
+      m: board.querySelector('[data-c="m"]'),
+      s: board.querySelector('[data-c="s"]')
+    };
+    var kicker = board.querySelector('[data-clock-k]');
+    var nowT = board.querySelector('[data-board-now]');
+    var live = board.querySelector('[data-board-live]');
+    var stages = [].slice.call(board.querySelectorAll('[data-stage]'));
+
+    /* The last stage's end is the backstop: the furthest moment the page knows about, and
+       counting to it beats counting to nothing. */
+    var fallback = stages.length
+      ? Date.parse(stages[stages.length - 1].getAttribute('data-to') || '')
+      : NaN;
+    var deadline = isFinite(fallback) ? fallback : NaN;
+    var closed = false;
+
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+
+    function paint() {
+      var now = Date.now();
+
+      /* The timeline is recomputed from the dates rather than trusted from the classes in
+         the markup -- those were written by hand for one particular day and are wrong by
+         the next. */
+      stages.forEach(function (li) {
+        var from = Date.parse(li.getAttribute('data-from') || '');
+        var to = Date.parse(li.getAttribute('data-to') || '');
+        var run = li.querySelector('.board__run');
+        if (!isFinite(from) || !isFinite(to) || to <= from) return;
+        var past = now >= to, nowish = now >= from && now < to;
+        li.classList.toggle('is-past', past);
+        li.classList.toggle('is-now', nowish);
+        if (nowish) { li.setAttribute('aria-current', 'step'); }
+        else { li.removeAttribute('aria-current'); }
+        if (run) {
+          run.style.width = past ? '100%'
+            : (nowish ? Math.max(2, Math.min(100, ((now - from) / (to - from)) * 100)) + '%' : '0');
+        }
+      });
+
+      if (!isFinite(deadline)) return;
+      var left = Math.max(0, deadline - now);
+
+      if (left === 0 && !closed) {
+        closed = true;
+        if (kicker) kicker.textContent = 'Voting has closed';
+        if (nowT) nowT.textContent = 'Public voting has closed';
+        if (live) live.textContent = 'Closed';
+      }
+
+      var sec = Math.floor(left / 1000);
+      if (cells.d) cells.d.textContent = String(Math.floor(sec / 86400));
+      if (cells.h) cells.h.textContent = two(Math.floor(sec / 3600) % 24);
+      if (cells.m) cells.m.textContent = two(Math.floor(sec / 60) % 60);
+      if (cells.s) cells.s.textContent = two(sec % 60);
+    }
+
+    paint();
+    setInterval(paint, 1000);
+
+    /* The authoritative deadline, if the endpoint will give one. A failure here is not
+       worth showing anyone: the fallback is already counting. */
+    fetch('/api/pc-otp.php?action=status', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok || !d.deadline) return;
+        var t = Date.parse(d.deadline);
+        if (isFinite(t)) { deadline = t; paint(); }
+      })
+      .catch(function () {});
+  }
+
   initSteps();
   initTabs();
   initVote();
   initScrollLinks();
+  initBoard();
 })();

@@ -495,8 +495,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261024-82">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-82">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261024-83">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-83">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -934,7 +934,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261024-82" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261024-83" defer></script>
 <?php endif; ?>
 </body>
 </html>

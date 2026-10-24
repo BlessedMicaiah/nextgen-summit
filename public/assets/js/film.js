@@ -20,9 +20,9 @@
 (function () {
   'use strict';
 
-  var SRC = '/assets/nextgen-film.mp4?v=20261024-92';
-  var POSTER = '/assets/img/nextgen-film-poster.jpg?v=20261024-92';
-  var FACE = '/assets/img/convener-face.jpg?v=20261024-92';
+  var SRC = '/assets/nextgen-film.mp4?v=20261024-93';
+  var POSTER = '/assets/img/nextgen-film-poster.jpg?v=20261024-93';
+  var FACE = '/assets/img/convener-face.jpg?v=20261024-93';
   var DONE = 'ngs-film-watched';    // localStorage: watched to the end once, so the close is free
   var REST = 83;                    // s: the frame the end card rests on (the nextgen mark on black)
   var GATE = 15;                    // s of the film before the close button unlocks

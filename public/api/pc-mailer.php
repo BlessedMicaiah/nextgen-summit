@@ -372,9 +372,28 @@ function pc_smtp_cmd($fp, string $cmd, int $expect, string $label): array
     $r = pc_smtp_read($fp);
     $code = (int) substr(ltrim($r), 0, 3);
     if ($code !== $expect) {
-        return ['ok' => false, 'step' => $label, 'code' => $code];
+        /* The reply text used to be reduced to three digits and discarded, which is why
+           "code=550" was as much as anyone could learn. Three digits cannot tell a daily
+           sending limit from a policy block, and those call for opposite responses. */
+        return ['ok' => false, 'step' => $label, 'code' => $code, 'reply' => pc_smtp_scrub($r)];
     }
     return ['ok' => true, 'code' => $code];
+}
+
+/**
+ * A relay's reply, made safe to store and to read.
+ *
+ * A rejection usually quotes the envelope back, so the sender's address and the voter's can
+ * both appear in it -- that is the first thing out. Long opaque runs go too, on the
+ * principle that anything token-shaped should never be written down by accident. What
+ * survives is the part that matters: the enhanced status code and the sentence after it.
+ */
+function pc_smtp_scrub(string $raw): string
+{
+    $t = preg_replace('/\s+/', ' ', trim($raw));
+    $t = preg_replace('/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/', '<address>', $t);
+    $t = preg_replace('/[A-Za-z0-9+\/=_-]{24,}/', '<redacted>', $t);
+    return substr((string) $t, 0, 300);
 }
 
 /**
@@ -433,6 +452,9 @@ function pc_mail_note_failure(array $r, bool $retried): void
     if (isset($r['code'])) { $bits[] = 'code=' . (int) $r['code']; }
     $bits[] = $retried ? 'retried=yes' : 'retried=no';
     $bits[] = 'at=' . gmdate('Y-m-d H:i:s') . 'Z';
+    if (!empty($r['reply'])) {
+        $bits[] = 'reply=' . (string) $r['reply'];
+    }
     try {
         pc_set_meta('smtp_last_error', implode(' ', $bits));
         $n = (int) pc_meta('smtp_fail_count', '0');
@@ -466,8 +488,10 @@ function pc_mail_send_once(string $to, string $subject, string $html, string $te
 
     $fail = function (array $r) use ($fp) {
         @fclose($fp);
-        error_log("People's Choice: SMTP " . $r['step'] . ' got ' . $r['code'] . '.');
-        return ['ok' => false, 'error' => 'smtp', 'step' => $r['step'], 'code' => $r['code']];
+        error_log("People's Choice: SMTP " . $r['step'] . ' got ' . $r['code'] . '. '
+            . (string) ($r['reply'] ?? ''));
+        return ['ok' => false, 'error' => 'smtp', 'step' => $r['step'], 'code' => $r['code'],
+                'reply' => (string) ($r['reply'] ?? '')];
     };
 
     $r = pc_smtp_cmd($fp, '', 220, 'greeting');

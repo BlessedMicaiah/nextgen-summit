@@ -382,6 +382,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $notice = (string) pc_meta('rank_public', '1') === '1'
             ? 'The founder feed now runs in vote order. Visitors can see who is ahead.'
             : 'The founder feed is back in contestant order. Standings are private again.';
+    } elseif ($authed && $action === 'smtpcap') {
+        /* What the configured provider allows in a day. Only used to work out the
+           percentage and when to warn -- it does not limit anything, and getting it wrong
+           cannot stop a single email being sent. */
+        $cap = (int) preg_replace('/\D+/', '', (string) ($_POST['cap'] ?? ''));
+        $cap = max(0, min(1000000, $cap));
+        pc_set_meta('smtp_daily_cap', (string) $cap);
+        $notice = $cap > 0
+            ? 'Daily sending allowance set to ' . $cap . '. The warnings use this figure.'
+            : 'Daily sending allowance cleared. No percentage will be shown.';
     } elseif ($authed && $action === 'resolve') {
         /* Reads two lists we already hold, hashes each address, and keeps only exact
            matches against the key on a vote. Nothing is guessed and no vote is altered. */
@@ -495,8 +505,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261024-93">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-93">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261024-94">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-94">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -796,7 +806,75 @@ foreach ($standings as $r) {
           <button class="adm__btn" type="submit">Test the connection (sends nothing)</button>
         </form>
       </div>
-      <?php $smtpErr = pc_meta('smtp_last_error'); $smtpN = (int) pc_meta('smtp_fail_count', '0'); ?>
+      <?php
+        $smtpErr = pc_meta('smtp_last_error');
+        $smtpN = (int) pc_meta('smtp_fail_count', '0');
+        $es = function_exists('pc_email_stats') ? pc_email_stats(12) : null;
+        $cap = (int) pc_meta('smtp_daily_cap', '500');
+        $pct = ($es && $cap > 0) ? (int) round(($es['sent_today'] / $cap) * 100) : 0;
+      ?>
+      <?php if ($es): ?>
+      <p class="adm__h" style="margin-top:18px">Mail volume</p>
+      <p class="adm__p">Counted from the send log, not from voting points. <strong>Points are not
+        emails</strong> &mdash; one voter can spend three points on a single code, and another can
+        burn six codes and never vote. The figures below are what the relay was actually asked to
+        send. &ldquo;Today&rdquo; is the Eastern day the competition runs on; a provider counting
+        in UTC rolls over at a different moment, which matters when a number sits near a limit.</p>
+      <div class="adm__tablewrap">
+        <table class="adm__table">
+          <thead><tr><th>Measure</th><th class="num">Today</th><th class="num">All time</th></tr></thead>
+          <tbody>
+            <tr><td>Codes sent successfully</td><td class="num"><?= (int) $es['sent_today'] ?></td><td class="num"><?= (int) $es['sent_total'] ?></td></tr>
+            <tr><td>Send failures</td><td class="num"><?= (int) $es['failed_today'] ?></td><td class="num"><?= (int) $es['failed_total'] ?></td></tr>
+            <tr><td>Codes entered by voters</td><td class="num"><?= (int) $es['checks_today'] ?></td><td class="num">&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="adm__inline">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="smtpcap">
+        <label class="adm__label" for="cap">Provider&rsquo;s daily sending allowance</label>
+        <input class="adm__input" id="cap" name="cap" type="text" inputmode="numeric" value="<?= (int) $cap ?>">
+        <button class="adm__btn" type="submit">Save</button>
+      </form>
+      <?php if ($cap > 0): ?>
+      <p class="adm__p">
+        <strong><?= (int) $es['sent_today'] ?> of <?= (int) $cap ?> used today &mdash; <?= $pct ?>%.</strong>
+        <?php if ($pct >= 90): ?>
+          <span class="adm__pill adm__pill--hidden">90% &mdash; switch relay now</span>
+          Voters will start being turned away shortly. Change the SMTP settings above to the backup provider.
+        <?php elseif ($pct >= 80): ?>
+          <span class="adm__pill adm__pill--hidden">80%</span>
+          Have the backup provider&rsquo;s credentials to hand.
+        <?php elseif ($pct >= 60): ?>
+          <span class="adm__pill">60%</span>
+          Worth watching. No action needed yet.
+        <?php else: ?>
+          Comfortable.
+        <?php endif; ?>
+        Set the allowance to match whichever provider is configured &mdash; Gmail is 500 a day on a
+        consumer account and 2,000 on Workspace; Brevo&rsquo;s free tier is 300 a day.
+      </p>
+      <?php endif; ?>
+      <div class="adm__tablewrap">
+        <table class="adm__table">
+          <thead><tr><th>Recent attempts</th><th>What happened</th></tr></thead>
+          <tbody>
+            <?php foreach ($es['recent'] as $r): ?>
+            <tr>
+              <td><?= h($r['when']) ?></td>
+              <td><?php
+                $lbl = ['start' => 'code sent', 'failed' => 'send FAILED', 'check' => 'code entered'];
+                echo h($lbl[$r['action']] ?? $r['action']);
+                echo $r['ok'] ? '' : ' &mdash; rejected';
+              ?></td>
+            </tr>
+            <?php endforeach; ?>
+            <?php if (!$es['recent']): ?><tr><td colspan="2">Nothing logged yet.</td></tr><?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php endif; ?>
       <?php if ($smtpErr): ?>
       <p class="adm__p"><strong>Last send failure:</strong> <code><?= h($smtpErr) ?></code>
         &mdash; <?= $smtpN ?> failure<?= $smtpN === 1 ? '' : 's' ?> recorded in total.</p>
@@ -948,7 +1026,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261024-93" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261024-94" defer></script>
 <?php endif; ?>
 </body>
 </html>

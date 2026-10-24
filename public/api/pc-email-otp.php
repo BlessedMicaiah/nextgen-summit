@@ -56,6 +56,82 @@ function pc_email_otp_table(): void
 }
 
 /** Records that a code was asked for. Holds the identity hash, never the address. */
+/**
+ * What the mail relay has actually been asked to do, and how it went.
+ *
+ * Written because a guess was being used in its place. Failures appeared once the
+ * competition passed three hundred voting POINTS, and the easy inference -- that three
+ * hundred-odd emails had exhausted an allowance -- was never more than an inference.
+ * Points are not emails. One voter can spend three points on one code, and one voter can
+ * burn six codes and never vote at all.
+ *
+ * pc_email_log has recorded every attempt since the email channel was built, so the real
+ * number has been sitting in the database the whole time. This only reads it.
+ *
+ * "Today" is the Eastern day, because that is the day the competition runs on; a provider
+ * counting in UTC will roll over at a different moment, which is worth knowing when a
+ * figure here sits just under a limit.
+ *
+ * @return array{sent_today:int,failed_today:int,sent_total:int,failed_total:int,
+ *               checks_today:int,first_ts:?int,recent:list<array{when:string,action:string,ok:bool}>}
+ */
+function pc_email_stats(int $recent = 12): array
+{
+    $out = ['sent_today' => 0, 'failed_today' => 0, 'sent_total' => 0, 'failed_total' => 0,
+            'checks_today' => 0, 'first_ts' => null, 'recent' => []];
+    $db = pc_db();
+    if (!$db) {
+        return $out;
+    }
+    pc_email_otp_table();
+
+    /* Midnight Eastern, expressed as a unix timestamp, so the comparison is on ts. */
+    try {
+        $tz = new DateTimeZone(defined('PC_TZ') ? PC_TZ : 'America/New_York');
+        $midnight = (new DateTime('today', $tz))->getTimestamp();
+    } catch (Throwable $e) {
+        $midnight = time() - 86400;
+    }
+
+    try {
+        $s = $db->prepare("SELECT action, ok, COUNT(*) n FROM pc_email_log
+                           WHERE ts >= ? GROUP BY action, ok");
+        $s->execute([$midnight]);
+        foreach ($s->fetchAll() as $r) {
+            $n = (int) $r['n'];
+            $act = (string) $r['action'];
+            $ok = (int) $r['ok'] === 1;
+            if ($act === 'start' && $ok) { $out['sent_today'] += $n; }
+            if ($act === 'failed' || ($act === 'start' && !$ok)) { $out['failed_today'] += $n; }
+            if ($act === 'check') { $out['checks_today'] += $n; }
+        }
+        $s = $db->prepare("SELECT action, ok, COUNT(*) n FROM pc_email_log GROUP BY action, ok");
+        $s->execute();
+        foreach ($s->fetchAll() as $r) {
+            $n = (int) $r['n'];
+            $act = (string) $r['action'];
+            $ok = (int) $r['ok'] === 1;
+            if ($act === 'start' && $ok) { $out['sent_total'] += $n; }
+            if ($act === 'failed' || ($act === 'start' && !$ok)) { $out['failed_total'] += $n; }
+        }
+        $r = $db->query('SELECT MIN(ts) t FROM pc_email_log')->fetch();
+        $out['first_ts'] = $r && $r['t'] ? (int) $r['t'] : null;
+
+        /* The last few attempts, so a pattern is visible rather than a single snapshot. */
+        $s = $db->prepare('SELECT action, ok, created_at FROM pc_email_log
+                           ORDER BY ts DESC, id DESC LIMIT ?');
+        $s->execute([max(1, min(50, $recent))]);
+        foreach ($s->fetchAll() as $r) {
+            $out['recent'][] = ['when' => (string) $r['created_at'],
+                                'action' => (string) $r['action'],
+                                'ok' => (int) $r['ok'] === 1];
+        }
+    } catch (Throwable $e) {
+        return $out;                 // a panel that cannot be drawn must not break the page
+    }
+    return $out;
+}
+
 function pc_email_note(string $ident, string $action, bool $ok): void
 {
     pc_email_otp_table();

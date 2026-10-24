@@ -91,15 +91,42 @@ function pc_site_registrations(): array
  * Match unresolved voter keys against addresses we hold, and record what matches.
  *
  * @return array{voters:int,unresolved_before:int,resolved:int,from_eventbrite:int,
- *               from_site:int,still_unresolved:int,phone_only:int,eb_available:bool}
+ *               from_site:int,still_unresolved:int,phone_only:int,eb_available:bool,
+ *               eb_rows:int,bindings:int,via_binding:int}
  */
 function pc_voter_resolve(): array
 {
     $stat = ['voters' => 0, 'unresolved_before' => 0, 'resolved' => 0, 'from_eventbrite' => 0,
-             'from_site' => 0, 'still_unresolved' => 0, 'phone_only' => 0, 'eb_available' => false];
+             'from_site' => 0, 'still_unresolved' => 0, 'phone_only' => 0, 'eb_available' => false,
+             'eb_rows' => 0, 'bindings' => 0, 'via_binding' => 0];
     $db = pc_db();
     if (!$db) {
         return $stat;
+    }
+
+    /* ---- what our own database already proves, before any lookup ----
+
+       Every row in pc_attendee is a registration that was bound to a voting identity by the
+       bonus flow. That binding IS the verification, and it happened at the time. Voters who
+       claimed a bonus before eb_status started being written are therefore registered as a
+       matter of record, and saying so needs no Eventbrite call and no matching at all.
+
+       The row also carries email_key -- the hash of the address the registration was found
+       under, which is not always the address the person voted with. Kept here as a second
+       key to try, because for a bonus claimer that address is in the attendee list by
+       definition. */
+    $bound = [];
+    pc_attendee_tables();
+    try {
+        foreach ($db->query('SELECT voter_key, email_key FROM pc_attendee')->fetchAll() as $r) {
+            $bound[(string) $r['voter_key']] = (string) $r['email_key'];
+        }
+    } catch (Throwable $e) {
+        $bound = [];
+    }
+    $stat['bindings'] = count($bound);
+    foreach ($bound as $vk => $_) {
+        pc_voter_note($vk, ['eb_status' => 'registered']);
     }
 
     /* Every distinct identity that has actually cast a vote. */
@@ -151,12 +178,21 @@ function pc_voter_resolve(): array
 
     $idx = pc_eb_email_index(true, true);   // force a walk, keep plaintext in memory
     $ebRows = pc_eb_plain();
+    $stat['eb_rows'] = count($ebRows);
     $stat['eb_available'] = $idx['ok'] && $ebRows !== [];
     $add($ebRows, 'eventbrite');
     $add(pc_site_registrations(), 'site');
 
     foreach (array_keys($todo) as $k) {
+        /* Their voting identity first. Failing that, the address their registration was
+           found under -- a bonus claimer may well have voted with a different one, and
+           pc_attendee recorded which address actually matched. */
         $m = $cand[$k] ?? null;
+        $viaBinding = false;
+        if ($m === null && isset($bound[$k]) && isset($cand[$bound[$k]])) {
+            $m = $cand[$bound[$k]];
+            $viaBinding = true;
+        }
         if ($m === null) {
             $stat['still_unresolved']++;
             continue;
@@ -165,7 +201,8 @@ function pc_voter_resolve(): array
         if ($m['source'] === 'eventbrite') {
             /* Their proven address is a registration for this event. Whether the bonus was
                ever claimed is a separate fact, and the two are not reported as one. */
-            $fields['eb_status'] = pc_attendee_verified($k) ? 'registered' : 'on_list';
+            $fields['eb_status'] = (isset($bound[$k]) || pc_attendee_verified($k))
+                ? 'registered' : 'on_list';
             if ($m['first'] !== '' || $m['last'] !== '') {
                 $fields['eb_first'] = $m['first'];
                 $fields['eb_last'] = $m['last'];
@@ -173,6 +210,9 @@ function pc_voter_resolve(): array
             $stat['from_eventbrite']++;
         } else {
             $stat['from_site']++;
+        }
+        if ($viaBinding) {
+            $stat['via_binding']++;
         }
         pc_voter_note($k, $fields);
         $stat['resolved']++;

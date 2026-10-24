@@ -386,28 +386,46 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         /* Reads two lists we already hold, hashes each address, and keeps only exact
            matches against the key on a vote. Nothing is guessed and no vote is altered. */
         $r = pc_voter_resolve();
+        $say = [];
+        if ($r['bindings']) {
+            $say[] = $r['bindings'] . ' voter' . ($r['bindings'] === 1 ? '' : 's')
+                . ' marked Registered from bonus claims already in our own database';
+        }
         if ($r['unresolved_before'] === 0) {
-            $notice = 'Every voter who could be identified already is. Nothing to do.';
+            $say[] = 'every voter who could be identified already is';
         } else {
-            $bits = [];
+            $from = [];
             if ($r['from_eventbrite']) {
-                $bits[] = $r['from_eventbrite'] . ' from the Eventbrite attendee list';
+                $from[] = $r['from_eventbrite'] . ' from the Eventbrite attendee list';
             }
             if ($r['from_site']) {
-                $bits[] = $r['from_site'] . ' from site registrations';
+                $from[] = $r['from_site'] . ' from site registrations';
             }
-            $notice = 'Matched ' . $r['resolved'] . ' of ' . $r['unresolved_before']
-                . ' unidentified voters'
-                . ($bits ? ' (' . implode(', ', $bits) . ')' : '') . '. '
-                . ($r['still_unresolved']
-                    ? $r['still_unresolved'] . ' could not be matched against any list we hold, '
-                      . 'so they stay "Not provided" -- the key is a one-way hash and there is '
-                      . 'nothing honest to put there. '
-                    : '')
-                . (!$r['eb_available']
-                    ? 'Eventbrite could not be reached, so only site registrations were checked.'
-                    : '');
+            $say[] = 'matched ' . $r['resolved'] . ' of ' . $r['unresolved_before']
+                . ' unidentified voters' . ($from ? ' (' . implode(', ', $from) . ')' : '');
+            if ($r['via_binding']) {
+                $say[] = $r['via_binding'] . ' of those matched on the address their '
+                    . 'registration was found under rather than the one they voted with';
+            }
+            if ($r['still_unresolved']) {
+                $say[] = $r['still_unresolved'] . ' could not be matched against any list we '
+                    . 'hold and will stay "Not provided" -- the key is one-way and there is '
+                    . 'nothing honest to put there';
+            }
         }
+        if (!$r['eb_available']) {
+            $say[] = 'EVENTBRITE RETURNED NO ATTENDEES, so only site registrations '
+                . 'were checked. That is usually the API token: if it has been '
+                . 'rotated or revoked, the attendee list cannot be read and no Eventbrite '
+                . 'name or address can be recovered until it works again';
+        } else {
+            $say[] = $r['eb_rows'] . ' attendees read from Eventbrite';
+        }
+        if ($r['phone_only']) {
+            $say[] = $r['phone_only'] . ' phone voter' . ($r['phone_only'] === 1 ? '' : 's')
+                . ' skipped; a phone proves a number, not an address';
+        }
+        $notice = ucfirst(implode('. ', $say)) . '.';
     } elseif ($authed && $action === 'seed') {
         /* Test rows, so the dashboard can be shown doing its job before any real ballot
            exists. They are votes like any other -- same table, same counting -- and they go

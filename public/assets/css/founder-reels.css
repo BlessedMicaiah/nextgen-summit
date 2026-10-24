@@ -580,68 +580,22 @@ html.pc-live [data-announce] { display: none !important; }
    The panels stay in the DOM -- they are what immersive mode scrolls, and they hold
    every vote and share hook -- they simply are not laid out until the visitor asks for
    them. Discovery before that point is the founder rail, the search and the deck. */
-/* ---------- the primary founder cards: a rail, not a column ----------
+/* ---------- the in-page founder cards ----------
 
-   The cards belong on the page. Hiding them was a mistake: cutting the page from
-   19,977px to 4,501px I took the whole track out of layout and argued the bubbles and
-   the search were enough to discover twenty founders. They are not, and removing the
-   DUPLICATE lower directory was never a licence to remove the primary cards.
+   Back to the layout of 378dbc2 (19:50): the panels lie down the page, one under the
+   next, 88svh tall and no wider than 560px, snapped with proximity. That is the
+   founder-card browse, and it is a different thing from the immersive reels, which
+   promote these same panels to a full-viewport vertical feed.
 
-   So they are here, laid out across instead of down. Twenty cards side by side cost one
-   screen of height instead of twenty, which keeps the page short and puts the founders
-   back in front of the visitor. Immersive mode still promotes the very same panels to a
-   full-viewport vertical feed; only the layout differs. */
+   Two attempts to improve on it in between were both worse, and both were deployed:
+
+     * hiding the track entirely, to cut the page from 19,977px to 4,501px. That is
+       the whole gallery gone -- not a trade-off, a regression.
+     * laying the panels out as a horizontal rail of small cards. Oversized video
+       tiles scrolling sideways with the neighbours half in frame, and it collapsed
+       the distinction between browsing cards and watching reels.
+
+   The page is tall again, about 20,000px on a phone. That is the known cost of this
+   layout and it is leadership's call whether to pay it; nothing here should quietly
+   trade the gallery away to buy it back. */
 .reel:not(.is-live) .reel__up { display: none; }
-.reel:not(.is-live) { padding: 0 0 clamp(14px, 2.4vw, 22px); }
-
-.reel:not(.is-live) .reel__track {
-  display: flex; gap: clamp(12px, 1.6vw, 18px);
-  overflow-x: auto; overflow-y: hidden;
-  scroll-snap-type: x proximity;
-  padding: 4px 2px clamp(10px, 1.6vw, 16px);
-  scrollbar-width: thin;
-  overscroll-behavior-x: contain;
-}
-.reel:not(.is-live) .reel__track::-webkit-scrollbar { height: 6px; }
-.reel:not(.is-live) .reel__track::-webkit-scrollbar-thumb {
-  background: var(--ff-edge-2, rgba(255,255,255,.18)); border-radius: 99px;
-}
-.reel:not(.is-live) .reel__panel {
-  flex: 0 0 auto;
-  width: clamp(236px, 70vw, 288px);
-  height: auto; min-height: 0;
-  aspect-ratio: 9 / 14;
-  margin: 0;
-  border-radius: 18px;
-  scroll-snap-align: center;
-  scroll-margin: 0;
-}
-.reel:not(.is-live) .reel__panel[hidden] { display: none; }
-/* the end card is the deck, which is a full experience and not a card in a row */
-.reel:not(.is-live) .reel__panel.deck { display: none; }
-
-/* the furniture, scaled to a card rather than a screen */
-.reel:not(.is-live) .reel__rail { right: 8px; bottom: 10px; gap: 8px; }
-.reel:not(.is-live) .reel__act { width: 36px; height: 36px; }
-.reel:not(.is-live) .reel__act svg { width: 16px; height: 16px; }
-.reel:not(.is-live) .reel__act small { font-size: 7.5px; letter-spacing: .1em; }
-.reel:not(.is-live) .reel__meta { right: 54px; padding: 0 12px 12px; }
-.reel:not(.is-live) .reel__co { font-size: clamp(15px, 2vw, 18px); }
-.reel:not(.is-live) .reel__by { font-size: 11px; }
-.reel:not(.is-live) .reel__blurb { display: none; }
-.reel:not(.is-live) .reel__meet { font-size: 9px; letter-spacing: .12em; }
-.reel:not(.is-live) .reel__hint { display: none; }
-.reel:not(.is-live) .reel__num,
-.reel:not(.is-live) .reel__medal { top: 10px; left: 10px; }
-.reel:not(.is-live) .reel__medal { font-size: 8.5px; padding: 4px 8px; }
-
-@media (hover: hover) {
-  .reel:not(.is-live) .reel__panel { transition: transform .28s var(--ease), box-shadow .28s var(--ease); }
-  .reel:not(.is-live) .reel__panel:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0 0 1.5px rgba(57,216,200,.45), 0 26px 54px -26px rgba(0,0,0,1);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .reel:not(.is-live) .reel__panel { transition: none; }
-}

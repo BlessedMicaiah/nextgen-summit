@@ -1885,16 +1885,6 @@
        preload arithmetic. So its arrival is decided from its own rectangle rather than by
        asking which panel holds the centre -- which is why the earlier data-reel-end test
        here could never fire. */
-    /* In card mode nothing plays. Twenty cards sit side by side sharing one vertical
-       band, so "which panel holds the middle of the screen" has no sensible answer, and
-       a page that starts talking because a card drifted past the centre is not what
-       anybody asked for. Posters until someone opens a founder or enters the reels. */
-    if (!reelLive) {
-      reelActivate(null);
-      reelProgress(null);
-      return;
-    }
-
     var end = $('[data-reel-end]', reelTrack);
     if (end) {
       var er = end.getBoundingClientRect();

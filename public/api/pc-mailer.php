@@ -378,11 +378,72 @@ function pc_smtp_cmd($fp, string $cmd, int $expect, string $label): array
 }
 
 /**
- * Deliver one message over the configured relay.
+ * Deliver one message, retrying once when a retry is the right answer.
+ *
+ * A voter who is told "we could not send the email just now" is a voter who does not vote,
+ * so a momentary refusal from the relay should not end their attempt. But only SOME
+ * refusals are momentary, and retrying the others is worse than useless -- it burns a
+ * second unit of a quota that has already run out, and it doubles the wait before the
+ * person is told the truth.
+ *
+ * So: a failure to connect, or any 4xx, is tried once more after a short pause. A 5xx is
+ * not. 535 means the app password is wrong and will still be wrong in six hundred
+ * milliseconds; Gmail's daily-limit refusal is equally settled for the day.
+ *
+ * Whatever finally failed is recorded for the dashboard, because the detail currently only
+ * reaches the server's error log -- which is exactly where nobody can see it while a
+ * competition is running.
  *
  * @return array{ok:bool,error?:string,step?:string,code?:int}
  */
 function pc_mail_send(string $to, string $subject, string $html, string $text): array
+{
+    $r = pc_mail_send_once($to, $subject, $html, $text);
+    if (!empty($r['ok'])) {
+        return $r;
+    }
+    $code = (int) ($r['code'] ?? 0);
+    $worthRetrying = (($r['error'] ?? '') === 'connect') || ($code >= 400 && $code < 500);
+    if ($worthRetrying) {
+        usleep(600000);
+        $again = pc_mail_send_once($to, $subject, $html, $text);
+        if (!empty($again['ok'])) {
+            return $again;
+        }
+        $r = $again;
+    }
+    pc_mail_note_failure($r, $worthRetrying);
+    return $r;
+}
+
+/**
+ * Leave the reason somewhere an administrator can read it.
+ *
+ * Nothing identifying: the step, the SMTP code and the time. No address, no subject, no
+ * credential. It is stored in pc_meta, which no public endpoint returns.
+ */
+function pc_mail_note_failure(array $r, bool $retried): void
+{
+    if (!function_exists('pc_set_meta')) {
+        return;                          // loaded without the People's Choice library
+    }
+    $bits = [];
+    $bits[] = 'error=' . (string) ($r['error'] ?? 'unknown');
+    if (isset($r['step'])) { $bits[] = 'step=' . (string) $r['step']; }
+    if (isset($r['code'])) { $bits[] = 'code=' . (int) $r['code']; }
+    $bits[] = $retried ? 'retried=yes' : 'retried=no';
+    $bits[] = 'at=' . gmdate('Y-m-d H:i:s') . 'Z';
+    try {
+        pc_set_meta('smtp_last_error', implode(' ', $bits));
+        $n = (int) pc_meta('smtp_fail_count', '0');
+        pc_set_meta('smtp_fail_count', (string) ($n + 1));
+    } catch (Throwable $e) {
+        // a diagnostic that cannot be written must not become the failure it describes
+    }
+}
+
+/** One attempt over the relay. */
+function pc_mail_send_once(string $to, string $subject, string $html, string $text): array
 {
     if (!pc_smtp_configured()) {
         return ['ok' => false, 'error' => 'not_configured'];

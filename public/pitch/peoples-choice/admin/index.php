@@ -495,8 +495,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261024-91">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-91">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261024-92">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-92">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -796,6 +796,20 @@ foreach ($standings as $r) {
           <button class="adm__btn" type="submit">Test the connection (sends nothing)</button>
         </form>
       </div>
+      <?php $smtpErr = pc_meta('smtp_last_error'); $smtpN = (int) pc_meta('smtp_fail_count', '0'); ?>
+      <?php if ($smtpErr): ?>
+      <p class="adm__p"><strong>Last send failure:</strong> <code><?= h($smtpErr) ?></code>
+        &mdash; <?= $smtpN ?> failure<?= $smtpN === 1 ? '' : 's' ?> recorded in total.</p>
+      <p class="adm__p">What the codes mean. <code>code=535</code> is the app password being
+        refused &mdash; regenerate it. <code>code=550</code> or <code>code=552</code> with a
+        daily-limit message is the relay's sending quota for the day, which no amount of
+        retrying will clear: Gmail allows 500 messages a day on a consumer account and 2,000
+        on Workspace, and a busy voting day goes through them faster than it looks, because
+        every verification is one message. <code>error=connect</code> is the relay being
+        unreachable. A 4xx is momentary and is already retried once automatically.</p>
+      <?php else: ?>
+      <p class="adm__p">No send failure has been recorded.</p>
+      <?php endif; ?>
     </section>
 
     <section class="adm__sec">
@@ -934,7 +948,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261024-91" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261024-92" defer></script>
 <?php endif; ?>
 </body>
 </html>

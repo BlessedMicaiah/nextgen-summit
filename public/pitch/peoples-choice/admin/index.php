@@ -18,6 +18,7 @@ declare(strict_types=1);
 require dirname(__DIR__, 3) . '/api/pc-twilio-write.php';
 require_once dirname(__DIR__, 3) . '/api/pc-mailer.php';
 require_once dirname(__DIR__, 3) . '/api/pc-admin-pin.php';
+require_once dirname(__DIR__, 3) . '/api/pc-voter-resolve.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -125,7 +126,8 @@ if (isset($_GET['export'])) {
         $vk = (string) $v['voter_key'];
         $w = $who[$vk] ?? null;
         $e = $ent[(string) $v['entrant_id']] ?? null;
-        $registered = ($w['eb_status'] ?? '') === 'registered';
+        $ebs = (string) ($w['eb_status'] ?? '');
+        $registered = $ebs === 'registered' || $ebs === 'on_list';   // name is theirs either way
         $out[] = [
             $v['created_at'],
             $v['vote_day'] ?? '',
@@ -134,7 +136,8 @@ if (isset($_GET['export'])) {
             $registered ? (string) ($w['eb_first'] ?? '') : '',
             $registered ? (string) ($w['eb_last'] ?? '') : '',
             ($w['email'] ?? '') !== '' ? (string) $w['email'] : 'Not provided',
-            $registered ? 'Registered' : 'Not registered',
+            $ebs === 'registered' ? 'Registered (bonus claimed)'
+                : ($ebs === 'on_list' ? 'On attendee list' : 'Not registered'),
             (string) ($w['channel'] ?? 'unknown'),
             ((int) ($v['slot'] ?? 1)) > 1 ? 'Attendee bonus' : 'Base vote',
             1,
@@ -379,6 +382,32 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $notice = (string) pc_meta('rank_public', '1') === '1'
             ? 'The founder feed now runs in vote order. Visitors can see who is ahead.'
             : 'The founder feed is back in contestant order. Standings are private again.';
+    } elseif ($authed && $action === 'resolve') {
+        /* Reads two lists we already hold, hashes each address, and keeps only exact
+           matches against the key on a vote. Nothing is guessed and no vote is altered. */
+        $r = pc_voter_resolve();
+        if ($r['unresolved_before'] === 0) {
+            $notice = 'Every voter who could be identified already is. Nothing to do.';
+        } else {
+            $bits = [];
+            if ($r['from_eventbrite']) {
+                $bits[] = $r['from_eventbrite'] . ' from the Eventbrite attendee list';
+            }
+            if ($r['from_site']) {
+                $bits[] = $r['from_site'] . ' from site registrations';
+            }
+            $notice = 'Matched ' . $r['resolved'] . ' of ' . $r['unresolved_before']
+                . ' unidentified voters'
+                . ($bits ? ' (' . implode(', ', $bits) . ')' : '') . '. '
+                . ($r['still_unresolved']
+                    ? $r['still_unresolved'] . ' could not be matched against any list we hold, '
+                      . 'so they stay "Not provided" -- the key is a one-way hash and there is '
+                      . 'nothing honest to put there. '
+                    : '')
+                . (!$r['eb_available']
+                    ? 'Eventbrite could not be reached, so only site registrations were checked.'
+                    : '');
+        }
     } elseif ($authed && $action === 'seed') {
         /* Test rows, so the dashboard can be shown doing its job before any real ballot
            exists. They are votes like any other -- same table, same counting -- and they go
@@ -620,7 +649,10 @@ foreach ($standings as $r) {
             <tr>
               <td><?= h($v['created_at']) ?></td>
               <td><?php if ($who && $who['email']): ?><?= h($who['email']) ?><?php else: ?><span class="adm__muted">Not provided</span><br><span class="mono"><?= h(substr($vk, 0, 18)) ?>&hellip;</span><?php endif; ?></td>
-              <td><?php if ($who && ($who['eb_status'] ?? '') === 'registered'): ?><span class="adm__pill adm__pill--ok">Registered</span><?php if ($name !== ''): ?> <?= h($name) ?><?php endif; ?><?php else: ?><span class="adm__muted">&mdash;</span><?php endif; ?></td>
+              <td><?php $ebs = $who['eb_status'] ?? ''; ?>
+                <?php if ($ebs === 'registered'): ?><span class="adm__pill adm__pill--ok">Registered</span><?php if ($name !== ''): ?> <?= h($name) ?><?php endif; ?>
+                <?php elseif ($ebs === 'on_list'): ?><span class="adm__pill">On attendee list</span><?php if ($name !== ''): ?> <?= h($name) ?><?php endif; ?>
+                <?php else: ?><span class="adm__muted">&mdash;</span><?php endif; ?></td>
               <td><?= h($who['channel'] ?? '—') ?></td>
               <td><?php if ($ent): ?><?= h($ent['name']) ?><?php if (($ent['company'] ?? '') !== ''): ?> &middot; <?= h($ent['company']) ?><?php endif; ?><?php else: ?><?= h((string) $v['entrant_id']) ?><?php endif; ?></td>
               <td class="num"><?= $slot > 1 ? 'bonus' : '1' ?></td>
@@ -645,7 +677,11 @@ foreach ($standings as $r) {
       <div class="adm__bar">
         <a class="adm__btn" href="?export=votes">Download voting records (CSV)</a>
         <a class="adm__btn" href="?export=summary">Download standings (CSV)</a>
+        <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="resolve">
+          <button class="adm__btn" type="submit">Identify earlier voters</button></form>
       </div>
+      <p class="adm__p"><strong>Identify earlier voters</strong> fills in people who voted before addresses were being recorded. It takes the two lists we already hold &mdash; the Eventbrite attendee list and site registrations &mdash; hashes each address, and keeps only those that match the key on a vote exactly. A match is the same HMAC, which can only be produced by hashing that address, and the voter had already proved they could read mail sent to it. Nothing is guessed, no vote or total is touched, and anyone whose address is in neither list stays <em>Not provided</em>. <strong>Registered</strong> means a registration is bound to that identity through the bonus flow; <strong>On attendee list</strong> means their proven address is a registration but no bonus was claimed.</p>
       <p class="adm__p"><strong>These files contain personal information</strong> &mdash; verified email addresses, and registered names where a registration was bound. Phone numbers, verification codes, IP addresses and voter-key hashes are deliberately left out. Share them only with people entitled to see them.</p>
       <p class="adm__p">Cells beginning <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> are written with a leading apostrophe so a spreadsheet treats them as text rather than running them as a formula. The apostrophe is not part of the value and does not show in the cell.</p>
     </section>

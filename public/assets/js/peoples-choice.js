@@ -1881,15 +1881,25 @@
     panels.forEach(function (p, i) {
       var v = $('[data-reel-video]', p);
       if (!v) return;
-      var near = Math.abs(i - idx) <= 1;
+      /* How many videos may hold a source at once, and why it is this few.
+
+         It used to assign a source either side of the live panel and only release beyond
+         two, which left FIVE media elements loaded. A desktop does not care. A phone does:
+         iOS allows a small number of simultaneously loaded media elements and, once past
+         it, play() simply fails -- silently, and on whichever panel happens to ask next,
+         which is exactly what "it happens to all of them randomly" looks like.
+
+         So: the live panel and the one below it, which is the only one the reader can
+         reach without warning. Everything else is released. Scrolling back up costs a
+         moment on the poster, which is the right thing to spend. */
+      var near = (i === idx || i === idx + 1);
       if (near && !v.src && v.getAttribute('data-src')) {
         v.src = v.getAttribute('data-src');
       }
-      /* The live panel needs enough data to actually start; its neighbours only need to be
-         ready to. preload="none" in the markup keeps the other seventeen off the network
-         entirely until they are close. */
+      /* The live panel needs enough data to actually start; the next one only needs to be
+         ready to. preload="none" in the markup keeps the rest off the network entirely. */
       if (v.src) { v.preload = (i === idx) ? 'auto' : 'metadata'; }
-      if (!near && v.src && Math.abs(i - idx) > 2) {
+      if (!near && v.src) {
         // let go of the ones well out of reach so memory does not creep on a long scroll
         try { v.pause(); v.removeAttribute('src'); v.load(); } catch (err) {}
       }
@@ -2042,21 +2052,31 @@
     addEventListener('resize', reelQueue, { passive: true });
     addEventListener('orientationchange', reelQueue, { passive: true });
 
-    /* The first touch unlocks media on a device that was refusing it -- iOS in Low Power
-       Mode is the common case, and no amount of correctness on this side talks it round
-       beforehand. One sync on the first gesture and the live pitch starts.
+    /* A gesture unlocks media on a device that is refusing it, and iOS refuses a lot:
+       play() outside a user gesture is declined there under several conditions, and nothing
+       on this side talks it round beforehand.
+
+       This listened ONCE and then stopped, which was wrong and was mine. A visitor whose
+       first tap landed on the menu, or on a card, or anywhere above the feed spent the only
+       unlock there was, and every touch afterwards did nothing -- so the feed stayed on its
+       posters however much they prodded it. It now keeps listening until a pitch has
+       actually played, and only then stands down.
 
        Capture, so it runs before the tap reaches a play/pause control: a visitor whose tap
        means "pause" gets the sync first (video still playing, nothing to do) and their pause
        second, which is the order that leaves the video paused. */
-    var unlocked = false;
     function reelUnlock() {
-      if (unlocked) return;
-      unlocked = true;
+      var live = reelActive ? $('[data-reel-video]', reelActive) : null;
+      if (live && !live.paused) {
+        ['pointerdown', 'touchend', 'keydown'].forEach(function (ev) {
+          document.removeEventListener(ev, reelUnlock, true);
+        });
+        return;
+      }
       reelSync();
     }
     ['pointerdown', 'touchend', 'keydown'].forEach(function (ev) {
-      document.addEventListener(ev, reelUnlock, { passive: true, capture: true, once: true });
+      document.addEventListener(ev, reelUnlock, { passive: true, capture: true });
     });
 
     /* And a slow heartbeat, because neither of the event-driven routes can be relied on.

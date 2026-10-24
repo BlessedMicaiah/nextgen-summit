@@ -9,8 +9,13 @@ public/data/*.jsonl
 *.sqlite
 *.jsonl
 
-# private site settings: generated per server with node tools/make-config.mjs
+# private site settings: generated per server with node tools/make-config.mjs.
+# The second pattern covers config.twilio.php and anything else of that shape: the
+# first line named one file exactly, so a new secrets file would have been committed.
 public/api/config.php
+public/api/config.*.php
+!public/api/config.example.php
+!public/api/config.twilio.example.php
 
 # originals from the image generator (large); web sizes live in public/assets/img
 source-images/
@@ -18,3 +23,7 @@ source-images/
 # release zips built by tools/release.py
 release/
 public/api/resume.php
+
+# Build state for the cache-stamp guard in tools/release.py. Local, not source:
+# a fresh clone simply records a new baseline on its first build.
+tools/.asset-stamp

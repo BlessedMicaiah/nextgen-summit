@@ -19,13 +19,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   gtag('js', new Date());
   gtag('config', 'G-3M5BCK61VB');
 </script>
-<title>Pitch Competition for Founders 29 &amp; Under · $10K · NextGen</title>
-<meta name="description" content="Founders 29 and under: apply to pitch at NextGen Summit. Ten finalists pitch live on Oct 30 for a share of $10,000 in cash prizes. Apply by Oct 20.">
+<title>Pitch Competition: Top 20, Public Vote, $10K Live Final · NextGen</title>
+<meta name="description" content="Twenty founders 29 and under are through to the NextGen Summit Pitch Competition semifinals. Public voting Oct 22–28; ten pitch live on Oct 30 for a share of $10,000.">
 <meta name="theme-color" content="#FAFAF8">
 <link rel="canonical" href="https://nextgensummit.us/pitch/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Your idea belongs on stage · NextGen Summit Pitch Competition">
-<meta property="og:description" content="Founders age 29 and under pitch for a share of $10,000 at NextGen Summit, October 30. Applications close October 20.">
+<meta property="og:title" content="Twenty founders. One stage. · NextGen Summit Pitch Competition">
+<meta property="og:description" content="The Top 20 semifinalists are in. The public picks one finalist; ten founders pitch live for a share of $10,000 at NextGen Summit, October 30.">
 <meta property="og:url" content="https://nextgensummit.us/pitch/">
 <meta property="og:image" content="https://nextgensummit.us/assets/img/pitch-hero-1200.jpg">
 <meta property="og:image:width" content="1200">
@@ -43,17 +43,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preload" as="image" href="/assets/img/pitch-hero-m-900.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="preload" as="image" href="/assets/img/pitch-hero-1600.jpg" imagesrcset="/assets/img/pitch-hero-1200.jpg 1200w, /assets/img/pitch-hero-1600.jpg 1600w, /assets/img/pitch-hero-2048.jpg 2048w" imagesizes="(max-aspect-ratio: 16/9) 177.78vh, 100vw" media="not all and (max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261017-02">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261021-01">
-<link rel="stylesheet" href="/assets/css/pitch.css?v=20261017-02">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261023-77">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261023-77">
+<link rel="stylesheet" href="/assets/css/pitch.css?v=20261023-77">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261017-02" defer></script>
-<script src="/assets/js/announce.js?v=20261021-01" defer></script>
-<script src="/assets/js/depart.js?v=20261017-02" defer></script>
-<script src="/assets/js/forms.js?v=20261017-02" defer></script>
-<script src="/assets/js/pitch.js?v=20261017-02" defer></script>
+<script src="/assets/js/site.js?v=20261023-77" defer></script>
+<script src="/assets/js/announce.js?v=20261023-77" defer></script>
+<script src="/assets/js/depart.js?v=20261023-77" defer></script>
+<script src="/assets/js/pitch.js?v=20261023-77" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -83,6 +82,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a class="nav__link" href="/">The Summit</a>
     <a class="nav__link" href="/experience/" data-depart>The Experience</a>
     <span class="nav__link is-here" aria-current="page">Pitch Competition</span>
+    <a class="nav__link" href="/pitch/peoples-choice/">People&rsquo;s Choice</a>
     <a class="btn btn--sm" href="/tickets/">Get tickets</a>
     <button class="nav__link nav__menu" type="button" data-open="menu">Menu</button>
   </nav>
@@ -90,7 +90,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <main>
 
-  <!-- ==================== hero ==================== -->
+  <!-- ==================== hero: where the competition stands, today ====================
+       pitch.js reads the dates on the stage board (data-from / data-to, Eastern time), marks
+       what is done and what is happening now, and runs the clock. The markup below is the
+       voting week, so the page is true with JavaScript off too. -->
   <section class="ph" data-nav="photo" aria-labelledby="ph-title">
     <picture class="ph__media">
       <source media="(max-aspect-ratio: 3/4)" srcset="/assets/img/pitch-hero-m-700.jpg 700w, /assets/img/pitch-hero-m-900.jpg 900w" sizes="100vw">
@@ -100,22 +103,74 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         alt="A founder stands alone on a dark stage under a single hard spotlight, one hand open mid-sentence.">
     </picture>
     <div class="ph__shade" aria-hidden="true"></div>
+    <span class="ph__beam" aria-hidden="true"></span>
     <div class="ph__inner">
-      <p class="ph__eyebrow rv">NextGen Summit <span aria-hidden="true">·</span> Pitch Competition</p>
+      <p class="ph__eyebrow rv">NextGen Summit <span aria-hidden="true">·</span> Pitch Competition <span aria-hidden="true">·</span> <span data-stage-eyebrow>Semifinals</span></p>
       <h1 class="ph__title wm" id="ph-title">
-        <span class="ph__l1 rv" style="--d:.12s">your idea</span>
-        <span class="ph__l2 rv" style="--d:.42s">belongs on stage.</span>
+        <span class="ph__l1 rv" style="--d:.12s" data-stage-l1>twenty founders.</span>
+        <span class="ph__l2 rv" style="--d:.42s" data-stage-l2>one stage.</span>
       </h1>
+
+      <div class="board rv" style="--d:.6s" data-board>
+        <div class="board__top">
+          <p class="board__now">
+            <span class="board__live"><span class="board__pulse" aria-hidden="true"></span><span data-board-live>Live</span></span>
+            <span class="board__now-t" data-board-now>Public voting is open</span>
+            <span class="board__day" data-board-day hidden></span>
+          </p>
+          <div class="board__clock" data-clock>
+            <span class="board__clock-k" data-clock-k>Voting closes in</span>
+            <span class="board__clock-t" aria-hidden="true">
+              <span class="board__u"><span class="board__n" data-c="d">--</span><span class="board__l">Days</span></span>
+              <span class="board__sep">:</span>
+              <span class="board__u"><span class="board__n" data-c="h">--</span><span class="board__l">Hrs</span></span>
+              <span class="board__sep">:</span>
+              <span class="board__u"><span class="board__n" data-c="m">--</span><span class="board__l">Min</span></span>
+              <span class="board__sep">:</span>
+              <span class="board__u board__u--s"><span class="board__n" data-c="s">--</span><span class="board__l">Sec</span></span>
+            </span>
+            <span class="sr" data-clock-sr>Voting closes October 28 at 11:59 PM Eastern.</span>
+          </div>
+        </div>
+        <!-- one cell per stage: done ones full, today's filling with its days, later ones hatched -->
+        <ol class="board__track" aria-label="Competition timeline">
+          <li class="board__s is-past" data-stage data-from="2026-10-01T00:00:00-04:00" data-to="2026-10-21T00:00:00-04:00">
+            <span class="board__head"><span class="board__no">01</span><span class="board__k">Apply</span><svg class="board__tick" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.4l2.3 2.3 4.7-5"/></svg></span>
+            <span class="board__cell" aria-hidden="true"><span class="board__run"></span></span>
+            <span class="board__v">Closed Oct 20</span><span class="sr" data-stage-sr> (done)</span>
+          </li>
+          <li class="board__s is-past" data-stage data-from="2026-10-21T00:00:00-04:00" data-to="2026-10-22T00:00:00-04:00">
+            <span class="board__head"><span class="board__no">02</span><span class="board__k">Top 20</span><svg class="board__tick" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.4l2.3 2.3 4.7-5"/></svg></span>
+            <span class="board__cell" aria-hidden="true"><span class="board__run"></span></span>
+            <span class="board__v">Named Oct 22</span><span class="sr" data-stage-sr> (done)</span>
+          </li>
+          <li class="board__s is-now" data-stage data-from="2026-10-22T00:00:00-04:00" data-to="2026-10-29T00:00:00-04:00" aria-current="step">
+            <span class="board__head"><span class="board__no">03</span><span class="board__k">Public vote</span><svg class="board__tick" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.4l2.3 2.3 4.7-5"/></svg></span>
+            <span class="board__cell" aria-hidden="true"><span class="board__run"></span></span>
+            <span class="board__v">Oct 22&ndash;28</span><span class="sr" data-stage-sr> (happening now)</span>
+          </li>
+          <li class="board__s" data-stage data-from="2026-10-29T00:00:00-04:00" data-to="2026-10-30T00:00:00-04:00">
+            <span class="board__head"><span class="board__no">04</span><span class="board__k">Top 10</span><svg class="board__tick" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.4l2.3 2.3 4.7-5"/></svg></span>
+            <span class="board__cell" aria-hidden="true"><span class="board__run"></span></span>
+            <span class="board__v">Oct 29</span><span class="sr" data-stage-sr></span>
+          </li>
+          <li class="board__s" data-stage data-from="2026-10-30T00:00:00-04:00" data-to="2026-10-31T00:00:00-04:00">
+            <span class="board__head"><span class="board__no">05</span><span class="board__k">Live final</span><svg class="board__tick" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.4l2.3 2.3 4.7-5"/></svg></span>
+            <span class="board__cell" aria-hidden="true"><span class="board__run"></span></span>
+            <span class="board__v">Oct 30</span><span class="sr" data-stage-sr></span>
+          </li>
+        </ol>
+      </div>
+
       <div class="ph__foot">
-        <p class="ph__lede rv" style="--d:.66s">Young founders: apply to pitch your startup at NextGen Summit. Twenty semifinalists will be featured online. Ten will pitch live on October 30 for a share of $10,000 in cash prizes.</p>
-        <p class="ph__elig rv" style="--d:.72s"><span class="ph__elig-k">Age 29 and under</span> <span>Applicants must be 29 years old or younger.</span></p>
-        <div class="ph__cta rv" style="--d:.78s">
-          <!-- the official application (Typeform), opened in a panel over this page;
-               both Apply buttons on this page use it -->
-          <a class="btn btn--lg" href="https://form.typeform.com/to/XYDhoClo" data-open="apply-pitch" target="_blank" rel="noopener noreferrer">Apply<span class="sr"> to the pitch competition<span data-form-sr> (opens in a new tab)</span></span></a>
+        <p class="ph__lede rv" style="--d:.72s" data-stage-lede>Applications are closed and the Top 20 semifinalists are in. Now the public helps decide who takes the stage: the People&rsquo;s Choice sends one founder straight to the live final, where ten pitch for a share of $10,000 on October 30.</p>
+        <div class="ph__cta rv" style="--d:.84s">
+          <!-- the vote buttons stay hidden until pitch.js has found the People's Choice page on this site -->
+          <a class="btn btn--lg" href="/pitch/peoples-choice/" data-pc-link hidden><span data-pc-label>Vote for a founder</span> <span class="arr" aria-hidden="true">&rarr;</span></a>
+          <a class="btn btn--lg btn--ghost" href="/tickets/">Watch the final live</a>
           <a class="textlink" href="#path" data-scroll>How it works <span class="arr" aria-hidden="true">↓</span></a>
         </div>
-        <p class="ph__note rv" style="--d:.9s">Applications close <span class="dl"><span aria-hidden="true"><del class="dl__old">October 17</del><ins class="dl__new"><time datetime="2026-10-20">October 20</time></ins></span><span class="sr">October 20 (extended from October 17)</span></span>.</p>
+        <p class="ph__note rv" style="--d:.9s" data-pc-soon>The People&rsquo;s Choice gallery and voting open on this site soon.</p>
       </div>
     </div>
   </section>
@@ -130,14 +185,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </picture>
     <div class="opp__shade" aria-hidden="true"></div>
     <div class="opp__inner">
-      <p class="label label--light rv">The opportunity</p>
+      <p class="label label--light rv">What&rsquo;s on the line</p>
       <p class="opp__prize wm rv" style="--d:.1s" id="opp-title"><span class="opp__cur" aria-hidden="true">$</span>10K</p>
-      <p class="opp__sub rv" style="--d:.2s">Total cash prizes across the top three winners.</p>
+      <p class="opp__sub rv" style="--d:.2s">Total cash prizes across the top three winners of the live final.</p>
       <dl class="opp__facts">
         <div class="opp__fact rv" style="--d:.28s"><dt>Semifinalists</dt><dd>20</dd></div>
         <div class="opp__fact rv" style="--d:.36s"><dt>Live finalists</dt><dd>10</dd></div>
-        <div class="opp__fact rv" style="--d:.44s"><dt>Live competition</dt><dd>Oct 30</dd></div>
-        <div class="opp__fact rv" style="--d:.52s"><dt>Age limit</dt><dd>29</dd></div>
+        <div class="opp__fact rv" style="--d:.44s"><dt>Minutes on stage</dt><dd>7</dd></div>
+        <div class="opp__fact rv" style="--d:.52s"><dt>Live final</dt><dd>Oct 30</dd></div>
       </dl>
     </div>
   </section>
@@ -147,36 +202,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="road__head">
       <p class="label rv">The journey</p>
       <h2 class="road__title wm rv" style="--d:.1s" id="path-title">the path<br> to the stage.</h2>
-      <p class="road__lede rv" style="--d:.2s">Five steps. One stage. Apply once. A committee selects 20 semifinalists. The public helps send one founder to the live final while judges select the remaining nine.</p>
+      <p class="road__lede rv" style="--d:.2s">Five steps, one stage. The public sends one founder to the live final, the judges choose nine more, and on October 30 the ten pitch for the room.</p>
     </div>
 
     <div class="road__body">
-    <!-- the rail fills as you move down the steps; step logic lives in pitch.js -->
+    <!-- pitch.js marks each step done / now / next from the same dates as the stage board, and
+         fills today's stretch of the timeline with its days -->
     <ol class="steps" data-steps>
-      <li class="step rv" data-step>
+      <li class="step rv is-past" data-step>
         <span class="step__rail" aria-hidden="true"><span class="step__dot"></span></span>
         <article class="step__in" tabindex="0">
           <p class="step__no" aria-hidden="true">01</p>
+          <p class="step__tag" data-tag>Done</p>
           <h3 class="step__t">Apply</h3>
-          <p class="step__hook">Tell us what you&rsquo;re building.</p>
-          <p class="step__body">Founder and company information, your traction so far, a short executive summary and a one&#8209;minute elevator pitch.</p>
-          <p class="step__when"><span class="step__when-k">Applications close</span> <span class="dl"><span aria-hidden="true"><del class="dl__old">October 17</del><ins class="dl__new"><time datetime="2026-10-20">October 20</time></ins></span><span class="sr">October 20 (extended from October 17)</span></span></p>
+          <p class="step__hook">Founders told us what they&rsquo;re building.</p>
+          <p class="step__body">Founder and company information, traction so far, a short executive summary and a one&#8209;minute elevator pitch. Thank you to every founder who applied.</p>
+          <p class="step__when"><span class="step__when-k">Applications closed</span> <time datetime="2026-10-20">October 20</time></p>
         </article>
       </li>
-      <li class="step rv" data-step>
+      <li class="step rv is-past" data-step>
         <span class="step__rail" aria-hidden="true"><span class="step__dot"></span></span>
         <article class="step__in" tabindex="0">
           <p class="step__no" aria-hidden="true">02</p>
+          <p class="step__tag" data-tag>Done</p>
           <h3 class="step__t">Top 20</h3>
           <p class="step__hook">Twenty founders move forward.</p>
-          <p class="step__body">A review committee reads every application, weighing innovation, growth potential, founder execution and impact.</p>
+          <p class="step__body">A review committee read every application, weighing innovation, growth potential, founder execution and impact.</p>
           <p class="step__when"><span class="step__when-k">Semifinalists announced</span> <time datetime="2026-10-22">October 22</time></p>
         </article>
       </li>
-      <li class="step rv" data-step>
+      <li class="step rv is-now" data-step>
         <span class="step__rail" aria-hidden="true"><span class="step__dot"></span></span>
         <article class="step__in" tabindex="0">
           <p class="step__no" aria-hidden="true">03</p>
+          <p class="step__tag" data-tag>Now</p>
           <h3 class="step__t">Public vote</h3>
           <p class="step__hook">Everyone gets a voice.</p>
           <p class="step__body">The Top 20 profiles are published for public voting. The founder with the most eligible votes takes the People&rsquo;s Choice place in the live final.</p>
@@ -187,6 +246,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="step__rail" aria-hidden="true"><span class="step__dot"></span></span>
         <article class="step__in" tabindex="0">
           <p class="step__no" aria-hidden="true">04</p>
+          <p class="step__tag" data-tag>Next</p>
           <h3 class="step__t">Top 10</h3>
           <p class="step__hook">The final lineup is revealed.</p>
           <p class="step__body">One finalist qualifies through People&rsquo;s Choice. Nine more are selected by the judging committee.</p>
@@ -197,6 +257,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="step__rail" aria-hidden="true"><span class="step__dot"></span></span>
         <article class="step__in" tabindex="0">
           <p class="step__no" aria-hidden="true">05</p>
+          <p class="step__tag" data-tag>Coming</p>
           <h3 class="step__t">Live final</h3>
           <p class="step__hook">Pitch on the main stage.</p>
           <p class="step__body">The Top 10 pitch live at NextGen Summit, in front of an executive panel and the whole room.</p>
@@ -210,90 +271,63 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             srcset="/assets/img/pitch-team-700.jpg 700w, /assets/img/pitch-team-1000.jpg 1000w, /assets/img/pitch-team-1400.jpg 1400w"
             sizes="(max-width:960px) 92vw, 38vw" width="2016" height="1021" loading="lazy" decoding="async" alt="">
         </figure>
-        <p class="road__cap">Applications are open to any founder age 29 and under.</p>
+        <p class="road__cap">Applications closed October 20. Twenty founders age 29 and under are through to the semifinals.</p>
       </aside>
     </div>
   </section>
 
-  <!-- ==================== for applicants ==================== -->
-  <section class="subm" id="apply" data-nav="paper" aria-labelledby="subm-title">
-    <figure class="subm__shot rv">
-      <img src="/assets/img/pitch-prep-820.jpg"
-        srcset="/assets/img/pitch-prep-560.jpg 560w, /assets/img/pitch-prep-820.jpg 820w, /assets/img/pitch-prep-1100.jpg 1100w"
-        sizes="(max-width:860px) 88vw, 42vw" width="1405" height="1946" loading="lazy" decoding="async"
-        alt="A founder rehearses her pitch alone in an empty room, one hand raised mid-gesture, notes in the other.">
-    </figure>
-    <div class="subm__body">
-      <p class="label rv">For applicants</p>
-      <h2 class="subm__title wm rv" style="--d:.1s" id="subm-title">what you&rsquo;ll submit.</h2>
-      <p class="subm__elig rv" style="--d:.14s"><span class="subm__k">Age 29 and under</span> <span>Applicants must be 29 years old or younger.</span></p>
-      <ol class="subm__list">
-        <li class="rv" style="--d:.16s"><span class="subm__k">Company and founder</span><span class="subm__v">Who you are and what you are building.</span></li>
-        <li class="rv" style="--d:.22s"><span class="subm__k">Traction</span><span class="subm__v">Progress so far, in whatever form it takes.</span></li>
-        <li class="rv" style="--d:.28s"><span class="subm__k">Elevator pitch</span><span class="subm__v">One minute.</span></li>
-        <li class="rv" style="--d:.34s"><span class="subm__k">Executive summary</span><span class="subm__v">Problem, solution, market, execution plan.</span></li>
-      </ol>
-      <p class="subm__note rv" style="--d:.4s">One application. Closes <span class="dl"><span aria-hidden="true"><del class="dl__old">October 17</del><ins class="dl__new"><time datetime="2026-10-20">October 20</time></ins></span><span class="sr">October 20 (extended from October 17)</span></span>.</p>
+  <!-- ==================== people's choice: the public's place in the final ==================== -->
+  <section class="pv" id="vote" data-nav="photo" aria-labelledby="pv-title">
+    <span class="pv__glow" aria-hidden="true"></span>
+    <div class="pv__in">
+      <div class="pv__copy">
+        <p class="label label--light rv">People&rsquo;s Choice</p>
+        <h2 class="pv__title wm rv" style="--d:.1s" id="pv-title">your vote<br> sends one founder<br> <span class="pv__hi">to the final.</span></h2>
+        <p class="pv__lede rv" style="--d:.2s" data-pv-lede>Twenty semifinalists, twenty pitches. Watch them, pick the founder you believe in, and share their page. The one with the most eligible votes skips the judges and goes straight to the live final.</p>
+        <div class="pv__cta rv" style="--d:.28s">
+          <a class="btn btn--lg" href="/pitch/peoples-choice/" data-pc-link hidden><span data-pc-label>Vote for a founder</span> <span class="arr" aria-hidden="true">&rarr;</span></a>
+          <p class="pv__soon" data-pc-soon>The gallery of the Top 20 and the vote open on this site soon.</p>
+        </div>
+      </div>
+      <ul class="pv__stats">
+        <li class="pv__stat rv" style="--d:.16s"><span class="pv__n">20</span><span class="pv__k">Semifinalists to choose from</span></li>
+        <li class="pv__stat rv" style="--d:.24s"><span class="pv__n">1</span><span class="pv__k">Place in the live final, decided by the public</span></li>
+        <li class="pv__stat pv__stat--date rv" style="--d:.32s"><span class="pv__n">Oct 28</span><span class="pv__k">Voting closes at 11:59 PM Eastern</span></li>
+      </ul>
     </div>
   </section>
 
-  <!-- ==================== the final ten: two views ==================== -->
+  <!-- ==================== the final ten ==================== -->
   <section class="ten" id="final-ten" data-nav="paper" aria-labelledby="ten-title">
     <div class="ten__head">
-      <p class="label rv">For semifinalists</p>
+      <p class="label rv">For the semifinalists</p>
       <h2 class="ten__title wm rv" style="--d:.1s" id="ten-title">how the final ten<br> are chosen.</h2>
     </div>
-
-    <div class="tabs rv" style="--d:.18s">
-      <div class="tabs__list" role="tablist" aria-label="The final ten">
-        <button class="tab" type="button" role="tab" id="tab-comp" aria-controls="panel-comp" aria-selected="true">Competition</button>
-        <button class="tab" type="button" role="tab" id="tab-vote" aria-controls="panel-vote" aria-selected="false" tabindex="-1">People&rsquo;s Choice</button>
+    <div class="ten__body rv" style="--d:.18s">
+      <div class="sum" aria-hidden="true">
+        <span class="sum__n sum__n--one">1</span>
+        <span class="sum__op">+</span>
+        <span class="sum__n">9</span>
+        <span class="sum__op">=</span>
+        <span class="sum__n sum__n--tot">10</span>
       </div>
-
-      <div class="tabs__panel" role="tabpanel" id="panel-comp" aria-labelledby="tab-comp" tabindex="0">
-        <div class="sum" aria-hidden="true">
-          <span class="sum__n sum__n--one">1</span>
-          <span class="sum__op">+</span>
-          <span class="sum__n">9</span>
-          <span class="sum__op">=</span>
-          <span class="sum__n sum__n--tot">10</span>
+      <div class="ten__grid">
+        <div class="ten__item">
+          <h3 class="ten__k"><span class="ten__num">1</span> People&rsquo;s Choice finalist</h3>
+          <p>The Top 20 founder with the most eligible public votes advances to the live final automatically.</p>
         </div>
-        <div class="ten__grid">
-          <div class="ten__item">
-            <h3 class="ten__k"><span class="ten__num">1</span> People&rsquo;s Choice finalist</h3>
-            <p>The Top 20 founder with the most eligible public votes advances to the live final automatically.</p>
-          </div>
-          <div class="ten__item">
-            <h3 class="ten__k"><span class="ten__num">9</span> Judges&rsquo; finalists</h3>
-            <p>The committee selects nine more founders on business merit and stage readiness.</p>
-          </div>
-        </div>
-        <p class="ten__rule">If the People&rsquo;s Choice winner is already inside the judges&rsquo; original nine, the next highest&#8209;ranked founder takes the final judges&rsquo; place. Ten founders pitch either way.</p>
-        <figure class="ten__shot rv">
-          <img src="/assets/img/pitch-judges-1000.jpg"
-            srcset="/assets/img/pitch-judges-700.jpg 700w, /assets/img/pitch-judges-1000.jpg 1000w, /assets/img/pitch-judges-1400.jpg 1400w"
-            sizes="(max-width:860px) 92vw, 62vw" width="2016" height="1149" loading="lazy" decoding="async"
-            alt="Three judges at a long table in a dark auditorium, listening to a pitch off frame.">
-        </figure>
-      </div>
-
-      <div class="tabs__panel" role="tabpanel" id="panel-vote" aria-labelledby="tab-vote" tabindex="0" hidden>
-        <!-- PRE-LAUNCH. No semifinalists exist yet, so none are shown. When the Top 20 are confirmed,
-             fill SEMIFINALISTS in /assets/js/pitch.js and this panel renders the cards instead.
-             Each entry: { id, name, company, blurb, image, site }. -->
-        <div class="vote" data-vote>
-          <div class="vote__soon">
-            <p class="vote__kicker">People&rsquo;s Choice</p>
-            <p class="vote__big wm">everyone gets<br> a voice.</p>
-            <p class="vote__copy">Voting opens <time datetime="2026-10-22">October 22</time> and closes <time datetime="2026-10-28">October 28</time>. The Top 20 founders appear here when it does, and the founder with the most eligible votes goes straight into the live final.</p>
-            <ul class="vote__when">
-              <li><span class="vote__when-k">Top 20 announced</span> <time datetime="2026-10-22">October 22</time></li>
-              <li><span class="vote__when-k">Voting</span> <time datetime="2026-10-22">October 22</time>&ndash;<time datetime="2026-10-28">28</time></li>
-              <li><span class="vote__when-k">Top 10 announced</span> <time datetime="2026-10-29">October 29</time></li>
-            </ul>
-          </div>
+        <div class="ten__item">
+          <h3 class="ten__k"><span class="ten__num">9</span> Judges&rsquo; finalists</h3>
+          <p>The committee selects nine more founders on business merit and stage readiness.</p>
         </div>
       </div>
+      <p class="ten__rule">If the People&rsquo;s Choice winner is already inside the judges&rsquo; original nine, the next highest&#8209;ranked founder takes the final judges&rsquo; place. Ten founders pitch either way. The finalists are announced on <time datetime="2026-10-29">October 29</time>.</p>
+      <figure class="ten__shot">
+        <img src="/assets/img/pitch-judges-1000.jpg"
+          srcset="/assets/img/pitch-judges-700.jpg 700w, /assets/img/pitch-judges-1000.jpg 1000w, /assets/img/pitch-judges-1400.jpg 1400w"
+          sizes="(max-width:860px) 92vw, 62vw" width="2016" height="1149" loading="lazy" decoding="async"
+          alt="Three judges at a long table in a dark auditorium, listening to a pitch off frame.">
+      </figure>
     </div>
   </section>
 
@@ -309,23 +343,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="live__inner">
       <p class="label label--light rv"><time datetime="2026-10-30">October 30</time> <span aria-hidden="true">·</span> Live competition</p>
       <h2 class="live__title wm rv" style="--d:.1s" id="live-title">three minutes<br> to make your case.</h2>
-      <p class="live__copy rv" style="--d:.2s">The ten finalists pitch to an executive panel and the NextGen audience. Final scores combine 60% judges&rsquo; scoring and 40% live audience scoring. The top three share the $10,000 cash prize pool.</p>
+      <p class="live__copy rv" style="--d:.2s">The ten finalists pitch to an executive panel and the NextGen audience. Final scores combine 60% judges&rsquo; scoring and 40% live audience scoring, so the room has a real say. The top three share the $10,000 cash prize pool.</p>
       <ol class="fmt" data-fmt>
         <li class="fmt__i rv" style="--d:.26s"><span class="fmt__n">3</span><span class="fmt__u">min</span><span class="fmt__k">Pitch</span></li>
         <li class="fmt__i rv" style="--d:.34s"><span class="fmt__n">3</span><span class="fmt__u">min</span><span class="fmt__k">Panel Q&amp;A</span></li>
         <li class="fmt__i rv" style="--d:.42s"><span class="fmt__n">1</span><span class="fmt__u">min</span><span class="fmt__k">Audience score + reset</span></li>
         <li class="fmt__i fmt__i--tot rv" style="--d:.5s"><span class="fmt__n">7</span><span class="fmt__u">min</span><span class="fmt__k">Total per finalist</span></li>
       </ol>
+      <div class="split rv" style="--d:.58s" aria-hidden="true">
+        <span class="split__a"><span class="split__n">60%</span> Judges</span>
+        <span class="split__b"><span class="split__n">40%</span> The room</span>
+      </div>
     </div>
   </section>
 
   <!-- ==================== closing ==================== -->
   <section class="pend" data-nav="paper" aria-labelledby="pend-title">
-    <p class="label rv">Applications close <span class="dl"><span aria-hidden="true"><del class="dl__old">October 17</del><ins class="dl__new"><time datetime="2026-10-20">October 20</time></ins></span><span class="sr">October 20 (extended from October 17)</span></span></p>
-    <h2 class="pend__title wm rv" style="--d:.1s" id="pend-title">your idea<br> belongs on stage.</h2>
+    <p class="label rv"><time datetime="2026-10-30">October 30</time> <span aria-hidden="true">·</span> NextGen Summit</p>
+    <h2 class="pend__title wm rv" style="--d:.1s" id="pend-title">be in the room<br> when they pitch.</h2>
     <div class="pend__cta rv" style="--d:.2s">
-      <a class="btn btn--lg" href="https://form.typeform.com/to/XYDhoClo" data-open="apply-pitch" target="_blank" rel="noopener noreferrer">Apply<span class="sr"> to the pitch competition<span data-form-sr> (opens in a new tab)</span></span></a>
-      <p class="pend__small">Open to founders age 29 and under.</p>
+      <a class="btn btn--lg" href="/tickets/">Get tickets <span class="arr" aria-hidden="true">&rarr;</span></a>
+      <a class="textlink" href="/pitch/peoples-choice/" data-pc-link hidden><span data-pc-label>Vote for a founder</span> <span class="arr" aria-hidden="true">&rarr;</span></a>
+      <p class="pend__small">Your audience score counts for 40% of the final result.</p>
     </div>
   </section>
 
@@ -352,22 +391,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <p class="foot__note">NextGen Summit 2026</p>
 </footer>
 
-
-<dialog class="drawer drawer--form" id="apply-pitch" aria-labelledby="apply-pitch-t">
-  <div class="drawer__in drawer__in--form">
-    <div class="drawer__top">
-      <div class="drawer__lead"><p class="label" id="apply-pitch-t">Take your shot</p></div>
-      <button class="drawer__close" type="button" data-close aria-label="Close">
-        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
-      </button>
-    </div>
-    <div class="fm">
-      <iframe class="fm__frame" data-src="https://form.typeform.com/to/XYDhoClo?typeform-embed=embed-widget&amp;typeform-source=nextgensummit.us&amp;typeform-embed-no-heading=true" title="NextGen Summit Pitch Competition Application" allow="camera; microphone; autoplay; encrypted-media; fullscreen"></iframe>
-      <p class="fm__alt">Form not loading? <a class="linkish" href="https://form.typeform.com/to/XYDhoClo" target="_blank" rel="noopener noreferrer">Open it in a new tab</a>.</p>
-    </div>
-  </div>
-</dialog>
-
 <dialog class="drawer" id="menu" aria-label="Menu">
   <div class="drawer__in">
     <div class="drawer__top">
@@ -382,6 +405,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <li><a href="/tickets/">Get tickets</a></li>
       <li><a href="/experience/" data-depart>The Experience</a></li>
       <li><a href="/pitch/" aria-current="page">Pitch Competition</a></li>
+      <li><a href="/pitch/peoples-choice/">People&rsquo;s Choice</a></li>
       <li><a href="/#involved">Get Involved</a></li>
       <li><a href="/#faq">FAQ</a></li>
     </ul>

@@ -42,7 +42,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('X-Robots-Tag: noindex');
 header('Cache-Control: no-store');
 
-const NGS_EB_EVENT_ID = '1999190304016';
+/* NGS_EB_EVENT_ID now comes from _lib.php, required above, so the bonus path sees it too. */
 const NGS_EB_TTL = 15;              // seconds a count is considered fresh
 const NGS_EB_KEEP = 86400;          // how long a last good count may stand in during an outage
 const NGS_EB_STATES_TTL = 300;      // seconds a per-state snapshot is considered fresh

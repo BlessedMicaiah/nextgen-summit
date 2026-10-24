@@ -1,0 +1,36 @@
+{
+  "_what_this_is": "Which founder occupies which voting contestant id. One file, one decision, reversible by editing it and re-running tools/build-founders.py.",
+  "reviewed": true,
+  "_existing_staging_votes_land_here": {
+    "status": "resolved 2026-10-23 - all 14 rows in pc_votes are now valid=0",
+    "note": "A dated backup of the database sits beside it in nextgen-data-staging."
+  },
+  "map": {
+    "haptol-labs": "entrant-01",
+    "credible-blossom": "entrant-02",
+    "sooz": "entrant-03",
+    "the-luminous-lab": "entrant-04",
+    "lookbook": "entrant-05",
+    "ibraid": "entrant-06",
+    "beforekeys-llc": "entrant-07",
+    "if-the-shoe-fits-itsf": "entrant-08",
+    "rest": "entrant-09",
+    "pathbridge": "entrant-10",
+    "applytrack": "entrant-11",
+    "jay-s-watermelonade": "entrant-12",
+    "offguardz": "entrant-13",
+    "k8culture-productions": "entrant-14",
+    "melavyr": "entrant-15",
+    "light": "entrant-16",
+    "beauty-boot-camp": "entrant-17",
+    "nextofferup": "entrant-18",
+    "exam-me": "entrant-19",
+    "find-your-mission-corp": "entrant-20"
+  },
+  "_reviewed_note": "Confirmed by the project owner on 2026-10-23. At the same time the 10 staging test votes that sat on entrant-01 and entrant-07 were set to valid=0 so the real founders start at zero. No row was deleted; the admin dashboard can restore any of them.",
+  "focal": {
+    "light": "50% 24%",
+    "find-your-mission-corp": "50% 42%"
+  },
+  "_focal_note": "Per-founder crop positions. build-founders.py derives a default from each image shape; anything listed here overrides it. Added 2026-10-23 for the two headshots leadership supplied."
+}

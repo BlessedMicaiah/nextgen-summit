@@ -1,0 +1,601 @@
+/* NextGen Founder Reels — the scrolling half of the People's Choice experience.
+
+   Two decisions shape everything here.
+
+   THE PAGE DOES THE SCROLLING. The panels are not inside their own scroll container; they
+   snap against the page itself, with proximity rather than mandatory. A nested scroller
+   would hold the visitor until it ran out, which is the trapped feeling the brief rules
+   out, and proximity means a deliberate flick still carries straight past the feed into the
+   rest of the page. Each panel is a little under the viewport so the next one shows at the
+   edge -- that sliver is the only hint anyone needs that this scrolls.
+
+   THE FOOTAGE IS NOT CROPPED. Twenty founders filmed in portrait, landscape and square, and
+   a reel that fills the screen with every one of them would have to cut faces off the wide
+   ones. The video is contained and the founder's own poster sits blurred behind it, so the
+   letterboxing reads as staging rather than as a mistake. */
+
+.reel {
+  --reel-h: 88svh;
+  position: relative;
+  padding: 0 0 clamp(40px, 7vw, 80px);
+}
+.reel__track { list-style: none; margin: 0; padding: 0; }
+
+.reel__panel {
+  position: relative;
+  height: var(--reel-h);
+  min-height: 460px;
+  margin: 0 auto clamp(14px, 2.4vw, 26px);
+  width: min(560px, 100%);
+  border-radius: 20px;
+  overflow: hidden;
+  background: #05070A;
+  scroll-snap-align: center;
+  scroll-margin-top: calc(var(--nav-h, 72px) + 10px);
+  box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 30px 70px -40px rgba(0,0,0,1);
+  isolation: isolate;
+}
+@media (min-width: 900px) {
+  /* Desktop is not the phone feed stretched wide. The panel keeps a sane reading width and
+     the surrounding space is left alone rather than filled for the sake of it. */
+  .reel { --reel-h: 80svh; }
+  .reel__panel { width: min(520px, 100%); }
+}
+
+/* the blurred ground, from this founder's own poster */
+.reel__back {
+  position: absolute; inset: -14%;
+  background-size: cover; background-position: center;
+  filter: blur(30px) saturate(.75) brightness(.4);
+  transform: scale(1.08);
+  z-index: 0; pointer-events: none;
+}
+.reel__media {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; place-items: center;
+}
+.reel__media video,
+.reel__media iframe,
+.reel__media .reel__still {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  border: 0; display: block; background: transparent;
+}
+.reel__media .reel__still { object-fit: contain; }
+
+/* the darkening that makes white text legible over any frame */
+.reel__scrim {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(5,7,10,.55) 0%, rgba(5,7,10,0) 22%),
+    linear-gradient(0deg, rgba(5,7,10,.88) 0%, rgba(5,7,10,.4) 26%, rgba(5,7,10,0) 52%);
+}
+
+.reel__num {
+  position: absolute; left: 14px; top: 14px; z-index: 4;
+  min-width: 30px; height: 26px; padding: 0 9px;
+  display: inline-grid; place-items: center; border-radius: 999px;
+  background: rgba(5,7,10,.62); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.2);
+  font: 800 11px/1 var(--f-sans); letter-spacing: .08em; color: #fff;
+}
+
+/* the play affordance, for when autoplay is refused or the pitch is an embed */
+.reel__play {
+  position: absolute; inset: 0; z-index: 5;
+  display: grid; place-items: center;
+  background: none; border: 0; cursor: pointer; color: #fff;
+}
+.reel__play span {
+  width: 68px; height: 68px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(8,12,16,.6); backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,.5);
+  transition: transform .3s var(--ease), background-color .3s var(--ease);
+}
+.reel__play svg { width: 24px; height: 24px; margin-left: 3px; }
+@media (hover: hover) { .reel__play:hover span { transform: scale(1.07); background: rgba(31,199,190,.9); color: #06161A; } }
+
+/* ---------- the words ---------- */
+
+.reel__meta {
+  position: absolute; left: 0; right: 68px; bottom: 0; z-index: 6;
+  padding: 0 16px 18px;
+  display: grid; gap: 5px;
+}
+.reel__co {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(22px, 5.4vw, 30px); line-height: 1.04; letter-spacing: -.02em;
+  color: #fff;
+}
+.reel__by { margin: 0; font: 700 12.5px/1.3 var(--f-sans); letter-spacing: .06em; color: var(--accent); }
+.reel__blurb {
+  margin: 3px 0 0; font: 500 13.5px/1.5 var(--f-sans); color: rgba(255,255,255,.84);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.reel__meet {
+  justify-self: start; margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 7px;
+  background: none; border: 0; padding: 6px 0; cursor: pointer;
+  color: #fff; font: 800 11.5px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+}
+.reel__meet::after {
+  content: ""; width: 16px; height: 1.5px; background: var(--accent);
+  transition: width .3s var(--ease);
+}
+@media (hover: hover) { .reel__meet:hover::after { width: 28px; } }
+
+/* ---------- the rail ---------- */
+
+.reel__rail {
+  position: absolute; right: 8px; bottom: 16px; z-index: 7;
+  display: grid; gap: 14px; justify-items: center;
+}
+.reel__act {
+  display: grid; gap: 4px; justify-items: center;
+  background: none; border: 0; padding: 2px; cursor: pointer; color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+.reel__act span:first-child {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(8,12,16,.55); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.18);
+  transition: background-color .3s var(--ease), transform .3s var(--ease), color .3s var(--ease);
+}
+.reel__act svg { width: 21px; height: 21px; }
+.reel__act small { font: 700 9.5px/1 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+@media (hover: hover) { .reel__act:hover span:first-child { background: rgba(31,199,190,.9); color: #06161A; transform: scale(1.06); } }
+.reel__act:focus-visible span:first-child { outline: 2px solid var(--accent); outline-offset: 3px; }
+.reel__act--vote span:first-child { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.reel__act--vote[disabled] { opacity: .45; cursor: default; }
+.reel__act--on span:first-child { background: rgba(31,199,190,.92); color: #06161A; }
+
+/* ---------- the way back ---------- */
+
+.reel__up {
+  position: sticky; top: calc(var(--nav-h, 72px) + 8px); z-index: 20;
+  display: block; margin: 0 auto clamp(10px, 2vw, 16px);
+  padding: 8px 15px; border-radius: 999px; cursor: pointer;
+  background: rgba(8,12,16,.72); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.2); color: #fff;
+  font: 700 11px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
+  transition: opacity .35s var(--ease), transform .35s var(--ease);
+}
+.reel.is-inside .reel__up { opacity: 1; transform: none; pointer-events: auto; }
+@media (hover: hover) { .reel__up:hover { background: var(--accent); color: var(--on-accent); } }
+
+/* ---------- the end ---------- */
+
+.reel__end {
+  display: grid; place-content: center; gap: 14px; text-align: center;
+  padding: 34px 24px;
+  background:
+    radial-gradient(80% 60% at 50% 18%, rgba(31,199,190,.18), transparent 70%), #080C11;
+}
+.reel__end-k { margin: 0; font: 700 11px/1 var(--f-sans); letter-spacing: .22em; text-transform: uppercase; color: var(--accent); }
+.reel__end-t {
+  margin: 0; font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(28px, 6.4vw, 40px); line-height: 1.02; letter-spacing: -.03em; color: #fff;
+}
+.reel__end-p { margin: 0; font: 500 15px/1.6 var(--f-sans); color: var(--ff-dim, #9AA6B2); max-width: 36ch; }
+.reel__end-acts { display: grid; gap: 9px; margin-top: 6px; }
+.reel__end-acts .btn { --h: 46px; font-size: 11.5px; }
+
+/* ---------- the transition into all of it ---------- */
+
+.ffx { padding: clamp(46px, 9vw, 96px) 0 clamp(18px, 3vw, 34px); text-align: center; }
+.ffx__k {
+  margin: 0 0 14px; font: 700 11px/1 var(--f-sans); letter-spacing: .24em;
+  text-transform: uppercase; color: var(--accent);
+}
+.ffx__t {
+  margin: 0 auto; max-width: 20ch;
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(30px, 6.6vw, 56px); line-height: 1.02; letter-spacing: -.03em; color: #fff;
+  text-wrap: balance;
+}
+.ffx__p { margin: 16px auto 0; max-width: 42ch; font: 500 clamp(15px,2vw,17px)/1.6 var(--f-sans); color: var(--ff-dim, #9AA6B2); }
+.ffx__cue {
+  margin: 26px 0 0; display: inline-flex; align-items: center; gap: 10px;
+  font: 700 11px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(255,255,255,.72);
+}
+.ffx__cue i { display: block; animation: ffx-nudge 2.2s var(--ease) infinite; font-style: normal; }
+@keyframes ffx-nudge { 0%,100% { transform: translateY(0); opacity: .6 } 50% { transform: translateY(5px); opacity: 1 } }
+
+/* things arrive as they come into view, once */
+.ffx__k, .ffx__t, .ffx__p, .ffx__cue { opacity: 0; transform: translateY(14px); }
+.ffx.is-in .ffx__k { animation: ffx-in .7s var(--ease) .02s both; }
+.ffx.is-in .ffx__t { animation: ffx-in .8s var(--ease) .12s both; }
+.ffx.is-in .ffx__p { animation: ffx-in .8s var(--ease) .26s both; }
+.ffx.is-in .ffx__cue { animation: ffx-in .8s var(--ease) .4s both; }
+@keyframes ffx-in { to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reel__panel { scroll-snap-align: none; }
+  .ffx__k, .ffx__t, .ffx__p, .ffx__cue { opacity: 1; transform: none; animation: none !important; }
+  .ffx__cue i { animation: none; }
+  .reel__up { transition: none; }
+}
+
+
+/* ---------- the podium ----------
+   Accents, not different designs. A medal only renders when the server says the standings
+   support one; see pc-rank.php. */
+.reel__medal {
+  position: absolute; left: 50%; top: 14px; z-index: 8;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  padding: 7px 14px; border-radius: 999px;
+  background: rgba(5,7,10,.72); backdrop-filter: blur(8px);
+  font: 700 10px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+  color: #fff;
+}
+.reel__medal b { font: 900 12px/1 var(--f-display); letter-spacing: 0; }
+.reel__medal--1 { border: 1px solid rgba(255,206,92,.85); color: #FFE08A; box-shadow: 0 0 24px -6px rgba(255,206,92,.6); }
+.reel__medal--2 { border: 1px solid rgba(214,222,232,.8); color: #E6ECF3; box-shadow: 0 0 22px -8px rgba(214,222,232,.5); }
+.reel__medal--3 { border: 1px solid rgba(214,158,106,.85); color: #F0C094; box-shadow: 0 0 22px -8px rgba(214,158,106,.5); }
+.reel__panel--p1 { box-shadow: 0 0 0 1.5px rgba(255,206,92,.5), 0 30px 70px -40px rgba(0,0,0,1); }
+.reel__panel--p2 { box-shadow: 0 0 0 1.5px rgba(214,222,232,.45), 0 30px 70px -40px rgba(0,0,0,1); }
+.reel__panel--p3 { box-shadow: 0 0 0 1.5px rgba(214,158,106,.45), 0 30px 70px -40px rgba(0,0,0,1); }
+
+/* ============================================================================
+   IMMERSIVE MODE
+   ============================================================================
+
+   The feed above is the in-page version: panels under the viewport, proximity
+   snapping, the rest of the website still around them. It was built that way on
+   purpose -- a nested scroller that fills the screen holds a visitor until it runs
+   out, and that is the trapped feeling we ruled out.
+
+   Immersive mode answers the other half of the brief without reintroducing the trap:
+   the visitor ENTERS it deliberately, from a control, and the way out is on screen
+   the whole time. The same panels, the same markup, the same geometry-driven
+   activation -- promoted to a fixed full-viewport scroller with mandatory snapping.
+   One founder on screen, edge to edge, exactly one per swipe.
+
+   dvh, not vh: on a phone vh includes the browser's own collapsing bars, so a 100vh
+   panel is taller than the screen and mandatory snapping fights the address bar. */
+
+html.pc-live, html.pc-live body { overflow: hidden !important; height: 100%; }
+/* the website's own furniture steps aside; it is not part of this experience */
+html.pc-live .nav,
+html.pc-live .foot,
+html.pc-live .skip,
+html.pc-live [data-announce] { display: none !important; }
+
+.reel.is-live {
+  position: fixed; inset: 0; z-index: 90;
+  margin: 0; padding: 0;
+  background: #000;
+  overflow-y: auto; overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.reel.is-live::-webkit-scrollbar { width: 0; height: 0; }
+
+/* The sticky Back chip belongs to the in-page feed; immersive mode has the exit button
+   in the corner instead, and two ways back would just be two things to read. */
+.reel.is-live .reel__up { display: none; }
+
+.reel.is-live .reel__panel {
+  height: 100dvh;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;      /* one founder per swipe, never two */
+  scroll-margin-top: 0;
+}
+@media (min-width: 700px) {
+  /* Anything wider than a phone is not a phone stretched wide. The footage keeps a
+     phone-shaped stage in the middle of a dark room, which is how a vertical feed is
+     meant to be read.
+
+     700, not 900: measured on a 768-wide tablet the old breakpoint left the caption
+     running 685px across, which is about twice a comfortable line. A tablet in portrait
+     is a big screen, not a big phone. */
+  .reel.is-live .reel__panel { height: 100dvh; }
+  .reel.is-live .reel__media { inset: 0 max(0px, calc(50% - 15.5rem)); }
+  .reel.is-live .reel__back  { inset: -14%; }
+  .reel.is-live .reel__meta,
+  .reel.is-live .reel__rail,
+  .reel.is-live .reel__medal { --reel-inset: max(22px, calc(50% - 15rem)); }
+  .reel.is-live .reel__meta  { left: var(--reel-inset); right: auto; max-width: 23rem; }
+  .reel.is-live .reel__rail  { right: var(--reel-inset); }
+  /* The medal and the position badge are alternatives -- a panel shows one or the
+     other, never both -- so they sit in the same corner. The badge inherits left:14px
+     from its base rule, so pinning it by `right` as well would have stretched it the
+     whole width of the stage. */
+  .reel.is-live .reel__medal,
+  .reel.is-live .reel__num { left: var(--reel-inset); right: auto; }
+}
+
+/* Safe areas. A phone's home indicator sits over the bottom of the panel and the
+   notch over the top, so the furniture is inset rather than the panel shrunk --
+   the video still runs the full height behind them. */
+.reel.is-live .reel__meta { padding-bottom: max(18px, calc(14px + env(safe-area-inset-bottom))); }
+.reel.is-live .reel__rail { bottom: max(96px, calc(92px + env(safe-area-inset-bottom))); }
+.reel.is-live .reel__medal { top: max(62px, calc(54px + env(safe-area-inset-top))); }
+.reel.is-live .reel__num { top: max(62px, calc(54px + env(safe-area-inset-top))); }
+
+/* ---- landscape footage on a tall screen ----
+
+   Eleven of these pitches were filmed wide. Contained in a 9:19.5 phone they draw a band
+   about a quarter of the screen high, and the first version left the rest near-black --
+   which reads as a broken player rather than as staging. Cropping is not the answer: it
+   is the founder's face that would go.
+
+   So the ground behind the clip is made to carry the frame. The founder's own poster,
+   blurred and lifted out of the dark, with a vignette pulling the eye back to the middle
+   and a soft bar of light behind the clip itself. The clip is untouched; the room it
+   sits in is dressed. */
+.reel.is-live .reel__back {
+  filter: blur(46px) saturate(1.12) brightness(.74);
+  transform: scale(1.22);
+}
+.reel.is-live .reel__panel::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    /* a band of light where a wide clip lands, so it sits on something */
+    linear-gradient(180deg, rgba(0,0,0,0) 18%, rgba(255,255,255,.055) 34%, rgba(255,255,255,.055) 56%, rgba(0,0,0,0) 72%),
+    radial-gradient(84% 40% at 50% 42%, rgba(57,216,200,.11) 0%, rgba(57,216,200,0) 72%),
+    /* a light vignette, not a blackout: the point is to keep the eye in the middle,
+       not to put the poster back in the dark it was just lifted out of */
+    radial-gradient(142% 86% at 50% 42%, rgba(0,0,0,0) 46%, rgba(2,4,6,.52) 100%);
+}
+/* Wide footage is lifted clear of the caption, so the empty space reads as a margin
+   above a clip rather than as a hole the clip is floating in. The class is set from the
+   file's own dimensions once its header arrives -- never from the extension. */
+.reel.is-live .reel__panel.is-wide .reel__media { inset: 0 0 19% 0; }
+@media (min-width: 700px) {
+  .reel.is-live .reel__panel.is-wide .reel__media { inset: 0 max(0px, calc(50% - 15.5rem)) 13% ; }
+}
+
+/* ---- the exit, and the progress of the feed ---- */
+.reel__bar {
+  position: fixed; z-index: 94;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  right: max(10px, env(safe-area-inset-right));
+  display: none; align-items: center; gap: 12px;
+  pointer-events: none;
+}
+.reel.is-live ~ .reel__bar, .reel__bar.is-on { display: flex; }
+.reel__exit {
+  pointer-events: auto;
+  display: inline-grid; place-items: center;
+  width: 40px; height: 40px; flex: 0 0 auto;
+  border: 0; border-radius: 999px; padding: 0;
+  background: rgba(8,10,14,.56); color: #fff;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.17);
+  cursor: pointer;
+}
+.reel__exit svg { width: 17px; height: 17px; }
+.reel__exit:hover { background: rgba(8,10,14,.8); }
+.reel__ticks {
+  display: flex; gap: 3px; flex: 1 1 auto; min-width: 0;
+  height: 3px; border-radius: 999px; overflow: hidden;
+}
+.reel__ticks i {
+  flex: 1 1 0; min-width: 0; border-radius: 999px;
+  background: rgba(255,255,255,.26);
+  transition: background-color .3s var(--ease, ease);
+}
+.reel__ticks i.is-seen { background: rgba(255,255,255,.52); }
+.reel__ticks i.is-on { background: #fff; }
+.reel__of {
+  pointer-events: none; flex: 0 0 auto;
+  font: 800 10px/1 var(--f-sans, system-ui); letter-spacing: .16em;
+  text-transform: uppercase; color: rgba(255,255,255,.76);
+  text-shadow: 0 1px 10px rgba(0,0,0,.8);
+}
+
+/* A one-time hint that this swipes, on the first panel only, gone after a scroll. */
+/* Clear of BOTH the caption and the action rail. At the bottom of the panel it landed on
+   top of the founder's own name, which is not a hint, it is a mess: the caption block
+   starts around 147px up and the rail occupies the right-hand 76px, so the hint sits in
+   the gap that is left. */
+.reel__hint {
+  position: absolute; z-index: 9; left: 16px; right: 78px;
+  bottom: max(166px, calc(162px + env(safe-area-inset-bottom)));
+  display: grid; justify-items: center; gap: 6px;
+  pointer-events: none; text-align: center;
+  font: 700 10.5px/1 var(--f-sans, system-ui); letter-spacing: .2em;
+  text-transform: uppercase; color: rgba(255,255,255,.82);
+  text-shadow: 0 1px 12px rgba(0,0,0,.9);
+  transition: opacity .4s var(--ease, ease);
+}
+.reel__hint i { display: block; width: 18px; height: 18px; animation: reel-nudge 1.8s ease-in-out infinite; }
+.reel__hint i svg { width: 100%; height: 100%; }
+.reel.is-moved .reel__hint { opacity: 0; }
+@keyframes reel-nudge { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+@media (prefers-reduced-motion: reduce) { .reel__hint i { animation: none; } }
+
+/* A tap anywhere on the footage pauses it, the way a reel does. */
+.reel__tap {
+  position: absolute; inset: 0; z-index: 3;
+  border: 0; padding: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.reel__tap span {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  opacity: 0; transition: opacity .22s var(--ease, ease);
+}
+.reel__tap span svg { width: 68px; height: 68px; color: #fff; filter: drop-shadow(0 6px 24px rgba(0,0,0,.7)); }
+.reel__panel.is-held .reel__tap span { opacity: .96; }
+
+/* the spinner that only appears if the footage actually makes someone wait */
+.reel__wait {
+  position: absolute; z-index: 5; left: 50%; top: 50%;
+  width: 34px; height: 34px; margin: -17px 0 0 -17px;
+  border-radius: 999px; pointer-events: none; opacity: 0;
+  border: 2px solid rgba(255,255,255,.26); border-top-color: #fff;
+  transition: opacity .2s var(--ease, ease);
+}
+.reel__panel.is-waiting .reel__wait { opacity: 1; animation: reel-spin .8s linear infinite; }
+@keyframes reel-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .reel__panel.is-waiting .reel__wait { animation: none; border-top-color: rgba(255,255,255,.26); }
+}
+
+/* The stand-in when a founder submitted no image and their pitch is an embed, so there
+   is no frame of their own to lift one from. Their initials on a plate, which is honest
+   about the gap rather than dressing it with somebody else's picture. */
+.reel__plate {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; place-items: center;
+  background: linear-gradient(160deg, #141A20, #07090C);
+}
+.reel__plate .reel__mono {
+  font: 900 clamp(58px, 17vw, 96px)/1 var(--f-sans, system-ui);
+  color: rgba(255,255,255,.24); letter-spacing: .02em;
+}
+
+/* ===========================================================================
+   DESKTOP UX: the rail, the affordance, and bright footage
+   =========================================================================== */
+
+/* ---------- the founder rail, for a mouse ----------
+   A phone swipes this. A desktop should not have to, so it gets arrows -- shown only
+   when there is something off the end to reach, and only to a fine pointer, because a
+   touch device already has the better gesture. */
+.ff-railwrap { position: relative; }
+.ff-nav {
+  position: absolute; top: 50%; z-index: 4;
+  transform: translateY(-50%);
+  display: grid; place-items: center;
+  width: 42px; height: 42px; padding: 0;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(10,14,18,.86); color: #fff;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 10px 26px -12px rgba(0,0,0,1);
+  transition: background-color .25s var(--ease), transform .25s var(--ease);
+}
+.ff-nav svg { width: 17px; height: 17px; }
+.ff-nav--prev { left: -6px; }
+.ff-nav--next { right: -6px; }
+@media (hover: hover) {
+  .ff-nav:hover { background: var(--accent); color: #06161A; transform: translateY(-50%) scale(1.06); }
+}
+.ff-nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* a touch device keeps the swipe and loses the furniture */
+@media (hover: none), (pointer: coarse) { .ff-nav { display: none !important; } }
+
+/* the clear control, beside the search field */
+.ff-tools { display: flex; align-items: center; gap: 10px; }
+.ff-clear {
+  flex: none; display: grid; place-items: center;
+  width: 38px; height: 38px; padding: 0;
+  border: 1px solid var(--ff-edge-2, rgba(255,255,255,.16));
+  border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--ff-dim, rgba(255,255,255,.66));
+}
+.ff-clear svg { width: 15px; height: 15px; }
+@media (hover: hover) { .ff-clear:hover { color: var(--accent); border-color: var(--accent); } }
+.ff-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- "click to explore", and a card that looks like one ----------
+   The cue used to read "Tap to meet the founder" on every device, including the ones
+   without a touchscreen. It now says what the visitor's own device can do, and the
+   whole caption lights up on hover so the card reads as one target rather than a
+   paragraph with a link somewhere in it. */
+.reel__meet {
+  display: inline-flex; align-items: center; gap: 9px;
+  transition: color .22s var(--ease), gap .22s var(--ease);
+}
+.reel__meet::after {
+  content: ""; width: 15px; height: 15px; flex: none;
+  background: currentColor;
+  -webkit-mask: var(--arrow) center / contain no-repeat;
+  mask: var(--arrow) center / contain no-repeat;
+  --arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h12m-5-6 6 6-6 6"/></svg>');
+}
+@media (hover: hover) {
+  .reel__panel:hover .reel__meet { color: var(--accent); gap: 13px; }
+  .reel__meet:hover { color: var(--accent); }
+}
+.reel__meet:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* On a pointer device the caption block is itself the way in, so the cursor says so
+   and the plate lifts very slightly under the pointer. */
+@media (hover: hover) and (pointer: fine) {
+  .reel__meta { cursor: pointer; }
+  .reel__panel:hover .reel__meta {
+    background: linear-gradient(0deg, rgba(57,216,200,.09) 0%, rgba(57,216,200,0) 68%);
+  }
+}
+
+/* ---------- bright footage on a big screen ----------
+   Several pitches were filmed against white walls and studio lighting. On a phone they
+   are fine; on a 1440px screen the clip becomes a slab of glare in a dark room, and the
+   caption over it loses contrast.
+
+   The fix is framing, not dimming. The clip keeps its own exposure -- a barely-there
+   trim of the very brightest highlights, far too small to change a face -- and gains a
+   defined edge and a soft falloff into the dark surround, which is what stops it
+   reading as a hole cut in the page. */
+@media (min-width: 700px) {
+  .reel.is-live .reel__media video,
+  .reel.is-live .reel__media iframe,
+  .reel.is-live .reel__media .reel__still {
+    filter: brightness(.965) contrast(1.035) saturate(1.02);
+  }
+  /* the edge, and the falloff: drawn over the clip's box, never over its middle */
+  .reel.is-live .reel__media::after {
+    content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.085),
+      inset 0 0 64px 24px rgba(4,7,10,.30),
+      0 28px 80px -36px rgba(0,0,0,.9);
+    border-radius: 14px;
+  }
+  .reel.is-live .reel__media { border-radius: 14px; overflow: hidden; }
+  /* and the ground behind it comes down a little, so the clip is the brightest thing
+     on screen rather than competing with its own blurred copy */
+  .reel.is-live .reel__back { filter: blur(48px) saturate(1.04) brightness(.56); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reel__meet { transition: none; }
+}
+
+/* ---------- the feed does not need to be in the page as well ----------
+
+   Twenty full-height panels laid out in the document made the page 19,977px tall on a
+   phone. That is the opposite of the brief: the immersive feed IS the reading
+   experience, entered from a control, and a second copy of it stacked down the page
+   was costing a visitor fourteen thousand pixels of scrolling to reach the voting
+   rules underneath.
+
+   The panels stay in the DOM -- they are what immersive mode scrolls, and they hold
+   every vote and share hook -- they simply are not laid out until the visitor asks for
+   them. Discovery before that point is the founder rail, the search and the deck. */
+/* ---------- the in-page founder cards ----------
+
+   Back to the layout of 378dbc2 (19:50): the panels lie down the page, one under the
+   next, 88svh tall and no wider than 560px, snapped with proximity. That is the
+   founder-card browse, and it is a different thing from the immersive reels, which
+   promote these same panels to a full-viewport vertical feed.
+
+   Two attempts to improve on it in between were both worse, and both were deployed:
+
+     * hiding the track entirely, to cut the page from 19,977px to 4,501px. That is
+       the whole gallery gone -- not a trade-off, a regression.
+     * laying the panels out as a horizontal rail of small cards. Oversized video
+       tiles scrolling sideways with the neighbours half in frame, and it collapsed
+       the distinction between browsing cards and watching reels.
+
+   The page is tall again, about 20,000px on a phone. That is the known cost of this
+   layout and it is leadership's call whether to pay it; nothing here should quietly
+   trade the gallery away to buy it back. */
+.reel:not(.is-live) .reel__up { display: none; }

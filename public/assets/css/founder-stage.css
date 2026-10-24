@@ -1,0 +1,650 @@
+/* NextGen People's Choice — the staged moments either side of the feed.
+
+   Three things live here, and they share one idea: the website stops behaving like a
+   website for a few seconds, then hands over to the founders.
+
+     1. MEET THE FOUNDERS   the shift out of the dashboard
+     2. THE CINEMATIC INTRO four overlapping scenes, then a title, then the first reel
+     3. THE NEXTGEN DECK    twenty cards that sweep in, gather into three decks and open
+
+   Every image used is one a founder submitted or a frame from a founder's own pitch.
+   Nothing here invents an event photograph. */
+
+:root {
+  --stg-ink: #F4F7F8;
+  --stg-dim: rgba(244,247,248,.62);
+  --stg-deep: #04070A;
+}
+
+/* ===========================================================================
+   1. MEET THE FOUNDERS
+   ===========================================================================
+   The existing .ffx block, given a deliberate threshold rather than a scroll cue.
+   This is where the ordinary page ends. */
+
+.ffx__enter {
+  display: inline-flex; align-items: center; gap: 13px;
+  margin-top: clamp(20px, 3.4vw, 30px);
+  min-height: 54px; padding: 0 26px 0 28px;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--accent, #39D8C8); color: #04171A;
+  font: 800 12px/1 var(--f-sans, system-ui); letter-spacing: .2em; text-transform: uppercase;
+  box-shadow: 0 18px 44px -22px rgba(57,216,200,.9);
+  transition: transform .34s var(--ease, ease), box-shadow .34s var(--ease, ease);
+}
+.ffx__enter:hover { transform: translateY(-2px); box-shadow: 0 24px 54px -22px rgba(57,216,200,1); }
+.ffx__enter i { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: rgba(4,23,26,.16); }
+.ffx__enter i svg { width: 12px; height: 12px; }
+.ffx__sub {
+  margin-top: 14px;
+  font: 700 10px/1.7 var(--f-sans, system-ui); letter-spacing: .18em;
+  text-transform: uppercase; color: var(--stg-dim);
+}
+
+/* ---- the bubble entrance: removed, on purpose ----
+
+   There was a staggered fly-in here. It hid the founders three times on a deployed
+   site and I fixed it three times, each fix defeated by the same thing in a different
+   costume:
+
+     1. opacity 0 carried to 1 by a transition -- the transition never ran;
+     2. a timer adding .is-in -- the rule still matched, so nothing changed;
+     3. a timer removing the gate -- by then `transition: all` had started animating
+        the change, and the animation never finished either.
+
+   Each attempt left twenty founders invisible on the page. No decorative entrance is
+   worth that, five days from a launch, so the bubbles simply appear. The rail still
+   scrolls, still has its arrows and its arrow keys; it just does not perform.
+
+   If this is ever wanted back: drive it with a keyframe animation and NO fill-mode, so
+   that an animation which never starts leaves the element in its ordinary visible
+   state. Never with a transition, and never with fill-mode: both. */
+
+/* ===========================================================================
+   2. THE CINEMATIC INTRO
+   ===========================================================================
+   Four scenes that overlap rather than cut, then the title, then the feed. Around six
+   seconds in total and skippable from the first frame -- a visitor who came to vote
+   should never have to sit through a film to do it. */
+
+.fci {
+  position: fixed; inset: 0; z-index: 120;
+  display: none; place-items: center;
+  background: #000;
+  overflow: hidden;
+}
+.fci.is-on { display: grid; }
+.fci__stage { position: absolute; inset: 0; }
+
+.fci__scene {
+  position: absolute; inset: 0;
+  opacity: 0;
+  will-change: opacity, transform, clip-path;
+}
+.fci__scene img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: var(--fp, 50% 38%);
+  /* .74 took the faces into the dark. These are the only authentic images of these
+     founders we have; the point of the sequence is that you can see them. */
+  filter: saturate(.98) contrast(1.03) brightness(.95);
+}
+.fci__scene::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(118% 84% at 50% 14%, rgba(0,0,0,0) 0%, rgba(0,0,0,.34) 78%),
+    linear-gradient(180deg, rgba(4,7,10,.34) 0%, rgba(4,7,10,0) 34%, rgba(4,7,10,.6) 100%);
+}
+/* Each scene arrives differently: a slow push in, a wipe from the left, a rise, a
+   scale back. Four moves rather than one repeated four times. */
+.fci.is-playing .fci__scene--1 { animation: fci-push 2.6s cubic-bezier(.25,.1,.25,1) both; }
+.fci.is-playing .fci__scene--2 { animation: fci-wipe 2.6s cubic-bezier(.22,1,.3,1) 1.7s both; }
+.fci.is-playing .fci__scene--3 { animation: fci-rise 2.6s cubic-bezier(.22,1,.3,1) 3.4s both; }
+.fci.is-playing .fci__scene--4 { animation: fci-pull 3s cubic-bezier(.22,1,.3,1) 5.1s both; }
+
+@keyframes fci-push {
+  0%   { opacity: 0; transform: scale(1.16); }
+  14%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+@keyframes fci-wipe {
+  0%   { opacity: 1; clip-path: inset(0 100% 0 0); transform: scale(1.1); }
+  44%  { opacity: 1; clip-path: inset(0 0 0 0); }
+  78%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; clip-path: inset(0 0 0 0); transform: scale(1); }
+}
+@keyframes fci-rise {
+  0%   { opacity: 0; transform: translateY(9%) scale(1.12); }
+  18%  { opacity: 1; }
+  76%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1.04); }
+}
+@keyframes fci-pull {
+  0%   { opacity: 0; transform: scale(1.22); }
+  16%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1.04); }
+}
+
+/* the words, over the last scene */
+.fci__words {
+  position: relative; z-index: 3;
+  /* The type carries its own shade rather than relying on the whole frame being dim.
+     Lightening the photographs must not be paid for in readability. */
+  padding-block: clamp(26px, 7vw, 44px);
+  background: radial-gradient(76% 120% at 50% 50%, rgba(3,6,9,.72) 0%, rgba(3,6,9,0) 72%);
+  padding: 0 clamp(22px, 7vw, 60px);
+  text-align: center;
+  max-width: 24em;
+}
+.fci__k {
+  margin: 0;
+  font: 800 10.5px/1 var(--f-sans, system-ui); letter-spacing: .34em;
+  text-transform: uppercase; color: var(--accent, #39D8C8);
+  opacity: 0;
+}
+.fci__t {
+  margin: 16px 0 0;
+  font: 900 clamp(34px, 11vw, 82px)/.94 var(--f-display, var(--f-sans, system-ui));
+  letter-spacing: -.03em; text-transform: uppercase; color: #fff;
+  text-shadow: 0 8px 50px rgba(0,0,0,.72);
+}
+.fci__t span { display: block; opacity: 0; }
+.fci__t span:nth-child(2) { color: var(--accent, #39D8C8); }
+
+.fci.is-playing .fci__k { animation: fci-word .9s cubic-bezier(.22,1,.3,1) 5.5s both; }
+.fci.is-playing .fci__t span:nth-child(1) { animation: fci-word 1s cubic-bezier(.22,1,.3,1) 5.75s both; }
+.fci.is-playing .fci__t span:nth-child(2) { animation: fci-word 1s cubic-bezier(.22,1,.3,1) 6s both; }
+@keyframes fci-word {
+  from { opacity: 0; transform: translateY(16px); filter: blur(7px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+.fci__skip {
+  position: absolute; z-index: 5;
+  right: max(14px, env(safe-area-inset-right));
+  top: max(14px, env(safe-area-inset-top));
+  min-height: 38px; padding: 0 17px;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,.13); color: #fff;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.2);
+  font: 800 10px/1 var(--f-sans, system-ui); letter-spacing: .2em; text-transform: uppercase;
+}
+.fci__skip:hover { background: rgba(255,255,255,.22); }
+
+/* The reduced-motion cut: the last scene and the title, held still, and on for long
+   enough to read rather than to watch. */
+.fci.is-still .fci__scene--4 { opacity: 1; }
+.fci.is-still .fci__k,
+.fci.is-still .fci__t span { opacity: 1; }
+
+/* ===========================================================================
+   3. THE NEXTGEN DECK
+   ===========================================================================
+   What happens after the twentieth pitch. Twenty cards sweep in, gather into three
+   decks, and open when chosen. Every founder appears exactly once: 6 / 6 / 8. */
+
+.deck {
+  position: relative;
+  min-height: 100dvh;
+  display: grid; align-content: center;
+  padding: clamp(64px, 11vh, 120px) clamp(14px, 4vw, 30px) clamp(34px, 6vh, 80px);
+  background:
+    radial-gradient(118% 70% at 50% 0%, rgba(57,216,200,.12) 0%, rgba(4,7,10,0) 62%),
+    var(--stg-deep);
+  /* A safety net, not a design: the layout is sized to fit, and if a long founder name
+     or a large text setting pushes it past the screen anyway the panel scrolls rather
+     than hiding the buttons. Contained, so it does not steal the feed's snap. */
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  scroll-snap-align: start;
+}
+.deck__k {
+  margin: 0; text-align: center;
+  font: 800 10.5px/1 var(--f-sans, system-ui); letter-spacing: .32em;
+  text-transform: uppercase; color: var(--accent, #39D8C8);
+}
+.deck__t {
+  margin: 15px 0 0; text-align: center;
+  font: 900 clamp(30px, 8.6vw, 60px)/.95 var(--f-display, var(--f-sans, system-ui));
+  letter-spacing: -.03em; text-transform: uppercase; color: #fff;
+}
+.deck__p {
+  margin: 14px auto 0; max-width: 30ch; text-align: center;
+  font: 500 clamp(14px, 3.4vw, 16px)/1.6 var(--f-sans, system-ui);
+  color: var(--stg-dim);
+}
+
+/* ---- the three stacks ---- */
+.deck__stacks {
+  display: grid; gap: clamp(14px, 3.4vw, 26px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: clamp(26px, 5vw, 44px) auto 0;
+  width: 100%; max-width: 840px;
+  list-style: none; padding: 0;
+}
+@media (max-width: 560px) {
+  /* Three stacks DOWN a phone does not fit: measured at 375x812 the content ran to
+     1174px in an 812px panel, which put the title 231px above the screen and both
+     buttons below it. They stay side by side and get smaller instead -- a stack is a
+     thing you tap, not a thing you read, and the cards inside it are shown full size
+     the moment it opens. */
+  .deck__stacks { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: none; }
+  .deck__fan { width: 100%; }
+  /* At 108px a company name is three clipped characters and an ellipsis, which tells
+     nobody anything. The closed stack is a tap target: it shows the artwork, the label
+     underneath says which deck it is, and the names appear at full size the moment it
+     opens. */
+  .deck__stack .deck__face { display: none; }
+  .deck__rank { top: 5px; left: 5px; padding: 2px 5px; font-size: 7.5px; }
+  .deck__label { margin-top: 9px; }
+  .deck__label b { font-size: 9.5px; letter-spacing: .12em; }
+  .deck__label span { font-size: 8.5px; }
+  .deck__foot .btn { width: 100%; }
+}
+
+.deck__stack { position: relative; margin: 0; }
+.deck__open {
+  position: relative; display: block; width: 100%;
+  padding: 0; border: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.deck__fan {
+  position: relative; display: block;
+  aspect-ratio: 5 / 7;
+  margin: 0 auto; width: min(100%, 230px);
+}
+@media (max-width: 560px) { .deck__fan { width: min(68%, 210px); } }
+
+/* Each card in the closed stack is offset and rotated a little, so it reads as a
+   stack of physical cards rather than a stack of divs. */
+.deck__card {
+  position: absolute; inset: 0;
+  border-radius: 13px; overflow: hidden;
+  background: #0A0E12;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.1) inset,
+    0 24px 50px -28px rgba(0,0,0,1);
+  transform:
+    translate3d(calc(var(--i) * 3px), calc(var(--i) * -4px), 0)
+    rotate(calc(var(--r, 1) * var(--i) * 1.1deg));
+  transition: transform .62s cubic-bezier(.22,1,.3,1), opacity .4s var(--ease, ease);
+  will-change: transform;
+}
+.deck__card img {
+  width: 100%; height: 100%; object-fit: cover;
+  object-position: var(--fp, 50% 26%);
+  display: block;
+}
+.deck__card--logo { background: #11161B; }
+.deck__card--logo img { object-fit: contain; padding: 15%; }
+.deck__mono {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font: 900 clamp(26px, 6vw, 38px)/1 var(--f-sans, system-ui);
+  letter-spacing: .02em; color: rgba(255,255,255,.3);
+  background: linear-gradient(160deg, #141A20, #0A0E12);
+}
+.deck__card::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(4,7,10,0) 38%, rgba(4,7,10,.9) 100%);
+}
+.deck__face { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; padding: 11px 12px 12px; text-align: left; }
+.deck__co {
+  margin: 0; font: 800 clamp(11px, 2.6vw, 12.5px)/1.22 var(--f-sans, system-ui);
+  letter-spacing: -.01em; color: #fff;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.deck__by {
+  margin: 4px 0 0; font: 600 9.5px/1.3 var(--f-sans, system-ui);
+  letter-spacing: .04em; color: rgba(255,255,255,.66);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.deck__rank {
+  position: absolute; z-index: 3; top: 8px; left: 8px;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 7px; border-radius: 4px;
+  font: 800 8.5px/1 var(--f-sans, system-ui); letter-spacing: .12em; text-transform: uppercase;
+}
+.deck__rank--1 { background: linear-gradient(135deg, #F7E0A3, #C9A227); color: #241B04; }
+.deck__rank--2 { background: linear-gradient(135deg, #E8ECEF, #A8B2B8); color: #1B2024; }
+.deck__rank--3 { background: linear-gradient(135deg, #E8BE97, #B07A49); color: #2A1A0C; }
+
+.deck__label {
+  display: grid; gap: 3px; margin-top: 13px; text-align: center;
+}
+.deck__label b {
+  font: 800 11px/1 var(--f-sans, system-ui); letter-spacing: .18em;
+  text-transform: uppercase; color: #fff;
+}
+.deck__label span {
+  font: 600 10px/1 var(--f-sans, system-ui); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--stg-dim);
+}
+.deck__open:hover .deck__card { transform:
+  translate3d(calc(var(--i) * 5px), calc(var(--i) * -7px), 0)
+  rotate(calc(var(--r, 1) * var(--i) * 1.9deg)); }
+
+/* ---- STAGE 1: ARRIVAL. The cards sweep in from off screen. ---- */
+.deck[data-deck] .deck__card { opacity: 0; }
+.deck[data-deck].is-arrived .deck__card {
+  opacity: 1;
+  animation: deck-fly .9s cubic-bezier(.2,1,.28,1) both;
+  animation-delay: calc(var(--d, 0) * 45ms);
+}
+@keyframes deck-fly {
+  from {
+    opacity: 0;
+    transform:
+      translate3d(var(--fx, -120vw), var(--fy, 32vh), 0)
+      rotate(var(--fr, -28deg)) scale(.82);
+  }
+  to {
+    opacity: 1;
+    transform:
+      translate3d(calc(var(--i) * 3px), calc(var(--i) * -4px), 0)
+      rotate(calc(var(--r, 1) * var(--i) * 1.1deg));
+  }
+}
+.deck[data-deck].is-arrived .deck__label,
+.deck[data-deck].is-arrived .deck__k,
+.deck[data-deck].is-arrived .deck__t,
+.deck[data-deck].is-arrived .deck__p { animation: deck-word .7s var(--ease, ease) both; }
+.deck[data-deck].is-arrived .deck__k { animation-delay: .1s; }
+.deck[data-deck].is-arrived .deck__t { animation-delay: .22s; }
+.deck[data-deck].is-arrived .deck__p { animation-delay: .34s; }
+.deck[data-deck].is-arrived .deck__label { animation-delay: 1.15s; }
+@keyframes deck-word { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .deck[data-deck] .deck__card { opacity: 1; }
+  .deck[data-deck].is-arrived .deck__card,
+  .deck[data-deck].is-arrived .deck__label,
+  .deck[data-deck].is-arrived .deck__k,
+  .deck[data-deck].is-arrived .deck__t,
+  .deck[data-deck].is-arrived .deck__p { animation: none; }
+}
+
+/* ---- STAGE 3+4: OPENING. A chosen deck spreads into cards you can read. ---- */
+.deck__spread {
+  position: fixed; inset: 0; z-index: 130;
+  display: none;
+  background: rgba(3,5,8,.92);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.deck__spread.is-on { display: block; }
+.deck__spread-in {
+  min-height: 100%;
+  padding:
+    max(66px, calc(58px + env(safe-area-inset-top)))
+    clamp(14px, 4vw, 30px)
+    max(34px, calc(28px + env(safe-area-inset-bottom)));
+}
+.deck__spread-h { text-align: center; margin: 0 0 clamp(18px, 4vw, 28px); }
+.deck__spread-h b {
+  display: block;
+  font: 900 clamp(22px, 6.4vw, 34px)/1 var(--f-display, var(--f-sans, system-ui));
+  letter-spacing: -.02em; text-transform: uppercase; color: #fff;
+}
+.deck__spread-h span {
+  display: block; margin-top: 9px;
+  font: 700 10px/1 var(--f-sans, system-ui); letter-spacing: .2em;
+  text-transform: uppercase; color: var(--stg-dim);
+}
+.deck__grid {
+  list-style: none; margin: 0 auto; padding: 0;
+  max-width: 860px;
+  display: grid; gap: clamp(11px, 2.6vw, 18px);
+  grid-template-columns: repeat(auto-fill, minmax(min(140px, 44vw), 1fr));
+}
+.deck__pick {
+  position: relative; display: block; width: 100%;
+  aspect-ratio: 5 / 7;
+  padding: 0; border: 0; cursor: pointer;
+  border-radius: 13px; overflow: hidden;
+  background: #0A0E12;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset, 0 22px 44px -26px rgba(0,0,0,1);
+  opacity: 0;
+  animation: deck-open .62s cubic-bezier(.2,1,.3,1) both;
+  animation-delay: calc(var(--d, 0) * 48ms);
+  transition: transform .3s var(--ease, ease), box-shadow .3s var(--ease, ease);
+}
+.deck__pick:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 0 1px rgba(57,216,200,.5) inset, 0 28px 52px -24px rgba(0,0,0,1);
+}
+.deck__pick img { width: 100%; height: 100%; object-fit: cover; object-position: var(--fp, 50% 26%); display: block; }
+.deck__pick--logo img { object-fit: contain; padding: 15%; }
+.deck__pick::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(4,7,10,0) 36%, rgba(4,7,10,.92) 100%);
+}
+@keyframes deck-open {
+  from { opacity: 0; transform: translateY(26px) rotate(var(--sr, -5deg)) scale(.9); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck__pick { opacity: 1; animation: none; }
+}
+.deck__x {
+  position: fixed; z-index: 4;
+  top: max(13px, env(safe-area-inset-top));
+  right: max(13px, env(safe-area-inset-right));
+  display: grid; place-items: center;
+  width: 42px; height: 42px; padding: 0;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,.14); color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.2);
+}
+.deck__x svg { width: 17px; height: 17px; }
+.deck__x:hover { background: rgba(255,255,255,.24); }
+
+.deck__foot {
+  display: flex; flex-wrap: wrap; gap: 11px; justify-content: center;
+  margin-top: clamp(24px, 5vw, 40px);
+}
+
+/* ===========================================================================
+   4. THE FOUNDER CARD
+   ===========================================================================
+   The speaker card from the main microsite, carrying founders instead of speakers.
+   Same geometry (5:7 portrait, 3px gradient edge, 14px radius), the same perspective
+   and backface turn, the same scroll-inside-the-pane on the back, the same
+   reduced-motion exit. Reusing it means the two card systems on this website behave
+   identically rather than merely resembling each other.
+
+   One deliberate difference: the back carries the actions, so the turn control is the
+   ONLY thing that flips the card. Reaching for Vote must never spin it away. */
+
+.fcd {
+  --flip: .66s; --half: .33s;
+  width: min(430px, 94vw); max-width: none; max-height: none;
+  padding: 0; border: 0; background: none; color: #fff; overflow: visible;
+}
+.fcd::backdrop { background: rgba(4,8,10,.86); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
+.fcd__in { position: relative; opacity: 1; transform: none; transition: opacity .3s var(--ease, ease), transform .46s var(--ease, ease); }
+.fcd.is-morph .fcd__in { transition: none; }
+
+.fcd__close {
+  position: fixed; z-index: 10;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  display: grid; place-items: center;
+  width: 42px; height: 42px; padding: 0;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,.14); color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.2);
+  transition: opacity .24s var(--ease, ease), transform .44s cubic-bezier(.65,0,.35,1), background-color .3s var(--ease, ease);
+}
+.fcd__close:hover { background: rgba(255,255,255,.26); }
+.fcd__close svg { width: 16px; height: 16px; }
+.fcd.is-closing .fcd__close { opacity: 0; transform: rotate(90deg) scale(.55); }
+
+.fcd__flip { position: relative; perspective: 1500px; perspective-origin: 50% 50%; }
+.fcd__front, .fcd__back {
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  border-radius: 14px; padding: 3px;
+  background-image: linear-gradient(150deg, rgba(255,255,255,.4), rgba(255,255,255,.05) 26%, rgba(31,199,190,.42) 56%, rgba(255,255,255,.06) 76%, rgba(255,255,255,.3));
+  box-shadow:
+    0 0 0 1px rgba(31,199,190,.32), 0 34px 80px rgba(2,8,10,.78),
+    0 0 40px -6px rgba(31,199,190,.42), 0 0 120px -26px rgba(31,199,190,.6);
+  transition:
+    transform var(--flip) cubic-bezier(.42,0,.58,1),
+    opacity 0s linear var(--half), visibility 0s linear var(--half);
+}
+.fcd__front { transform: rotateY(0deg); }
+.fcd__back { position: absolute; inset: 0; transform: rotateY(-180deg); }
+.fcd:not(.is-back) .fcd__back { opacity: 0; visibility: hidden; }
+.fcd.is-back .fcd__front { opacity: 0; visibility: hidden; transform: rotateY(180deg); }
+.fcd.is-back .fcd__back { transform: rotateY(0deg); }
+.fcd__pane {
+  position: relative; border-radius: 11px; overflow: hidden; background: #07090A;
+  background-image: radial-gradient(120% 80% at 82% 6%, rgba(31,199,190,.12) 0%, rgba(31,199,190,0) 54%);
+}
+
+/* --- the front --- */
+.fcd__shot { position: relative; display: block; aspect-ratio: 5/7; }
+.fcd__shot img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; display: block; }
+.fcd__shot.is-contain img { object-fit: contain; padding: 14% 14% 30%; }
+.fcd__shot::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4,7,10,.62) 0%, rgba(4,7,10,0) 34%),
+    linear-gradient(0deg, rgba(4,7,10,.96) 2%, rgba(4,7,10,.5) 36%, rgba(4,7,10,0) 62%);
+}
+.fcd__mono {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font: 900 clamp(52px, 15vw, 78px)/1 var(--f-sans, system-ui); color: rgba(255,255,255,.26);
+  background: linear-gradient(160deg, #141A20, #0A0E12);
+}
+.fcd__top {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 3;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; padding: clamp(14px,3.4vw,19px) clamp(15px,3.6vw,20px);
+}
+.fcd__wm { font: 900 clamp(21px,4.6vw,26px)/.86 var(--f-display, var(--f-sans, system-ui)); color: #fff; }
+.fcd__wm em { font-style: normal; color: var(--accent, #39D8C8); }
+.fcd__wm small { display: block; margin-top: 3px; font: 800 7px/1 var(--f-sans, system-ui); letter-spacing: .42em; text-transform: uppercase; color: #fff; }
+.fcd__when { padding-left: 12px; border-left: 1px solid rgba(255,255,255,.26); text-align: right; }
+.fcd__when small { display: block; font: 800 7px/1 var(--f-sans, system-ui); letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+.fcd__when b { display: block; margin-top: 4px; font: 800 13.5px/1 var(--f-sans, system-ui); letter-spacing: .1em; color: var(--accent, #39D8C8); }
+
+.fcd__id { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 0 clamp(15px,3.6vw,20px) clamp(13px,3.2vw,17px); }
+.fcd__tag {
+  display: inline-block; padding: 5px 11px; border-radius: 3px;
+  background: var(--accent, #39D8C8); color: #06161A;
+  font: 800 8.5px/1 var(--f-sans, system-ui); letter-spacing: .18em; text-transform: uppercase;
+}
+.fcd__co {
+  margin: 0; font: 800 clamp(26px,7vw,36px)/.96 var(--f-sans, system-ui);
+  letter-spacing: -.028em; text-transform: uppercase; color: #fff;
+}
+.fcd__name {
+  margin: 9px 0 0;
+  font: 700 10px/1.5 var(--f-sans, system-ui); letter-spacing: .17em;
+  text-transform: uppercase; color: var(--accent, #39D8C8);
+}
+.fcd__blurb {
+  margin: 12px 0 0;
+  font: 500 13px/1.55 var(--f-sans, system-ui); color: rgba(255,255,255,.82);
+  /* two lines, so it reads as the preview of the description the back carries in full */
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.fcd__bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 13px; padding-top: 11px; border-top: 1px solid rgba(255,255,255,.22);
+}
+.fcd__bar > small { font: 800 8px/1 var(--f-sans, system-ui); letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.5); }
+.fcd__turn {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 40px; padding: 0; border: 0; background: none; color: #fff; cursor: pointer;
+  font: 800 9.5px/1 var(--f-sans, system-ui); letter-spacing: .16em; text-transform: uppercase;
+}
+.fcd__turn i {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto;
+  border-radius: 999px; border: 1.5px solid var(--accent, #39D8C8); color: var(--accent, #39D8C8);
+  transition: background-color .3s var(--ease, ease), color .3s var(--ease, ease);
+}
+.fcd__turn i svg { width: 13px; height: 13px; }
+@media (hover: hover) { .fcd__turn:hover i { background: var(--accent, #39D8C8); color: #06161A; } }
+
+/* --- the back ---
+   height, not min-height: the pane is bound to the card so the copy scrolls INSIDE it.
+   With min-height the pane grows past the card and takes the actions off the bottom,
+   which is exactly what a long project description does on a narrow phone. */
+.fcd__bpane { display: flex; flex-direction: column; height: 100%; padding: clamp(15px,3.6vw,20px); }
+.fcd__bscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* The logo column. Measured at 50px on a 375px phone, which is too small to read
+   a mark carrying a tagline -- BeforeKeys' RENTAL VERIFICATION and The Lookbook's
+   wordmark both disappeared. Wide enough now that every mark is legible, and the
+   founder's name still has room beside it. */
+.fcd__bhead { display: grid; grid-template-columns: minmax(0,1fr) clamp(104px,30vw,128px); gap: 14px; align-items: start; }
+.fcd__bco { margin: 0; font: 800 clamp(22px,5.6vw,30px)/.96 var(--f-sans, system-ui); letter-spacing: -.025em; text-transform: uppercase; color: #fff; }
+.fcd__bname { margin: 9px 0 0; font: 700 9px/1.6 var(--f-sans, system-ui); letter-spacing: .15em; text-transform: uppercase; color: var(--accent, #39D8C8); }
+.fcd__thumb { position: relative; aspect-ratio: 3/4; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1.5px var(--accent, #39D8C8); background: #11161B; }
+.fcd__thumb img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; display: block; }
+.fcd__thumb.is-contain img { object-fit: contain; padding: 12%; }
+/* The logo panel: square, because every mark was re-seated on a square of its own, and
+   with no inner padding because that padding is already baked into the artwork at a
+   consistent 74%. One size, one alignment, one corner radius across all twenty cards. */
+.fcd__thumb.is-logo { aspect-ratio: 1 / 1; border-radius: 7px; box-shadow: 0 0 0 1.5px rgba(57,216,200,.55); }
+.fcd__thumb.is-logo img { object-fit: contain; padding: 0; }
+.fcd__sec { margin-top: clamp(16px,3.6vw,22px); padding-top: clamp(14px,3vw,18px); border-top: 1px solid rgba(255,255,255,.12); }
+.fcd__k { margin: 0; font: 800 9.5px/1 var(--f-sans, system-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--accent, #39D8C8); }
+.fcd__t { margin: 10px 0 0; font: 500 13.5px/1.62 var(--f-sans, system-ui); color: rgba(255,255,255,.92); }
+.fcd__note { margin: 10px 0 0; font: 500 12px/1.55 var(--f-sans, system-ui); color: rgba(255,255,255,.55); }
+.fcd__acts { display: grid; gap: 9px; margin-top: clamp(17px,3.6vw,22px); }
+.fcd__acts .btn { width: 100%; }
+.fcd__link { margin: 12px 0 0; font: 500 11.5px/1.5 var(--f-sans, system-ui); color: rgba(255,255,255,.6); }
+.fcd__link a { color: var(--accent, #39D8C8); }
+.fcd__bbar { display: flex; margin-top: clamp(12px,2.8vw,16px); padding-top: clamp(11px,2.6vw,14px); border-top: 1px solid rgba(255,255,255,.12); }
+
+@media (max-width: 560px) { .fcd { width: 94vw; } }
+@media (max-height: 760px) { .fcd { width: min(380px, 92vw); } }
+@media (prefers-reduced-motion: reduce) {
+  /* no rotation at all, just the face that is wanted */
+  .fcd__front, .fcd__back, .fcd__in, .fcd__close { transition: none; }
+  .fcd__front, .fcd.is-back .fcd__front, .fcd__back, .fcd.is-back .fcd__back { transform: none; }
+}
+
+
+/* ===========================================================================
+   5. NOTHING STAYS HIDDEN BEHIND AN ANIMATION THAT MAY NEVER RUN
+   ===========================================================================
+   Every entrance above starts from opacity:0 and is carried to opacity:1 by a
+   keyframe animation with fill-mode both. That is correct right up until the
+   animation does not run -- and it does not run for a page that is hidden,
+   occluded or throttled, which is measurable here: the deck arrived with its
+   title, its cards and its labels all held at the first frame, invisible, with
+   only the two buttons showing.
+
+   This is the same shape of bug as the rAF latch that once held the whole feed
+   shut: content whose visibility depends on an animation completing. So a
+   backstop class is set from script a beat after each entrance begins, and it
+   cancels the animation and states the resting values outright. If the
+   animation did run, this changes nothing -- it lands on the same values. If it
+   did not, the content appears anyway. */
+
+/* The selector has to out-rank .deck[data-deck].is-arrived, which is where the animation
+   is declared -- and a running (or stalled) animation beats a plain declaration outright,
+   so cancelling it is the only thing that works. Measured: with the shorter selector the
+   title, the labels and all twenty cards stayed at zero opacity. */
+.deck[data-deck].is-arrived.is-settled .deck__card { animation: none; opacity: 1; }
+.deck[data-deck].is-arrived.is-settled .deck__k,
+.deck[data-deck].is-arrived.is-settled .deck__t,
+.deck[data-deck].is-arrived.is-settled .deck__p,
+.deck[data-deck].is-arrived.is-settled .deck__label { animation: none; opacity: 1; transform: none; }
+.deck__spread.is-settled .deck__pick { animation: none; opacity: 1; transform: none; }
+/* Same lesson as the deck: .fci.is-playing .fci__t span:nth-child(1) out-ranks a plain
+   .fci.is-settled .fci__t span, and a stalled animation beats a declaration outright. The
+   kicker came back and the title did not, which is how it was caught. */
+.fci.is-settled .fci__scene--4,
+.fci.is-playing.is-settled .fci__scene--4 { opacity: 1; }
+.fci.is-settled .fci__k,
+.fci.is-playing.is-settled .fci__k,
+.fci.is-settled .fci__t span,
+.fci.is-playing.is-settled .fci__t span:nth-child(1),
+.fci.is-playing.is-settled .fci__t span:nth-child(2) {
+  animation: none; opacity: 1; transform: none; filter: none;
+}

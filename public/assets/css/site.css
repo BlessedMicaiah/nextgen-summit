@@ -60,6 +60,17 @@ h1,h2,h3,p{margin:0}
 .draft-note::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
 
 /* ---------- buttons ---------- */
+/* The hidden attribute has to actually hide things.
+
+   An author rule that sets display -- .btn does, and so does every component here -- beats
+   the browser's own [hidden]{display:none}, so hidden silently stops working on anything
+   styled. This file compensates component by component (.tally[hidden], .vol[hidden],
+   .mini[hidden] and a dozen more), which works right up until someone sets hidden on an
+   element nobody wrote a rule for. That happened: the ticket link on the three-point screen
+   was hidden in JavaScript, reported itself as hidden, and stayed on screen anyway, offering
+   a ticket to someone who had just proved they held one. One rule, so it cannot happen again. */
+[hidden]{display:none !important}
+
 .btn{--h:48px;display:inline-flex;align-items:center;justify-content:center;gap:.75em;min-height:var(--h);padding:0 1.35em;border-radius:8px;background:var(--accent);color:var(--on-accent);font:700 13px/1 var(--f-sans);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;white-space:nowrap;transition:background-color .4s var(--ease),transform .6s var(--ease)}
 .btn:hover{background:var(--accent-hover)}
 .btn:active{transform:scale(.97)}
@@ -163,6 +174,15 @@ h1,h2,h3,p{margin:0}
   .count__to,.count__u:nth-child(4){display:none}
   .nav__links{gap:clamp(16px,1.9vw,26px)}
 }
+/* the bar fits itself (site.js, initNavFit), giving up one thing at a time: the links close up,
+   the countdown drops its seconds and "to NextGen", the countdown goes, and last the links fold
+   into Menu. Get tickets always stays on the bar, inside the gutter. */
+.nav.nav--snug .nav__links{gap:clamp(14px,1.25vw,22px)}
+.nav.nav--snug .nav__link{letter-spacing:.12em}
+.nav.nav--short .count__to,.nav.nav--short .count__u:nth-child(4){display:none}
+.nav.nav--bare .count{display:none}
+.nav.nav--menu .nav__link{display:none}
+.nav.nav--menu .nav__menu{display:inline-flex}
 /* small phones: the CTA keeps its full wording by tightening, so it never crowds MENU */
 @media (max-width:440px){
   .nav__mark .wm{font-size:22px}
@@ -729,8 +749,28 @@ button.card__face{cursor:pointer}
 .sp__thumb img{width:100%;height:100%;object-fit:cover;object-position:50% 14%}
 /* the credentials scroll inside the card on a short screen. No -webkit-overflow-scrolling here:
    it hands the list a scrolling layer of its own, which is what used to print through the card. */
-.sp__wins{list-style:none;margin:clamp(14px,3.4vw,20px) 0 0;padding:0;flex:1 1 auto;min-height:0;
-  overflow-y:auto;overscroll-behavior:contain}
+.sp__list{position:relative;display:flex;flex-direction:column;flex:1 1 auto;min-height:0;margin-top:clamp(14px,3.4vw,20px)}
+.sp__wins{list-style:none;margin:0;padding:0;flex:1 1 auto;min-height:0;
+  overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.sp__wins::-webkit-scrollbar{display:none}
+/* no scrollbar inside the card: while more of the list is below, its foot fades into the card and a
+   small "Scroll for more" button sits there (speakers.js shows it only while there is more) */
+.sp__list::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;pointer-events:none;
+  background:linear-gradient(rgba(7,9,10,0),#07090A 78%);opacity:0;transition:opacity .3s var(--ease)}
+.sp__list.has-more::after{opacity:1}
+.sp__more{position:absolute;left:50%;bottom:4px;z-index:1;transform:translateX(-50%);
+  display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 8px 0 15px;border-radius:999px;
+  background:rgba(7,9,10,.9);border:1px solid rgba(31,199,190,.5);color:var(--accent);
+  font:800 9.5px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;
+  transition:background-color .3s var(--ease),color .3s var(--ease);animation:sp-more-in .4s var(--ease)}
+.sp__more[hidden]{display:none}
+.sp__more i{display:grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--accent);color:#06161A}
+.sp__more i svg{width:13px;height:13px;animation:sp-more-nudge 1.8s var(--ease-io) infinite}
+@media (hover:hover){.sp__more:hover{background:var(--accent);color:#06161A}.sp__more:hover i{background:#06161A;color:var(--accent)}}
+.sp__more:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@keyframes sp-more-in{from{opacity:0;transform:translate(-50%,6px)}}
+@keyframes sp-more-nudge{0%,60%,100%{transform:none}30%{transform:translateY(2px)}}
+@media (prefers-reduced-motion:reduce){.sp__more,.sp__more i svg{animation:none}}
 .sp__wins li{display:grid;grid-template-columns:38px minmax(0,1fr);gap:13px;align-items:center;
   padding:clamp(10px,2.4vw,13px) 0;border-top:1px solid rgba(255,255,255,.12)}
 .sp__wins li:first-child{border-top:0}
@@ -1032,6 +1072,13 @@ main:has(> .finale:last-child) + .foot{border-top-color:transparent}   /* the fi
 .ask__done[hidden]{display:none}
 .ask__done-x{margin-top:10px;font:500 16px/1.55 var(--f-sans);color:var(--ink-2);max-width:40ch}
 .ask__done-x small{display:block;margin-top:6px;font:600 13px/1.45 var(--f-sans)}
+/* the top of the FAQ: questions for the speakers, sent to the program team's form. Same title and
+   lede as the question form at the bottom, opened by the accent rule the confirmation uses */
+.speakq{margin-bottom:clamp(40px,6.5vh,64px);padding-top:24px;border-top:3px solid var(--accent)}
+.speakq__cta{margin-top:clamp(20px,3vh,28px)}
+@media (max-width:560px){.speakq__cta .btn{width:100%}}
+/* small phones: the long label tightens as the bar's button does, and wraps rather than spill */
+@media (max-width:440px){.speakq__cta .btn{white-space:normal;text-align:center;line-height:1.25;padding:12px .9em;letter-spacing:.07em}}
 @supports (interpolate-size:allow-keywords){
   .faq{interpolate-size:allow-keywords}
   .faq details::details-content{height:0;overflow:clip;transition:height .5s var(--ease),content-visibility .5s allow-discrete}

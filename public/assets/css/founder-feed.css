@@ -1,0 +1,417 @@
+/* NextGen Founder Feed — the People's Choice discovery experience.
+
+   This is a layer over peoples-choice.css, not a replacement for it. The vote dialog, the
+   bonus screens and every [data-pc-*] hook keep their existing styles and behaviour; what
+   changes is the stage those things stand on: the gallery becomes a dark, cinematic feed with
+   a stories row above it.
+
+   The one rule that governs every choice here: the founders are the content and this is the
+   stage. Anything that draws attention to itself rather than to them is wrong, however
+   clever. There is no particle field, no permanent animation and no glass for its own sake.
+
+   Tokens come from site.css. --accent is the turquoise; the dark surface values are local
+   because nothing else on the site is dark. */
+
+.ff {
+  --ff-void: #06080B;
+  --ff-deep: #0B0F14;
+  --ff-card: #11161D;
+  --ff-card-2: #161C25;
+  --ff-edge: rgba(255,255,255,.10);
+  --ff-edge-2: rgba(255,255,255,.18);
+  --ff-text: #F2F5F7;
+  --ff-dim: #9AA6B2;
+  --ff-dimmer: #6B7682;
+  --ff-glow: rgba(31,199,190,.16);
+  position: relative;
+  background: var(--ff-void);
+  color: var(--ff-text);
+  isolation: isolate;
+}
+
+/* The atmosphere. Two soft turquoise lights and a vignette, painted once as gradients --
+   cheap, and they survive scrolling without repainting a blur. */
+.ff::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(70% 55% at 12% 4%, var(--ff-glow), transparent 62%),
+    radial-gradient(58% 48% at 92% 22%, rgba(0,163,230,.11), transparent 60%),
+    radial-gradient(120% 80% at 50% 100%, rgba(31,199,190,.07), transparent 70%),
+    linear-gradient(180deg, var(--ff-deep), var(--ff-void) 42%, var(--ff-void));
+  pointer-events: none;
+}
+
+.ff__wrap { width: min(1240px, 100% - 40px); margin-inline: auto; }
+@media (max-width: 760px) { .ff__wrap { width: calc(100% - 32px); } }
+
+/* ---------- the opening ---------- */
+
+.ff-hero { padding: clamp(56px, 11vw, 132px) 0 clamp(28px, 5vw, 52px); }
+
+.ff-hero__kicker {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin: 0 0 22px;
+  font: 700 11px/1 var(--f-sans); letter-spacing: .24em; text-transform: uppercase;
+  color: var(--accent);
+}
+.ff-hero__kicker::before {
+  content: ""; width: 26px; height: 2px; background: var(--accent); border-radius: 2px;
+}
+
+.ff-hero__t {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(42px, 8.4vw, 104px);
+  line-height: .92; letter-spacing: -.035em;
+  color: #fff;
+  text-wrap: balance;
+}
+.ff-hero__t em { font-style: normal; color: var(--accent); }
+
+.ff-hero__lede {
+  max-width: 54ch; margin: 22px 0 0;
+  font: 500 clamp(16px, 2.1vw, 19px)/1.6 var(--f-sans);
+  color: var(--ff-dim);
+}
+
+/* ---------- the compact dashboard ---------- */
+
+.ff-stats {
+  display: grid; gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: clamp(28px, 4vw, 44px) 0 0;
+  background: var(--ff-edge);
+  border: 1px solid var(--ff-edge);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.ff-stat { background: var(--ff-deep); padding: 18px 20px 16px; }
+.ff-stat__v {
+  display: block;
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(26px, 3.6vw, 40px); line-height: 1; letter-spacing: -.03em;
+  color: #fff;
+}
+.ff-stat__v em { font-style: normal; color: var(--accent); }
+.ff-stat__k {
+  display: block; margin-top: 8px;
+  font: 700 10px/1.3 var(--f-sans); letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ff-dimmer);
+}
+.ff-stat--live .ff-stat__v { color: var(--accent); }
+
+/* ---------- founder stories ---------- */
+
+.ff-stories { padding: clamp(30px, 5vw, 52px) 0 clamp(8px, 2vw, 18px); }
+
+.ff-sec {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  margin: 0 0 18px;
+}
+.ff-sec__t {
+  margin: 0;
+  font: 700 12px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--ff-text);
+}
+.ff-sec__n { font: 600 12px/1 var(--f-sans); letter-spacing: .12em; color: var(--ff-dimmer); }
+
+/* The rail scrolls horizontally and bleeds to the viewport edge on a phone, so the last
+   bubble is not cut off mid-ring by the page gutter. */
+.ff-rail {
+  display: flex; gap: 18px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 18px;
+  scrollbar-width: thin; scrollbar-color: var(--ff-edge-2) transparent;
+}
+.ff-rail::-webkit-scrollbar { height: 6px; }
+.ff-rail::-webkit-scrollbar-thumb { background: var(--ff-edge-2); border-radius: 99px; }
+@media (max-width: 760px) {
+  .ff-rail { margin-inline: -16px; padding-inline: 16px; }
+}
+
+.ff-bub {
+  flex: 0 0 auto; scroll-snap-align: start;
+  width: 86px;
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: inherit; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.ff-bub__ring {
+  position: relative;
+  width: 76px; height: 76px; border-radius: 50%;
+  padding: 2.5px;
+  background: conic-gradient(from 210deg, var(--accent), #00A3E6 45%, var(--accent) 78%, #0E6F6B);
+  transition: transform .45s var(--ease);
+}
+/* A founder with no playable pitch still appears, with a quieter ring, because being
+   excluded from the row would read as being out of the competition. */
+.ff-bub--flat .ff-bub__ring { background: linear-gradient(160deg, var(--ff-edge-2), var(--ff-edge)); }
+.ff-bub__in {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: var(--ff-card); border: 2.5px solid var(--ff-void);
+  overflow: hidden; display: grid; place-items: center;
+}
+.ff-bub__in img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ff-bub__in img.is-contain { object-fit: contain; padding: 12px; background: #fff; }
+.ff-bub__mono {
+  font-family: var(--f-display); font-weight: 900; font-size: 24px; letter-spacing: -.02em;
+  color: var(--accent);
+}
+.ff-bub__n {
+  font: 600 11px/1.3 var(--f-sans); color: var(--ff-dim);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ff-bub__play {
+  position: absolute; right: -1px; bottom: -1px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #06080B;
+  display: grid; place-items: center;
+  border: 2.5px solid var(--ff-void);
+}
+.ff-bub__play svg { width: 11px; height: 11px; }
+@media (hover: hover) {
+  .ff-bub:hover .ff-bub__ring { transform: translateY(-3px) scale(1.04); }
+  .ff-bub:hover .ff-bub__n { color: #fff; }
+}
+.ff-bub:focus-visible .ff-bub__ring { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/* ---------- the feed ---------- */
+
+/* The lower gallery is gone, and so are the card styles that drew it -- including
+   .ffc__num, the little numbered circle in each tile's corner. That was the last
+   arbitrary contestant number on the site; it is deleted, not hidden.
+
+   The search keeps its appearance and moves up to sit with the founder rail. */
+
+.ff-tools {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  margin: 0 0 24px;
+}
+.ff-search {
+  flex: 1 1 260px; max-width: 420px;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--ff-card); border: 1px solid var(--ff-edge);
+  border-radius: 999px; padding: 0 16px; height: 46px;
+}
+.ff-search svg { width: 16px; height: 16px; color: var(--ff-dimmer); flex: none; }
+.ff-search input {
+  flex: 1; min-width: 0; background: none; border: 0; outline: none;
+  color: var(--ff-text); font: 500 15px/1 var(--f-sans);
+}
+.ff-search input::placeholder { color: var(--ff-dimmer); }
+.ff-search:focus-within { border-color: var(--accent); }
+.ff-count { font: 600 12px/1 var(--f-sans); letter-spacing: .1em; color: var(--ff-dimmer); }
+
+.ff-empty {
+  padding: 48px 8px; text-align: center; color: var(--ff-dim);
+  font: 500 15px/1.6 var(--f-sans);
+}
+
+/* A staging-only strip. The founder-to-contestant mapping is provisional until a human
+   confirms it, and nobody looking at a vote on staging should have to guess whether it is. */
+.ff-provisional {
+  margin: 0 0 22px; padding: 11px 16px;
+  border: 1px dashed rgba(255,229,0,.5); border-radius: 10px;
+  background: rgba(255,229,0,.06);
+  font: 600 12px/1.5 var(--f-sans); color: #FFE500;
+}
+
+/* ---------- the opening reveal ---------- */
+
+.ff-boot {
+  position: fixed; inset: 0; z-index: 400;
+  display: grid; place-items: center;
+  background: var(--ff-void);
+  animation: ff-boot-out .5s var(--ease) 1.05s both;
+}
+.ff-boot__mark {
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(30px, 7vw, 58px); letter-spacing: -.04em; color: #fff;
+  position: relative; opacity: 0;
+  animation: ff-mark-in .55s var(--ease) .1s both;
+}
+.ff-boot__mark em { font-style: normal; color: var(--accent); }
+/* the signal: one turquoise line crossing the frame, once */
+.ff-boot__scan {
+  position: absolute; left: 0; top: 50%; width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: scaleX(0); transform-origin: left;
+  animation: ff-scan .85s var(--ease) .12s both;
+}
+.ff-boot__cards { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.ff-boot__cards i {
+  position: absolute; bottom: -10%; width: 78px; height: 104px; border-radius: 10px;
+  border: 1px solid rgba(31,199,190,.3);
+  background: linear-gradient(180deg, rgba(31,199,190,.07), transparent);
+  opacity: 0; animation: ff-card-up .9s var(--ease) both;
+}
+@keyframes ff-mark-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes ff-scan { 0% { transform: scaleX(0); } 55% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
+@keyframes ff-card-up { 0% { opacity: 0; transform: translateY(40px); } 40% { opacity: .85; } 100% { opacity: 0; transform: translateY(-26px); } }
+@keyframes ff-boot-out { to { opacity: 0; visibility: hidden; } }
+
+/* Motion is decoration here. Anyone who has asked for less gets the page, immediately. */
+@media (prefers-reduced-motion: reduce) {
+  .ff-boot { animation: ff-boot-out .01s linear both; }
+  .ff-boot__mark, .ff-boot__scan, .ff-boot__cards i { animation-duration: .01s; }
+  .ff-bub__ring { transition: none; }
+}
+
+/* ---------- the story viewer ---------- */
+
+.ff-view::backdrop { background: rgba(4,6,9,.92); }
+.ff-view {
+  width: min(460px, 100vw); max-width: 100vw;
+  height: min(860px, 100dvh); max-height: 100dvh;
+  padding: 0; border: 0; background: var(--ff-void); color: var(--ff-text);
+  border-radius: 0;
+}
+@media (min-width: 560px) { .ff-view { border-radius: 20px; height: min(820px, 94dvh); } }
+.ff-view__in { display: flex; flex-direction: column; height: 100%; }
+.ff-view__bar { display: flex; gap: 5px; padding: 12px 14px 0; }
+.ff-view__tick { flex: 1; height: 2.5px; border-radius: 99px; background: rgba(255,255,255,.22); }
+.ff-view__tick.is-on { background: var(--accent); }
+.ff-view__head {
+  display: flex; align-items: center; gap: 11px; padding: 13px 14px;
+}
+.ff-view__av {
+  width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex: none;
+  background: var(--ff-card); display: grid; place-items: center;
+}
+.ff-view__av img { width: 100%; height: 100%; object-fit: cover; }
+.ff-view__av img.is-contain { object-fit: contain; padding: 4px; background: #fff; }
+.ff-view__who { flex: 1; min-width: 0; }
+.ff-view__co { display: block; font: 800 13px/1.2 var(--f-sans); color: #fff; }
+.ff-view__by { display: block; font: 500 11.5px/1.3 var(--f-sans); color: var(--ff-dim); }
+.ff-view__x {
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  background: rgba(255,255,255,.08); border: 0; color: #fff; cursor: pointer;
+  display: grid; place-items: center; font-size: 17px; line-height: 1;
+}
+/* ---------- one player, whatever shape the pitch arrived in ----------
+
+   These twenty pitches are portrait, landscape and square, between 480x854 and 3840x2160.
+   Forcing them all into one frame would crop faces off the wide ones and pillar-box the
+   tall ones against dead black. The stage keeps a steady 9:16 so every founder occupies
+   the same space, the video is contained inside it so nothing is ever cropped or stretched,
+   and the founder's own image sits blurred behind to fill what is left. */
+.ff-view__stage {
+  flex: 1; min-height: 0; position: relative; background: #05070A;
+  display: grid; place-items: center; overflow: hidden;
+}
+/* Only a photograph makes a good backdrop. A white logo blurred to fill the frame is a
+   pale haze, which looks like a rendering fault rather than a design. Those founders get
+   the dark ground instead, set by --ff-back: none. */
+.ff-view__stage::before {
+  content: ""; position: absolute; inset: -12%;
+  background-image: var(--ff-back, none);
+  background-size: cover; background-position: center;
+  filter: blur(26px) saturate(.7) brightness(.42);
+  transform: scale(1.1);
+  opacity: .55; pointer-events: none;
+}
+.ff-view__stage::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(70% 60% at 50% 45%, transparent, rgba(5,7,10,.72));
+}
+/* Fill the box and let object-fit do the letterboxing.
+
+   Sizing by intrinsic dimensions (width:auto with max-height) looked equivalent and was
+   not: a 1080x1920 pitch came out 818px tall inside a 662px stage, cropping the top and
+   bottom off the founder. Filling the stage and containing is the one form that holds for
+   portrait, landscape and square alike. */
+.ff-view__stage video, .ff-view__stage iframe {
+  /* Absolute, not a grid item. As a centred grid item the player's height:100% resolved
+     against an area the player itself was sizing, so a 9:16 pitch computed 818px inside a
+     662px stage and overflowed. Pinned to the stage box there is nothing circular left to
+     resolve, and contain does the letterboxing. */
+  position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%;
+  border: 0; display: block; object-fit: contain; background: transparent;
+}
+/* An iframe cannot be sized to its content, so YouTube and Drive get the 9:16 box itself
+   and letterbox inside it the way their own players do. */
+.ff-view__stage iframe { width: 100%; height: 100%; }
+/* No video? Then an editorial card, not an apology. */
+.ff-view__tell {
+  padding: 30px 26px; text-align: center; display: grid; gap: 14px; align-content: center;
+  background:
+    radial-gradient(80% 60% at 50% 20%, rgba(31,199,190,.14), transparent 70%), var(--ff-deep);
+  height: 100%; width: 100%;
+}
+.ff-view__tell-co {
+  font-family: var(--f-display); font-weight: 900; font-size: clamp(28px, 7vw, 42px);
+  line-height: 1.02; letter-spacing: -.03em; color: #fff; margin: 0;
+}
+.ff-view__tell-p { margin: 0; font: 500 15px/1.65 var(--f-sans); color: var(--ff-dim); }
+.ff-view__tell-k {
+  font: 700 10px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--accent);
+}
+.ff-view__acts { display: flex; gap: 9px; padding: 13px 14px calc(13px + env(safe-area-inset-bottom)); }
+.ff-view__acts .btn { flex: 1; --h: 46px; font-size: 11.5px; }
+.ff-view__body {
+  position: relative; flex: 1; min-height: 0; display: flex;
+  aspect-ratio: 9 / 16; max-height: 100%; margin-inline: auto; width: 100%;
+}
+.ff-view__body .ff-view__stage { flex: 1; min-width: 0; }
+.ff-view__nav {
+  position: absolute; inset: 0; display: flex; z-index: 3; pointer-events: none;
+}
+.ff-view__navgap { flex: 1 1 auto; }
+.ff-view__nav button {
+  flex: 0 0 22%; pointer-events: auto;
+  background: none; border: 0; cursor: pointer; color: transparent; font: 0/0 a;
+  -webkit-tap-highlight-color: transparent;
+}
+.ff-view__nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: -6px; }
+
+
+/* ---------- the profile dialog's player ----------
+   Same principle, different room: a 16:9 region on the profile, with the video contained
+   inside it so a portrait pitch is never cropped to fit a landscape box. */
+[data-pc-p-video] {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #05070A;
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid; place-items: center;
+}
+[data-pc-p-video] video,
+[data-pc-p-video] iframe {
+  width: 100%; height: 100%;
+  border: 0; display: block; background: transparent;
+  object-fit: contain;
+}
+[data-pc-p-video] iframe { width: 100%; height: 100%; }
+
+/* The profile portrait follows the same crop its card uses, set inline per founder. */
+.pcp__shot img, [data-pc-p-shot] img { object-fit: cover; }
+
+
+/* The understated way back to a registration check.
+
+   It sits under the ticket offer and is deliberately NOT a button: leadership's note was
+   that a second large control competing with the ticket CTA gave people two shouts and no
+   clear next step. Someone who already holds a ticket knows it and will look for this; a
+   visitor who does not should see one offer. */
+.pcbonus__link {
+  display: inline-block;
+  margin: 2px auto 0;
+  padding: 8px 4px;
+  background: none; border: 0; cursor: pointer;
+  color: var(--ff-dim, #9AA6B2);
+  font: 600 13px/1.4 var(--f-sans);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(154,166,178,.45);
+}
+.pcbonus__link:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.pcbonus__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }

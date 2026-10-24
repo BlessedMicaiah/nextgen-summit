@@ -119,9 +119,11 @@
     });
 
     // for other scripts (pitch.js): glide to an element when Lenis is running
-    window.NGScrollTo = function (target) {
+    window.NGScrollTo = function (target, options) {
       if (!lenis) return false;
-      lenis.scrollTo(target);
+      // A layout switch may change the page height before ResizeObserver runs.
+      if (options && options.immediate) lenis.resize();
+      lenis.scrollTo(target, options);
       return true;
     };
 
@@ -506,6 +508,43 @@
     addEventListener('scroll', requestNav, { passive: true });
     addEventListener('resize', requestNav);
     update();
+  }
+
+  /* ---------- the bar always fits ----------
+     The pages carry four to six links beside the countdown and Get tickets, with long names
+     ("Pitch Competition", "People's Choice"), so no single breakpoint holds on every page: the
+     homepage's six ran Get tickets off the edge where a four-link page sat comfortably. So the
+     bar measures itself and gives up only what it must, one step at a time: the links close up
+     (nav--snug), the countdown sheds its seconds and "to NextGen" (nav--short), the countdown
+     leaves (nav--bare), and last the links fold into Menu (nav--menu), as on a tablet. Below
+     1201px the stylesheet has already folded them, so there is nothing to measure there. */
+  function initNavFit() {
+    var nav = $('.nav'), links = nav && $('.nav__links', nav);
+    if (!links) return;
+    var LEVELS = ['nav--snug', 'nav--short', 'nav--bare', 'nav--menu'];
+    var raf = null;
+    function box(el) { return el && el.offsetWidth ? el.getBoundingClientRect() : null; }
+    function fits() {
+      var n = nav.getBoundingClientRect();
+      var pad = parseFloat(getComputedStyle(nav).paddingRight) || 0;
+      var kids = Array.prototype.filter.call(links.children, function (k) { return k.offsetWidth; });
+      if (!kids.length) return true;
+      if (kids[kids.length - 1].getBoundingClientRect().right > n.right - pad + 0.5) return false;
+      var l = links.getBoundingClientRect(), c = box($('.count', nav)), m = box($('.nav__mark', nav));
+      if (c && c.right > l.left - 16) return false;
+      if (m && m.right > (c ? c.left : l.left) - 12) return false;
+      return true;
+    }
+    function fit() {
+      raf = null;
+      LEVELS.forEach(function (k) { nav.classList.remove(k); });
+      for (var i = 0; i < LEVELS.length && !fits(); i++) nav.classList.add(LEVELS[i]);
+    }
+    function soon() { if (raf === null) raf = requestAnimationFrame(fit); }
+    addEventListener('resize', soon);
+    addEventListener('load', soon);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(soon);
+    fit();
   }
 
   /* ---------- 02 rotating identity ----------
@@ -1648,6 +1687,7 @@
   initMotionClass();
   initSmoothScroll();
   initNav();
+  initNavFit();
   initCountdown();
   initHero();
   initReveals();

@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pc-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-I",
+        "-m",
+        "http.server",
+        "8777",
+        "--directory",
+        "public"
+      ],
+      "port": 8777
+    }
+  ]
+}

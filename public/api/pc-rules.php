@@ -3,14 +3,21 @@
 
    TWO VOTING MODELS LIVE HERE. Only one of them is switched on.
 
-     'single'  one voter, one vote, for the whole competition.   <- APPROVED, and the default
-     'daily'   an allowance that refills at midnight Eastern,
-               larger for a verified ticket holder.              <- PROPOSED, not approved
+     'single'  one voter, one vote, for the whole competition.
+     'daily'   an allowance that refills at midnight Eastern, larger for a
+               verified ticket holder.                           <- APPROVED, and the default
 
-   The daily model is written, tested and selectable, because leadership asked to see it
-   working. It is not the default and a deploy cannot make it the default: the mode is a stored
-   setting an administrator changes deliberately. Quietly changing the rules of a live
-   competition is not something a release should be able to do.
+   The default was 'single' for most of this project's life, deliberately, so that no deploy
+   could quietly change the rules of a live competition. Leadership approved the daily rule in
+   the production release authorisation of 2026-10-23 and asked specifically that it be
+   explicit configuration rather than something an administrator has to remember to set on the
+   dashboard after launch -- a fresh production database has no stored mode, so the fallback
+   IS the rule there.
+
+   1 point a day for a phone-verified voter, 2 more for a verified NextGen registration,
+   3 maximum, reset at midnight America/New_York, closing at 12:00 AM Eastern on 29 October
+   2026. The stored setting still wins where one exists, so an administrator can still change
+   it; this only decides what a database that has never been configured does.
 
    Nothing here decides anything from browser storage, a cookie or an IP address. The allowance
    is counted from the vote rows, server-side, every time. */
@@ -18,7 +25,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/pc-lib.php';
 
-const PC_MODE_DEFAULT = 'single';
+const PC_MODE_DEFAULT = 'daily';
 const PC_MODES = ['single', 'daily'];
 
 function pc_mode(): string

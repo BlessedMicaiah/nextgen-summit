@@ -510,6 +510,78 @@ function pc_reset(): void
     pc_file_write($d);
 }
 
+/* ---------- the voter's session ----------
+
+   How long a verification lasts, and the two things that have to agree about it.
+
+   The intent was always thirty days -- pc-otp.php has said so in a comment since it was
+   written: "the voter should not be asked again tomorrow". Neither half of the machinery
+   was set up to deliver it.
+
+   THE COOKIE was created with lifetime 0, which is a session cookie: gone when the browser
+   session ends. Leadership noticed the consequence before anyone noticed the cause -- "verify
+   once to vote sounds like if I did it yesterday, I won't have to do it today" -- and they
+   were right, because that is exactly what happened.
+
+   THE SERVER SIDE was worse and would have defeated a fix to the cookie on its own.
+   session.gc_maxlifetime was never set, so PHP's default of about twenty-four minutes
+   applied: the session FILE became eligible for collection within the hour, whatever the
+   cookie said. A voter could be asked again after a cup of tea.
+
+   Both are set here, in one place, because three endpoints share this session and the
+   parameters must match exactly or the session is invisible to the others -- a trap the old
+   code handled with a comment repeated at each copy. A function cannot drift from itself.
+
+   One honest limit: on shared hosting the session directory can be common to several sites,
+   and PHP's collector uses the lifetime of whichever request happens to trigger it. So the
+   files get their own directory beside the database when one can be had -- and if it cannot,
+   the default is used rather than failing, because a session that will not start is a voter
+   who cannot vote. */
+const PC_SESSION_MAX_AGE = 2592000;          // thirty days
+
+function pc_session_begin(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
+    /* Our own directory if we can have one. Checked rather than assumed: a save path that
+       does not exist makes session_start() fail, and that is the whole page. */
+    try {
+        $dir = ngs_data_dir() . '/sessions';
+        if ((is_dir($dir) || @mkdir($dir, 0700, true)) && is_writable($dir)) {
+            session_save_path($dir);
+        }
+    } catch (Throwable $e) {
+        // the default path is fine; it is only the collector we lose confidence in
+    }
+
+    @ini_set('session.gc_maxlifetime', (string) PC_SESSION_MAX_AGE);
+    session_name('ngs_pc_voter');
+    /* Path '/' on purpose. The page lives under /pitch/peoples-choice/ but its endpoints live
+       under /api/, and a cookie scoped to the page is simply never sent to them -- the session
+       existed and could not be read, which is how that was found. The cookie's own name keeps
+       it distinct from the admin session; httpOnly, Secure and SameSite do the actual work. */
+    session_set_cookie_params([
+        'lifetime' => PC_SESSION_MAX_AGE, 'path' => '/',
+        'secure' => $https, 'httponly' => true, 'samesite' => 'Lax',
+    ]);
+    session_start();
+
+    /* PHP sends Set-Cookie when it creates a session, not on every request afterwards, so a
+       voter already carrying the old session cookie would keep its lifetime of 0 and be asked
+       again tomorrow regardless. Re-sending it moves them onto the new expiry without making
+       them verify again. */
+    if (!empty($_SESSION['verified_at']) && isset($_COOKIE['ngs_pc_voter'])) {
+        @setcookie('ngs_pc_voter', session_id(), [
+            'expires' => time() + PC_SESSION_MAX_AGE, 'path' => '/',
+            'secure' => $https, 'httponly' => true, 'samesite' => 'Lax',
+        ]);
+    }
+}
+
 /* ---------- who the voter is ----------
 
    Until now nothing here knew. A voter is a one-way HMAC of their email or phone number

@@ -52,16 +52,7 @@ function pcb_out(int $code, array $body): void
     exit;
 }
 
-$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-session_name('ngs_pc_voter');
-session_set_cookie_params([
-    'lifetime' => 0, 'path' => '/',          // must match pc-otp.php or the session is invisible
-    'secure' => $https, 'httponly' => true, 'samesite' => 'Lax',
-]);
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+pc_session_begin();      // same parameters as every other endpoint, by construction
 
 $raw = file_get_contents('php://input');
 $in = is_string($raw) && $raw !== '' ? json_decode($raw, true) : null;

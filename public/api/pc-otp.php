@@ -37,18 +37,9 @@ function pc_json(int $code, array $body): void
    and Strict would drop the cookie and ask them to verify again. Lax keeps top-level
    navigations working while still refusing cross-site POSTs, and the CSRF token covers the
    rest. */
-$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-session_name('ngs_pc_voter');
-/* Path '/' on purpose. The page lives under /pitch/peoples-choice/ but its endpoints live
-   under /api/, and a cookie scoped to the page is simply never sent to them -- the session
-   existed and could not be read, which is how this was found. The cookie's own name keeps it
-   distinct from the admin session, and httpOnly, Secure and SameSite do the actual work. */
-session_set_cookie_params([
-    'lifetime' => 0, 'path' => '/',
-    'secure' => $https, 'httponly' => true, 'samesite' => 'Lax',
-]);
-session_start();
+/* Opened in pc-lib.php, where the lifetime and the collector's idea of it are set together
+   and cannot disagree with the other two endpoints that share this session. */
+pc_session_begin();
 
 if (empty($_SESSION['csrf'])) {
     $_SESSION['csrf'] = bin2hex(random_bytes(16));
@@ -57,7 +48,8 @@ if (empty($_SESSION['csrf'])) {
 /* A verified session is good until voting closes, or thirty days, whichever comes first. The
    voter should not be asked again tomorrow; they should be asked again if the session is old
    enough to have been left on a shared machine. */
-const PC_SESSION_MAX_AGE = 2592000;
+/* PC_SESSION_MAX_AGE now lives in pc-lib.php, beside the cookie and collector settings
+   that have to honour it. */
 
 function pc_session_verified(): bool
 {

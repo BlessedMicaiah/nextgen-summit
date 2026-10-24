@@ -111,16 +111,7 @@ function pc_voter_key(array $in): string
    When phone verification is required (phone_required), step 2 is not offered at all. */
 function pc_voter_identity(array $in): array
 {
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-    session_name('ngs_pc_voter');
-    session_set_cookie_params([
-        'lifetime' => 0, 'path' => '/',       // must match pc-otp.php, or the session is invisible here
-        'secure' => $https, 'httponly' => true, 'samesite' => 'Lax',
-    ]);
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
+    pc_session_begin();   // same parameters as every other endpoint, by construction
     $fresh = !empty($_SESSION['phone_key']) && !empty($_SESSION['verified_at'])
         && time() - (int) $_SESSION['verified_at'] <= 2592000;
     if ($fresh) {

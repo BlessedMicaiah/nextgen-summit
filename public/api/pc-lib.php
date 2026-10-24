@@ -424,21 +424,90 @@ function pc_reset(): void
 }
 
 /* ---------- the entrants ----------
-   One list, read by the public page and the dashboard alike, so a rename cannot leave the two
-   disagreeing. Still placeholders: no name here belongs to a real person. */
+   The twenty ids are generated here and never read from anywhere else. pc-vote.php and
+   pc-rank.php validate against this list, so an id that went missing would silently make a
+   founder unvotable -- which is why the loop below is the source of the ids and the manifest
+   is only ever allowed to decorate them.
+
+   The names used to be placeholders here ("Semifinalist 07", "Company to be confirmed") while
+   the real roster lived only in the JavaScript the public page loads. The public page was
+   therefore right and the admin dashboard was wrong, which made the standings table unusable
+   for the one job it has: telling an administrator who is actually winning.
+
+   So the manifest is read and overlaid by id. If it is missing, unreadable or malformed, every
+   founder keeps its placeholder and nothing breaks. */
 function pc_entrants(): array
 {
+    $real = pc_founder_manifest();
     $out = [];
     for ($i = 1; $i <= 20; $i++) {
         $n = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+        $id = 'entrant-' . $n;
+        $m = $real[$id] ?? null;
         $out[] = [
-            'id' => 'entrant-' . $n,
+            'id' => $id,
             'n' => $n,
-            'draft' => true,
-            'name' => 'Semifinalist ' . $n,
-            'company' => 'Company to be confirmed',
-            'shot' => null,
+            'draft' => $m === null,
+            'name' => $m['name'] ?? ('Semifinalist ' . $n),
+            'company' => $m['company'] ?? 'Company to be confirmed',
+            'shot' => $m['shot'] ?? null,
         ];
     }
     return $out;
+}
+
+/**
+ * The public founder manifest, keyed by entrant id.
+ *
+ * tools/build-founders.py writes public/assets/js/pc-founders.js as a JavaScript assignment
+ * wrapping a JSON array. Read as TEXT and json_decode'd -- it is data, and nothing about it
+ * needs to be executed or evaluated here.
+ *
+ * Public fields only, and only the three the dashboard displays. Anything that fails -- no
+ * file, no array, a name that is not a string -- returns what it has so far, and the caller
+ * falls back to the placeholder for whatever is missing.
+ *
+ * @return array<string, array{name:string,company:string,shot:?string}>
+ */
+function pc_founder_manifest(): array
+{
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+    $cache = [];
+    $f = dirname(__DIR__) . '/assets/js/pc-founders.js';
+    if (!is_file($f) || !is_readable($f)) {
+        return $cache;
+    }
+    $raw = @file_get_contents($f);
+    if (!is_string($raw) || $raw === '') {
+        return $cache;
+    }
+    /* From the first [ after the assignment to the last ] before the trailing semicolon. */
+    $start = strpos($raw, '[');
+    $end = strrpos($raw, ']');
+    if ($start === false || $end === false || $end <= $start) {
+        return $cache;
+    }
+    $rows = json_decode(substr($raw, $start, $end - $start + 1), true);
+    if (!is_array($rows)) {
+        return $cache;
+    }
+    foreach ($rows as $r) {
+        if (!is_array($r) || !isset($r['entrant']) || !is_string($r['entrant'])) {
+            continue;
+        }
+        $name = isset($r['name']) && is_string($r['name']) ? trim($r['name']) : '';
+        $company = isset($r['company']) && is_string($r['company']) ? trim($r['company']) : '';
+        if ($name === '') {
+            continue;                       // nothing worth overlaying
+        }
+        $cache[$r['entrant']] = [
+            'name' => $name,
+            'company' => $company !== '' ? $company : 'Company to be confirmed',
+            'shot' => isset($r['shot']) && is_string($r['shot']) ? $r['shot'] : null,
+        ];
+    }
+    return $cache;
 }

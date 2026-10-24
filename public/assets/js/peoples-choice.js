@@ -1884,8 +1884,12 @@
       var near = Math.abs(i - idx) <= 1;
       if (near && !v.src && v.getAttribute('data-src')) {
         v.src = v.getAttribute('data-src');
-        v.preload = 'metadata';
-      } else if (!near && v.src && Math.abs(i - idx) > 2) {
+      }
+      /* The live panel needs enough data to actually start; its neighbours only need to be
+         ready to. preload="none" in the markup keeps the other seventeen off the network
+         entirely until they are close. */
+      if (v.src) { v.preload = (i === idx) ? 'auto' : 'metadata'; }
+      if (!near && v.src && Math.abs(i - idx) > 2) {
         // let go of the ones well out of reach so memory does not creep on a long scroll
         try { v.pause(); v.removeAttribute('src'); v.load(); } catch (err) {}
       }
@@ -1908,6 +1912,15 @@
   function reelPlay(v, panel) {
     if (!v || reelHeld) return;
     v.muted = reelMuted;
+    /* The attribute, not just the method call.
+
+       Everything here relied on calling play() and hoping. On iOS that is the weaker of the
+       two routes: WebKit has its own handling for a muted, inline, AUTOPLAY video -- it
+       starts it when it scrolls into view and restarts it when it comes back -- and that
+       handling never engaged, because the element never carried the attribute. Setting it
+       on the live panel lets Safari do the work it is already good at, and our play() below
+       becomes the belt rather than the only brace. */
+    v.autoplay = true;
     var go;
     try { go = v.play(); } catch (e) { return; }
     if (!go || !go.catch) return;
@@ -1922,7 +1935,12 @@
   function reelActivate(panel) {
     if (reelActive !== panel) {
       $$('[data-reel-video]', reelTrack).forEach(function (v) {
-        if (!panel || v !== $('[data-reel-video]', panel)) { try { v.pause(); } catch (e) {} }
+        if (!panel || v !== $('[data-reel-video]', panel)) {
+          /* Clear the attribute as well as pausing. Left set, Safari's own visibility
+             handling would start the panel above or below the live one the moment any part
+             of it showed, and two pitches would talk at once. */
+          try { v.autoplay = false; v.pause(); } catch (e) {}
+        }
       });
       if (reelActive) reelActive.classList.remove('is-held');
       /* A tap-to-hold belongs to the founder it was made on. Carrying it to the next one

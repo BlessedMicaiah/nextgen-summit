@@ -311,6 +311,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 $standings = $authed ? pc_standings(pc_entrants()) : [];
 $leaders = $authed ? pc_leaders($standings) : [];
 $rows = $authed ? pc_rows(60) : [];
+$daily = $authed ? pc_daily(21) : [];
 $state = pc_state();
 $totalValid = 0;
 foreach ($standings as $r) {
@@ -425,6 +426,34 @@ foreach ($standings as $r) {
           </tbody>
         </table>
       </div>
+    </section>
+
+    <!-- ===== day by day ===== -->
+    <section class="adm__sec">
+      <p class="adm__h">Day by day</p>
+      <p class="adm__p">Each Eastern day the allowance was spent against, newest first. <strong>Points</strong> is every valid vote that day; <strong>voters</strong> counts distinct people, so a verified attendee spending all three shows as one voter and three points. <strong>Bonus</strong> is the attendee&rsquo;s second and third points. The running totals above are the competition; this is the shape of it.</p>
+      <?php if (!$daily): ?>
+      <p class="adm__p"><em>No votes recorded yet. Days appear here as soon as voting starts.</em></p>
+      <?php else: ?>
+      <div class="adm__tablewrap">
+        <table class="adm__table">
+          <thead><tr><th>Day (ET)</th><th class="num">Points</th><th class="num">Voters</th><th class="num">Bonus</th><th>Leading that day</th><th class="num">Test</th></tr></thead>
+          <tbody>
+            <?php foreach ($daily as $d): ?>
+            <tr>
+              <td><?= h($d['day']) ?></td>
+              <td class="num"><?= (int) $d['points'] ?></td>
+              <td class="num"><?= (int) $d['voters'] ?></td>
+              <td class="num"><?= (int) $d['bonus'] ?></td>
+              <td><?php if ($d['top']): ?><?= h($d['top']['name']) ?><?php if ($d['top']['company'] !== ''): ?> &middot; <?= h($d['top']['company']) ?><?php endif; ?> (<?= (int) $d['top']['points'] ?>)<?php else: ?>&mdash;<?php endif; ?></td>
+              <td class="num"><?= $d['simulated'] ? (int) $d['simulated'] : '&mdash;' ?></td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <p class="adm__p"><strong>Test</strong> counts rows added with &ldquo;Add test votes&rdquo;. They are included in the figures on this page and excluded from the public standings, which is why the two can disagree. A day showing test votes is not turnout.</p>
+      <?php endif; ?>
     </section>
 
     <!-- ===== controls ===== -->

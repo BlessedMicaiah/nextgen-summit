@@ -325,6 +325,93 @@ function pc_invalidated_count(): int
     return $n;
 }
 
+/* ---------- the competition day by day ----------
+
+   The running total answers "who is winning". It cannot answer "is today going well", "did
+   the Monday push work" or "why did yesterday jump", and in a competition whose whole shape
+   is a daily allowance those are the questions an administrator actually has.
+
+   Every row already carries vote_day -- the Eastern date the allowance was spent against --
+   so this is a grouping, not new bookkeeping. Nothing is written and no vote is touched.
+
+   Counted the way the dashboard counts elsewhere: valid = 1, simulated included, with the
+   simulated share broken out so test data can never be mistaken for turnout.
+
+   @return list<array{day:string,points:int,voters:int,bonus:int,simulated:int,
+                      top:?array{id:string,name:string,company:string,points:int}}>
+*/
+function pc_daily(int $limit = 21): array
+{
+    $limit = max(1, min(400, $limit));
+    $names = [];
+    foreach (pc_entrants() as $e) {
+        $names[$e['id']] = $e;
+    }
+
+    /* day => [points, voters set, bonus, simulated, per-entrant counts] */
+    $acc = [];
+    $add = function (string $day, string $entrant, string $voter, int $slot, int $sim) use (&$acc): void {
+        if (!isset($acc[$day])) {
+            $acc[$day] = ['points' => 0, 'voters' => [], 'bonus' => 0, 'simulated' => 0, 'by' => []];
+        }
+        $acc[$day]['points']++;
+        $acc[$day]['voters'][$voter] = true;
+        if ($slot > 1) {
+            $acc[$day]['bonus']++;           // slot 1 is the base point; 2 and 3 are the attendee bonus
+        }
+        if ($sim === 1) {
+            $acc[$day]['simulated']++;
+        }
+        $acc[$day]['by'][$entrant] = ($acc[$day]['by'][$entrant] ?? 0) + 1;
+    };
+
+    $db = pc_db();
+    if ($db) {
+        $s = $db->prepare('SELECT vote_day, entrant_id, voter_key, slot, simulated
+                           FROM pc_votes WHERE competition = ? AND valid = 1');
+        $s->execute([PC_COMPETITION]);
+        foreach ($s->fetchAll() as $r) {
+            $add((string) $r['vote_day'], (string) $r['entrant_id'], (string) $r['voter_key'],
+                 (int) $r['slot'], (int) $r['simulated']);
+        }
+    } else {
+        foreach (pc_file_read()['votes'] as $v) {
+            if ((int) ($v['valid'] ?? 1) !== 1) {
+                continue;
+            }
+            $add((string) ($v['vote_day'] ?? 'all'), (string) ($v['entrant_id'] ?? ''),
+                 (string) ($v['voter_key'] ?? ''), (int) ($v['slot'] ?? 1),
+                 (int) ($v['simulated'] ?? 1));
+        }
+    }
+
+    krsort($acc);                            // newest day first
+    $out = [];
+    foreach (array_slice($acc, 0, $limit, true) as $day => $a) {
+        $top = null;
+        arsort($a['by']);
+        foreach ($a['by'] as $id => $n) {
+            $e = $names[$id] ?? null;
+            $top = [
+                'id' => $id,
+                'name' => $e['name'] ?? $id,
+                'company' => $e['company'] ?? '',
+                'points' => $n,
+            ];
+            break;                           // arsort put the leader first
+        }
+        $out[] = [
+            'day' => $day,
+            'points' => $a['points'],
+            'voters' => count($a['voters']),
+            'bonus' => $a['bonus'],
+            'simulated' => $a['simulated'],
+            'top' => $top,
+        ];
+    }
+    return $out;
+}
+
 /** Rank the whole field. Equal counts share a rank, so a tie reads as a tie. */
 function pc_standings(array $entrants): array
 {

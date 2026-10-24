@@ -12,12 +12,9 @@ const fs = require('fs');
 
 const path = process.argv[2] || 'public/assets/js/peoples-choice.js';
 // Normalised, because git hands this file back with CRLF on a Windows checkout and the
-// matcher below looks for 
-. During a release that reads as 'idleLabel not found',
+// matcher below looks for \n. During a release that reads as 'idleLabel not found',
 // which is an alarming thing to see and was not true.
-const src = fs.readFileSync(path, 'utf8').replace(/
-/g, '
-');
+const src = fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 const grab = (name) => {
   const m = src.match(new RegExp('\\n  function ' + name + '[\\s\\S]*?\\n  \\}\\n'));
   if (!m) { console.error(name + ' not found in ' + path); process.exit(1); }

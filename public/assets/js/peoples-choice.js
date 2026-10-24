@@ -281,15 +281,27 @@
   function paintProfile(e) {
     /* Company and founder name appear on both faces, so they are set by selector across
        the whole dialog rather than once each. */
-    /* Long company names get smaller type rather than a broken card. The thresholds come
-       from the roster: "Jay's Watermelonade" is 19 and "K8Culture Productions" is 21, and
-       both overflowed at the full size. CSS cannot measure a string, so the class is set
-       here and the sizes live in founder-stage.css. */
+    /* Long company names get smaller type rather than a broken card.
+
+       Two different things make a name too big, and only one of them is its length. A
+       title wraps between words happily, so "If The Shoe Fits (ITSF)" at 23 characters is
+       no trouble. What cannot wrap is a single long WORD: "WATERMELONADE" is thirteen
+       characters that must fit on one line or break mid-word, and breaking it left an
+       orphaned "E" on the back of the card.
+
+       So the size is driven by whichever is worse -- the whole string, or the longest word
+       in it. CSS cannot measure either, which is why this is set here and the sizes live
+       in founder-stage.css. */
     $$('[data-pc-p-co]', pDlg).forEach(function (n) {
       n.textContent = e.company;
-      var len = (e.company || '').length;
-      n.classList.toggle('is-long', len >= 16 && len < 21);
-      n.classList.toggle('is-xlong', len >= 21);
+      var name = e.company || '';
+      var longest = name.split(/\s+/).reduce(function (m, w) {
+        return Math.max(m, w.length);
+      }, 0);
+      var xl = name.length >= 21 || longest >= 12;
+      var lg = !xl && (name.length >= 16 || longest >= 9);
+      n.classList.toggle('is-long', lg);
+      n.classList.toggle('is-xlong', xl);
     });
     $$('[data-pc-p-name]', pDlg).forEach(function (n) { n.textContent = e.name; });
 

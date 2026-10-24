@@ -596,7 +596,10 @@
    a mark carrying a tagline -- BeforeKeys' RENTAL VERIFICATION and The Lookbook's
    wordmark both disappeared. Wide enough now that every mark is legible, and the
    founder's name still has room beside it. */
-.fcd__bhead { display: grid; grid-template-columns: minmax(0,1fr) clamp(104px,30vw,128px); gap: 14px; align-items: start; }
+/* The logo column gave itself up to 128px of a ~300px card, which left the title about
+   140px -- narrower than the word "WATERMELONADE" at any size the title wants to be. The
+   mark is perfectly legible smaller, and the name is the thing being read first. */
+.fcd__bhead { display: grid; grid-template-columns: minmax(0,1fr) clamp(88px,24vw,104px); gap: 14px; align-items: start; }
 /* The back of the card has its own class for the company name, which is why the sizing
    added for the front did nothing here: "JAY'S WATERMELONADE" still ran into the logo
    beside it and came out as "JAY'S WATERMELONAI...". The grid column was already
@@ -608,7 +611,7 @@
   overflow-wrap: break-word; hyphens: auto; min-width: 0;
 }
 .fcd__bco.is-long  { font-size: clamp(19px,4.6vw,25px); letter-spacing: -.032em; }
-.fcd__bco.is-xlong { font-size: clamp(17px,4vw,21px); letter-spacing: -.034em; line-height: 1.06; }
+.fcd__bco.is-xlong { font-size: clamp(16px,3.6vw,19px); letter-spacing: -.034em; line-height: 1.08; }
 .fcd__bname { margin: 9px 0 0; font: 700 9px/1.6 var(--f-sans, system-ui); letter-spacing: .15em; text-transform: uppercase; color: var(--accent, #39D8C8); }
 .fcd__thumb { position: relative; aspect-ratio: 3/4; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1.5px var(--accent, #39D8C8); background: #11161B; }
 .fcd__thumb img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; display: block; }

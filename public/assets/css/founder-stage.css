@@ -597,7 +597,18 @@
    wordmark both disappeared. Wide enough now that every mark is legible, and the
    founder's name still has room beside it. */
 .fcd__bhead { display: grid; grid-template-columns: minmax(0,1fr) clamp(104px,30vw,128px); gap: 14px; align-items: start; }
-.fcd__bco { margin: 0; font: 800 clamp(22px,5.6vw,30px)/.96 var(--f-sans, system-ui); letter-spacing: -.025em; text-transform: uppercase; color: #fff; }
+/* The back of the card has its own class for the company name, which is why the sizing
+   added for the front did nothing here: "JAY'S WATERMELONADE" still ran into the logo
+   beside it and came out as "JAY'S WATERMELONAI...". The grid column was already
+   minmax(0,1fr), so the column was willing to shrink -- the WORD was not, because nothing
+   allowed a break inside it. Same three defences as the front, same thresholds. */
+.fcd__bco {
+  margin: 0; font: 800 clamp(22px,5.6vw,30px)/.98 var(--f-sans, system-ui);
+  letter-spacing: -.025em; text-transform: uppercase; color: #fff;
+  overflow-wrap: break-word; hyphens: auto; min-width: 0;
+}
+.fcd__bco.is-long  { font-size: clamp(19px,4.6vw,25px); letter-spacing: -.032em; }
+.fcd__bco.is-xlong { font-size: clamp(17px,4vw,21px); letter-spacing: -.034em; line-height: 1.06; }
 .fcd__bname { margin: 9px 0 0; font: 700 9px/1.6 var(--f-sans, system-ui); letter-spacing: .15em; text-transform: uppercase; color: var(--accent, #39D8C8); }
 .fcd__thumb { position: relative; aspect-ratio: 3/4; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1.5px var(--accent, #39D8C8); background: #11161B; }
 .fcd__thumb img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; display: block; }

@@ -1892,32 +1892,64 @@
     });
   }
 
-  function reelActivate(panel) {
-    if (reelActive === panel) return;
-    $$('[data-reel-video]', reelTrack).forEach(function (v) {
-      if (!panel || v !== $('[data-reel-video]', panel)) { try { v.pause(); } catch (e) {} }
-    });
-    reelActive = panel;
-    if (!panel) return;
-    var panels = $$('[data-reel-panel]', reelTrack);
-    reelLoadNear(panels.indexOf(panel));
-    var v = $('[data-reel-video]', panel);
-    if (!v) return;
+  /* Ask this video to play, and mean it.
+
+     play() gets refused for reasons that have nothing to do with this page: iOS blocks
+     autoplay outright in Low Power Mode, some devices decline until the visitor has touched
+     something, and a source assigned a moment ago may have nothing buffered yet.
+
+     The old code called play(), swallowed the rejection and moved on. That alone would have
+     been survivable -- what made it stick is that the panel had ALREADY been marked active,
+     so the 250ms heartbeat's first line was "this one is already active, nothing to do".
+     One refusal meant a poster for as long as you stayed on that founder.
+
+     A refusal now arms a retry for the moment the media reports it can play. The other half
+     of the remedy is the first-gesture unlock in watchReels. */
+  function reelPlay(v, panel) {
+    if (!v || reelHeld) return;
     v.muted = reelMuted;
-    /* Wide footage on a tall screen needs a different composition from portrait footage,
-       and the only honest way to know which is which is to ask the file. Once the header
-       is in, the panel says so and the stylesheet lifts the clip clear of the caption. */
-    var shape = function () {
-      if (!v.videoWidth || !v.videoHeight) return;
-      panel.classList.toggle('is-wide', (v.videoWidth / v.videoHeight) > 1.2);
-    };
-    if (v.readyState >= 1) shape();
-    else v.addEventListener('loadedmetadata', shape, { once: true });
-    /* Muted autoplay is what phones allow. If this browser refuses anyway the poster is
-       already there and the play control is one tap away, which is the same screen either
-       way -- no error, no apology. */
-    var go = v.play();
-    if (go && go.catch) { go.catch(function () {}); }
+    var go;
+    try { go = v.play(); } catch (e) { return; }
+    if (!go || !go.catch) return;
+    go.catch(function () {
+      if (reelActive !== panel || reelHeld) return;
+      v.addEventListener('canplay', function () {
+        if (reelActive === panel && !reelHeld) reelPlay(v, panel);
+      }, { once: true });
+    });
+  }
+
+  function reelActivate(panel) {
+    if (reelActive !== panel) {
+      $$('[data-reel-video]', reelTrack).forEach(function (v) {
+        if (!panel || v !== $('[data-reel-video]', panel)) { try { v.pause(); } catch (e) {} }
+      });
+      if (reelActive) reelActive.classList.remove('is-held');
+      /* A tap-to-hold belongs to the founder it was made on. Carrying it to the next one
+         would mean scrolling into a pitch that silently refuses to start. */
+      reelHeld = false;
+      reelActive = panel;
+      if (!panel) return;
+      var panels = $$('[data-reel-panel]', reelTrack);
+      reelLoadNear(panels.indexOf(panel));
+      var nv = $('[data-reel-video]', panel);
+      if (!nv) return;
+      /* Wide footage on a tall screen needs a different composition from portrait footage,
+         and the only honest way to know which is which is to ask the file. Once the header
+         is in, the panel says so and the stylesheet lifts the clip clear of the caption. */
+      var shape = function () {
+        if (!nv.videoWidth || !nv.videoHeight) return;
+        panel.classList.toggle('is-wide', (nv.videoWidth / nv.videoHeight) > 1.2);
+      };
+      if (nv.readyState >= 1) shape();
+      else nv.addEventListener('loadedmetadata', shape, { once: true });
+    }
+    if (!panel) return;
+    /* Every sync, not only on arrival. If the live pitch is not playing and the visitor did
+       not pause it themselves, ask again. This is the line that makes the feed self-healing:
+       the heartbeat was already running four times a second and had nothing to heal with. */
+    var live = $('[data-reel-video]', panel);
+    if (live && live.paused && !reelHeld) reelPlay(live, panel);
   }
 
   /* Which panel is live is worked out from geometry on scroll, not from an
@@ -1991,6 +2023,23 @@
     document.addEventListener('scroll', reelQueue, { passive: true, capture: true });
     addEventListener('resize', reelQueue, { passive: true });
     addEventListener('orientationchange', reelQueue, { passive: true });
+
+    /* The first touch unlocks media on a device that was refusing it -- iOS in Low Power
+       Mode is the common case, and no amount of correctness on this side talks it round
+       beforehand. One sync on the first gesture and the live pitch starts.
+
+       Capture, so it runs before the tap reaches a play/pause control: a visitor whose tap
+       means "pause" gets the sync first (video still playing, nothing to do) and their pause
+       second, which is the order that leaves the video paused. */
+    var unlocked = false;
+    function reelUnlock() {
+      if (unlocked) return;
+      unlocked = true;
+      reelSync();
+    }
+    ['pointerdown', 'touchend', 'keydown'].forEach(function (ev) {
+      document.addEventListener(ev, reelUnlock, { passive: true, capture: true, once: true });
+    });
 
     /* And a slow heartbeat, because neither of the event-driven routes can be relied on.
 

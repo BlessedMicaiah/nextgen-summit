@@ -27,3 +27,7 @@ public/api/resume.php
 # Build state for the cache-stamp guard in tools/release.py. Local, not source:
 # a fresh clone simply records a new baseline on its first build.
 tools/.asset-stamp
+
+# Python bytecode from running the tools
+__pycache__/
+*.pyc

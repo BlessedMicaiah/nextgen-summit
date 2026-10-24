@@ -406,7 +406,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 20,
     "entrant": "entrant-19",
-    "shot": "/assets/img/founders/exam-me.webp?v=4c3b9304",
+    "shot": "/assets/img/founders/exam-me.webp?v=141f11cd",
     "shotFit": "cover",
     "logo": "/assets/img/logos/exam-me.webp?v=5bca3118",
     "video": {
@@ -414,9 +414,9 @@ window.NGS_FOUNDERS = [
       "src": "/assets/video/exam-me.mp4?v=854851c5"
     },
     "shotFrom": "headshot supplied by the NextGen team",
-    "shotW": 939,
-    "shotH": 943,
-    "focal": "50% 35%",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "selfHosted": true,
     "poster": "/assets/video/exam-me-poster.jpg?v=d8eb76ff",
     "pitchNote": "direct video file"

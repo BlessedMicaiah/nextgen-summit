@@ -52,9 +52,17 @@ $voters = array_fill_keys($ids, 0);     // PEOPLE: distinct verified identities
 
 $db = $public ? pc_db() : null;
 if ($db) {
-    $day = pc_mode() === 'daily' ? null : 'all';
-    /* Every valid point, the +1s and the attendee +2s alike, across the whole competition.
-       Each bonus point is its own row, so counting rows counts points. */
+    /* CUMULATIVE, deliberately, and there is no vote_day filter here on purpose.
+     *
+     * vote_day exists on every row and is what the daily ALLOWANCE is counted against:
+     * it decides whether a voter has points left today. It has nothing to do with a
+     * founder's score. Midnight Eastern refills what each voter may spend; it does not
+     * touch what any founder has already been given.
+     *
+     * So this counts every valid point a founder has ever received -- the +1s and the
+     * attendee +2s alike, each one its own row, so counting rows counts points. A
+     * variable filtering by day used to be computed here and never used, which read as
+     * though the standings reset nightly. They do not. */
     $sql = 'SELECT entrant_id, COUNT(*) n, COUNT(DISTINCT voter_key) v FROM pc_votes
             WHERE competition = ? AND valid = 1 AND simulated = 0
             GROUP BY entrant_id';

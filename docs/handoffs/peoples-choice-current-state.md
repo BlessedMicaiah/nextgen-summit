@@ -1294,14 +1294,21 @@ curl -s https://staging.nextgensummit.us/pitch/peoples-choice/ | grep -o "v=2026
 node tools/test-labelvote.js public/assets/js/peoples-choice.js
 ```
 
-To read staging data without changing it, write a throwaway script following the same shape
-`tools/deploy.mjs` uses for authentication: POST to the Hostinger
-`/api/hosting/v1/files/upload-urls` endpoint with the hosting username and domain, take
-`auth_key` and `rest_auth_key` from the reply and send them as `X-Auth` and `X-Auth-Rest`,
-then `GET /api/resources/nextgen-data-staging` to list and `/api/raw/...` to download the
-SQLite file. Open the copy read-only, report **aggregates only**, delete the copy. Never print
-voter keys, email keys, attendee keys, IP hashes or codes — they are one-way HMACs and there
-is still no reason to show them. Do not read the `config.*.php` files at all.
+**Reading the staging database over the Hostinger API does not work, and this handoff used
+to claim it did.** Tried on 2026-10-23: authentication is exactly as `tools/deploy.mjs` does
+it — POST `/api/hosting/v1/files/upload-urls`, then `X-Auth` and `X-Auth-Rest` against
+`<file-host>/rest/<id>/api/resources/` — and that part succeeds. But the file browser is
+**rooted at the web root**. It lists `about`, `api`, `assets`, `pitch` and so on;
+`nextgen-data-staging` is a sibling of the web root, one level up, and every path to it
+answers 404. The same separation that keeps the database out of reach of a visitor keeps it
+out of reach of this API.
+
+So there is no route from here to the vote rows. **The dashboard is the only way to read
+them**, and it needs the PIN, which belongs to the owner. If a future pass needs aggregates,
+ask for them from the dashboard rather than trying this again.
+
+(`public/data/` is a different thing entirely: an intentionally empty directory inside the web
+root holding only a deny-all `.htaccess`. It answers 403 and holds no data.)
 
 **Standing constraints, all still in force:**
 

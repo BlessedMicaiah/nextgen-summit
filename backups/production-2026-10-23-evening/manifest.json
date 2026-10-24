@@ -1,0 +1,70 @@
+{
+  "taken": "2026-10-24T00:07:07.946362+00:00",
+  "host": "nextgensummit.us",
+  "why": "production was deployed again from outside this repository on 2026-10-23 (site asset stamp moved 20261021-10 -> 20261023-50 while origin/main stayed at 01f0112). The afternoon backup is therefore stale; this is the current copy.",
+  "files": [
+    {
+      "path": "/",
+      "saved_as": "index.html__index.html",
+      "bytes": 79035,
+      "content_type": "text/html",
+      "sha256": "c4ea2c634615da0dd022bfac6499ab23e0ce6e8629261548528f5c3eaf47cc5c"
+    },
+    {
+      "path": "/about/",
+      "saved_as": "about__index.html",
+      "bytes": 16034,
+      "content_type": "text/html",
+      "sha256": "ea16d9eae059c34e581185e13280ca21ad4f2f428ee70cc0b9c35410ee7a114a"
+    },
+    {
+      "path": "/pitch/",
+      "saved_as": "pitch__index.html",
+      "bytes": 28132,
+      "content_type": "text/html",
+      "sha256": "5979c6eee2b8f75636ce60c00e4943f30ca398dd1ffc10c238436b70ebf8d9b3"
+    },
+    {
+      "path": "/assets/css/film.css",
+      "saved_as": "assets__css__film.css",
+      "bytes": 22178,
+      "content_type": "text/css",
+      "sha256": "6e3a91aeedc9412f13af734fad5c87e96ab47049fef4946950938113b2298330"
+    },
+    {
+      "path": "/assets/js/film.js",
+      "saved_as": "assets__js__film.js",
+      "bytes": 26455,
+      "content_type": "application/x-javascript",
+      "sha256": "284c5a2bf05caa298ac6170ebe02af6ee8ed9ee3c6bd4c32ab1ce5f2b389b536"
+    },
+    {
+      "path": "/assets/css/site.css",
+      "saved_as": "assets__css__site.css",
+      "bytes": 92631,
+      "content_type": "text/css",
+      "sha256": "d106c8ea9c8932ec5c5600e9da5d6f9c5462356209b74d84a1f4c4b33734ebb1"
+    },
+    {
+      "path": "/assets/js/site.js",
+      "saved_as": "assets__js__site.js",
+      "bytes": 77070,
+      "content_type": "application/x-javascript",
+      "sha256": "703d67fe216073b21e7645f85f67d7c6bc2910aa051cad1bce269a0c4267a719"
+    },
+    {
+      "path": "/assets/img/sponsors/zation.png",
+      "saved_as": "assets__img__sponsors__zation.png",
+      "bytes": 12625,
+      "content_type": "image/png",
+      "sha256": "ca07404fd275024614db95e2a8ed5b34b89f74d25f87bfed9e259db680c983f9"
+    },
+    {
+      "path": "/assets/img/sponsors/simms-media.png",
+      "saved_as": "assets__img__sponsors__simms-media.png",
+      "bytes": 12582,
+      "content_type": "image/png",
+      "sha256": "55c7add9610353e300d08bb5d42df011a71ff49d72da554503e17e9d6db70544"
+    }
+  ]
+}

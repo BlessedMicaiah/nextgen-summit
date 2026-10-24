@@ -180,8 +180,141 @@ function pc_smtp_save(array $in): array
         $secure = 'tls';
     }
 
+    return pc_smtp_write([
+        'host' => $host, 'port' => (int) $port, 'secure' => $secure,
+        'user' => $user, 'pass' => $pass, 'from' => $from, 'name' => $name,
+    ]);
+}
+
+/* ---------- saved relays ----------
+
+   One stored set of credentials per provider, so switching between them is a button rather
+   than seven fields retyped under pressure.
+
+   This exists because of how the Gmail-to-Brevo switch actually went: the form keeps a blank
+   box meaning "leave as it was", which silently married a new host to an old password and
+   produced an authentication failure that looked like a bad key. Retyping everything
+   correctly, at speed, while voting is down, is the moment that mistake gets made. A saved
+   relay is a complete set that was tested as a set, and applying it replaces every field at
+   once -- there is no half-switched state to be in.
+
+   Stored beside the live config, outside the web root, 0600, as JSON. Read with
+   json_decode: it is data and nothing about it is executed. Keys are never rendered back to
+   the page -- the listing shows host, login and sender, and says only whether a key is held.
+*/
+function pc_smtp_profiles_file(): string
+{
+    return ngs_data_dir() . '/config.smtp-profiles.json';
+}
+
+/** @return array<string, array<string,mixed>> label => settings */
+function pc_smtp_profiles(): array
+{
+    $f = pc_smtp_profiles_file();
+    if (!is_file($f) || !is_readable($f)) {
+        return [];
+    }
+    $j = json_decode((string) @file_get_contents($f), true);
+    return is_array($j) ? $j : [];
+}
+
+/** @return array{ok:bool,error?:string} */
+function pc_smtp_profiles_put(array $all): array
+{
+    $f = pc_smtp_profiles_file();
+    if (!is_dir(dirname($f)) || !is_writable(dirname($f))) {
+        return ['ok' => false, 'error' => 'The data directory is not writable by PHP.'];
+    }
+    $tmp = $f . '.new';
+    if (@file_put_contents($tmp, json_encode($all, JSON_PRETTY_PRINT), LOCK_EX) === false) {
+        return ['ok' => false, 'error' => 'Could not write the saved relays.'];
+    }
+    @chmod($tmp, 0600);
+    if (!@rename($tmp, $f)) {
+        @unlink($tmp);
+        return ['ok' => false, 'error' => 'Could not move the saved relays into place.'];
+    }
+    @chmod($f, 0600);
+    return ['ok' => true];
+}
+
+/**
+ * Store whatever is configured right now under a label.
+ *
+ * Deliberately a snapshot of the LIVE settings rather than of the form: you save a relay
+ * after you have tested it, so what gets saved is the thing that was proved to work.
+ *
+ * @return array{ok:bool,error?:string}
+ */
+function pc_smtp_profile_save(string $label): array
+{
+    $label = trim(preg_replace('/[^A-Za-z0-9 ._-]/', '', $label));
+    if ($label === '') {
+        return ['ok' => false, 'error' => 'Give the relay a name so you can tell them apart.'];
+    }
+    if (!pc_smtp_configured()) {
+        return ['ok' => false, 'error' => 'The current settings are incomplete, so there is nothing worth saving.'];
+    }
+    $c = pc_smtp_conf();
+    $all = pc_smtp_profiles();
+    $all[$label] = [
+        'host' => $c['host'], 'port' => (int) $c['port'], 'secure' => $c['secure'],
+        'user' => $c['user'], 'pass' => $c['pass'], 'from' => $c['from'], 'name' => $c['name'],
+        'saved_at' => gmdate('Y-m-d H:i') . 'Z',
+    ];
+    return pc_smtp_profiles_put($all);
+}
+
+/** @return array{ok:bool,error?:string} */
+function pc_smtp_profile_apply(string $label): array
+{
+    $all = pc_smtp_profiles();
+    if (!isset($all[$label]) || !is_array($all[$label])) {
+        return ['ok' => false, 'error' => 'There is no saved relay by that name.'];
+    }
+    $c = $all[$label];
+    foreach (['host', 'user', 'pass', 'from'] as $k) {
+        if (trim((string) ($c[$k] ?? '')) === '') {
+            return ['ok' => false, 'error' => 'That saved relay is missing its ' . $k
+                . ', so applying it would leave email switched off. Nothing was changed.'];
+        }
+    }
+    /* Straight to the writer: a saved relay is complete by construction, so the
+       provider-switch guard has nothing to protect against here. */
+    return pc_smtp_write([
+        'host' => (string) $c['host'], 'port' => (int) ($c['port'] ?: 587),
+        'secure' => (string) ($c['secure'] ?: 'tls'), 'user' => (string) $c['user'],
+        'pass' => (string) $c['pass'], 'from' => (string) $c['from'],
+        'name' => (string) ($c['name'] ?? ''),
+    ]);
+}
+
+/** @return array{ok:bool,error?:string} */
+function pc_smtp_profile_delete(string $label): array
+{
+    $all = pc_smtp_profiles();
+    if (!isset($all[$label])) {
+        return ['ok' => false, 'error' => 'There is no saved relay by that name.'];
+    }
+    unset($all[$label]);
+    return pc_smtp_profiles_put($all);
+}
+
+/**
+ * Write a complete relay configuration to disk.
+ *
+ * Split out from pc_smtp_save so that applying a SAVED relay does not have to pass the
+ * provider-switch guard. That guard exists to stop a half-filled form pairing a new host
+ * with an old password; a saved relay is a complete set that was tested as a set, so the
+ * guard would only be in the way.
+ *
+ * @param array{host:string,port:int,secure:string,user:string,pass:string,from:string,name:string} $c
+ * @return array{ok:bool,error?:string}
+ */
+function pc_smtp_write(array $c): array
+{
     $q = function (string $v): string {
-        return "'" . str_replace(["\\", "'"], ["\\\\", "\\'"], $v) . "'";
+        return "'" . str_replace(["\\", "'"], ["\\\\", "\'"], $v) . "'";
     };
     $lines = [
         '<?php',
@@ -190,17 +323,16 @@ function pc_smtp_save(array $in): array
         '',
         '   The password is whatever the configured provider issues: an SMTP key from a',
         '   transactional provider, or an app password if the relay is a mailbox. Never an',
-        '   account password. Changing the host clears these, because credentials belong to',
-        '   the provider that issued them. */',
+        '   account password. */',
         'declare(strict_types=1);',
         '',
-        'const NGS_SMTP_HOST   = ' . $q($host) . ';',
-        'const NGS_SMTP_PORT   = ' . (int) $port . ';',
-        'const NGS_SMTP_SECURE = ' . $q($secure) . ';',
-        'const NGS_SMTP_USER   = ' . $q($user) . ';',
-        'const NGS_SMTP_PASS   = ' . $q($pass) . ';',
-        'const NGS_SMTP_FROM   = ' . $q($from) . ';',
-        'const NGS_SMTP_NAME   = ' . $q($name) . ';',
+        'const NGS_SMTP_HOST   = ' . $q((string) $c['host']) . ';',
+        'const NGS_SMTP_PORT   = ' . (int) $c['port'] . ';',
+        'const NGS_SMTP_SECURE = ' . $q((string) $c['secure']) . ';',
+        'const NGS_SMTP_USER   = ' . $q((string) $c['user']) . ';',
+        'const NGS_SMTP_PASS   = ' . $q((string) $c['pass']) . ';',
+        'const NGS_SMTP_FROM   = ' . $q((string) $c['from']) . ';',
+        'const NGS_SMTP_NAME   = ' . $q((string) $c['name']) . ';',
         '',
     ];
     $path = pc_smtp_file();
@@ -208,7 +340,8 @@ function pc_smtp_save(array $in): array
         return ['ok' => false, 'error' => 'The data directory is not writable by PHP. Nothing was saved.'];
     }
     $tmp = $path . '.new';
-    if (@file_put_contents($tmp, implode("\n", $lines), LOCK_EX) === false) {
+    if (@file_put_contents($tmp, implode("
+", $lines), LOCK_EX) === false) {
         return ['ok' => false, 'error' => 'Could not write the settings. Nothing was saved.'];
     }
     @chmod($tmp, 0600);

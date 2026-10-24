@@ -382,6 +382,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $notice = (string) pc_meta('rank_public', '1') === '1'
             ? 'The founder feed now runs in vote order. Visitors can see who is ahead.'
             : 'The founder feed is back in contestant order. Standings are private again.';
+    } elseif ($authed && $action === 'smtpsaveprofile') {
+        $r = pc_smtp_profile_save((string) ($_POST['label'] ?? ''));
+        $notice = $r['ok']
+            ? 'Saved the current relay settings. You can switch back to them in one click.'
+            : (string) ($r['error'] ?? 'Could not save that relay.');
+    } elseif ($authed && $action === 'smtpuseprofile') {
+        $label = (string) ($_POST['label'] ?? '');
+        $r = pc_smtp_profile_apply($label);
+        if ($r['ok']) {
+            /* Prove it before trusting it. pc_smtp_probe connects, authenticates and hangs
+               up without queueing anything, so the switch is confirmed by the relay itself
+               rather than by the fact that a file was written. */
+            $pr = pc_smtp_probe();
+            $notice = 'Switched to ' . $label . '. '
+                . (!empty($pr['ok'])
+                    ? 'The connection test passed (code ' . (int) $pr['code'] . '), so it is ready to send.'
+                    : 'The connection test FAILED at ' . (string) $pr['step']
+                      . ' - ' . (string) $pr['detail'] . '. Check it before relying on it.');
+        } else {
+            $notice = (string) ($r['error'] ?? 'Could not switch relay.');
+        }
+    } elseif ($authed && $action === 'smtpdelprofile') {
+        $r = pc_smtp_profile_delete((string) ($_POST['label'] ?? ''));
+        $notice = $r['ok'] ? 'Removed that saved relay.' : (string) ($r['error'] ?? 'Could not remove it.');
     } elseif ($authed && $action === 'smtpcap') {
         /* What the configured provider allows in a day. Only used to work out the
            percentage and when to warn -- it does not limit anything, and getting it wrong
@@ -505,8 +529,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261024-94">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-94">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261024-95">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261024-95">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -806,6 +830,51 @@ foreach ($standings as $r) {
           <button class="adm__btn" type="submit">Test the connection (sends nothing)</button>
         </form>
       </div>
+      <?php $profiles = function_exists('pc_smtp_profiles') ? pc_smtp_profiles() : []; ?>
+      <p class="adm__h" style="margin-top:18px">Saved relays</p>
+      <p class="adm__p">One stored set of credentials per provider, so switching is a button rather
+        than seven fields retyped under pressure. Save a relay <em>after</em> its connection test
+        passes &mdash; what gets stored is the configuration that was proved to work, and applying it
+        replaces every field at once, so there is no half-switched state to be caught in.
+        Keys are stored beside the live settings, outside the web root, and are never shown here.</p>
+      <?php if ($profiles): ?>
+      <div class="adm__tablewrap">
+        <table class="adm__table">
+          <thead><tr><th>Name</th><th>Host</th><th>Sender</th><th>Key</th><th>Saved</th><th></th></tr></thead>
+          <tbody>
+            <?php foreach ($profiles as $label => $pr): ?>
+            <tr>
+              <td><strong><?= h($label) ?></strong></td>
+              <td><?= h((string) ($pr['host'] ?? '')) ?>:<?= (int) ($pr['port'] ?? 0) ?></td>
+              <td><?= h((string) ($pr['from'] ?? '')) ?></td>
+              <td><?= trim((string) ($pr['pass'] ?? '')) !== '' ? 'held' : '<em>missing</em>' ?></td>
+              <td><?= h((string) ($pr['saved_at'] ?? '')) ?></td>
+              <td>
+                <form method="post" style="display:inline"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                  <input type="hidden" name="action" value="smtpuseprofile">
+                  <input type="hidden" name="label" value="<?= h($label) ?>">
+                  <button class="adm__btn" type="submit">Switch to this</button></form>
+                <form method="post" style="display:inline"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                  <input type="hidden" name="action" value="smtpdelprofile">
+                  <input type="hidden" name="label" value="<?= h($label) ?>">
+                  <button class="adm__btn adm__btn--warn" type="submit">Remove</button></form>
+              </td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php else: ?>
+      <p class="adm__p"><em>No relays saved yet. Save the one that is working now, so you have
+        something to fall back to.</em></p>
+      <?php endif; ?>
+      <form method="post" class="adm__inline">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="smtpsaveprofile">
+        <label class="adm__label" for="plab">Save the current settings as</label>
+        <input class="adm__input" id="plab" name="label" type="text" placeholder="Brevo &mdash; vote@nextgensummit.us">
+        <button class="adm__btn" type="submit">Save this relay</button>
+      </form>
       <?php
         $smtpErr = pc_meta('smtp_last_error');
         $smtpN = (int) pc_meta('smtp_fail_count', '0');
@@ -1028,7 +1097,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261024-94" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261024-95" defer></script>
 <?php endif; ?>
 </body>
 </html>

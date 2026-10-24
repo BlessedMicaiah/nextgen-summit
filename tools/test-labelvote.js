@@ -107,5 +107,52 @@ STATE = 'coming-soon';
 t('not opened yet',                 VISITOR,  'entrant-05',
   { label: 'Voting opens soon', disabled: true });
 
-console.log(fails ? '\n' + fails + ' FAILED' : '\nall ' + 13 + ' pass');
+/* ---- the reel rail's own compact labeller ----
+   Same server state, a much smaller box, and its own copy. It is tested separately because
+   it went live saying "Closed" in both not-open states, so for the days before voting opened
+   all twenty founder cards told visitors the vote was over. */
+const reel = (state) =>
+  new Function('STATE', '$', grab('labelReelVote') + '; return labelReelVote;')(
+    state, (sel, root) => (sel === 'small' ? root.small : null));
+
+function rbtn(id) {
+  const cls = new Set();
+  return {
+    disabled: false, small: { textContent: '' },
+    classList: { add: (c) => cls.add(c), remove: (c) => cls.delete(c) },
+    on: () => cls.has('reel__act--on'),
+    getAttribute: (k) => (k === 'data-pc-vote' ? id : null)
+  };
+}
+
+function r(name, state, d, id, want) {
+  const b = rbtn(id);
+  reel(state)(b, d);
+  const got = { label: b.small.textContent, disabled: b.disabled, on: b.on() };
+  const ok = got.label === want.label && got.disabled === !!want.disabled
+          && got.on === !!want.on;
+  if (ok) {
+    console.log('ok   ' + name + '  -> ' + JSON.stringify(got.label) +
+      (got.disabled ? ' [disabled]' : '') + (got.on ? ' [highlighted]' : ''));
+  } else {
+    fails++;
+    console.log('FAIL ' + name + '\n   got  ' + JSON.stringify(got) +
+                          '\n   want ' + JSON.stringify(want));
+  }
+}
+
+console.log('--- the reel rail, where the box fits one word ---');
+r('before voting opens, NOT "Closed"', 'coming-soon', VISITOR, 'entrant-05',
+  { label: 'Soon', disabled: true });
+r('after voting closes',               'closed',      VISITOR, 'entrant-05',
+  { label: 'Closed', disabled: true });
+r('open, nobody verified yet',         'open',        VISITOR,  'entrant-05', { label: 'Vote' });
+r('open, verified, no vote today',     'open',        NOVOTEYET,'entrant-05', { label: 'Vote' });
+r('their founder, bonus to come',      'open',        ATTENDEE, 'entrant-01',
+  { label: '+2 bonus', on: true });
+r('their founder, all three spent',    'open',        ALLTHREE, 'entrant-01',
+  { label: 'Voted', on: true });
+r('a different founder, after +1',     'open',        PLUS1,    'entrant-07', { label: 'Used' });
+
+console.log(fails ? '\n' + fails + ' FAILED' : '\nall ' + 20 + ' pass');
 process.exit(fails ? 1 : 0);

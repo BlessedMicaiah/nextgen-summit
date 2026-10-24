@@ -1029,7 +1029,14 @@
     if (!small) return;
     var id = b.getAttribute('data-pc-vote');
     var today = (d && d.verified) ? (d.today_entrant || null) : null;
-    if (STATE !== 'open') { b.disabled = true; small.textContent = 'Closed'; return; }
+    /* "Closed" and "not open yet" are not the same sentence. The gallery button has always
+       distinguished them; this one said "Closed" for both, so in the days before voting
+       opened every founder card told visitors the vote was over. One word, twenty cards. */
+    if (STATE !== 'open') {
+      b.disabled = true;
+      small.textContent = STATE === 'coming-soon' ? 'Soon' : 'Closed';
+      return;
+    }
     if (!today) { b.disabled = false; small.textContent = 'Vote'; return; }
     if (id === today) {
       b.disabled = false;

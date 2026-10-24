@@ -570,12 +570,74 @@ body.has-pcbar .nav{top:34px}
 /* What a vote is worth, in the column the tutorial placeholder used to occupy. Three
    facts the rest of the page states in prose; nothing here is forthcoming. */
 .pcw__worth { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 12px; }
+/* The label column is sized for the longest label, not for "+1".
+
+   It used to be a flat 54px while the label ran up to 26px bold, so "Daily" was wider than
+   its own column and ran straight into the sentence beside it -- "DailyYour allowance
+   returns each day". A grid column does not clip, it just lets the word out.
+
+   One width for all three rows, so +1, +2 and Daily stay aligned with each other, and
+   nowrap so the label can never be the thing that wraps. */
 .pcw__worth li {
-  display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 14px; align-items: baseline;
+  display: grid;
+  grid-template-columns: minmax(64px, 88px) minmax(0, 1fr);
+  gap: 18px; align-items: baseline;
   padding-top: 12px; border-top: 1px solid rgba(255,255,255,.14);
 }
 .pcw__worth li:first-child { border-top: 0; padding-top: 0; }
 .pcw__worth b {
-  font: 800 clamp(20px, 3.4vw, 26px)/1 var(--f-sans); letter-spacing: -.02em; color: var(--accent);
+  font: 800 clamp(19px, 2.8vw, 24px)/1 var(--f-sans); letter-spacing: -.02em; color: var(--accent);
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .pcw__worth li { grid-template-columns: minmax(58px, 74px) minmax(0, 1fr); gap: 14px; }
 }
 .pcw__worth span { font: 500 14px/1.55 var(--f-sans); color: rgba(255,255,255,.84); }
+
+/* ---------- jump to the foot of the page, and back ----------
+
+   Twenty pitches make a long page, so leadership asked for a way down and a way back.
+
+   It sits against the right edge, vertically centred, clear of the founder rail (which
+   scrolls horizontally and must keep its full width), clear of the vote buttons on the
+   cards, and clear of the sticky footer CTA. Inside the immersive feed it is hidden
+   outright: that view has its own navigation and does not need a second set of arrows
+   floating over somebody's pitch. */
+.pcj {
+  position: fixed; right: max(10px, env(safe-area-inset-right)); top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pcj[hidden] { display: none; }
+.pcj__b {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(8,12,16,.72); color: var(--accent, #39D8C8);
+  border: 1px solid rgba(57,216,200,.42);
+  -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px);
+  cursor: pointer; padding: 0;
+  box-shadow: 0 6px 20px rgba(0,0,0,.34);
+  transition: background .2s ease, transform .2s ease, border-color .2s ease;
+}
+.pcj__b[hidden] { display: none; }
+.pcj__b svg { width: 19px; height: 19px; }
+@media (hover: hover) {
+  .pcj__b:hover { background: var(--accent, #39D8C8); color: #06161A; transform: translateY(-2px); }
+}
+.pcj__b:focus-visible { outline: 2px solid var(--accent, #39D8C8); outline-offset: 3px; }
+
+/* The immersive feed owns the screen while it is open. */
+body.pc-reel-live .pcj { display: none; }
+
+/* On a phone the rail runs edge to edge and the buttons would sit on top of it, so they
+   drop to the lower corner and shrink. 40px is still comfortably above the 24px tap
+   target floor. */
+@media (max-width: 640px) {
+  .pcj { top: auto; bottom: calc(16px + env(safe-area-inset-bottom)); transform: none; }
+  .pcj__b { width: 40px; height: 40px; }
+  .pcj__b svg { width: 17px; height: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcj__b { transition: none; }
+}

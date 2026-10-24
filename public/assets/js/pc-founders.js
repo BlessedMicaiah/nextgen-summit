@@ -11,7 +11,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 2,
     "entrant": "entrant-01",
-    "shot": "/assets/img/founders/haptol-labs.webp?v=d1dc7578",
+    "shot": "/assets/img/founders/haptol-labs.webp?v=482519c7",
     "shotFit": "cover",
     "logo": "/assets/img/logos/haptol-labs.webp?v=4823df06",
     "video": {
@@ -19,9 +19,9 @@ window.NGS_FOUNDERS = [
       "src": "/assets/video/haptol-labs.mp4?v=ad280214"
     },
     "shotFrom": "headshot supplied by the NextGen team",
-    "shotW": 702,
-    "shotH": 768,
-    "focal": "50% 35%",
+    "shotW": 780,
+    "shotH": 1100,
+    "focal": "50% 22%",
     "selfHosted": true,
     "poster": "/assets/video/haptol-labs-poster.jpg?v=684b9ac9",
     "pitchNote": "direct video file"
@@ -385,7 +385,7 @@ window.NGS_FOUNDERS = [
     "bio": null,
     "sheet_row": 19,
     "entrant": "entrant-18",
-    "shot": "/assets/img/founders/nextofferup.webp?v=6c9ad8be",
+    "shot": "/assets/img/founders/nextofferup.webp?v=b8969750",
     "shotFit": "cover",
     "logo": "/assets/img/logos/nextofferup.webp?v=6d77b1d7",
     "video": {
@@ -393,9 +393,9 @@ window.NGS_FOUNDERS = [
       "id": "Diqye88F3Rw"
     },
     "shotFrom": "headshot supplied by the NextGen team",
-    "shotW": 1096,
+    "shotW": 780,
     "shotH": 1100,
-    "focal": "50% 35%",
+    "focal": "50% 22%",
     "pitchNote": "YouTube link supplied directly"
   },
   {

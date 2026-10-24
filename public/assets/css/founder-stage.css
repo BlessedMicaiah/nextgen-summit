@@ -507,11 +507,16 @@
 .fcd__shot { position: relative; display: block; aspect-ratio: 5/7; }
 .fcd__shot img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; display: block; }
 .fcd__shot.is-contain img { object-fit: contain; padding: 14% 14% 30%; }
+/* The bottom wash used to fade out at 62% of the card, so on any portrait whose chin
+   sits low -- Melavyr and Find Your Mission among them -- half the face was under a
+   grey veil with the company name across it. Pulled back to 46% and made to reach full
+   strength faster: the type keeps a base dark enough to read on, and it reads as a band
+   under the portrait rather than a haze over it. */
 .fcd__shot::after {
   content: ""; position: absolute; inset: 0;
   background:
-    linear-gradient(180deg, rgba(4,7,10,.62) 0%, rgba(4,7,10,0) 34%),
-    linear-gradient(0deg, rgba(4,7,10,.96) 2%, rgba(4,7,10,.5) 36%, rgba(4,7,10,0) 62%);
+    linear-gradient(180deg, rgba(4,7,10,.58) 0%, rgba(4,7,10,0) 28%),
+    linear-gradient(0deg, rgba(4,7,10,.97) 0%, rgba(4,7,10,.88) 18%, rgba(4,7,10,.42) 34%, rgba(4,7,10,0) 46%);
 }
 .fcd__mono {
   position: absolute; inset: 0; display: grid; place-items: center;
@@ -536,10 +541,21 @@
   background: var(--accent, #39D8C8); color: #06161A;
   font: 800 8.5px/1 var(--f-sans, system-ui); letter-spacing: .18em; text-transform: uppercase;
 }
+/* "JAY'S WATERMELONADE" and "K8CULTURE PRODUCTIONS" are one long word each at 36px
+   uppercase, wider than the card holding them. A flex or grid child does not clip, so
+   the word simply left the card.
+
+   Three things stop that, in order of preference: wrap between words, shrink the type
+   for names that are genuinely long (set from the character count in paintProfile),
+   and -- only if a single word is still too wide -- break inside it. The last is a
+   backstop that should not be reached, not the plan. */
 .fcd__co {
-  margin: 0; font: 800 clamp(26px,7vw,36px)/.96 var(--f-sans, system-ui);
+  margin: 0; font: 800 clamp(24px,6.2vw,34px)/.98 var(--f-sans, system-ui);
   letter-spacing: -.028em; text-transform: uppercase; color: #fff;
+  overflow-wrap: break-word; hyphens: auto;
 }
+.fcd__co.is-long  { font-size: clamp(21px,5.3vw,28px); letter-spacing: -.034em; }
+.fcd__co.is-xlong { font-size: clamp(18px,4.5vw,24px); letter-spacing: -.036em; line-height: 1.05; }
 .fcd__name {
   margin: 9px 0 0;
   font: 700 10px/1.5 var(--f-sans, system-ui); letter-spacing: .17em;
@@ -548,8 +564,9 @@
 .fcd__blurb {
   margin: 12px 0 0;
   font: 500 13px/1.55 var(--f-sans, system-ui); color: rgba(255,255,255,.82);
-  /* two lines, so it reads as the preview of the description the back carries in full */
-  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  /* One line. It was two, and on a 5:7 card that is another ~20px of the founder's face
+     spent on a sentence the back of the card gives in full anyway. */
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
 }
 .fcd__bar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;

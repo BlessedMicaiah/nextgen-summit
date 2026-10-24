@@ -181,6 +181,57 @@
 }
 .ff-bub:focus-visible .ff-bub__ring { outline: 2px solid var(--accent); outline-offset: 4px; }
 
+/* ---------- the live leaderboard ----------
+
+   The rail is the one place on this page where position means standing, so the top three
+   are marked -- and marked lightly. The restraint is the brief: a metallic ring, a small
+   numeral, a few per cent of extra size. No crowns, no podium, no glow.
+
+   None of this renders until the server reports `ranked`, which it will not do while every
+   founder is on zero. An untouched competition shows twenty equal turquoise rings, because
+   that is what is true. */
+.ff-bub__rank {
+  position: absolute; left: -2px; top: -2px;
+  min-width: 21px; height: 21px; padding: 0 5px;
+  border-radius: 99px;
+  background: var(--ff-void); color: var(--ff-dim);
+  border: 2px solid var(--ff-edge-2);
+  font: 800 11px/17px var(--f-sans); letter-spacing: -.01em;
+  display: grid; place-items: center;
+}
+.ff-bub__pts {
+  font: 700 10px/1.2 var(--f-sans); color: var(--ff-dim);
+  letter-spacing: .02em; margin-top: -4px;
+}
+
+/* The metals. Conic rather than flat so the ring catches an edge as it curves, which is
+   what keeps gold from reading as mustard. */
+.ff-bub--m1 .ff-bub__ring {
+  background: conic-gradient(from 210deg, #F5D67E, #B8860B 28%, #FFF1C2 52%, #C9972B 74%, #F5D67E);
+}
+.ff-bub--m2 .ff-bub__ring {
+  background: conic-gradient(from 210deg, #E6E9EE, #8B929C 30%, #FFFFFF 54%, #A8AFB8 76%, #E6E9EE);
+}
+.ff-bub--m3 .ff-bub__ring {
+  background: conic-gradient(from 210deg, #E3A977, #8C5524 30%, #F7D3B0 54%, #AE703C 76%, #E3A977);
+}
+.ff-bub--m1 .ff-bub__rank { background: #F5D67E; color: #2A1F05; border-color: #FFF1C2; }
+.ff-bub--m2 .ff-bub__rank { background: #E6E9EE; color: #22262B; border-color: #FFFFFF; }
+.ff-bub--m3 .ff-bub__rank { background: #E3A977; color: #2E1A0A; border-color: #F7D3B0; }
+.ff-bub--m1 .ff-bub__n,
+.ff-bub--m2 .ff-bub__n,
+.ff-bub--m3 .ff-bub__n { color: #fff; }
+.ff-bub--m1 .ff-bub__pts { color: #F5D67E; }
+.ff-bub--m2 .ff-bub__pts { color: #E6E9EE; }
+.ff-bub--m3 .ff-bub__pts { color: #E3A977; }
+
+/* 7% larger, which is inside the 5-10% asked for and small enough that the rail's rhythm
+   survives it. The bubble's own width is left alone so the spacing does not jump. */
+.ff-bub--m1 .ff-bub__ring,
+.ff-bub--m2 .ff-bub__ring,
+.ff-bub--m3 .ff-bub__ring { width: 81px; height: 81px; }
+.ff-bub--m1, .ff-bub--m2, .ff-bub--m3 { width: 91px; }
+
 /* ---------- the feed ---------- */
 
 /* The lower gallery is gone, and so are the card styles that drew it -- including

@@ -281,7 +281,16 @@
   function paintProfile(e) {
     /* Company and founder name appear on both faces, so they are set by selector across
        the whole dialog rather than once each. */
-    $$('[data-pc-p-co]', pDlg).forEach(function (n) { n.textContent = e.company; });
+    /* Long company names get smaller type rather than a broken card. The thresholds come
+       from the roster: "Jay's Watermelonade" is 19 and "K8Culture Productions" is 21, and
+       both overflowed at the full size. CSS cannot measure a string, so the class is set
+       here and the sizes live in founder-stage.css. */
+    $$('[data-pc-p-co]', pDlg).forEach(function (n) {
+      n.textContent = e.company;
+      var len = (e.company || '').length;
+      n.classList.toggle('is-long', len >= 16 && len < 21);
+      n.classList.toggle('is-xlong', len >= 21);
+    });
     $$('[data-pc-p-name]', pDlg).forEach(function (n) { n.textContent = e.name; });
 
     /* The card's corner follows the reel's: once there are standings it shows the
@@ -1716,14 +1725,46 @@
       '</li>';
   }
 
-  /* The order the feed runs in.
+  /* ---------- two orders, deliberately different ----------
 
-     Leader first, from the server's own count of valid points. Fetched ONCE per page load
-     and then left alone: re-sorting under someone who is halfway through watching would
-     move the founder out from under them because a stranger voted. A refresh picks up the
-     new order, which is what the brief asks for and all it asks for. */
+     THE PITCHES run in leadership's editorial sequence. It is a curated running order --
+     which pitch opens the experience, what follows it -- and it does not move when somebody
+     votes. A reader halfway through the feed keeps the feed they started.
+
+     THE LEADERBOARD runs on votes. That is the bubble rail, and it is the only place where
+     position means standing.
+
+     Keeping those apart is the whole point. If the editorial order drove the leaderboard it
+     would announce a winner leadership had picked; if votes drove the pitch order the
+     curation would evaporate the moment the first vote landed. */
+  var EDITORIAL = [
+    'entrant-16',   // LIGHT
+    'entrant-09',   // Rest
+    'entrant-06',   // iBraid
+    'entrant-04',   // The Luminous Lab
+    'entrant-01',   // Haptol Labs
+    'entrant-03',   // Sooz
+    'entrant-07',   // BeforeKeys LLC
+    'entrant-08',   // If The Shoe Fits
+    'entrant-17',   // Beauty Boot Camp
+    'entrant-14',   // K8Culture Productions
+    'entrant-13'    // Offguardz
+  ];
+
+  /* The curated running order. The nine leadership did not name keep their contestant order
+     behind the eleven that were, so the sequence is fully determined rather than partly
+     arbitrary -- and adding an id to EDITORIAL is the only edit needed to move someone. */
   function reelOrder() {
-    if (!RANK || !RANK.order) return ENTRANTS.slice();
+    var out = [];
+    EDITORIAL.forEach(function (id) { if (byId[id]) out.push(byId[id]); });
+    ENTRANTS.forEach(function (e) { if (out.indexOf(e) < 0) out.push(e); });
+    return out;
+  }
+
+  /* The leaderboard: whoever the server says is ahead. Falls back to the editorial order
+     when no ranking has arrived, so the rail is never empty and never invents a winner. */
+  function voteOrder() {
+    if (!RANK || !RANK.order) return reelOrder();
     var out = [];
     RANK.order.forEach(function (id) { if (byId[id]) out.push(byId[id]); });
     ENTRANTS.forEach(function (e) { if (out.indexOf(e) < 0) out.push(e); });
@@ -2011,6 +2052,7 @@
     reelReturn = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     document.documentElement.classList.add('pc-live');
     reel.classList.add('is-live');
+    document.body.classList.add('pc-reel-live');   // the jump arrows stand down
     reel.classList.remove('is-moved');
     if (reelBar) { reelBar.hidden = false; reelBar.classList.add('is-on'); }
     reelTicks();
@@ -2032,6 +2074,7 @@
     reelHeld = false;
     document.documentElement.classList.remove('pc-live');
     reel.classList.remove('is-live');
+    document.body.classList.remove('pc-reel-live');
     if (reelBar) { reelBar.hidden = true; reelBar.classList.remove('is-on'); }
     /* Silence first, then put the page back. Leaving the feed must stop the sound, and
        the sync pass that follows decides for itself whether an in-flow panel is live. */
@@ -2338,10 +2381,10 @@
   /* Who appears in the stories row, and in what order. Founders with a playable pitch come
      first, because a pitch is what the row promises. Everyone is in it regardless: being
      left out would read as being out of the competition. */
-  /* The bubbles run in the same order as everything else. One authoritative list from
-     one endpoint, so the rail, the reels and the deck can never disagree. */
+  /* The bubble rail IS the live leaderboard, so it is the one thing here that follows
+     votes rather than the curated running order. */
   function storyOrderRanked() {
-    return reelOrder();
+    return voteOrder();
   }
 
   function storyOrder() {
@@ -2350,19 +2393,46 @@
     return withVideo.concat(without);
   }
 
+  /* A bubble, and what it is allowed to claim.
+
+     standing() returns null until the server says `ranked` -- which it will not do while
+     every founder is on zero. So on an untouched competition there is no badge, no metal
+     and no points line: twenty equal turquoise rings, which is the truth. Medals appear
+     when there is something to be ahead of.
+
+     Ties share a place, so two founders level on points both read #2 and both wear silver.
+     That is the server's tiebreak showing through, not a decision made here. */
   function bubbleHtml(e) {
     var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
     var bpos = e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal) + '"';
     var face = e.shot
       ? '<img src="' + e.shot + '"' + fit + bpos + ' alt="" loading="lazy" decoding="async">'
       : '<span class="ff-bub__mono">' + esc(initials(e)) + '</span>';
-    return '<button class="ff-bub' + (e.video ? '' : ' ff-bub--flat') + '" type="button" ' +
+
+    var st = standing(e);
+    var cls = 'ff-bub' + (e.video ? '' : ' ff-bub--flat');
+    var badge = '';
+    var pts = '';
+    var said = '';
+    if (st) {
+      if (st.place <= 3) { cls += ' ff-bub--m' + st.place; }
+      badge = '<span class="ff-bub__rank" aria-hidden="true">' + st.place + '</span>';
+      if (st.points != null) {
+        pts = '<span class="ff-bub__pts">' + st.points +
+              (st.points === 1 ? ' pt' : ' pts') + '</span>';
+      }
+      /* The visual rank is decoration; the sentence is what a screen reader gets. */
+      said = ', ' + st.ordinal + (st.points != null
+        ? ' with ' + st.points + (st.points === 1 ? ' point' : ' points') : '');
+    }
+    return '<button class="' + cls + '" type="button" ' +
       'data-ff-story="' + e.id + '" aria-label="' +
-      (e.video ? 'Watch the pitch from ' : 'Read about ') + esc(e.company) + '">' +
+      (e.video ? 'Watch the pitch from ' : 'Read about ') + esc(e.company) + esc(said) + '">' +
       '<span class="ff-bub__ring"><span class="ff-bub__in">' + face + '</span>' +
       (e.video ? '<span class="ff-bub__play" aria-hidden="true">' + playIcon() + '</span>' : '') +
+      badge +
       '</span>' +
-      '<span class="ff-bub__n">' + esc(e.company) + '</span></button>';
+      '<span class="ff-bub__n">' + esc(e.company) + '</span>' + pts + '</button>';
   }
 
   function paintStories() {
@@ -2711,4 +2781,51 @@
   }
 
   track('page_view', { state: STATE, entrants: ENTRANTS.length, simulated: true });
+
+  /* ---------- jump to the foot of the page, and back ----------
+
+     Two buttons, each shown only when it would do something: no "back to top" while
+     already at the top, no "to the bottom" once there. Passive scroll listener and a
+     rAF gate, because this runs on every scroll of a very long page.
+
+     Reduced motion is honoured by asking for 'auto' rather than 'smooth' -- the jump
+     still happens, it just does not animate. */
+  (function jumpNav() {
+    var box = $('[data-pc-jump]');
+    if (!box) return;
+    var up = $('[data-pc-jump-up]', box);
+    var down = $('[data-pc-jump-down]', box);
+    var quiet = matchMedia('(prefers-reduced-motion: reduce)');
+    var ticking = false;
+
+    function go(y) {
+      try { window.scrollTo({ top: y, behavior: quiet.matches ? 'auto' : 'smooth' }); }
+      catch (e) { window.scrollTo(0, y); }      /* older Safari takes two numbers only */
+    }
+    if (up) up.addEventListener('click', function () { go(0); track('jump_top', {}); });
+    if (down) down.addEventListener('click', function () {
+      go(document.documentElement.scrollHeight);
+      track('jump_bottom', {});
+    });
+
+    function sync() {
+      ticking = false;
+      var y = window.scrollY || document.documentElement.scrollTop || 0;
+      var vh = window.innerHeight || 0;
+      var max = (document.documentElement.scrollHeight || 0) - vh;
+      /* A page shorter than a screen and a bit has nothing to jump through. */
+      if (max < 400) { box.hidden = true; return; }
+      box.hidden = false;
+      if (up) up.hidden = y < vh * 0.6;
+      if (down) down.hidden = y > max - vh * 0.6;
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(sync);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    sync();
+  }());
 })();

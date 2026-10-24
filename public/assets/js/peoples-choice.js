@@ -2382,6 +2382,11 @@
   function bubbleEntrance() {
     if (!rail) return;
     rail.setAttribute('data-enter', '');
+    rail.classList.add('is-armed');
+    /* And disarmed shortly after, unconditionally. While is-armed is on the rail the
+       bubbles are hidden; once it is gone the hidden rule stops matching and they are
+       simply visible, with no transition left to depend on. */
+    setTimeout(function () { rail.classList.remove('is-armed'); }, 1800);
     $$('.ff-bub', rail).forEach(function (b, i) {
       /* alternating sides, and a little further out every other card for depth */
       var side = (i % 2) ? 1 : -1;

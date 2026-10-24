@@ -45,11 +45,18 @@
    They fly in from alternating sides, staggered, and settle. Held off until the rail
    is genuinely on screen, and latched so a visitor drifting up and down the page does
    not set twenty bubbles flying every time. */
-.ff-rail[data-enter] .ff-bub {
+/* The hidden state is GATED ON .is-armed, and the script removes that class on a timer
+   whatever else happens. That matters because the entrance has a per-bubble transition
+   DELAY, and a delay never elapses if the compositor is not running -- measured on the
+   deployed site, is-in was set and the portraits were still at opacity 0 a second and a
+   half later. Adding another class could not rescue that, because the rule was still
+   matching. Removing the gate makes the hidden declaration stop applying at all, so the
+   bubbles return to their ordinary visible state with nothing left to animate. */
+.ff-rail.is-armed .ff-bub {
   opacity: 0;
   transform: translate3d(var(--bx, 64px), 14px, 0) scale(.84);
 }
-.ff-rail[data-enter].is-in .ff-bub {
+.ff-rail.is-armed.is-in .ff-bub {
   opacity: 1;
   transform: none;
   transition:
@@ -57,8 +64,8 @@
     transform .74s cubic-bezier(.18,1.02,.28,1) var(--bd, 0s);
 }
 @media (prefers-reduced-motion: reduce) {
-  .ff-rail[data-enter] .ff-bub { opacity: 1; transform: none; }
-  .ff-rail[data-enter].is-in .ff-bub { transition: none; }
+  .ff-rail.is-armed .ff-bub { opacity: 1; transform: none; }
+  .ff-rail.is-armed.is-in .ff-bub { transition: none; }
 }
 
 /* ===========================================================================

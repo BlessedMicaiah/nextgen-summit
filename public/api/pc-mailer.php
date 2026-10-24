@@ -124,13 +124,41 @@ function pc_smtp_save(array $in): array
     $take = function (string $k) use ($in): string {
         return isset($in[$k]) && is_string($in[$k]) ? trim($in[$k]) : '';
     };
-    $host = $take('host') !== '' ? $take('host') : $cur['host'];
-    $user = $take('user') !== '' ? $take('user') : $cur['user'];
-    $pass = $take('pass') !== '' ? $take('pass') : $cur['pass'];
-    $from = $take('from') !== '' ? $take('from') : $cur['from'];
+
+    /* An empty box keeps what is stored. That is right while you are correcting one field of
+       a working relay, and wrong the moment you point the form at a DIFFERENT relay: the new
+       host and login get silently married to the OLD provider's password, and the result is
+       a 535 that looks like a bad key and is actually a mismatched pair.
+
+       That is exactly what happened switching from Gmail to Brevo. The stored password stayed
+       19 characters -- which is a Gmail app password, sixteen characters shown as four groups
+       of four -- while the host said Brevo.
+    
+       So: changing the host is treated as changing provider, and the credentials that belong
+       to a provider must be given again rather than inherited. */
+    $hostIn = $take('host');
+    $switching = $hostIn !== '' && $cur['host'] !== '' && strcasecmp($hostIn, $cur['host']) !== 0;
+
+    $host = $hostIn !== '' ? $hostIn : $cur['host'];
+    $user = $take('user') !== '' ? $take('user') : ($switching ? '' : $cur['user']);
+    /* Whitespace is never part of an SMTP key. Google prints its app passwords in four
+       groups for legibility and accepts them with or without the spaces; every other
+       provider would simply reject them. Stripping all of it removes a whole category of
+       "I definitely pasted it correctly". */
+    $passIn = preg_replace('/\s+/', '', $take('pass'));
+    $pass = $passIn !== '' ? $passIn : ($switching ? '' : $cur['pass']);
+    $from = $take('from') !== '' ? $take('from') : ($switching ? '' : $cur['from']);
     $name = $take('name') !== '' ? $take('name') : $cur['name'];
     $secure = $take('secure') !== '' ? strtolower($take('secure')) : $cur['secure'];
     $port = $take('port') !== '' ? (int) $take('port') : $cur['port'];
+
+    if ($switching && ($pass === '' || $user === '' || $from === '')) {
+        return ['ok' => false, 'error' => 'You are pointing this at a different relay ('
+            . $cur['host'] . ' to ' . $host . '), so the username, password and From address '
+            . 'must all be entered again. The previous provider's credentials are not carried '
+            . 'across -- they would not work, and pairing them with the new host is what '
+            . 'produces an authentication failure that looks like a bad key. Nothing was saved.'];
+    }
 
     if ($host !== '' && !preg_match('/^[a-z0-9.-]+$/i', $host)) {
         return ['ok' => false, 'error' => 'That host name does not look right. Nothing was saved.'];
@@ -138,8 +166,12 @@ function pc_smtp_save(array $in): array
     if ($from !== '' && filter_var($from, FILTER_VALIDATE_EMAIL) === false) {
         return ['ok' => false, 'error' => 'The From address is not a valid email. Nothing was saved.'];
     }
-    if ($user !== '' && filter_var($user, FILTER_VALIDATE_EMAIL) === false) {
-        return ['ok' => false, 'error' => 'The SMTP username should be the full mailbox address. Nothing was saved.'];
+    /* Not every relay's login is an email address. Gmail's and Brevo's are; SendGrid's is
+       the literal word "apikey", and Mailgun hands out a domain-scoped login. Requiring an
+       address here would have rejected those outright, so the check is only that something
+       was given and that it has no whitespace in it. */
+    if ($user !== '' && preg_match('/\s/', $user)) {
+        return ['ok' => false, 'error' => 'The SMTP username should not contain spaces. Nothing was saved.'];
     }
     if ($port < 1 || $port > 65535) {
         return ['ok' => false, 'error' => 'That port is out of range. Nothing was saved.'];
@@ -154,8 +186,12 @@ function pc_smtp_save(array $in): array
     $lines = [
         '<?php',
         '/* SMTP relay for NextGen verification email. Written by the admin dashboard, outside',
-        '   the web root, never in git and never in a release archive. The password here should',
-        '   be a Google Workspace APP PASSWORD scoped to this site, not an account password. */',
+        '   the web root, never in git and never in a release archive.',
+        '',
+        '   The password is whatever the configured provider issues: an SMTP key from a',
+        '   transactional provider, or an app password if the relay is a mailbox. Never an',
+        '   account password. Changing the host clears these, because credentials belong to',
+        '   the provider that issued them. */',
         'declare(strict_types=1);',
         '',
         'const NGS_SMTP_HOST   = ' . $q($host) . ';',

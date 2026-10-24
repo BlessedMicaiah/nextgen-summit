@@ -772,7 +772,7 @@ foreach ($standings as $r) {
 
     <section class="adm__sec">
       <p class="adm__h">Email delivery (verification codes)</p>
-      <p class="adm__p"><strong>All four of host, username, app password and From address must be filled.</strong> If any one is blank, email verification stays switched off. The relay that sends voting codes. Use a <strong>Google Workspace app password</strong>, not an account password &mdash; it is scoped to this site and can be revoked on its own. Written to <code>config.smtp.php</code> in the data directory, outside the web root, and never shown back.</p>
+      <p class="adm__p"><strong>Host, username, password and From address must all be filled.</strong> If any one is blank, email verification stays switched off. The password is whatever your provider issues &mdash; an SMTP key from a transactional provider, or an app password if the relay is a mailbox. Never an account password. It is written to <code>config.smtp.php</code> in the data directory, outside the web root, and never shown back.</p>
       <?php $sm = pc_smtp_status(); ?>
       <div class="adm__table-wrap">
         <table class="adm__table"><tbody>
@@ -785,15 +785,15 @@ foreach ($standings as $r) {
         <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
         <input type="hidden" name="action" value="smtp">
         <label class="adm__label" for="sh">SMTP host</label>
-        <input class="adm__input" id="sh" name="smtp_host" type="text" placeholder="smtp.gmail.com" value="<?= h($sm['host'] === 'not set' ? '' : $sm['host']) ?>">
+        <input class="adm__input" id="sh" name="smtp_host" type="text" placeholder="smtp-relay.brevo.com" value="<?= h($sm['host'] === 'not set' ? '' : $sm['host']) ?>">
         <label class="adm__label" for="sp">Port</label>
         <input class="adm__input" id="sp" name="smtp_port" type="number" min="1" max="65535" value="<?= (int) $sm['port'] ?>">
         <label class="adm__label" for="se">Encryption</label>
         <input class="adm__input" id="se" name="smtp_secure" type="text" placeholder="tls" value="<?= h($sm['encryption']) ?>">
-        <label class="adm__label" for="su">SMTP username (full mailbox address)</label>
-        <input class="adm__input" id="su" name="smtp_user" type="text" autocomplete="off" placeholder="you@nextgensummit.us" value="<?= h($sm['username'] === 'NOT SET' ? '' : $sm['username']) ?>">
-        <label class="adm__label" for="sw">App password</label>
-        <input class="adm__input" id="sw" name="smtp_pass" type="password" autocomplete="new-password" placeholder="<?= $sm['password'] === 'NOT SET' ? '16 characters from Google' : 'saved — leave blank to keep' ?>">
+        <label class="adm__label" for="su">SMTP username / login</label>
+        <input class="adm__input" id="su" name="smtp_user" type="text" autocomplete="off" placeholder="the login your provider issued" value="<?= h($sm['username'] === 'NOT SET' ? '' : $sm['username']) ?>">
+        <label class="adm__label" for="sw">SMTP password / key</label>
+          <input class="adm__input" id="sw" name="smtp_pass" type="password" autocomplete="new-password" placeholder="<?= $sm['password'] === 'NOT SET' ? 'the key your provider issued' : 'saved &mdash; retype it if you change provider' ?>">
         <label class="adm__label" for="sf">From address</label>
         <input class="adm__input" id="sf" name="smtp_from" type="text" placeholder="vote@nextgensummit.us" value="<?= h($sm['from'] === 'NOT SET' ? '' : $sm['from']) ?>">
         <label class="adm__label" for="sn">From name</label>
@@ -878,8 +878,10 @@ foreach ($standings as $r) {
       <?php if ($smtpErr): ?>
       <p class="adm__p"><strong>Last send failure:</strong> <code><?= h($smtpErr) ?></code>
         &mdash; <?= $smtpN ?> failure<?= $smtpN === 1 ? '' : 's' ?> recorded in total.</p>
-      <p class="adm__p">What the codes mean. <code>code=535</code> is the app password being
-        refused &mdash; regenerate it. <code>code=550</code> or <code>code=552</code> with a
+      <p class="adm__p">What the codes mean. <code>code=535</code> is the login being refused.
+        Before regenerating the key, check the host and the password belong to the <em>same</em>
+        provider: pointing this at a new relay while an old provider's password is still stored
+        produces exactly this error. <code>code=550</code> or <code>code=552</code> with a
         daily-limit message is the relay's sending quota for the day, which no amount of
         retrying will clear: Gmail allows 500 messages a day on a consumer account and 2,000
         on Workspace, and a busy voting day goes through them faster than it looks, because

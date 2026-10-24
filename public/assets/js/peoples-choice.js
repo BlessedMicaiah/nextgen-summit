@@ -1030,7 +1030,16 @@
     if (STATE !== 'open') {
       txt = COPY[STATE].pill;
     } else if (!d || !d.verified) {
-      txt = 'Verify once to vote';
+      /* "Verify ONCE to vote" was a promise the site cannot keep.
+
+         The server will honour a verification for thirty days, but the cookie carrying it is
+         set with lifetime 0 -- a session cookie, gone when the browser session ends. So a
+         voter who verified yesterday is quite likely to be asked again today, and the word
+         "once" had told them they would not be.
+
+         Leadership read it exactly that way: "sounds like if I did it yesterday, I won't
+         have to do it today". The word earned nothing and was costing trust. */
+      txt = 'Verify to vote';
     } else if (typeof d.remaining === 'number' && d.remaining > 0) {
       txt = d.remaining + (d.remaining === 1 ? ' point to give' : ' points to give');
     } else if (d.bonus_eligible) {

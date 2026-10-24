@@ -203,6 +203,11 @@ function pc_email_otp_check(string $email, string $code): array
     pc_email_note($ident, 'check', true);
     pc_flag($ident, 'email_verified');
 
+    /* The address is recorded here and only here, at the one moment it has been proved: the
+       person just read a code sent to it. Everywhere else in this file the address exists
+       only as a hash. */
+    pc_voter_note($ident, ['email' => $email, 'channel' => 'email']);
+
     /* Many identities verifying from one address is ordinary for an office and odd for a
        bedroom. Recorded rather than refused: blocking shared connections punishes schools,
        workplaces and anyone behind carrier-grade NAT, and the point is to have something to

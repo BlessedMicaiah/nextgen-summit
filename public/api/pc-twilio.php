@@ -535,9 +535,15 @@ function pc_otp_check(string $e164, string $code, ?string $expected): array
         return ['ok' => false, 'reason' => 'format'];
     }
 
+    /* A phone verification proves a number and nothing else. The channel is recorded so the
+       dashboard can say how someone verified; no address is written, because none was given.
+       The dashboard shows "Not provided" for these, which is the honest answer. */
     if (!pc_twilio_live()) {
         $good = $expected !== null && hash_equals($expected, $code);
         pc_otp_note($key, 'check', $good);
+        if ($good) {
+            pc_voter_note($key, ['channel' => 'phone']);
+        }
         return $good ? ['ok' => true, 'mock' => true] : ['ok' => false, 'reason' => 'code', 'mock' => true];
     }
 
@@ -547,5 +553,6 @@ function pc_otp_check(string $e164, string $code, ?string $expected): array
     if (!$good) {
         return ['ok' => false, 'reason' => $res['status'] === 404 ? 'expired' : 'code'];
     }
+    pc_voter_note($key, ['channel' => 'phone']);
     return ['ok' => true, 'mock' => false];
 }

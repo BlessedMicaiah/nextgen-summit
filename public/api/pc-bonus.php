@@ -97,6 +97,29 @@ if ($action !== 'status') {
     }
 }
 
+/**
+ * Record, for the dashboard, that this identity holds a proven registration.
+ *
+ * Called only after pc_attendee_bind() has succeeded. That ordering is the whole point: a
+ * name is written because a registration was bound to this voter, never because an address
+ * happened to appear in the attendee list.
+ *
+ * A missing name is left missing. Eventbrite does not always have one, and older cached
+ * indexes have none at all; "registered, name unknown" is a true statement and an invented
+ * name is not.
+ *
+ * @param array{first:string,last:string}|null $name
+ */
+function pcb_note_registration(string $voter, ?array $name): void
+{
+    $f = ['eb_status' => 'registered'];
+    if (is_array($name)) {
+        $f['eb_first'] = (string) ($name['first'] ?? '');
+        $f['eb_last'] = (string) ($name['last'] ?? '');
+    }
+    pc_voter_note($voter, $f);
+}
+
 /** What this voter has and has used today. */
 function pcb_state(string $voter): array
 {
@@ -188,6 +211,10 @@ if ($action === 'auto') {
         pcb_out(200, ['ok' => true, 'status' => 'claimed_elsewhere'] + $st);
     }
     pc_flag($voter, 'attendee_auto_matched');
+    /* The registration is now bound to this identity, so the registered name is this voter's
+       and the dashboard may show it. Before the binding it was only a matching address in a
+       list, which is not the same claim. */
+    pcb_note_registration($voter, $hit['name'] ?? null);
     pcb_out(200, ['ok' => true, 'status' => 'verified'] + pcb_state($voter));
 }
 
@@ -238,6 +265,9 @@ if ($action === 'check') {
     if (!$bind['ok']) {
         pcb_out(409, ['ok' => false, 'reason' => $bind['reason'] ?? 'claimed']);
     }
+    /* Same binding, reached by proving the address rather than by an automatic match. The
+       name comes from the index under the key that was just proved. */
+    pcb_note_registration($voter, pc_eb_name(pc_eb_email_index(), (string) $res['email_key']));
     /* Bound, and deliberately nothing else. The points are a separate, explicit request. */
     pcb_out(200, ['ok' => true, 'verified' => true] + pcb_state($voter));
 }

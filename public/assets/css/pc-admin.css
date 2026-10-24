@@ -150,3 +150,7 @@ body.has-pcbar{padding-top:34px}
   .pcbar__in{font-size:9px;letter-spacing:.1em}
   body.has-pcbar{padding-top:46px}
 }
+
+/* A value that is genuinely absent, not merely small. Used where the dashboard says
+   "Not provided": a phone voter gave no address, and the blank is the honest answer. */
+.adm__muted{color:rgba(255,255,255,.45)}

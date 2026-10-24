@@ -54,6 +54,101 @@ function token_ok(): bool
         && hash_equals((string) ($_SESSION['csrf'] ?? ''), $_POST['csrf']);
 }
 
+/* ---------- exports ----------
+
+   Two spreadsheets, both behind the same session as the rest of this page and both answered
+   before a byte of HTML is drawn.
+
+   What is deliberately NOT in them: phone numbers, verification codes, IP addresses and the
+   voter-key hashes. The hash identifies a row to this system and nothing to a reader, and a
+   spreadsheet of them emailed around is a liability with no corresponding use.
+
+   What IS in them is personal: verified email addresses, and registered names where a
+   registration has been bound. Treat the file accordingly once it leaves here.
+
+   On the leading apostrophe some cells carry: a spreadsheet treats a value opening with
+   = + - or @ as a formula, so a crafted address could run on open. Prefixing it makes the
+   cell literal text. Excel and Sheets both show the value and hide the apostrophe.
+*/
+function csv_cell($v): string
+{
+    $s = (string) $v;
+    if ($s !== '' && strpos("=+-@\t\r", $s[0]) !== false) {
+        $s = "'" . $s;                 // inert in Excel and Google Sheets alike
+    }
+    return '"' . str_replace('"', '""', $s) . '"';
+}
+
+function csv_send(string $filename, array $header, array $rows): void
+{
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: no-store');
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");      // BOM, so Excel reads UTF-8 names correctly
+    fwrite($out, implode(',', array_map('csv_cell', $header)) . "\r\n");
+    foreach ($rows as $r) {
+        fwrite($out, implode(',', array_map('csv_cell', $r)) . "\r\n");
+    }
+    fclose($out);
+    exit;
+}
+
+if (isset($_GET['export'])) {
+    if (!$authed) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "Not signed in.\n";
+        exit;
+    }
+    $stamp = date('Y-m-d-Hi');
+    $ent = [];
+    foreach (pc_entrants() as $e) {
+        $ent[$e['id']] = $e;
+    }
+
+    if ($_GET['export'] === 'summary') {
+        $out = [];
+        foreach (pc_standings(pc_entrants()) as $r) {
+            $out[] = [$r['rank'] ?? '', $r['name'], $r['company'], $r['votes'], $r['id']];
+        }
+        csv_send('peoples-choice-standings-' . $stamp . '.csv',
+            ['Rank', 'Founder', 'Company', 'Total points', 'Entrant id'], $out);
+    }
+
+    /* Every vote, newest first. One row is one point: a verified attendee's three points are
+       three rows sharing a voter, which is what keeps "points" and "voters" separable. */
+    $all = pc_rows(100000);
+    $who = pc_voter_map(array_column($all, 'voter_key'));
+    $out = [];
+    foreach ($all as $v) {
+        $vk = (string) $v['voter_key'];
+        $w = $who[$vk] ?? null;
+        $e = $ent[(string) $v['entrant_id']] ?? null;
+        $registered = ($w['eb_status'] ?? '') === 'registered';
+        $out[] = [
+            $v['created_at'],
+            $v['vote_day'] ?? '',
+            $e['name'] ?? $v['entrant_id'],
+            $e['company'] ?? '',
+            $registered ? (string) ($w['eb_first'] ?? '') : '',
+            $registered ? (string) ($w['eb_last'] ?? '') : '',
+            ($w['email'] ?? '') !== '' ? (string) $w['email'] : 'Not provided',
+            $registered ? 'Registered' : 'Not registered',
+            (string) ($w['channel'] ?? 'unknown'),
+            ((int) ($v['slot'] ?? 1)) > 1 ? 'Attendee bonus' : 'Base vote',
+            1,
+            ((int) $v['valid'] === 1) ? 'Valid' : 'Invalid',
+            ((int) ($v['simulated'] ?? 0) === 1) ? 'Test' : 'Real',
+        ];
+    }
+    csv_send('peoples-choice-votes-' . $stamp . '.csv', [
+        'Vote date and time', 'Voting day (ET)', 'Founder', 'Company',
+        'Voter first name', 'Voter last name', 'Verified email', 'Eventbrite registration',
+        'Verified via', 'Point type', 'Points', 'Status', 'Source',
+    ], $out);
+}
+
 /* ---------- the live feed ----------
    Answered before anything is drawn, and refused outright without a session. */
 if (isset($_GET['data'])) {
@@ -312,6 +407,34 @@ $standings = $authed ? pc_standings(pc_entrants()) : [];
 $leaders = $authed ? pc_leaders($standings) : [];
 $rows = $authed ? pc_rows(60) : [];
 $daily = $authed ? pc_daily(21) : [];
+
+/* Founder names for every table on this page, and whatever is known about the people who
+   cast the votes being reviewed. Both are read once here rather than per row. */
+$entrantById = [];
+foreach (pc_entrants() as $e) {
+    $entrantById[$e['id']] = $e;
+}
+$voters = $authed ? pc_voter_map(array_column($rows, 'voter_key')) : [];
+
+/* Three different numbers that are easy to conflate, so they are counted once, here.
+   Points are votes. Voters are people. The bonus is the attendee's second and third
+   points, which is the whole reason the first two can never be assumed equal. */
+$totPoints = 0;
+$totVoters = 0;
+$totBonus = 0;
+foreach ($daily as $d) {
+    $totPoints += (int) $d['points'];
+    $totBonus += (int) $d['bonus'];
+}
+if ($authed) {
+    $seenVoters = [];
+    foreach (pc_rows(100000) as $r) {
+        if ((int) $r['valid'] === 1) {
+            $seenVoters[(string) $r['voter_key']] = true;
+        }
+    }
+    $totVoters = count($seenVoters);        // across the competition, not per day
+}
 $state = pc_state();
 $totalValid = 0;
 foreach ($standings as $r) {
@@ -325,8 +448,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261023-79">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261023-79">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261023-80">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261023-80">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -415,10 +538,11 @@ foreach ($standings as $r) {
     <!-- ===== the full field ===== -->
     <section class="adm__sec">
       <p class="adm__h">All twenty</p>
-      <p class="adm__p">Ranked by valid votes. Equal counts share a rank.</p>
+      <p class="adm__p">Ranked by points. Equal totals share a rank.</p>
+      <p class="adm__p"><strong><?= (int) $totPoints ?></strong> point<?= $totPoints === 1 ? '' : 's' ?> from <strong><?= (int) $totVoters ?></strong> voter<?= $totVoters === 1 ? '' : 's' ?><?php if ($totBonus): ?>, of which <strong><?= (int) $totBonus ?></strong> came from the verified-attendee bonus<?php endif; ?>. A point is one vote; a voter is one person, however many points they spent.</p>
       <div class="adm__tablewrap">
         <table class="adm__table">
-          <thead><tr><th>Rank</th><th>Contestant</th><th>Company</th><th class="num">Votes</th></tr></thead>
+          <thead><tr><th>Rank</th><th>Contestant</th><th>Company</th><th class="num">Points</th></tr></thead>
           <tbody data-pc-board>
             <?php foreach ($standings as $r): ?>
             <tr><td class="rk">#<?= (int) $r['rank'] ?></td><td><?= h($r['name']) ?></td><td><?= h($r['company']) ?></td><td class="num"><?= (int) $r['votes'] ?></td></tr>
@@ -478,21 +602,32 @@ foreach ($standings as $r) {
 
     <section class="adm__sec">
       <p class="adm__h">Vote review</p>
-      <p class="adm__p">Invalidating a vote removes it from the totals at the next count, which is within a few seconds. Voter keys are one-way hashes; no email address is stored.</p>
+      <p class="adm__p">Invalidating a vote removes it from the totals at the next count, which is within a few seconds. <strong>Points</strong> counts votes; <strong>voters</strong> counts people. A verified attendee spending all three is one voter and three points, which is why those two numbers differ and should.</p>
+      <p class="adm__p"><strong>About the voter column.</strong> An address appears because that person held a code sent to it. Someone who verified by phone never gave one, so it reads <em>Not provided</em> &mdash; not a gap to be filled in. A name appears only where an Eventbrite registration has been <em>bound</em> to that identity through the bonus flow; a matching address in the attendee list is not on its own evidence that this voter is that attendee. Votes cast before this was recorded have no address and never will: the voter key is a one-way hash.</p>
       <div class="adm__tablewrap">
         <table class="adm__table">
-          <thead><tr><th>When</th><th>Voter key</th><th>For</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>When</th><th>Voter</th><th>Registration</th><th>Via</th><th>For</th><th class="num">Pts</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            <?php if (!$rows): ?><tr><td colspan="5">No votes recorded.</td></tr><?php endif; ?>
+            <?php if (!$rows): ?><tr><td colspan="8">No votes recorded.</td></tr><?php endif; ?>
             <?php foreach ($rows as $v): ?>
+            <?php
+              $vk = (string) $v['voter_key'];
+              $who = $voters[$vk] ?? null;
+              $ent = $entrantById[(string) $v['entrant_id']] ?? null;
+              $name = trim((string) ($who['eb_first'] ?? '') . ' ' . (string) ($who['eb_last'] ?? ''));
+              $slot = (int) ($v['slot'] ?? 1);
+            ?>
             <tr>
               <td><?= h($v['created_at']) ?></td>
-              <td class="mono"><?= h(substr((string) $v['voter_key'], 0, 22)) ?>&hellip;</td>
-              <td><?= h($v['entrant_id']) ?></td>
+              <td><?php if ($who && $who['email']): ?><?= h($who['email']) ?><?php else: ?><span class="adm__muted">Not provided</span><br><span class="mono"><?= h(substr($vk, 0, 18)) ?>&hellip;</span><?php endif; ?></td>
+              <td><?php if ($who && ($who['eb_status'] ?? '') === 'registered'): ?><span class="adm__pill adm__pill--ok">Registered</span><?php if ($name !== ''): ?> <?= h($name) ?><?php endif; ?><?php else: ?><span class="adm__muted">&mdash;</span><?php endif; ?></td>
+              <td><?= h($who['channel'] ?? '—') ?></td>
+              <td><?php if ($ent): ?><?= h($ent['name']) ?><?php if (($ent['company'] ?? '') !== ''): ?> &middot; <?= h($ent['company']) ?><?php endif; ?><?php else: ?><?= h((string) $v['entrant_id']) ?><?php endif; ?></td>
+              <td class="num"><?= $slot > 1 ? 'bonus' : '1' ?></td>
               <td><?= ((int) $v['valid'] === 1) ? '<span class="adm__pill adm__pill--ok">Valid</span>' : '<span class="adm__pill adm__pill--hidden">Invalid</span>' ?></td>
               <td><form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                 <input type="hidden" name="action" value="invalidate">
-                <input type="hidden" name="voter" value="<?= h($v['voter_key']) ?>">
+                <input type="hidden" name="voter" value="<?= h($vk) ?>">
                 <input type="hidden" name="to" value="<?= ((int) $v['valid'] === 1) ? 'invalid' : 'valid' ?>">
                 <button class="adm__btn<?= ((int) $v['valid'] === 1) ? ' adm__btn--warn' : '' ?>" type="submit"><?= ((int) $v['valid'] === 1) ? 'Invalidate' : 'Restore' ?></button>
               </form></td>
@@ -501,6 +636,18 @@ foreach ($standings as $r) {
           </tbody>
         </table>
       </div>
+    </section>
+
+    <!-- ===== exports ===== -->
+    <section class="adm__sec">
+      <p class="adm__h">Export</p>
+      <p class="adm__p">Opens in Excel or Google Sheets. <strong>Voting records</strong> is one row per point, newest first, with the founder, how the voter verified, and their address and registered name where those were actually proved. <strong>Standings</strong> is the leaderboard: one row per founder with their total.</p>
+      <div class="adm__bar">
+        <a class="adm__btn" href="?export=votes">Download voting records (CSV)</a>
+        <a class="adm__btn" href="?export=summary">Download standings (CSV)</a>
+      </div>
+      <p class="adm__p"><strong>These files contain personal information</strong> &mdash; verified email addresses, and registered names where a registration was bound. Phone numbers, verification codes, IP addresses and voter-key hashes are deliberately left out. Share them only with people entitled to see them.</p>
+      <p class="adm__p">Cells beginning <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> are written with a leading apostrophe so a spreadsheet treats them as text rather than running them as a formula. The apostrophe is not part of the value and does not show in the cell.</p>
     </section>
 
     <section class="adm__sec">
@@ -733,7 +880,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261023-79" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261023-80" defer></script>
 <?php endif; ?>
 </body>
 </html>

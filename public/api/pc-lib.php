@@ -510,6 +510,158 @@ function pc_reset(): void
     pc_file_write($d);
 }
 
+/* ---------- who the voter is ----------
+
+   Until now nothing here knew. A voter is a one-way HMAC of their email or phone number
+   (pc-identity.php, pc-twilio.php), which is what let the dashboard honestly say no address
+   was stored -- and also what made "who voted for whom" unanswerable.
+
+   Leadership needs that answer for reporting, so verified addresses are now recorded. Three
+   things follow from that, and they are the whole design:
+
+   1. ONLY WHAT THE VOTER PROVED. An email appears here because the person held a code sent
+      to it. A phone voter who never gave an address has no address, and the dashboard says
+      "Not provided" rather than guessing one.
+   2. NOTHING IS BACKFILLED. The hash is one way, so votes cast before this will never have
+      a name or an address against them. That is a fact about the hash, not a bug to fix,
+      and inventing a plausible address would be worse than the gap.
+   3. AN EVENTBRITE NAME MEANS A PROVEN REGISTRATION. It is written only by the bonus flow,
+      after the registration has been bound to this identity. A matching address in the
+      attendee list is not, on its own, evidence that this voter is that attendee.
+
+   The table lives in the same database, outside the web root, and is never served publicly:
+   pc-rank.php and every other public endpoint read votes, never this.
+*/
+function pc_voter_table(): void
+{
+    $db = pc_db();
+    if (!$db) {
+        return;
+    }
+    $db->exec('CREATE TABLE IF NOT EXISTS pc_voter (
+        ident      TEXT PRIMARY KEY,
+        email      TEXT,
+        channel    TEXT,
+        eb_status  TEXT,
+        eb_first   TEXT,
+        eb_last    TEXT,
+        first_seen TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )');
+}
+
+/**
+ * Record what a verification just proved about this identity.
+ *
+ * Only non-empty fields are written, so a later phone verification cannot blank an email
+ * proved earlier, and a plain email verification cannot erase an Eventbrite name.
+ *
+ * @param array{email?:string,channel?:string,eb_status?:string,eb_first?:string,eb_last?:string} $f
+ */
+function pc_voter_note(string $ident, array $f): void
+{
+    if ($ident === '') {
+        return;
+    }
+    pc_voter_table();
+    $db = pc_db();
+    if (!$db) {
+        return;
+    }
+    $cols = ['email', 'channel', 'eb_status', 'eb_first', 'eb_last'];
+    $set = [];
+    $args = [];
+    foreach ($cols as $c) {
+        $v = isset($f[$c]) ? trim((string) $f[$c]) : '';
+        if ($v !== '') {
+            $set[] = $c;
+            $args[$c] = $v;
+        }
+    }
+    $now = ngs_now();
+    try {
+        $db->prepare('INSERT OR IGNORE INTO pc_voter (ident, first_seen, updated_at) VALUES (?, ?, ?)')
+           ->execute([$ident, $now, $now]);
+        if ($set === []) {
+            return;
+        }
+        $sql = 'UPDATE pc_voter SET updated_at = ?, '
+             . implode(', ', array_map(static function (string $c): string { return $c . ' = ?'; }, $set))
+             . ' WHERE ident = ?';
+        $db->prepare($sql)->execute(array_merge([$now], array_values($args), [$ident]));
+    } catch (Throwable $e) {
+        /* Reporting detail must never cost a vote. A verification that cannot be recorded
+           here still verified. */
+        error_log("People's Choice: could not record voter detail.");
+    }
+}
+
+/**
+ * Everything known about a set of voter keys, keyed by key.
+ *
+ * Votes carry the identity they were cast under; pc_identity may since have merged that with
+ * another. Both are looked up, the vote's own key first, so a merge adds information and
+ * never silently reattributes a vote to a different person's details.
+ *
+ * @param list<string> $keys
+ * @return array<string, array{email:?string,channel:?string,eb_status:?string,eb_first:?string,eb_last:?string}>
+ */
+function pc_voter_map(array $keys): array
+{
+    $out = [];
+    $keys = array_values(array_unique(array_filter($keys, static function ($k): bool {
+        return is_string($k) && $k !== '';
+    })));
+    if ($keys === []) {
+        return $out;
+    }
+    pc_voter_table();
+    $db = pc_db();
+    if (!$db) {
+        return $out;
+    }
+    /* The vote's own key, plus whatever it has been merged into. */
+    $want = $keys;
+    $canon = [];
+    foreach ($keys as $k) {
+        $c = function_exists('pc_canonical') ? pc_canonical($k) : $k;
+        $canon[$k] = $c;
+        if ($c !== '' && $c !== $k) {
+            $want[] = $c;
+        }
+    }
+    $want = array_values(array_unique($want));
+    $rows = [];
+    try {
+        $in = implode(',', array_fill(0, count($want), '?'));
+        $s = $db->prepare('SELECT ident, email, channel, eb_status, eb_first, eb_last
+                           FROM pc_voter WHERE ident IN (' . $in . ')');
+        $s->execute($want);
+        foreach ($s->fetchAll() as $r) {
+            $rows[(string) $r['ident']] = [
+                'email' => ($r['email'] ?? '') !== '' ? (string) $r['email'] : null,
+                'channel' => ($r['channel'] ?? '') !== '' ? (string) $r['channel'] : null,
+                'eb_status' => ($r['eb_status'] ?? '') !== '' ? (string) $r['eb_status'] : null,
+                'eb_first' => ($r['eb_first'] ?? '') !== '' ? (string) $r['eb_first'] : null,
+                'eb_last' => ($r['eb_last'] ?? '') !== '' ? (string) $r['eb_last'] : null,
+            ];
+        }
+    } catch (Throwable $e) {
+        return $out;
+    }
+    $blank = ['email' => null, 'channel' => null, 'eb_status' => null, 'eb_first' => null, 'eb_last' => null];
+    foreach ($keys as $k) {
+        $a = $rows[$k] ?? $blank;
+        $b = $rows[$canon[$k]] ?? $blank;
+        $merged = $blank;
+        foreach ($blank as $field => $_) {
+            $merged[$field] = $a[$field] ?? $b[$field];   // the vote's own identity wins
+        }
+        $out[$k] = $merged;
+    }
+    return $out;
+}
+
 /* ---------- the entrants ----------
    The twenty ids are generated here and never read from anywhere else. pc-vote.php and
    pc-rank.php validate against this list, so an id that went missing would silently make a

@@ -2808,6 +2808,21 @@
       track('jump_bottom', {});
     });
 
+    /* On a phone the founder rail runs the full width of the screen and the buttons sit
+       in the lower corner, which puts them on top of it. Rather than nudge them somewhere
+       else and hope, the nav stands down while the rail is on screen: the rail is a
+       horizontal scroller and a floating control over it is exactly the interference the
+       brief rules out. Above 640px the nav is centred on the right edge and clear of it,
+       so this does not apply. */
+    var overRail = false;
+    var railEl = $('.ff-rail');
+    if (railEl && typeof IntersectionObserver === 'function') {
+      new IntersectionObserver(function (es) {
+        overRail = es[0].isIntersecting;
+        sync();
+      }, { rootMargin: '-20% 0px -10% 0px' }).observe(railEl);
+    }
+
     function sync() {
       ticking = false;
       var y = window.scrollY || document.documentElement.scrollTop || 0;
@@ -2815,6 +2830,7 @@
       var max = (document.documentElement.scrollHeight || 0) - vh;
       /* A page shorter than a screen and a bit has nothing to jump through. */
       if (max < 400) { box.hidden = true; return; }
+      if (overRail && window.innerWidth <= 640) { box.hidden = true; return; }
       box.hidden = false;
       if (up) up.hidden = y < vh * 0.6;
       if (down) down.hidden = y > max - vh * 0.6;

@@ -155,7 +155,7 @@ function pc_smtp_save(array $in): array
     if ($switching && ($pass === '' || $user === '' || $from === '')) {
         return ['ok' => false, 'error' => 'You are pointing this at a different relay ('
             . $cur['host'] . ' to ' . $host . '), so the username, password and From address '
-            . 'must all be entered again. The previous provider's credentials are not carried '
+            . 'must all be entered again. Credentials from the previous relay are not carried '
             . 'across -- they would not work, and pairing them with the new host is what '
             . 'produces an authentication failure that looks like a bad key. Nothing was saved.'];
     }

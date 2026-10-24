@@ -1885,6 +1885,16 @@
        preload arithmetic. So its arrival is decided from its own rectangle rather than by
        asking which panel holds the centre -- which is why the earlier data-reel-end test
        here could never fire. */
+    /* In card mode nothing plays. Twenty cards sit side by side sharing one vertical
+       band, so "which panel holds the middle of the screen" has no sensible answer, and
+       a page that starts talking because a card drifted past the centre is not what
+       anybody asked for. Posters until someone opens a founder or enters the reels. */
+    if (!reelLive) {
+      reelActivate(null);
+      reelProgress(null);
+      return;
+    }
+
     var end = $('[data-reel-end]', reelTrack);
     if (end) {
       var er = end.getBoundingClientRect();
@@ -2383,6 +2393,12 @@
       rail.classList.add('is-in');
       return;
     }
+    /* The entrance is an enhancement and is treated as one. Whatever happens with
+       scroll events, observers or the compositor, the bubbles are on screen shortly
+       after the rail is painted. Measured on the deployed site before this: is-in was
+       set and the portraits were still at opacity 0, because the transition never
+       ran. */
+    setTimeout(function () { rail.classList.add('is-in'); }, 1200);
     var fired = false;
     var fire = function () {
       if (fired) return;
@@ -2558,6 +2574,12 @@
       b.hidden = !hit;
       if (hit) shown++;
     });
+    /* The cards are the primary surface, so they filter with the rail. */
+    $$('[data-reel-panel]', reelTrack).forEach(function (p) {
+      var e = byId[p.getAttribute('data-reel-panel')];
+      var hay = e ? fold(e.company + ' ' + e.name) : '';
+      p.hidden = !!(needle && hay.indexOf(needle) < 0);
+    });
     var empty = $('[data-ff-empty]');
     if (empty) empty.hidden = !(needle && shown === 0);
     if (clearBtn) clearBtn.hidden = !needle;
@@ -2586,6 +2608,7 @@
      A phone swipes this; a desktop should not have to. Arrows appear only when there is
      something off either end, and they move by roughly a screenful of bubbles. */
   function railArrows() {
+    var rail = activeRail();
     if (!rail) return;
     var prev = $('[data-ff-prev]'), next = $('[data-ff-next-rail]');
     if (!prev || !next) return;
@@ -2595,7 +2618,19 @@
     next.hidden = !fine || over < 8 || rail.scrollLeft > over - 8;
   }
 
+  /* Which horizontal rail the arrows drive. While the cards are laid out as a rail
+     they are the main thing to browse, so the arrows move them; the bubbles keep their
+     own swipe and keyboard. */
+  function activeRail() {
+    if (reel && !reel.classList.contains('is-live') && reelTrack
+        && reelTrack.scrollWidth > reelTrack.clientWidth + 8) {
+      return reelTrack;
+    }
+    return rail;
+  }
+
   function railStep(dir) {
+    var rail = activeRail();
     if (!rail) return;
     var by = Math.max(160, Math.round(rail.clientWidth * 0.8));
     var from = rail.scrollLeft;

@@ -2374,53 +2374,10 @@
     bubbleEntrance();
   }
 
-  /* The bubbles fly in from alternating sides, staggered, and settle.
-
-     Latched on purpose. The brief is explicit that this must not re-trigger whenever
-     somebody drifts a little up or down the page, so the class goes on once and the
-     watcher is dropped -- there is no route back to the hidden state. */
-  function bubbleEntrance() {
-    if (!rail) return;
-    rail.setAttribute('data-enter', '');
-    rail.classList.add('is-armed');
-    /* And disarmed shortly after, unconditionally. While is-armed is on the rail the
-       bubbles are hidden; once it is gone the hidden rule stops matching and they are
-       simply visible, with no transition left to depend on. */
-    setTimeout(function () { rail.classList.remove('is-armed'); }, 1800);
-    $$('.ff-bub', rail).forEach(function (b, i) {
-      /* alternating sides, and a little further out every other card for depth */
-      var side = (i % 2) ? 1 : -1;
-      b.style.setProperty('--bx', (side * (54 + (i % 3) * 20)) + 'px');
-      b.style.setProperty('--bd', (i * 55) + 'ms');
-    });
-    if (rail.classList.contains('is-in')) return;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      rail.classList.add('is-in');
-      return;
-    }
-    /* The entrance is an enhancement and is treated as one. Whatever happens with
-       scroll events, observers or the compositor, the bubbles are on screen shortly
-       after the rail is painted. Measured on the deployed site before this: is-in was
-       set and the portraits were still at opacity 0, because the transition never
-       ran. */
-    setTimeout(function () { rail.classList.add('is-in'); }, 1200);
-    var fired = false;
-    var fire = function () {
-      if (fired) return;
-      var r = rail.getBoundingClientRect();
-      if (r.top > innerHeight * 0.88 || r.bottom < 0) return;
-      fired = true;
-      rail.classList.add('is-in');
-      document.removeEventListener('scroll', fire, true);
-      clearInterval(beat);
-    };
-    document.addEventListener('scroll', fire, { passive: true, capture: true });
-    /* Same reason as the feed: in this environment neither IntersectionObserver nor a
-       window scroll listener can be relied on, so position is read on a slow heartbeat
-       as well. It stops the moment the bubbles have flown. */
-    var beat = setInterval(fire, 220);
-    fire();
-  }
+  /* The staggered entrance that used to live here is gone -- see the note in
+     founder-stage.css. It hid the founders three times and no flourish is worth that.
+     The bubbles are painted and they are visible. */
+  function bubbleEntrance() {}
 
   /* ---------- the story viewer ---------- */
 

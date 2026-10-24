@@ -41,32 +41,24 @@
   text-transform: uppercase; color: var(--stg-dim);
 }
 
-/* ---- the bubble entrance ----
-   They fly in from alternating sides, staggered, and settle. Held off until the rail
-   is genuinely on screen, and latched so a visitor drifting up and down the page does
-   not set twenty bubbles flying every time. */
-/* The hidden state is GATED ON .is-armed, and the script removes that class on a timer
-   whatever else happens. That matters because the entrance has a per-bubble transition
-   DELAY, and a delay never elapses if the compositor is not running -- measured on the
-   deployed site, is-in was set and the portraits were still at opacity 0 a second and a
-   half later. Adding another class could not rescue that, because the rule was still
-   matching. Removing the gate makes the hidden declaration stop applying at all, so the
-   bubbles return to their ordinary visible state with nothing left to animate. */
-.ff-rail.is-armed .ff-bub {
-  opacity: 0;
-  transform: translate3d(var(--bx, 64px), 14px, 0) scale(.84);
-}
-.ff-rail.is-armed.is-in .ff-bub {
-  opacity: 1;
-  transform: none;
-  transition:
-    opacity .52s cubic-bezier(.22,1,.3,1) var(--bd, 0s),
-    transform .74s cubic-bezier(.18,1.02,.28,1) var(--bd, 0s);
-}
-@media (prefers-reduced-motion: reduce) {
-  .ff-rail.is-armed .ff-bub { opacity: 1; transform: none; }
-  .ff-rail.is-armed.is-in .ff-bub { transition: none; }
-}
+/* ---- the bubble entrance: removed, on purpose ----
+
+   There was a staggered fly-in here. It hid the founders three times on a deployed
+   site and I fixed it three times, each fix defeated by the same thing in a different
+   costume:
+
+     1. opacity 0 carried to 1 by a transition -- the transition never ran;
+     2. a timer adding .is-in -- the rule still matched, so nothing changed;
+     3. a timer removing the gate -- by then `transition: all` had started animating
+        the change, and the animation never finished either.
+
+   Each attempt left twenty founders invisible on the page. No decorative entrance is
+   worth that, five days from a launch, so the bubbles simply appear. The rail still
+   scrolls, still has its arrows and its arrow keys; it just does not perform.
+
+   If this is ever wanted back: drive it with a keyframe animation and NO fill-mode, so
+   that an animation which never starts leaves the element in its ordinary visible
+   state. Never with a transition, and never with fill-mode: both. */
 
 /* ===========================================================================
    2. THE CINEMATIC INTRO

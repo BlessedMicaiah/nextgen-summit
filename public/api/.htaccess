@@ -8,7 +8,15 @@
 # edit ever left it unparseable the raw source would otherwise be served as text. Same
 # reasoning that put pc-twilio.php in this list.
 # finalists.php is the finalist data include; same reasoning again.
-<FilesMatch "^(_lib|pc-lib|pc-rules|pc-twilio|pc-admin-pin|finalists|finalists-gate|pc-attendee|pc-mailer|pc-identity|pc-email-otp)\.php$">
+#
+# ngd-lib.php and ngd-auth.php are the NextGen Data reporting core and its credential
+# check. Both are includes, same as the rest of this list: ngd-lib.php holds the read-only
+# database paths and ngd-auth.php reads the admin credential, so if an edit ever left either
+# unparseable the raw source would otherwise be served as text. ngd-collect.php is the one
+# NextGen Data endpoint that is meant to be public -- it only ever answers 204 -- and the
+# authenticated reporting pages live in /insights/, not here, so that the session cookie scoped
+# to /insights/ cannot reach them from anywhere else.
+<FilesMatch "^(_lib|pc-lib|pc-rules|pc-twilio|pc-admin-pin|finalists|finalists-gate|pc-attendee|pc-mailer|pc-identity|pc-email-otp|ngd-lib|ngd-auth)\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

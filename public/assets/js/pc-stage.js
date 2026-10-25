@@ -38,6 +38,19 @@
 
   var SELF = document.currentScript;      // captured now; it is null once a callback runs
 
+  /* The homepage view, recorded before anything else can bail out.
+
+     home_view below fires only once the section scrolls into sight, which makes it a
+     'the nominees were seen' signal rather than a page view -- and a visitor who lands
+     on the homepage and never scrolls would be invisible to the funnel, which would
+     then overstate every conversion rate measured against it.
+
+     This goes straight to the beacon rather than through track(), deliberately: track()
+     also pushes to the dataLayer, and the People's Choice page already emits
+     ngs_pc_page_view there. Routing a homepage view through it would add a second
+     source for an event somebody else's GTM configuration is already counting. */
+  try { if (window.NGD_BEACON) window.NGD_BEACON('page_view', null); } catch (e) {}
+
   var sec = document.querySelector('[data-pcs]');
   if (!sec) return;
 
@@ -77,6 +90,8 @@
       for (var k in data) { if (Object.prototype.hasOwnProperty.call(data, k)) p[k] = data[k]; }
       window.dataLayer.push(p);
     } catch (e) {}
+    /* and on to NextGen Data, on its own guard. See the note in peoples-choice.js. */
+    try { if (window.NGD_BEACON) window.NGD_BEACON(name, data); } catch (e) {}
   }
 
   function esc(s) {

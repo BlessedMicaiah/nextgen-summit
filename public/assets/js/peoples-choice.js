@@ -153,6 +153,13 @@
     var d = { event: 'ngs_pc_' + name };
     if (params) for (var k in params) if (params.hasOwnProperty(k)) d[k] = params[k];
     try { (window.dataLayer = window.dataLayer || []).push(d); } catch (e) {}
+    /* The same events, also to NextGen Data. On its own guard, because five of the call
+       sites below sit immediately before the UI continuation a voter is waiting on, and
+       several of those are inside a promise callback where a throw would be swallowed and
+       the screen would simply never advance. ngd-track.js is fire-and-forget by
+       construction; if it failed to load, NGD_BEACON is undefined and this line does
+       nothing. Nothing here is awaited and nothing is returned. */
+    try { if (window.NGD_BEACON) window.NGD_BEACON(name, params); } catch (e) {}
   }
 
   /* ---------- 4. no local ballot ----------

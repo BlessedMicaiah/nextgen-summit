@@ -97,8 +97,14 @@
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0) return;   // a new tab on purpose
         e.preventDefault();
         trigger.click();
-        // if the modal does not actually appear, go to Eventbrite rather than nowhere
-        setTimeout(function () { if (!modalIsOpen()) window.location.href = a.href || EVENT_URL; }, 1500);
+        // if the modal does not actually appear, go to Eventbrite rather than nowhere.
+        // The same check decides whether a checkout actually OPENED, which is the one
+        // funnel step a click alone cannot tell you -- and the reason this dashboard
+        // never reports a click as a purchase.
+        setTimeout(function () {
+          if (modalIsOpen()) { ngd('checkout_open'); return; }
+          window.location.href = a.href || EVENT_URL;
+        }, 1500);
       });
     });
   }
@@ -126,6 +132,19 @@
       if (window.EBWidgets) { clearInterval(wait); initCheckout(); }
     }, 100);
   }
+
+  /* ---------- NextGen Data ----------
+     This file has no track() of its own -- the only dataLayer push in it is the order
+     confirmation above -- so the two funnel steps that only exist here are sent directly.
+     Guarded and fire-and-forget, exactly as in ngd-track.js: nothing on this page may ever
+     fail because an analytics call did. */
+  function ngd(kind) {
+    try { if (window.NGD_BEACON) window.NGD_BEACON(kind, null); } catch (e) {}
+  }
+
+  /* The ticket page was opened. GA4 sees this page already; NextGen Data does not, and
+     the visitor-to-ticket funnel cannot be joined up without it. */
+  ngd('tickets_view');
 
   $$('[data-eb]').forEach(function (a) { if (!a.getAttribute('href')) a.href = EVENT_URL; });
 

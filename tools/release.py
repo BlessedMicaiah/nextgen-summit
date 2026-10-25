@@ -68,7 +68,12 @@ def stale_stamp():
         f = os.path.join(PUBLIC, page)
         if not os.path.isfile(f):
             continue
-        m = re.search(r'\?v=(\d{8}-\d+)', io.open(f, encoding='utf-8').read())
+        # The stamp is <date>-<build>, and the build part is not always digits: the
+        # review site uses s01, s02, s03... A pattern of \d+ therefore matched nothing
+        # on staging, stamp stayed None, and this whole guard returned at the 'no stamp
+        # scheme here' branch below -- silently inert for every review build it was
+        # meant to police. Found by audit on 2026-10-25.
+        m = re.search(r'\?v=(\d{8}-[A-Za-z0-9]+)', io.open(f, encoding='utf-8').read())
         if m:
             stamp = m.group(1)
             break

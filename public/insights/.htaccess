@@ -1,0 +1,64 @@
+# ============================================================================
+# /insights/ — NEXTGEN DATA, the private leadership dashboard.
+#
+# WHY NOT /data/, WHICH IS WHAT THE BRIEF SUGGESTED
+#
+# public/data/ is not a free directory. It is the third and last candidate in
+# ngs_data_dir() (api/_lib.php:45-64): if the host ever stops letting the code write
+# above the web root, the LIVE VOTING DATABASE is created in there, which is why
+# .gitignore carries "public/data/*.sqlite" and why that folder answers "Require all
+# denied" to everything.
+#
+# On this host that fallback is not in use — the live data folder resolves to
+# /home/.../nextgensummit.us/nextgen-data, outside public_html, which is the only reason
+# the votes have survived the deploys (a Hostinger deploy replaces the web root, so a
+# database inside it would have been destroyed by the first release after it was created).
+#
+# But "not in use today" is a fact about a configuration, not a guarantee, and three
+# things would have gone wrong had the dashboard been served from there:
+#
+#   1. Serving a web app out of the directory the database may fall back into means the
+#      only thing between the public and the ballot is a FilesMatch rule.
+#   2. ngs_protect_dir() (api/_lib.php:34-42) RE-CREATES a deny-all .htaccess and an empty
+#      index.html in that directory whenever either is missing. The voting code would
+#      periodically seal the dashboard shut.
+#   3. That same empty index.html already existed, and DirectoryIndex would serve it
+#      ahead of index.php — a blank page where the dashboard should be.
+#
+# So public/data/ has been left exactly as it was, sealed, and the dashboard lives here.
+# Nothing about the voting system was changed to make room for it.
+#
+# WHAT SECURES THIS DIRECTORY
+#
+# Not this file. index.php, report.php and export.php each authenticate in PHP before
+# emitting a byte, and the session cookie is scoped to /insights/ so no request to any
+# other part of the site can carry one. If this .htaccess vanished entirely the dashboard
+# would still demand a password. The rules below are belt, not braces.
+# ============================================================================
+
+# 1. No directory listing, whatever ends up in here.
+Options -Indexes
+
+# 2. Nothing but the three entry points is servable. A stray .json cache, an editor
+#    backup or a half-written export cannot be fetched.
+<FilesMatch "\.(sqlite|sqlite3|sqlite-journal|sqlite-wal|sqlite-shm|db|jsonl|json|log|bak|tmp|orig|save|swp)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# 3. The headers PHP already sends, repeated here so they still apply if PHP were ever
+#    misconfigured into serving these files as plain text.
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+  Header always set X-Frame-Options "DENY"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "no-referrer"
+  Header always set Cache-Control "no-store, no-cache, must-revalidate, private"
+</IfModule>
+
+DirectoryIndex index.php

@@ -135,10 +135,10 @@ function ngd_users_file(): string
  *
  * @return array<string, array{hash:string,name:string}>
  */
-function ngd_seed_accounts(): array
+function ngd_seed_accounts(bool $fresh = false): array
 {
     static $cache = null;
-    if ($cache !== null) {
+    if ($cache !== null && !$fresh) {
         return $cache;
     }
     $cache = [];
@@ -179,7 +179,7 @@ function ngd_users(bool $fresh = false): array
 
     /* Accounts that came with the deployment first, so that one exists even on a server
        where nothing has ever been written outside the web root. */
-    foreach (ngd_seed_accounts() as $u => $r) {
+    foreach (ngd_seed_accounts($fresh) as $u => $r) {
         $cache[$u] = ['hash' => $r['hash'], 'name' => $r['name'], 'added' => '',
                       'active' => true, 'last' => null, 'seeded' => true];
     }

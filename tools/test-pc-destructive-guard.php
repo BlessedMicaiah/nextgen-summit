@@ -79,12 +79,15 @@ function rmtree(string $d): void
 @mkdir($sand . '/' . $dirName, 0777, true);
 
 foreach (glob($root . '/public/api/*.php') ?: [] as $f) {
-    if (basename($f) === 'config.php') { continue; }
+    /* No real private config of any kind reaches a sandbox: config.php holds the
+       live secrets and config.ngd.php holds real account hashes. A test that
+       copied either would be testing the developer's machine. */
+    if (preg_match('/^config(\..+)?\.php$/', basename($f))) { continue; }
     copy($f, $sand . '/public/api/' . basename($f));
 }
 copy($root . '/public/assets/js/pc-founders.js', $sand . '/public/assets/js/pc-founders.js');
 file_put_contents($sand . '/public/api/config.php', "<?php\ndeclare(strict_types=1);\n"
-    . "const NGS_ADMIN_SALT = 'testsalt';\nconst NGS_ADMIN_HASH = 'nothing';\n"
+    . "const NGS_ADMIN_SALT = 'abababababababababababab';\nconst NGS_ADMIN_HASH = 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd';\n"
     . "const NGS_SECRET = 'test-secret-not-a-real-one';\nconst NGS_DATA_KEY = 'guard';\n"
     . "const NGS_EVENTBRITE_TOKEN = '';\n"
     . "define('NGS_DATA_DIR', '" . str_replace('\\', '/', $sand) . "/" . $dirName . "');\n");

@@ -83,8 +83,10 @@ echo "sandbox  $sand\n\n";
 @mkdir($sand . '/nextgen-data-staging', 0777, true);
 
 foreach (glob($root . '/public/api/*.php') ?: [] as $f) {
-    if (basename($f) === 'config.php') {
-        continue;                       // never copy the real secrets into a test sandbox
+    /* No real private config of any kind reaches a sandbox: config.php holds the
+       live secrets and config.ngd.php holds real account hashes. */
+    if (preg_match('/^config(\..+)?\.php$/', basename($f))) {
+        continue;
     }
     copy($f, $sand . '/public/api/' . basename($f));
 }
@@ -94,8 +96,8 @@ copy($root . '/public/assets/js/pc-founders.js', $sand . '/public/assets/js/pc-f
    exactly the shape release.py injects for the staging build -- so this also exercises the
    path arithmetic ngd_base_dir() depends on. */
 file_put_contents($sand . '/public/api/config.php', "<?php\ndeclare(strict_types=1);\n"
-    . "const NGS_ADMIN_SALT = 'testsalt';\n"
-    . "const NGS_ADMIN_HASH = 'nothing';\n"
+    . "const NGS_ADMIN_SALT = 'abababababababababababab';\n"
+    . "const NGS_ADMIN_HASH = 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd';\n"
     . "const NGS_SECRET = 'test-secret-not-a-real-one';\n"
     . "const NGS_DATA_KEY = 'testkey';\n"
     . "const NGS_EVENTBRITE_TOKEN = '';\n"
@@ -568,6 +570,111 @@ same('the ballot gained no rows from any of this', $ballotBefore,
      (int) $db->query("SELECT COUNT(*) n FROM pc_votes")->fetch()['n']);
 ok('and no analytics table appeared in the ballot',
    (int) $db->query("SELECT COUNT(*) n FROM sqlite_master WHERE name LIKE 'ngd_%'")->fetch()['n'] === 0);
+
+/* ---------------------------------------------------------------------------
+   12. WHO GETS IN
+
+   The dashboard reads a live competition, so the lock on it matters as much as the
+   numbers behind it. These cases run against the real ngd-auth.php: the credential
+   check, the throttle that makes guessing expensive, and the rule that a credential
+   provisioned with the deploy cannot be silently duplicated into the writable store.
+   ------------------------------------------------------------------------ */
+
+echo "\n=== the credential check ===\n";
+require_once $api . '/ngd-auth.php';
+
+/* The sandbox config sets NGS_ADMIN_SALT/HASH to obviously fake values, so build a
+   credential that matches them the way admin/index.php:53 does. */
+$pin = 'a-test-pin-that-is-not-real';
+$fakeHash = hash_hmac('sha256', $pin, NGS_ADMIN_SALT);
+ok('the sandbox PIN hash is the wrong one on purpose', $fakeHash !== NGS_ADMIN_HASH);
+
+same('an empty password never passes', false, ngd_auth_check('', '')['ok']);
+same('nor an empty password with a username', false, ngd_auth_check('someone', '')['ok']);
+same('an unknown username is refused', false, ngd_auth_check('nobody', 'whatever-long-string')['ok']);
+same('a wrong owner PIN is refused', false, ngd_auth_check('', 'definitely-not-the-pin')['ok']);
+same('and so is a wrong PIN under the name "owner"', false, ngd_auth_check('owner', 'nope')['ok']);
+
+echo "\n=== no default, and no way in without a credential ===\n";
+ok('with no accounts provisioned, nothing but the PIN can open it', ngd_users() === []);
+ok('and the PIN route only exists because config defines a hash', ngd_owner_pin_available());
+
+echo "\n=== accounts provisioned with the deploy ===\n";
+/* Write a config.ngd.php into the sandbox the way tools/make-ngd-user.php does. */
+$pass1 = 'river-cobalt-lantern-summit-ivory-41';
+$h1 = password_hash($pass1, PASSWORD_DEFAULT);
+file_put_contents($api . '/config.ngd.php',
+    "<?php\ndeclare(strict_types=1);\n\nNGD_ACCOUNT = 'chair|Board Chair|" . $h1 . "';\n"
+  . "NGD_ACCOUNT = 'broken|Bad Line|not-a-hash';\n");
+ngd_seed_accounts(true);
+$users = ngd_users(true);
+ok('the good account is picked up', isset($users['chair']), implode(',', array_keys($users)));
+ok('a line whose hash is not a hash is ignored, not trusted', !isset($users['broken']));
+same('it is marked as coming from the deploy', true, $users['chair']['seeded']);
+
+$r = ngd_auth_check('chair', $pass1);
+same('the right passphrase signs in', true, $r['ok']);
+same('with its display name', 'Board Chair', $r['name']);
+same('and the leadership role, not owner', 'leadership', $r['role']);
+same('a wrong passphrase does not', false, ngd_auth_check('chair', $pass1 . 'x')['ok']);
+same('and the username is case-insensitive', true, ngd_auth_check('CHAIR', $pass1)['ok']);
+
+echo "\n=== suspending, and what cannot be undone by a deploy ===\n";
+ok('a seeded account can be suspended', ngd_user_set_active('chair', false));
+ngd_users(true);
+same('and then it cannot sign in', false, ngd_auth_check('chair', $pass1)['ok']);
+$json = json_decode((string) file_get_contents(ngd_users_file()), true);
+ok('the writable store holds no copy of its hash',
+   !str_contains((string) json_encode($json), substr($h1, 0, 20)), 'a hash was copied out');
+ok('a seeded account cannot be deleted, only suspended', ngd_user_remove('chair') === false);
+ok('restoring it works', ngd_user_set_active('chair', true));
+ngd_users(true);
+same('and it signs in again', true, ngd_auth_check('chair', $pass1)['ok']);
+
+echo "\n=== an ordinary account, added from the dashboard ===\n";
+$pass2 = 'meadow-quartz-pennant-thistle-zenith-07';
+$add = ngd_user_save('director', $pass2, 'Programme Director');
+same('it is created', true, $add['ok']);
+same('and signs in', true, ngd_auth_check('director', $pass2)['ok']);
+same('a short password is refused outright', false, ngd_user_save('shorty', 'tooshort', 'X')['ok']);
+same('and so is a malformed username', false, ngd_user_save('no spaces!', $pass2, 'X')['ok']);
+ok('this one CAN be removed, because no deploy would bring it back',
+   ngd_user_remove('director') === true);
+same('and then it cannot sign in', false, ngd_auth_check('director', $pass2)['ok']);
+
+echo "\n=== the throttle ===\n";
+/* The counter lives in the analytics store, never in the voting database. */
+$ballotBefore2 = (int) $db->query('SELECT COUNT(*) n FROM pc_votes')->fetch()['n'];
+$t0 = ngd_try_check();
+same('a fresh connection is allowed', true, $t0['ok']);
+for ($i = 0; $i < NGD_TRY_MAX; $i++) {
+    ngd_try_note(false);
+}
+$t1 = ngd_try_check();
+same('after ' . NGD_TRY_MAX . ' failures it is locked out', false, $t1['ok']);
+ok('and is told roughly how long to wait', $t1['retry_after'] > 0 && $t1['retry_after'] <= NGD_TRY_WINDOW,
+   (string) $t1['retry_after']);
+ngd_try_note(true);
+same('a successful sign-in clears the record', true, ngd_try_check()['ok']);
+same('and none of that touched the ballot', $ballotBefore2,
+     (int) $db->query('SELECT COUNT(*) n FROM pc_votes')->fetch()['n']);
+$ev2 = ngd_events_db();
+ok('the failures were counted in the analytics store instead',
+   (int) $ev2->query('SELECT COUNT(*) n FROM sqlite_master WHERE name = ' . "'ngd_throttle'")->fetch()['n'] === 1);
+
+echo "\n=== the session is scoped to the dashboard and nowhere else ===\n";
+same('its cookie path is /insights/', '/insights/', NGD_SESSION_PATH);
+same('its cookie name is its own', 'ngd_sess', NGD_SESSION_NAME);
+ok('it is not the registrations admin cookie', NGD_SESSION_NAME !== 'ngs_admin');
+ok('nor the People\'s Choice admin cookie', NGD_SESSION_NAME !== 'ngs_pc_admin');
+ok('a session expires within the day', NGD_SESSION_MAX <= 12 * 3600);
+ok('and sooner if left alone', NGD_SESSION_IDLE < NGD_SESSION_MAX);
+
+echo "\n=== turning the shared PIN off once named accounts exist ===\n";
+ok('today the PIN is accepted because config defines one', ngd_owner_pin_available());
+ok('NGD_DISABLE_OWNER_PIN is the switch that ends that',
+   !defined('NGD_DISABLE_OWNER_PIN'),
+   'already defined in this sandbox');
 
 /* ---------------------------------------------------------------------------
    11. Done.

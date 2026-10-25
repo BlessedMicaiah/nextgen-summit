@@ -173,7 +173,9 @@ r('a different founder, after +1',     'open',        PLUS1,    'entrant-07', { 
    Under the old rule all of them read "Today's vote is used". With two votes still in hand
    that sentence is false, and false on nineteen cards at once.
    --------------------------------------------------------------------------- */
-const sp = (o) => Object.assign({ verified: true, spread: true, mode: 'daily' }, o);
+/* ok:true matters: routeFor refuses anything the server did not vouch for, and the label
+   functions ignore it. The fixture carries it so one set of states can drive both. */
+const sp = (o) => Object.assign({ ok: true, verified: true, spread: true, mode: 'daily' }, o);
 
 const S_FRESH3 = sp({ allowance: 3, used: 0, remaining: 3 });
 const S_LEFT2  = sp({ allowance: 3, used: 1, remaining: 2, today_entrant: 'entrant-01' });
@@ -201,5 +203,38 @@ r('attendee, one left',             'open', S_LEFT1,  'entrant-07', { label: '1 
 r('attendee, all three spent',      'open', S_SPENT3, 'entrant-07', { label: 'Used', on: true });
 r('not registered, vote intact',    'open', S_FRESH1, 'entrant-07', { label: 'Vote' });
 
-console.log(fails ? '\n' + fails + ' FAILED' : '\nall 33 pass');
+/* ---------------------------------------------------------------------------
+   routeFor: which screen the vote dialog opens on.
+
+   This is the function the labels were quietly contradicting. It had no tests, and that is
+   exactly how a card could read "Vote - 2 left" while clicking it landed on the dead-end
+   screen that says you already backed someone else. Under the flexible rule the founder you
+   backed is not a reason to refuse anything; the balance is the only question.
+   --------------------------------------------------------------------------- */
+const routeFor = new Function('spread',
+  grab('routeFor') + '; return routeFor;')((d) => !!(d && d.spread));
+
+function rt(name, d, entrantId, want) {
+  const got = routeFor(d, entrantId);
+  if (got === want) { console.log('ok   ' + name + '  -> ' + got); }
+  else { fails++; console.log('FAIL ' + name + '\n   got  ' + got + '\n   want ' + want); }
+}
+
+console.log('\n--- the flexible rule: which screen opens ---');
+rt('not verified anywhere',            S_UNVER,  'entrant-07', 'verify');
+rt('three in hand, any founder',       S_FRESH3, 'entrant-07', 'confirm');
+rt('two left, a DIFFERENT founder',    S_LEFT2,  'entrant-07', 'confirm');
+rt('two left, the one already backed', S_LEFT2,  'entrant-01', 'confirm');
+rt('one left, a different founder',    S_LEFT1,  'entrant-07', 'confirm');
+rt('all three spent',                  S_SPENT3, 'entrant-07', 'all-done');
+rt('unregistered, vote intact',        S_FRESH1, 'entrant-07', 'confirm');
+rt('unregistered, vote spent',         S_SPENT1, 'entrant-07', 'all-done');
+
+console.log('\n--- the original rule still routes as it always did ---');
+rt('old rule, another founder after voting',
+   { ok: true, verified: true, today_entrant: 'entrant-01', remaining: 0 }, 'entrant-07', 'other');
+rt('old rule, not voted yet',
+   { ok: true, verified: true, remaining: 1 }, 'entrant-07', 'confirm');
+
+console.log(fails ? '\n' + fails + ' FAILED' : '\nall 43 pass');
 process.exit(fails ? 1 : 0);

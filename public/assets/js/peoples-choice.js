@@ -631,6 +631,21 @@
 
   function routeFor(d, entrantId) {
     if (!d || !d.ok || !d.verified) return 'verify';
+
+    /* Under the flexible rule the only question is whether this voter has a vote left.
+
+       This is where the experiment was actually broken, and the labels made it worse rather
+       than better: the card correctly invited you with "Vote - 2 left", and then clicking it
+       sent you to the "you backed someone else today" screen, because the line below returns
+       'other' the moment today_entrant exists -- whatever the balance is. A registered
+       attendee could not place their second vote anywhere at all.
+
+       Spreading votes IS the feature, so under this rule there is no such thing as backing
+       someone else: there is only how many you have left. */
+    if (spread(d)) {
+      return (typeof d.remaining === 'number' && d.remaining > 0) ? 'confirm' : 'all-done';
+    }
+
     var today = d.today_entrant || null;
     if (today && today !== entrantId) return 'other';
     if (!today) return (d.remaining > 0) ? 'confirm' : 'all-done';
@@ -667,9 +682,19 @@
     var used = (d && typeof d.used === 'number') ? d.used : 0;
     var bonus = Math.max(0, used - 1);
     $$('[data-pc-sum-total]', vDlg).forEach(function (n) { n.textContent = String(used); });
-    $$('[data-pc-sum-bonus-row]', vDlg).forEach(function (n) { n.hidden = bonus <= 0; });
+    /* Under the flexible rule there is no bonus line to show: every vote is the same kind of
+       vote, so splitting the total into "one plus a bonus" would be describing a rule that
+       is not running. */
+    $$('[data-pc-sum-bonus-row]', vDlg).forEach(function (n) {
+      n.hidden = spread(d) || bonus <= 0;
+    });
     $$('[data-pc-sum-bonus]', vDlg).forEach(function (n) { n.textContent = '+' + bonus; });
     $$('[data-pc-done-title]', vDlg).forEach(function (n) {
+      if (spread(d)) {
+        n.textContent = used === 1 ? 'your vote is counted!'
+          : 'you gave ' + used + ' votes today!';
+        return;
+      }
       n.textContent = used >= 3 ? 'you gave 3 points today!'
         : (used === 1 ? 'your vote is counted!' : 'you gave ' + used + ' points today!');
     });

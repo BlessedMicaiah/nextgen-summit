@@ -1,6 +1,7 @@
 /* NextGen Summit — Pitch Competition page.
-   Rides on site.js (nav, countdown, reveals, drawers). This file owns the five-step progression,
-   the two tabs and the People's Choice panel. The application link is plain HTML in /pitch/index.html. */
+   Rides on site.js (nav, countdown, reveals, drawers). This file owns where the competition stands
+   (the stage board, its clock, the done / now / next marks), the five-step progression and the
+   buttons to the People's Choice vote. */
 (function () {
   'use strict';
 
@@ -11,7 +12,7 @@
   /* ======================================================================
      1. THE FIVE STEPS
      Whichever step is nearest the reading line is the active one, and every
-     step above it is marked done so the rail reads as progress rather than
+     step above it is marked done so the list reads as progress rather than
      as five separate rows. On a pointer device hover and keyboard focus
      take over, the same way the audience cards behave on the home page.
      One rAF-throttled passive listener, only while the list is on screen.
@@ -81,93 +82,192 @@
   }
 
   /* ======================================================================
-     2. THE TABS  —  Competition / People's Choice
+     2. WHERE THE COMPETITION STANDS
+     The stage board in the hero carries the dates (data-from / data-to, as
+     Eastern instants). Today decides which stage is "now": everything before
+     it is done, today's cell on the board fills as the stage's days
+     pass, the clock counts to whatever comes next, and the five steps further
+     down take the same marks. The markup ships as voting week, so the page
+     reads true without JavaScript; from October 29 it moves on by itself.
+     ?stage-at=2026-10-29T12:00-04:00 previews any moment.
      ================================================================== */
-  function initTabs() {
-    var list = $('[role="tablist"]');
-    if (!list) return;
-    var tabs = $$('[role="tab"]', list);
-    if (tabs.length < 2) return;
+  var COPY = [
+    { eye: 'Applications', l1: 'your idea', l2: 'belongs on stage.', now: 'Applications are closing',
+      clockK: 'Applications close in', lede: '' },
+    { eye: 'Semifinals', l1: 'twenty founders.', l2: 'almost named.', now: 'The committee is choosing the Top 20',
+      clockK: 'The Top 20 are named in',
+      lede: 'Applications are closed. The review committee is reading every one of them, and the Top 20 semifinalists are named on October 22.' },
+    null,                                  // voting week: the markup already says it
+    { eye: 'Finalists', l1: 'ten founders.', l2: 'one stage.', now: 'The Top 10 are announced',
+      clockK: 'The live final starts in',
+      lede: 'Voting has closed. One founder earned the People’s Choice place, the judges chose nine more, and tomorrow the ten pitch live for a share of $10,000.' },
+    { eye: 'Live final', l1: 'ten founders.', l2: 'live today.', now: 'The live final is today', clockK: '',
+      lede: 'The ten finalists pitch on the main stage at NextGen Summit today, to an executive panel and the whole room. The top three share $10,000.' },
+    { eye: '2026', l1: 'ten founders.', l2: 'one stage.', now: 'The final has been pitched', clockK: '',
+      lede: 'Thank you to every founder who applied, everyone who voted, and every judge. The results are shared by the NextGen team.' }
+  ];
 
-    function select(tab, moveFocus) {
-      tabs.forEach(function (t) {
-        var on = t === tab;
-        t.setAttribute('aria-selected', String(on));
-        t.tabIndex = on ? 0 : -1;
-        var panel = document.getElementById(t.getAttribute('aria-controls'));
-        if (panel) panel.hidden = !on;
-      });
-      if (moveFocus) tab.focus();
-    }
+  function nowMs() {
+    var at = /[?&]stage-at=([^&]+)/.exec(location.search);
+    var t = at ? new Date(decodeURIComponent(at[1])).getTime() : NaN;
+    return isNaN(t) ? Date.now() : t;
+  }
 
-    tabs.forEach(function (tab, i) {
-      tab.addEventListener('click', function () { select(tab, false); });
-      tab.addEventListener('keydown', function (e) {
-        var go = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1
-               : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1;
-        if (go < 0 || go > tabs.length - 1) {
-          if (e.key === 'ArrowRight') go = 0;
-          else if (e.key === 'ArrowLeft') go = tabs.length - 1;
-          else return;
-        }
-        e.preventDefault();
-        select(tabs[go], true);
-      });
+  function initStage() {
+    var board = $('[data-board]');
+    if (!board) return;
+    var stages = $$('[data-stage]', board);
+    var steps = $$('[data-step]');
+    var span = stages.map(function (s) {
+      return [new Date(s.getAttribute('data-from')).getTime(), new Date(s.getAttribute('data-to')).getTime()];
     });
+    var t0 = nowMs(), offset = t0 - Date.now();          // a preview keeps ticking from its own moment
+    var at = stages.length;                              // past the last stage: all done
+    for (var i = 0; i < span.length; i++) if (t0 < span[i][1]) { at = i; break; }
+
+    stages.forEach(function (s, i) {
+      s.classList.toggle('is-past', i < at);
+      s.classList.toggle('is-now', i === at);
+      if (i === at) s.setAttribute('aria-current', 'step'); else s.removeAttribute('aria-current');
+      var sr = $('[data-stage-sr]', s);
+      if (sr) sr.textContent = i < at ? ' (done)' : i === at ? ' (happening now)' : '';
+    });
+    var TAGS = ['Done', 'Now', 'Next', 'Coming'];
+    steps.forEach(function (s, i) {
+      s.classList.toggle('is-past', i < at);
+      s.classList.toggle('is-now', i === at);
+      var tag = $('[data-tag]', s);
+      if (tag) tag.textContent = TAGS[i < at ? 0 : i === at ? 1 : i === at + 1 ? 2 : 3];
+    });
+
+    // today's cell fills with the share of its days gone by, one notch per day
+    var part = 0;
+    if (at < stages.length) part = Math.min(1, Math.max(0, (t0 - span[at][0]) / (span[at][1] - span[at][0])));
+    stages.forEach(function (s, i) {
+      var days = Math.max(1, Math.round((span[i][1] - span[i][0]) / 864e5));
+      s.style.setProperty('--i', String(i));
+      s.style.setProperty('--days', String(days));
+      s.style.setProperty('--run', i === at ? Math.max(part, .04).toFixed(3) : '0');
+    });
+    steps.forEach(function (s, i) {
+      s.style.setProperty('--run', i === at ? Math.max(part, .04).toFixed(3) : '0');
+    });
+    var day = $('[data-board-day]', board);
+    if (day && at < stages.length) {
+      var n = Math.max(1, Math.round((span[at][1] - span[at][0]) / 864e5));
+      day.textContent = 'Day ' + Math.min(n, Math.floor((t0 - span[at][0]) / 864e5) + 1) + ' of ' + n;
+      day.hidden = n < 2;
+    }
+    var live = $('[data-board-live]', board);
+    if (live) live.textContent = at >= stages.length ? 'Complete' : 'Live';
+    board.classList.toggle('is-over', at >= stages.length);
+
+    var c = COPY[Math.min(at, COPY.length - 1)];
+    function put(sel, text) { var e = $(sel); if (e && text) e.textContent = text; }
+    if (c) {
+      put('[data-stage-eyebrow]', c.eye);
+      put('[data-stage-l1]', c.l1);
+      put('[data-stage-l2]', c.l2);
+      put('[data-board-now]', c.now);
+      put('[data-stage-lede]', c.lede);
+      put('[data-clock-k]', c.clockK);
+    }
+    if (at >= 3) put('[data-pv-lede]', 'Voting closed on October 28. The People’s Choice finalist is announced with the rest of the Top 10 on October 29.');
+    document.documentElement.setAttribute('data-pitch-stage', String(at));
+
+    // the clock counts to the end of voting, then to the final; on the day it steps aside
+    var clock = $('[data-clock]', board);
+    var target = at <= 2 ? span[Math.max(at, 0)][1] - 1000 : at === 3 ? span[4][0] : 0;
+    if (!clock) return;
+    if (!target) { clock.hidden = true; return; }
+    var out = {};
+    ['d', 'h', 'm', 's'].forEach(function (k) { out[k] = $('[data-c="' + k + '"]', clock); });
+    var sr = $('[data-clock-sr]', clock);
+    if (sr && at === 3) sr.textContent = 'The live final is on October 30.';
+    else if (sr && at < 2) sr.textContent = 'The Top 20 are named on October 22.';
+    var timer = null, visible = false;
+    function pad(v) { return (v < 10 ? '0' : '') + v; }
+    function tick() {
+      var left = Math.max(0, target - (Date.now() + offset));
+      var sec = Math.floor(left / 1000);
+      out.d.textContent = pad(Math.floor(sec / 86400));
+      out.h.textContent = pad(Math.floor(sec % 86400 / 3600));
+      out.m.textContent = pad(Math.floor(sec % 3600 / 60));
+      out.s.textContent = pad(sec % 60);
+      return left;
+    }
+    function loop() {
+      timer = null;
+      if (tick() && visible && !document.hidden) timer = setTimeout(loop, 1000 - Date.now() % 1000 + 15);
+    }
+    function run() {                            // ticks only while the board is on screen
+      var on = visible && !document.hidden;
+      if (on && !timer) loop();
+      else if (!on && timer) { clearTimeout(timer); timer = null; }
+    }
+    tick();
+    // in voting week the People's Choice endpoint holds the real closing time; the markup's date
+    // is the fallback, so the board never counts to a moment the vote does not keep
+    if (at === 2 && window.fetch && !/[?&]stage-at=/.test(location.search)) {
+      fetch('/api/pc-otp.php?action=status', { credentials: 'same-origin', cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var t = d && d.ok && d.deadline ? Date.parse(d.deadline) : NaN;
+          if (isFinite(t)) { target = t; tick(); }
+        })
+        .catch(function () {});
+    }
+    new IntersectionObserver(function (es) { visible = es[0].isIntersecting; run(); }).observe(clock);
+    document.addEventListener('visibilitychange', run);
   }
 
   /* ======================================================================
-     3. THE TOP 20  —  empty until the semifinalists are real.
-
-     When they are confirmed, fill this array and the People's Choice panel
-     renders the cards in place of the pre-launch note. Nothing here ships
-     with placeholder founders: an empty list is the honest state, and a
-     made-up one would read as a real announcement.
-
-       { id: 'slug', name: 'Founder Name', company: 'Company',
-         blurb: 'One line on what they are building.',
-         image: '/assets/img/semifinalists/slug.jpg',   // 3:4 portrait
-         site: 'https://example.com' }                   // optional
+     3. THE WAY TO THE VOTE
+     The People's Choice gallery is its own page, and it is not on every
+     copy of this site yet. Its endpoint answers a GET with the state of the
+     vote, so the buttons to it appear only where it answers, worded for that
+     state; anywhere else the page says the gallery is coming instead of
+     sending people to a page that is not there.
      ================================================================== */
-  var SEMIFINALISTS = [];
+  var PC_LABEL = { 'open': 'Vote for a founder', 'coming-soon': 'Meet the Top 20', 'closed': 'See the Top 20', 'results': 'See the results' };
 
-  function initVote() {
-    var wrap = $('[data-vote]');
-    if (!wrap || !SEMIFINALISTS.length) return;          // keep the pre-launch state
-    var ul = document.createElement('ul');
-    ul.className = 'vote__grid';
-    SEMIFINALISTS.forEach(function (f) {
-      var li = document.createElement('li');
-      li.className = 'vote__card';
-      li.setAttribute('data-founder', f.id || '');
-      if (f.image) {
-        var img = document.createElement('img');
-        img.src = f.image;
-        img.alt = 'Portrait of ' + (f.name || 'a semifinalist') + '.';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        li.appendChild(img);
-      }
-      var name = document.createElement('h3');
-      name.className = 'vote__name';
-      name.textContent = f.name || '';
-      li.appendChild(name);
-      if (f.company) {
-        var co = document.createElement('p');
-        co.className = 'vote__co';
-        co.textContent = f.company;
-        li.appendChild(co);
-      }
-      if (f.blurb) {
-        var b = document.createElement('p');
-        b.className = 'vote__blurb';
-        b.textContent = f.blurb;
-        li.appendChild(b);
-      }
-      ul.appendChild(li);
-    });
-    wrap.textContent = '';
-    wrap.appendChild(ul);
+  function initVoteLinks() {
+    var links = $$('[data-pc-link]'), soon = $$('[data-pc-soon]');
+    if (!links.length) return;
+    var stage = +document.documentElement.getAttribute('data-pitch-stage') || 0;
+    function none() {
+      // once voting is over there is nothing to promise any more
+      if (stage >= 3) soon.forEach(function (e) { e.hidden = true; });
+      // in the voting week, a copy of the site without the gallery must not say voting is open
+      if (stage === 2) waiting();
+    }
+    function waiting() {
+      var board = $('[data-board]');
+      if (!board) return;
+      board.classList.add('is-waiting');
+      var now = $('[data-board-now]', board), live = $('[data-board-live]', board);
+      var day = $('[data-board-day]', board), clock = $('[data-clock]', board);
+      if (now) now.textContent = 'Public voting opens soon';
+      if (live) live.textContent = 'Soon';
+      if (day) day.hidden = true;
+      if (clock) clock.hidden = true;
+    }
+    if (!window.fetch) return none();
+    fetch('/api/pc-vote.php', { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok || !PC_LABEL[j.state]) return none();
+        links.forEach(function (a) {
+          var l = $('[data-pc-label]', a);
+          if (l) l.textContent = PC_LABEL[j.state];
+          a.hidden = false;
+        });
+        soon.forEach(function (e) { e.hidden = true; });
+        document.documentElement.classList.add('has-pc');
+        // the gallery is up but the vote is not open yet: the board must not say it is
+        if (j.state === 'coming-soon' && stage === 2) waiting();
+      })
+      .catch(none);
   }
 
   /* ---------- in-page jump, without fighting the sticky bar ---------- */
@@ -186,148 +286,8 @@
     });
   }
 
-  /* ---------- the competition board ----------
-
-     This markup shipped without a driver, so the clock sat on "--Days : --Hrs" for as long
-     as the page has been live and the timeline bars never filled.
-
-     The deadline comes from the People's Choice API rather than a date typed in here,
-     because that endpoint is what actually decides whether a vote is accepted. If the two
-     disagreed, the page would be counting down to the wrong moment -- and the one on the
-     page is the one people plan around. The dates in the markup are the fallback for when
-     the endpoint cannot be reached. */
-  /* ---------- one answer about voting, shared ----------
-     Both the countdown and the vote buttons need to know the same thing, and asking twice
-     would be two requests for one fact. */
-  var pcWaiting = [];
-  var pcAnswer;
-  function pcStatus(cb) {
-    if (pcAnswer !== undefined) { cb(pcAnswer); return; }
-    pcWaiting.push(cb);
-    if (pcWaiting.length > 1) return;
-    fetch('/api/pc-otp.php?action=status', { credentials: 'same-origin', cache: 'no-store' })
-      .then(function (r) { return r.json(); })
-      .catch(function () { return null; })
-      .then(function (d) {
-        pcAnswer = (d && d.ok) ? d : null;
-        pcWaiting.splice(0).forEach(function (f) { f(pcAnswer); });
-      });
-  }
-
-  /* ---------- the vote buttons say what is actually true ----------
-
-     These three links shipped with the `hidden` attribute and a line of copy underneath
-     saying the vote "opens soon", from the weeks before it did. Nothing ever took the
-     attribute off: no script on this page read the voting state, so the Pitch Competition
-     page went on telling visitors they could not vote yet -- with no way through -- for
-     the whole of the live vote. The links are now visible in the markup, and this only
-     corrects them downwards if the endpoint says voting is not open. Failing that way
-     round means a visitor who loses the request still gets the link. */
-  function initPcState() {
-    var links = $$('[data-pc-link]');
-    var notes = $$('[data-pc-soon]');
-    if (!links.length && !notes.length) return;
-    pcStatus(function (d) {
-      if (!d) return;                                  // no answer: leave the markup alone
-      var state = d.state || (d.open ? 'open' : '');
-      if (state === 'open') return;                    // which is what the markup says
-      if (state === 'coming-soon') {
-        links.forEach(function (a) { a.hidden = true; });
-        notes.forEach(function (p) { p.hidden = false; });
-        return;
-      }
-      // closed: the gallery and the result are still worth reaching
-      links.forEach(function (a) {
-        var l = a.querySelector('[data-pc-label]');
-        if (l) l.textContent = 'See the People\u2019s Choice';
-      });
-      notes.forEach(function (p) {
-        p.hidden = false;
-        p.textContent = 'Voting has closed. The result is on the People\u2019s Choice page.';
-      });
-    });
-  }
-
-  function initBoard() {
-    var board = document.querySelector('[data-board]');
-    if (!board) return;
-
-    var cells = {
-      d: board.querySelector('[data-c="d"]'),
-      h: board.querySelector('[data-c="h"]'),
-      m: board.querySelector('[data-c="m"]'),
-      s: board.querySelector('[data-c="s"]')
-    };
-    var kicker = board.querySelector('[data-clock-k]');
-    var nowT = board.querySelector('[data-board-now]');
-    var live = board.querySelector('[data-board-live]');
-    var stages = [].slice.call(board.querySelectorAll('[data-stage]'));
-
-    /* The last stage's end is the backstop: the furthest moment the page knows about, and
-       counting to it beats counting to nothing. */
-    var fallback = stages.length
-      ? Date.parse(stages[stages.length - 1].getAttribute('data-to') || '')
-      : NaN;
-    var deadline = isFinite(fallback) ? fallback : NaN;
-    var closed = false;
-
-    function two(n) { return (n < 10 ? '0' : '') + n; }
-
-    function paint() {
-      var now = Date.now();
-
-      /* The timeline is recomputed from the dates rather than trusted from the classes in
-         the markup -- those were written by hand for one particular day and are wrong by
-         the next. */
-      stages.forEach(function (li) {
-        var from = Date.parse(li.getAttribute('data-from') || '');
-        var to = Date.parse(li.getAttribute('data-to') || '');
-        var run = li.querySelector('.board__run');
-        if (!isFinite(from) || !isFinite(to) || to <= from) return;
-        var past = now >= to, nowish = now >= from && now < to;
-        li.classList.toggle('is-past', past);
-        li.classList.toggle('is-now', nowish);
-        if (nowish) { li.setAttribute('aria-current', 'step'); }
-        else { li.removeAttribute('aria-current'); }
-        if (run) {
-          run.style.width = past ? '100%'
-            : (nowish ? Math.max(2, Math.min(100, ((now - from) / (to - from)) * 100)) + '%' : '0');
-        }
-      });
-
-      if (!isFinite(deadline)) return;
-      var left = Math.max(0, deadline - now);
-
-      if (left === 0 && !closed) {
-        closed = true;
-        if (kicker) kicker.textContent = 'Voting has closed';
-        if (nowT) nowT.textContent = 'Public voting has closed';
-        if (live) live.textContent = 'Closed';
-      }
-
-      var sec = Math.floor(left / 1000);
-      if (cells.d) cells.d.textContent = String(Math.floor(sec / 86400));
-      if (cells.h) cells.h.textContent = two(Math.floor(sec / 3600) % 24);
-      if (cells.m) cells.m.textContent = two(Math.floor(sec / 60) % 60);
-      if (cells.s) cells.s.textContent = two(sec % 60);
-    }
-
-    paint();
-    setInterval(paint, 1000);
-
-    /* The authoritative deadline, if the endpoint will give one. A failure here is not
-       worth showing anyone: the fallback is already counting. */
-    pcStatus(function (d) {
-      if (!d || !d.deadline) return;
-      var t = Date.parse(d.deadline);
-      if (isFinite(t)) { deadline = t; paint(); }
-    });
-  }
-
+  initStage();
   initSteps();
-  initTabs();
-  initVote();
+  initVoteLinks();
   initScrollLinks();
-  initBoard();
-  initPcState();
 })();

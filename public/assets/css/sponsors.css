@@ -1,172 +1,156 @@
-/* ============================================================================
-   NextGen Summit — sponsors, on the About page
-   One strip of logos sliding left on a loop. The track holds six identical runs
-   and moves by exactly half its width, so the second half lands where the first
-   began and the loop has no seam. Composition only: every colour and face comes
-   from site.css; the section itself is an About section (.ab, about.css).
-   ========================================================================= */
+/* NextGen sponsors: a moving homepage strip and a quiet About-page directory.
+   Every sponsor sits on its own card, in its own colours: equal cards even out logos of very
+   different shapes, and the brands read as the people backing the day rather than as grey
+   marks. Shared brand tokens and buttons come from site.css. */
 
-/* the About section runs to both edges; everything inside it keeps the page's measure */
-.ab--spon{max-width:none}
-.ab--spon > .ab__k,
-.ab--spon > .spon__directory-title,
-.ab--spon > .spon__grid,
-.ab--spon > .spon__more{max-width:var(--maxw);margin-inline:auto}
-.ab--spon > .spon__marquee{margin-inline:calc(var(--gutter) * -1)}
+/* ---------- the card both places share ---------- */
+.spon__card{position:relative;display:flex;align-items:center;justify-content:center;border-radius:18px;
+  background:#fff;border:1px solid var(--rule);text-decoration:none;color:var(--ink);
+  box-shadow:0 1px 0 rgba(11,11,15,.03),0 22px 44px -34px rgba(11,11,15,.32);
+  transition:transform .5s var(--ease),border-color .35s var(--ease),box-shadow .5s var(--ease)}
+.spon__card img{display:block;width:auto;height:var(--h,40px);max-width:88%;object-fit:contain;
+  transition:transform .6s var(--ease)}
+/* the arrow in the corner says the card leaves for the sponsor's own site */
+.spon__go{position:absolute;top:12px;right:12px;display:grid;place-items:center;width:26px;height:26px;border-radius:999px;
+  background:var(--accent);color:#06161A;opacity:0;transform:scale(.6) rotate(-45deg);
+  transition:opacity .3s var(--ease),transform .45s var(--ease)}
+.spon__go svg{width:12px;height:12px}
+.spon__card:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}
+.spon__card:focus-visible .spon__go{opacity:1;transform:none}
+@media (hover:hover){
+  .spon__card:hover{transform:translateY(-5px);border-color:var(--accent);
+    box-shadow:0 1px 0 rgba(11,11,15,.03),0 30px 54px -30px rgba(0,122,116,.45)}
+  .spon__card:hover img{transform:scale(1.04)}
+  .spon__card:hover .spon__go{opacity:1;transform:none}
+}
 
-/* the edges fade into the paper, so logos arrive and leave rather than being cut off */
-.spon__marquee{--gap:clamp(56px,6.5vw,104px);margin-top:clamp(30px,5vh,52px);overflow:hidden;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent 100%);
-          mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent 100%)}
-.spon__track{display:flex;width:max-content;animation:spon-slide 62s linear infinite}
-/* it stops while a logo is pointed at or has keyboard focus, so it can be read and clicked */
-.spon__marquee:hover .spon__track,.spon__marquee:focus-within .spon__track{animation-play-state:paused}
+/* ---------- homepage ---------- */
+.spon{padding:clamp(64px,9vw,128px) 0;background:var(--paper)}
+.spon__head,.spon__foot{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gutter)}
+.spon__head{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:clamp(30px,3.6vw,52px)}
+.spon__eyebrow{margin-bottom:18px;font:800 11px/1.3 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
+.spon__title{font-size:clamp(38px,4.6vw,70px);line-height:1.06}
+.spon__ctas{flex:none;display:flex;align-items:center;gap:clamp(16px,2vw,28px);margin-bottom:4px}
+.spon__join{display:inline-flex;align-items:center;gap:8px;min-height:44px;font:800 12px/1 var(--f-sans);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;
+  text-decoration-color:var(--accent);text-underline-offset:6px;transition:text-decoration-color .3s var(--ease)}
+.spon__join:hover{text-decoration-color:var(--ink)}
+
+/* the strip: the cards drift by, and the edges fade into the paper so they arrive and leave */
+.spon__marquee{--gap:clamp(16px,1.6vw,24px);overflow:hidden;padding-block:clamp(12px,1.6vw,20px) clamp(30px,3.4vw,46px);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.spon__track{display:flex;width:max-content;animation:spon-slide 90s linear infinite}
 .spon__run{display:flex;align-items:center;gap:var(--gap);list-style:none;margin:0;padding:0 calc(var(--gap) / 2)}
-.spon__logo{flex:none;display:flex;align-items:center;height:100px}
-.spon__logo img{width:auto;height:var(--h,40px)}
-.spon__logo a{display:block;border-radius:4px;transition:opacity .3s var(--ease)}
-@media (hover:hover){.spon__logo a:hover{opacity:.72}}
-
+.spon__logo{flex:0 0 auto}
+.spon__logo .spon__card{width:clamp(220px,19vw,280px);height:clamp(120px,9.6vw,148px)}
+.spon__marquee:hover .spon__track,.spon__marquee:focus-within .spon__track{animation-play-state:paused}
 @keyframes spon-slide{to{transform:translate3d(-50%,0,0)}}
-/* once sponsors.js has taken over, it moves the strip and the visitor can take hold of it: drag
-   with a mouse, swipe on a touch screen (an upright swipe still scrolls the page), or scroll
-   sideways on a trackpad */
 .spon__marquee.is-live .spon__track{animation:none;will-change:transform}
 .spon__marquee.is-live{cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none}
 .spon__marquee.is-live.is-held{cursor:grabbing}
 .spon__marquee.is-live img{-webkit-user-drag:none;pointer-events:none}
+.spon__marquee.is-held .spon__card{transform:none}
 
-@media (max-width:760px){
-  .spon__marquee{--gap:44px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%)}
-  .spon__track{animation-duration:46s}
-  .spon__logo{height:76px}
-  .spon__logo img{height:calc(var(--h,40px) * .76)}
-}
-
-/* no motion: the first run stands still, centred, and wraps if the screen is narrow */
-@media (prefers-reduced-motion:reduce){
-  .spon__marquee{-webkit-mask-image:none;mask-image:none}
-  .spon__track{animation:none;width:auto;justify-content:center}
-  .spon__run{flex-wrap:wrap;justify-content:center;row-gap:28px;padding:0 var(--gutter)}
-  .spon__run + .spon__run{display:none}
-}
-
-/* ---------- the homepage section ----------
-   The About page shows the marquee on its own under a heading; the homepage wraps it in a
-   section with its own title, a link through to /about/#sponsors and a line of thanks.
-   Only the section furniture lives here -- the marquee itself is shared, above. */
-.spon{padding:clamp(64px,9vw,128px) 0;background:var(--paper)}
-.spon__head,.spon__foot{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gutter)}
-.spon__head{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:clamp(32px,4vw,56px)}
-.spon__eyebrow{margin-bottom:18px;font:800 11px/1.3 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
-.spon__title{font-size:clamp(38px,4.6vw,70px);line-height:1.03}
-.spon__cta{flex:none;margin-bottom:4px}
-.spon__foot{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;font:500 12px/1.6 var(--f-sans);color:var(--ink-2)}
-.spon__pause{flex:none;min-height:44px;font:700 10px/1.3 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink)}
-.spon__pause:hover{text-decoration:underline;text-underline-offset:4px}
-@media (max-width:760px){
-  .spon__head{align-items:flex-start;flex-direction:column;gap:26px}
-  .spon__foot{align-items:center;font-size:11px;gap:12px}
-}
-@media (prefers-reduced-motion:reduce){
-  .spon__pause{display:none}
-}
-
-/* ---------- the logo card, on the homepage strip ----------
-   The markup wraps each logo in a .spon__card with a .spon__go arrow beside it. Neither
-   had a rule anywhere, and an inline <svg> with a viewBox and no width fills its block:
-   each arrow came out around 170px square inside a 100px row, so the strip rendered as a
-   line of giant black arrows with the logos pushed out of sight. The arrow is decorative
-   and aria-hidden, so it is taken out of flow entirely -- the strip's geometry is exactly
-   what it was -- and shown only as a small badge while a logo is pointed at. */
-.spon__logo .spon__card{position:relative;display:flex;align-items:center;justify-content:center;height:100%}
-.spon__logo .spon__go{position:absolute;top:50%;right:-26px;
-  display:grid;place-items:center;width:24px;height:24px;border-radius:50%;
-  background:var(--accent);color:var(--on-accent);
-  opacity:0;transform:translateY(-50%) scale(.7);pointer-events:none;
-  transition:opacity .3s var(--ease),transform .3s var(--ease)}
-.spon__go svg{display:block;width:13px;height:13px}
-@media (hover:hover){
-  .spon__logo .spon__card:hover .spon__go,
-  .spon__logo .spon__card:focus-visible .spon__go{opacity:1;transform:translateY(-50%) scale(1)}
-}
-
-/* the pair of calls to action in the section head */
-.spon__ctas{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(14px,2vw,26px);margin-bottom:4px}
-.spon__join{display:inline-flex;align-items:center;min-height:44px;
-  font:700 13px/1.4 var(--f-sans);color:var(--accent-ink);
-  text-decoration:underline;text-underline-offset:4px;white-space:nowrap}
-.spon__join:hover{color:var(--accent-ink-hover)}
-
-/* ---------- the directory, on the About page ----------
-   A row per sponsor, ruled top and bottom, in the same measure and the same idiom as the
-   roadmap list above it. Before this the list had no rules at all: the names ran into the
-   web addresses on one line and every arrow was the width of the page. */
-.spon__directory-title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(34px,5vw,78px);line-height:1.05;letter-spacing:-.035em}
-.spon__grid{list-style:none;margin-top:clamp(28px,4.6vh,52px);padding:0;border-top:1px solid var(--rule)}
-.spon__partner{border-bottom:1px solid var(--rule)}
-.spon__partner .spon__card{display:grid;grid-template-columns:minmax(110px,220px) minmax(0,1fr) auto;
-  align-items:center;gap:clamp(16px,3vw,44px);padding:clamp(18px,2.6vh,28px) 0;
-  text-decoration:none;color:inherit}
-.spon__mark{display:flex;align-items:center;min-height:var(--h,40px)}
-.spon__mark img{width:auto;max-width:100%;height:var(--h,40px);object-fit:contain}
-.spon__who{display:grid;gap:5px;min-width:0}
-.spon__name{font:800 clamp(16px,1.5vw,21px)/1.3 var(--f-sans);letter-spacing:-.012em;color:var(--ink)}
-.spon__site{font:600 clamp(12px,1vw,13.5px)/1.4 var(--f-sans);color:var(--ink-3);overflow-wrap:anywhere}
-.spon__partner .spon__go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;
-  box-shadow:inset 0 0 0 1.5px var(--rule);color:var(--accent-ink);
-  transition:background-color .35s var(--ease),box-shadow .35s var(--ease),color .35s var(--ease),transform .35s var(--ease)}
-@media (hover:hover){
-  a.spon__card:hover .spon__go{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent);
-    color:var(--on-accent);transform:translateX(3px)}
-  a.spon__card:hover .spon__name{color:var(--accent-ink)}
-}
-a.spon__card:focus-visible{outline-offset:-2px}
-.spon__more{margin-top:clamp(24px,3.6vh,38px);font:500 clamp(14px,1.2vw,16px)/1.6 var(--f-sans);color:var(--ink-2)}
-.spon__more .spon__join{min-height:0;margin-left:4px}
-
-@media (max-width:640px){
-  /* the logo gets its own line, so a wide mark and a long name stop competing for width */
-  .spon__partner .spon__card{grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:18px 0}
-  .spon__mark{grid-column:1 / -1;margin-bottom:6px}
-  .spon__partner .spon__go{width:36px;height:36px}
-}
+.spon__foot{display:flex;align-items:center;justify-content:space-between;gap:16px;font:500 13px/1.6 var(--f-sans);color:var(--ink-2)}
+.spon__foot p{display:flex;align-items:center;gap:12px}
+.spon__foot p::before{content:"";width:22px;height:2px;background:var(--accent);flex:none}
 
 /* ---------- the prime sponsor ----------
-   One card above the directory, because that sponsor paid for the position. It is the only
-   logo on the page with its own ground, and the only one shown at a size you read rather
-   than scan. None of this was in the stylesheet either. */
-.spon__prime-row { margin-top: clamp(28px, 4.6vh, 52px); }
-.spon__prime {
-  position: relative;
-  display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
-  align-items: center; gap: clamp(18px, 3vw, 44px);
-  padding: clamp(22px, 3.4vh, 34px) clamp(20px, 3vw, 36px);
-  border-radius: 14px; background: var(--paper-2);
-  box-shadow: inset 0 0 0 1px var(--rule);
-  text-decoration: none; color: inherit;
-  transition: box-shadow .35s var(--ease), background-color .35s var(--ease);
+   BLW Oasis leads both places on a card of its own: wider and taller than the rest, framed in
+   gold, with a band of gold across the top. Under the logo it says what it is and where it
+   lives; the address keeps the logo's blue, in a deeper shade so it reads. */
+.spon__prime-row{max-width:var(--maxw);margin:0 auto clamp(22px,2.6vw,34px);padding-inline:var(--gutter)}
+.ab--spon .spon__prime-row{max-width:none;margin:clamp(34px,5vh,60px) 0 0;padding-inline:0}
+.ab--spon .spon__prime-row + .spon__grid{margin-top:clamp(14px,1.6vw,24px)}
+.spon__prime{--gold:#C9A13B;--gold-hi:#E8CB74;--oasis-ink:#0F66A8;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;
+  gap:6px;padding:clamp(34px,4vw,54px) 24px clamp(26px,3vw,38px);border-radius:22px;text-decoration:none;text-align:center;
+  background:radial-gradient(120% 90% at 50% 0%,#FBF5E4 0%,#fff 62%);border:1.5px solid var(--gold);
+  box-shadow:0 1px 0 rgba(11,11,15,.03),0 34px 64px -42px rgba(150,112,24,.55);
+  transition:transform .5s var(--ease),border-color .35s var(--ease),box-shadow .5s var(--ease)}
+.spon__prime::before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,var(--gold),var(--gold-hi) 50%,var(--gold))}
+.spon__prime img{display:block;width:auto;height:clamp(70px,7.4vw,108px);max-width:86%;margin-bottom:clamp(14px,1.6vw,20px);
+  transition:transform .6s var(--ease)}
+.spon__prime-k{display:inline-flex;align-items:center;gap:12px;font:800 12px/1.3 var(--f-sans);letter-spacing:.24em;
+  text-transform:uppercase;color:var(--ink)}
+.spon__prime-k::before,.spon__prime-k::after{content:"";width:26px;height:2px;background:var(--gold)}
+.spon__prime-site{font:600 clamp(14px,1.1vw,16px)/1.4 var(--f-sans);color:var(--oasis-ink);overflow-wrap:anywhere}
+.spon__prime .spon__go{top:18px;right:18px;background:var(--gold);color:#fff}
+.spon__prime:focus-visible{outline:2px solid var(--oasis-ink);outline-offset:3px}
+.spon__prime:focus-visible .spon__go{opacity:1;transform:none}
+@media (hover:hover){
+  .spon__prime:hover{transform:translateY(-4px);border-color:#B08A2A;
+    box-shadow:0 1px 0 rgba(11,11,15,.03),0 40px 70px -38px rgba(150,112,24,.6)}
+  .spon__prime:hover img{transform:scale(1.03)}
+  .spon__prime:hover .spon__go{opacity:1;transform:none}
 }
-.spon__prime img { width: auto; max-width: 100%; height: clamp(44px, 6vw, 72px); object-fit: contain; }
-.spon__prime-k {
-  grid-column: 2; align-self: end;
-  font: 800 9.5px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
-  color: var(--accent-ink);
+@media (max-width:760px){
+  .spon__prime{border-radius:18px;padding:30px 18px 24px}
+  .spon__prime img{height:clamp(58px,17vw,78px)}
+  .spon__prime-k{font-size:11px;letter-spacing:.2em;gap:10px}
+  .spon__prime-k::before,.spon__prime-k::after{width:18px}
+  .spon__prime .spon__go{top:12px;right:12px}
 }
-.spon__prime-site {
-  grid-column: 2; grid-row: 2; align-self: start; margin-top: 5px;
-  font: 600 clamp(12px, 1vw, 13.5px)/1.4 var(--f-sans); color: var(--ink-3);
-  overflow-wrap: anywhere;
+@media (prefers-reduced-motion:reduce){
+  .spon__prime,.spon__prime img{transition:none;transform:none!important}
 }
-.spon__prime > img { grid-row: 1 / span 2; }
-.spon__prime > .spon__go { grid-column: 3; grid-row: 1 / span 2; }
-@media (hover: hover) {
-  .spon__prime:hover { background: #fff; box-shadow: inset 0 0 0 1px var(--rule-strong); }
+
+/* ---------- About page: the directory ---------- */
+.ab--spon .spon__directory-title{margin-top:clamp(16px,2.4vh,24px);max-width:15ch;font-size:clamp(40px,5.4vw,84px);line-height:1.06;letter-spacing:-.035em}
+.spon__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,1.6vw,24px);margin:clamp(34px,5vh,60px) 0 0;padding:0;list-style:none}
+.spon__partner{min-width:0}
+.spon__partner .spon__card{flex-direction:column;align-items:stretch;justify-content:space-between;height:100%;min-height:clamp(220px,19vw,268px);padding:clamp(18px,1.8vw,24px)}
+.spon__mark{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:14px 0 22px}
+.spon__mark img{max-width:86%}
+/* room for a two-line name, set to the foot, so every card's rule sits at the same height */
+.spon__who{--lines:2;display:flex;flex-direction:column;justify-content:flex-end;padding-top:14px;border-top:1px solid var(--rule);
+  min-height:calc(14px + 13px * 1.3 * var(--lines) + 4px + 12px * 1.3)}
+.spon__name{display:block;font:800 13px/1.3 var(--f-sans);letter-spacing:.04em;color:var(--ink)}
+.spon__site{display:block;margin-top:4px;font:600 12px/1.3 var(--f-sans);color:var(--accent-ink);overflow-wrap:anywhere}
+.spon__more{margin-top:clamp(26px,4vh,40px);display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;
+  font:500 clamp(15px,1.25vw,18px)/1.5 var(--f-sans);color:var(--ink-2)}
+/* where a pointer can hover, a card shows only its logo, centred; the name and address rise in under it
+   on hover or keyboard focus. Touch screens keep them in view, and screen readers read them either way. */
+@media (hover:hover){
+  .spon__partner .spon__mark{transform:translateY(34px);transition:transform .55s var(--ease)}
+  .spon__partner .spon__who{opacity:0;transform:translateY(12px);transition:opacity .3s var(--ease),transform .5s var(--ease)}
+  .spon__partner .spon__card:hover .spon__mark,.spon__partner .spon__card:focus-visible .spon__mark{transform:none}
+  .spon__partner .spon__card:hover .spon__who,.spon__partner .spon__card:focus-visible .spon__who{opacity:1;transform:none;transition-delay:.08s}
 }
-@media (max-width: 640px) {
-  .spon__prime { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; }
-  .spon__prime > img { grid-row: 1; grid-column: 1 / -1; margin-bottom: 10px; }
-  .spon__prime-k { grid-column: 1; grid-row: 2; }
-  .spon__prime-site { grid-column: 1; grid-row: 3; }
-  .spon__prime > .spon__go { grid-column: 2; grid-row: 2 / span 2; }
+
+@media (max-width:900px){
+  .spon__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .spon__head{align-items:flex-start;flex-direction:column;gap:22px}
+  .spon__ctas{flex-wrap:wrap;gap:12px 22px}
+  .spon__marquee{--gap:14px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+  .spon__track{animation-duration:78s}
+  .spon__logo .spon__card{width:186px;height:104px;border-radius:15px}
+  .spon__logo img{height:calc(var(--h,40px) * .78)}
+  .spon__foot{font-size:12px;gap:12px}
+}
+@media (max-width:420px){
+  .spon__grid{gap:12px}
+  .spon__partner .spon__card{min-height:184px;padding:14px;border-radius:15px}
+  .spon__partner img{height:calc(var(--h,40px) * .82)}
+  .spon__who{--lines:3;min-height:calc(12px + 12px * 1.3 * var(--lines) + 4px + 11px * 1.3 * 2);padding-top:12px}
+  .spon__name{font-size:12px}
+  .spon__site{font-size:11px}
+  .spon__go{top:9px;right:9px}
+}
+/* the narrowest phones: one card a row, so names and addresses never break mid-word */
+@media (max-width:360px){
+  .spon__grid{grid-template-columns:1fr}
+  .spon__partner .spon__card{min-height:0}
+  .spon__mark{padding:10px 0 18px;min-height:96px}
+  .spon__who{--lines:1;min-height:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .spon__marquee{-webkit-mask-image:none;mask-image:none;cursor:auto!important}
+  .spon__track{animation:none;width:auto;justify-content:center;transform:none!important}
+  .spon__run{flex-wrap:wrap;justify-content:center;gap:14px;padding:0 var(--gutter)}
+  .spon__run + .spon__run{display:none}
+  .spon__card,.spon__card img,.spon__go,.spon__mark{transition:none;transform:none!important}
+  .spon__who{transform:none!important}
 }

@@ -14,7 +14,7 @@
   linear-gradient(180deg,rgba(6,6,9,.6) 0%,rgba(6,6,9,.12) 22%,rgba(6,6,9,.2) 52%,rgba(6,6,9,.78) 86%,rgba(6,6,9,.92) 100%)}
 .ph__inner{position:relative;width:100%;max-width:var(--maxw);margin:0 auto;padding:calc(var(--nav-h) + 24px) var(--gutter) clamp(30px,6vh,64px)}
 .ph__eyebrow{font:700 clamp(10px,.82vw,12px)/1.4 var(--f-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
-.ph__title{margin:clamp(14px,2.4vh,26px) 0 0;font-size:clamp(52px,10.4vw,178px);line-height:1.06;text-shadow:0 2px 40px rgba(6,6,9,.4)}
+.ph__title{margin:clamp(14px,2.4vh,26px) 0 0;font-size:clamp(50px,9.4vw,164px);line-height:1.06;text-shadow:0 2px 40px rgba(6,6,9,.4)}
 .ph__l1,.ph__l2{display:block}
 .ph__l2{margin-top:.06em}   /* room for the tail of the y in "your" above the b and l below */
 /* the second line arrives from behind the first rather than simply fading up */
@@ -32,6 +32,97 @@
   .ph__foot{grid-template-columns:1fr;align-items:start}
   .ph__cta{width:100%}
   .ph__cta .btn{flex:1 1 auto;justify-content:center}
+}
+
+/* a slow turquoise spotlight drifts over the stage, behind the words */
+.ph__beam{position:absolute;top:-30%;right:-8%;width:min(78vw,1100px);height:150%;background:radial-gradient(ellipse 46% 62% at 50% 0%,rgba(31,199,190,.26) 0%,rgba(31,199,190,.08) 46%,rgba(31,199,190,0) 72%);transform-origin:50% 0;mix-blend-mode:screen;pointer-events:none;animation:ph-beam 11s var(--ease-io) infinite alternate}
+@keyframes ph-beam{from{transform:rotate(-9deg)}to{transform:rotate(7deg)}}
+.ph .btn--ghost{color:#fff}
+.ph [data-pc-link][hidden],.pv [data-pc-link][hidden],.pend [data-pc-link][hidden],[data-pc-soon][hidden]{display:none}
+
+/* ---------- the stage board: where the competition stands today ----------
+   A broadcast-style panel: status and day on the left, the clock in tiles on the right, and
+   underneath one cell per stage. Done cells are full, today's fills with its days (one notch
+   per day), later ones are hatched. Today's cell is wider, so the eye lands on it. */
+.board{position:relative;margin-top:clamp(22px,3.4vh,38px);padding:clamp(18px,2.1vw,26px) clamp(16px,2.4vw,30px) clamp(18px,2.2vw,26px);border-radius:16px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(20,20,26,.72) 0%,rgba(11,11,15,.62) 100%);
+  -webkit-backdrop-filter:blur(16px) saturate(1.25);backdrop-filter:blur(16px) saturate(1.25);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.08),0 40px 90px -44px rgba(0,0,0,.9)}
+/* the print bar along the top edge, as on the film player */
+.board::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan) 0 33.33%,var(--magenta) 33.33% 66.66%,var(--yellow) 66.66% 100%)}
+.board__top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 28px}
+
+.board__now{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-width:0}
+.board__live{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 11px 0 10px;border-radius:999px;background:var(--accent);color:var(--ink);font:800 10.5px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase}
+.board__pulse{position:relative;flex:none;width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.board__pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--ink);opacity:0;animation:board-ping 1.8s var(--ease) infinite}
+@keyframes board-ping{0%{transform:scale(.5);opacity:.8}80%,100%{transform:scale(1.5);opacity:0}}
+.board__now-t{font:800 clamp(13px,1.05vw,15.5px)/1.3 var(--f-sans);letter-spacing:.12em;text-transform:uppercase;color:#fff}
+.board__day{height:28px;display:inline-flex;align-items:center;padding:0 11px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font:700 10.5px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+.board__day[hidden]{display:none}
+.board.is-over .board__live{background:rgba(255,255,255,.16);color:#fff}
+.board.is-over .board__pulse{background:#fff}
+.board.is-over .board__pulse::after{display:none}
+/* the voting week on a copy of the site without the gallery: nothing is live yet */
+.board.is-waiting .board__live{background:rgba(255,255,255,.16);color:#fff}
+.board.is-waiting .board__pulse{background:#fff}
+.board.is-waiting .board__pulse::after{display:none}
+
+/* the clock: four tiles */
+.board__clock{display:flex;align-items:center;gap:8px 16px}
+.board__clock[hidden]{display:none}
+.board__clock-k{max-width:11.5em;text-wrap:balance;font:700 10px/1.35 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.6);text-align:right}
+.board__clock-t{display:inline-flex;align-items:flex-start;gap:5px}
+.board__u{display:flex;flex-direction:column;align-items:center;min-width:clamp(50px,4.4vw,64px);padding:9px 6px 7px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,.035) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.45)}
+.board__n{font:800 clamp(22px,2.15vw,32px)/1 var(--f-sans);font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:#fff}
+.board__u--s .board__n{color:var(--accent)}
+.board__l{margin-top:6px;font:700 8.5px/1 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.board__sep{padding-top:10px;font:800 18px/1 var(--f-sans);color:rgba(255,255,255,.26)}
+
+/* the track */
+.board__track{list-style:none;display:flex;gap:clamp(6px,.7vw,10px);margin:clamp(20px,2.8vh,28px) 0 0;padding:clamp(16px,2.2vh,22px) 0 0;border-top:1px solid rgba(255,255,255,.1)}
+.board__s{--run:0;flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:9px;transition:flex-grow .9s var(--ease)}
+.board__s.is-now{flex-grow:1.9}
+.board__head{display:flex;align-items:center;gap:8px;min-width:0}
+.board__no{flex:none;font:800 10px/1 var(--f-sans);letter-spacing:.14em;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.4)}
+.board__k{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 12px/1.2 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.board__tick{display:none;flex:none;width:14px;height:14px;padding:2px;border-radius:50%;background:var(--accent);fill:none;stroke:var(--ink);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.board__s.is-past .board__tick{display:block}
+.board__s.is-past .board__no{color:var(--accent)}
+.board__s.is-past .board__k{color:rgba(255,255,255,.86)}
+.board__s.is-now .board__no{color:var(--accent)}
+.board__s.is-now .board__k{color:#fff}
+
+.board__cell{position:relative;height:8px;border-radius:999px;overflow:hidden;background:repeating-linear-gradient(135deg,rgba(255,255,255,.09) 0 5px,rgba(255,255,255,.03) 5px 10px)}
+.board__s.is-past .board__cell,.board__s.is-now .board__cell{background:rgba(31,199,190,.16)}
+.board__run{position:absolute;inset:0;overflow:hidden;border-radius:inherit;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);transition:transform 1.2s var(--ease) calc(var(--d,0s) + .45s + var(--i,0) * .14s)}
+.board__s.is-past .board__run{transform:scaleX(1)}
+.board__s.is-now .board__run{transform:scaleX(var(--run));background:linear-gradient(90deg,var(--accent) 0%,#7DF2EA 100%);box-shadow:0 0 16px rgba(31,199,190,.7)}
+/* a sheen runs along today's fill */
+.board__s.is-now .board__run::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.55) 50%,transparent 100%);transform:translateX(-100%);animation:board-sheen 2.8s var(--ease-io) 1.8s infinite}
+@keyframes board-sheen{60%,100%{transform:translateX(100%)}}
+/* a notch for each day of today's stage */
+.board__s.is-now .board__cell::after{content:"";position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(90deg,transparent 0 calc(100% / var(--days,1) - 2px),rgba(11,11,15,.7) calc(100% / var(--days,1) - 2px) calc(100% / var(--days,1)))}
+.js .board.rv:not(.in) .board__run{transform:scaleX(0)}
+.board__v{font:600 12px/1.3 var(--f-sans);color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board__s.is-past .board__v{color:rgba(255,255,255,.66)}
+.board__s.is-now .board__v{color:var(--accent);font-weight:700}
+
+@media (max-width:860px){
+  .board__clock{width:100%;justify-content:space-between}
+  .board__clock-k{text-align:left}
+}
+@media (max-width:640px){
+  .board__top{flex-direction:column;align-items:flex-start}
+  .board__clock{flex-direction:column;align-items:flex-start;gap:10px}
+  .board__clock-k{max-width:none}
+  .board__clock-t{display:flex;width:100%}
+  .board__u{flex:1 1 0;min-width:0}
+  /* on a phone only today's stage keeps its words; the others are numbered cells */
+  .board__s{flex-grow:.7}
+  .board__s.is-now{flex-grow:3.2}
+  .board__s:not(.is-now) .board__k,.board__s:not(.is-now) .board__v{display:none}
+  .board__s.is-past .board__no{display:none}
 }
 
 /* ---------- the opportunity: $10K over the room ---------- */
@@ -71,14 +162,20 @@
 .road__cap{margin-top:14px;font:600 12.5px/1.5 var(--f-sans);color:var(--ink-3);max-width:34ch}
 .steps{list-style:none;margin:0;padding:0}
 .step{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 clamp(20px,3vw,52px)}
-/* the rail is drawn per step so it never depends on a measured height */
-.step__rail{position:relative;width:1px;justify-self:center;background:var(--rule)}
-.step__rail::after{content:"";position:absolute;inset:0;background:var(--accent);transform:scaleY(0);transform-origin:50% 0;transition:transform .9s var(--ease)}
-.step.is-done .step__rail::after,.step.is-active .step__rail::after{transform:scaleY(1)}
-.step--last .step__rail{background:linear-gradient(180deg,var(--rule) 0%,var(--rule) 62%,transparent 100%)}
-.step__dot{position:absolute;top:clamp(26px,3.4vh,36px);left:50%;width:11px;height:11px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--paper);box-shadow:inset 0 0 0 1.5px var(--rule-strong);transition:box-shadow .5s var(--ease),transform .6s var(--ease)}
-.step.is-active .step__dot{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent),0 0 0 5px rgba(31,199,190,.18);transform:scale(1.18)}
-.step.is-done .step__dot{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+/* the timeline: one track down the steps, drawn per step so it never depends on a measured
+   height. It follows the dates, as the board in the hero does: done stages are solid and ticked,
+   today's fills with its days, later ones are dashed. */
+.step__rail{--y:clamp(28px,3.6vh,38px);position:relative;width:30px;justify-self:center}
+.step__rail::before,.step__rail::after{content:"";position:absolute;left:50%;width:4px;margin-left:-2px;border-radius:4px;transform-origin:50% 0;transition:transform 1.1s var(--ease) .2s}
+.step__rail::before{top:0;bottom:0;background:repeating-linear-gradient(180deg,var(--rule-strong) 0 7px,transparent 7px 13px)}
+.step:first-child .step__rail::before{top:var(--y)}
+.step--last .step__rail::before{-webkit-mask:linear-gradient(180deg,#000 55%,transparent);mask:linear-gradient(180deg,#000 55%,transparent)}
+.step.is-past .step__rail::before{background:var(--accent-ink)}
+.step.is-now .step__rail::before{background:linear-gradient(180deg,var(--accent-ink) 0 var(--y),rgba(31,199,190,.2) var(--y))}
+.step.is-now .step__rail::after{top:var(--y);bottom:0;background:linear-gradient(180deg,var(--accent-ink) 0%,var(--accent) 70%,#7DF2EA 100%);box-shadow:0 0 14px rgba(31,199,190,.55);transform:scaleY(var(--run,.04))}
+.js .step.rv:not(.in) .step__rail::before,.js .step.rv:not(.in) .step__rail::after{transform:scaleY(0)}
+.step__dot{position:absolute;z-index:1;top:var(--y);left:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--paper);box-shadow:inset 0 0 0 2px var(--rule-strong);transition:transform .6s var(--ease) .3s,background-color .4s var(--ease)}
+.js .step.rv:not(.in) .step__dot{transform:scale(.4)}
 .step__in{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:baseline;gap:4px clamp(18px,2.6vw,44px);padding:clamp(22px,3.2vh,34px) 0 clamp(30px,4.6vh,56px);outline-offset:8px}
 .step__no{grid-row:1 / span 4;font:800 clamp(40px,5.4vw,86px)/.86 var(--f-sans);letter-spacing:-.03em;color:var(--rule-strong);transition:color .5s var(--ease),transform .7s var(--ease)}
 .step.is-active .step__no{color:var(--accent-ink)}
@@ -100,33 +197,46 @@
   .step__no{grid-row:auto;font-size:clamp(34px,11vw,52px);margin-bottom:8px}
 }
 
-/* ---------- for applicants ---------- */
-.subm{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter) clamp(100px,16vh,180px);display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1fr);align-items:center;gap:clamp(30px,5vw,96px)}
-.subm__shot{margin:0;overflow:hidden;background:var(--paper-2)}
-.subm__shot img{display:block;width:100%;height:auto;filter:grayscale(1) contrast(1.06)}
-.subm__title{margin-top:clamp(16px,2.6vh,30px);font-size:clamp(38px,5.4vw,84px);line-height:1.06}
-.subm__list{list-style:none;margin:clamp(26px,4vh,44px) 0 0;padding:0;border-top:1px solid var(--rule)}
-.subm__list li{display:grid;grid-template-columns:minmax(8.5rem,auto) minmax(0,1fr);align-items:baseline;gap:6px clamp(18px,2.6vw,40px);padding:18px 0;border-bottom:1px solid var(--rule)}
-.subm__k{font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink)}
-.subm__v{font:500 15.5px/1.5 var(--f-sans);color:var(--ink-2)}
-.subm__elig{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-top:clamp(16px,2.4vh,24px);font:600 15.5px/1.5 var(--f-sans);color:var(--ink)}
-.subm__note{margin-top:22px;font:800 clamp(15px,1.3vw,19px)/1.3 var(--f-sans);letter-spacing:.02em;text-transform:uppercase}
-@media (max-width:860px){.subm{grid-template-columns:1fr}.subm__shot{max-width:88%}}
+/* ---------- the steps by date: done / now / next ---------- */
+.step__tag{grid-column:2;justify-self:start;display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;padding:6px 10px 6px 9px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--rule);font:800 10px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.step.is-past .step__tag{background:var(--paper-2);box-shadow:none;color:var(--ink-2)}
+.step.is-past .step__tag::before{content:"";width:3px;height:6px;margin:-2px 1px 0 2px;border:solid var(--accent-ink);border-width:0 1.8px 1.8px 0;transform:rotate(45deg)}
+.step.is-now .step__tag{background:var(--accent);box-shadow:none;color:var(--ink)}
+.step.is-now .step__tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink);animation:tag-blink 1.6s var(--ease-io) infinite}
+@keyframes tag-blink{50%{opacity:.25}}
+.step__no{grid-row:1 / span 5}
+.step.is-past .step__dot{background:var(--accent-ink);box-shadow:0 0 0 4px var(--paper)}
+.step.is-past .step__dot::after{content:"";position:absolute;left:8px;top:5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.step.is-now .step__dot{width:28px;height:28px;margin:-14px 0 0 -14px;background:var(--accent);box-shadow:0 0 0 4px var(--paper),0 10px 24px -8px rgba(0,122,116,.7)}
+.step.is-now .step__dot::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--ink)}
+.step.is-now .step__dot::before{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--accent);opacity:0;animation:rail-ping 2s var(--ease) infinite}
+@keyframes rail-ping{0%{transform:scale(.7);opacity:.9}80%,100%{transform:scale(1.7);opacity:0}}
+.step.is-now .step__no{color:var(--accent-ink)}
+.step.is-now .step__in{position:relative}
+@media (max-width:860px){.step__tag{grid-column:1}}
 
-/* ---------- the final ten: two views ---------- */
+/* ---------- people's choice: the public's place in the final ---------- */
+.pv{position:relative;overflow:hidden;background:var(--ink);color:#fff}
+.pv__glow{position:absolute;top:-38vw;right:-24vw;width:82vw;height:82vw;border-radius:50%;background:radial-gradient(circle,rgba(31,199,190,.34) 0%,rgba(31,199,190,.1) 38%,rgba(31,199,190,0) 66%);pointer-events:none;animation:pv-glow 14s var(--ease-io) infinite alternate}
+@keyframes pv-glow{to{transform:translate3d(-9vw,7vw,0) scale(1.08)}}
+.pv__in{position:relative;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);align-items:end;gap:clamp(44px,6vw,110px);max-width:var(--maxw);margin:0 auto;padding:clamp(100px,16vh,180px) var(--gutter)}
+.pv__title{margin-top:clamp(18px,2.8vh,32px);font-size:clamp(44px,6.4vw,108px);line-height:1.05}
+.pv__hi{color:var(--accent)}
+.pv__lede{margin-top:clamp(18px,2.8vh,30px);max-width:48ch;font:500 clamp(15px,1.22vw,19px)/1.6 var(--f-sans);color:rgba(255,255,255,.82)}
+.pv__cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:clamp(26px,4vh,40px)}
+.pv__soon{padding:14px 18px;border:1.5px dashed rgba(31,199,190,.6);border-radius:10px;font:700 12px/1.5 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.pv__stats{list-style:none;margin:0;padding:0;border-top:1px solid rgba(255,255,255,.22)}
+.pv__stat{display:grid;grid-template-columns:clamp(112px,11vw,186px) minmax(0,1fr);align-items:baseline;gap:clamp(16px,2vw,28px);padding:clamp(18px,2.6vh,26px) 0;border-bottom:1px solid rgba(255,255,255,.22)}
+.pv__n{font:800 clamp(44px,5vw,84px)/.9 var(--f-sans);letter-spacing:-.03em;color:#fff}
+.pv__stat--date .pv__n{font-size:clamp(28px,3vw,50px);color:var(--accent)}
+.pv__k{font:700 11px/1.45 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+@media (max-width:900px){.pv__in{grid-template-columns:1fr;align-items:start}}
+@media (max-width:560px){.pv__cta .btn{width:100%;justify-content:center}}
+
+/* ---------- the final ten ---------- */
 .ten{max-width:var(--maxw);margin:0 auto;padding:clamp(80px,13vh,150px) var(--gutter) clamp(100px,16vh,180px);border-top:1px solid var(--rule)}
 .ten__title{margin-top:clamp(18px,2.8vh,32px);font-size:clamp(40px,6vw,96px);line-height:1.06}
-.tabs{margin-top:clamp(34px,5.4vh,62px)}
-.tabs__list{display:flex;flex-wrap:wrap;gap:0 clamp(20px,3vw,44px);border-bottom:1px solid var(--rule)}
-.tab{position:relative;padding:0 0 14px;font:800 clamp(13px,1.15vw,16px)/1 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);min-height:44px;transition:color .35s var(--ease)}
-.tab::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:0 50%;transition:transform .5s var(--ease)}
-.tab:hover{color:var(--ink-2)}
-.tab[aria-selected="true"]{color:var(--ink)}
-.tab[aria-selected="true"]::after{transform:scaleX(1)}
-.tab:focus-visible{outline:2px solid var(--accent-ink);outline-offset:4px}
-.tabs__panel{padding-top:clamp(30px,5vh,56px)}
-.tabs__panel[hidden]{display:none}
-.tabs__panel:focus-visible{outline:2px solid var(--accent-ink);outline-offset:8px}
+.ten__body{margin-top:clamp(34px,5.4vh,62px)}
 /* 1 + 9 = 10 */
 .sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 clamp(10px,1.8vw,26px);font:800 clamp(52px,10vw,150px)/.9 var(--f-sans);letter-spacing:-.03em}
 .sum__op{font-size:.46em;color:var(--ink-3)}
@@ -140,27 +250,6 @@
 .ten__shot{margin:clamp(30px,5vh,56px) 0 0;overflow:hidden;background:var(--paper-2)}
 .ten__shot img{display:block;width:100%;height:auto;filter:grayscale(1) contrast(1.1) brightness(.95)}
 @media (max-width:760px){.ten__grid{grid-template-columns:1fr}}
-/* people's choice, before it opens */
-.vote__kicker{font:700 11px/1.3 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:var(--accent-ink)}
-.vote__big{margin-top:14px;font-size:clamp(38px,6vw,92px);line-height:1.06}
-.vote__copy{margin-top:clamp(16px,2.4vh,24px);max-width:52ch;font:500 clamp(15px,1.25vw,18px)/1.6 var(--f-sans);color:var(--ink-2)}
-.vote__when{list-style:none;margin:clamp(26px,4vh,44px) 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--rule)}
-.vote__when li{padding:18px clamp(12px,1.8vw,26px) 0 0;font:800 clamp(15px,1.4vw,21px)/1.2 var(--f-sans);letter-spacing:.02em;text-transform:uppercase}
-.vote__when li + li{padding-left:clamp(14px,2vw,28px);border-left:1px solid var(--rule)}
-.vote__when-k{display:block;margin-bottom:8px;font:700 10.5px/1.3 var(--f-sans);letter-spacing:.18em;color:var(--ink-3)}
-@media (max-width:640px){
-  .vote__when{grid-template-columns:1fr}
-  .vote__when li{padding:16px 0}
-  .vote__when li + li{padding-left:0;border-left:0;border-top:1px solid var(--rule)}
-}
-/* the shape the Top 20 cards take once they exist (pitch.js renders into this) */
-.vote__grid{list-style:none;margin:clamp(26px,4vh,44px) 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:clamp(18px,2.4vw,34px)}
-.vote__card{display:flex;flex-direction:column}
-.vote__card img{width:100%;aspect-ratio:3/4;object-fit:cover;filter:grayscale(1) contrast(1.08);background:var(--paper-2)}
-.vote__name{margin-top:14px;font:800 15px/1.25 var(--f-sans);letter-spacing:.02em;text-transform:uppercase}
-.vote__co{margin-top:5px;font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink)}
-.vote__blurb{margin-top:9px;font:500 14px/1.5 var(--f-sans);color:var(--ink-2)}
-
 /* ---------- the live final ---------- */
 .live{position:relative;display:flex;align-items:center;min-height:100vh;min-height:100svh;color:#fff;overflow:hidden;background:#0B0B0F}
 .live__media{position:absolute;inset:0;margin:0}
@@ -185,6 +274,16 @@
   .fmt__i:nth-child(n+3){margin-top:14px;padding-top:18px;border-top:1px solid rgba(255,255,255,.22)}
 }
 
+/* the 60 / 40 scoring, as one bar that draws itself in */
+.split{display:flex;max-width:760px;height:48px;margin-top:clamp(26px,4vh,40px);border-radius:999px;overflow:hidden;font:800 11px/1 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.split__a,.split__b{display:flex;align-items:center;gap:10px;padding:0 clamp(14px,1.6vw,20px);white-space:nowrap}
+.split__a{flex:0 0 60%;background:#fff}
+.split__b{flex:1 1 auto;background:var(--accent)}
+.split__n{font-size:17px;letter-spacing:0}
+.js .split.rv{opacity:1;transform:none;clip-path:inset(0 100% 0 0 round 999px);transition:clip-path 1.5s var(--ease) var(--d,0s)}
+.js .split.rv.in{clip-path:inset(0 0 0 0 round 999px)}
+@media (max-width:420px){.split{font-size:9.5px;letter-spacing:.1em}.split__n{font-size:15px}}
+
 /* ---------- closing ---------- */
 .pend{max-width:var(--maxw);margin:0 auto;padding:clamp(90px,15vh,170px) var(--gutter) clamp(90px,15vh,170px)}
 .pend__title{margin-top:clamp(16px,2.6vh,30px);font-size:clamp(44px,8vw,140px);line-height:1.06}
@@ -195,125 +294,15 @@
 /* ---------- reduced motion: everything already arrived ---------- */
 @media (prefers-reduced-motion:reduce){
   .js .ph__l2.rv{opacity:1;transform:none}
-  .step__rail::after{transform:scaleY(1)}
-  .step__dot{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+  .step__rail::before,.step__rail::after,.step__dot{transition:none}
+  .js .step.rv:not(.in) .step__rail::before{transform:none}
+  .js .step.rv.is-now:not(.in) .step__rail::after{transform:scaleY(var(--run,.04))}
+  .js .step.rv:not(.in) .step__dot{transform:none}
   .steps.has-active .step:not(.is-active) .step__in{opacity:1}
   .step__no{color:var(--accent-ink)}
+  .ph__beam,.pv__glow,.board__pulse::after,.board__s.is-now .board__run::after,.step.is-now .step__dot::before,.step.is-now .step__tag::before{animation:none}
+  .board__run{transition:none}
+  .js .board.rv:not(.in) .board__s.is-past .board__run{transform:scaleX(1)}
+  .js .board.rv:not(.in) .board__s.is-now .board__run{transform:scaleX(var(--run))}
+  .js .split.rv{clip-path:none}
 }
-
-/* ============================================================================
-   The People's Choice section, and two pieces of the live-final section.
-
-   These had no rules at all. The markup arrived from a later build of the page than the
-   stylesheet did, so #vote rendered as unstyled running text at the window edge -- no
-   section padding, no ground, the headline at body size and the three figures as a
-   bulleted list. It has been live that way. Composition only: every colour, face and
-   easing is site.css's.
-   ========================================================================= */
-
-.pv {
-  position: relative; isolation: isolate;
-  background: var(--ink); color: #fff;
-  padding: clamp(72px, 11vw, 150px) 0;
-  overflow: hidden;
-}
-/* a single soft light behind the copy, the same turquoise the page uses elsewhere */
-.pv__glow {
-  position: absolute; z-index: -1; pointer-events: none;
-  left: -10%; top: -30%; width: 70%; height: 130%;
-  background: radial-gradient(50% 42% at 42% 50%, rgba(31,199,190,.20) 0%, rgba(31,199,190,0) 72%);
-}
-.pv__in {
-  max-width: var(--maxw); margin-inline: auto; padding-inline: var(--gutter);
-  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: clamp(32px, 5vw, 86px); align-items: center;
-}
-.pv__copy { min-width: 0; }
-.pv__title {
-  margin: clamp(16px, 2.4vh, 26px) 0 0;
-  font-size: clamp(38px, 5.4vw, 86px); line-height: 1.04; letter-spacing: -.035em;
-}
-.pv__hi { color: var(--accent); }
-.pv__lede {
-  margin: clamp(18px, 2.6vh, 26px) 0 0; max-width: 46ch;
-  font: 500 clamp(15.5px, 1.3vw, 19px)/1.6 var(--f-sans); color: rgba(255,255,255,.76);
-}
-.pv__cta { margin-top: clamp(24px, 3.4vh, 36px); display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; }
-.pv__soon {
-  margin: 0; max-width: 34ch;
-  font: 700 12px/1.5 var(--f-sans); letter-spacing: .04em; color: rgba(255,255,255,.58);
-}
-.pv__soon[hidden] { display: none; }
-
-/* the three figures: a ruled column, not a bulleted list */
-.pv__stats {
-  list-style: none; margin: 0; padding: 0; min-width: 0;
-  display: grid; gap: clamp(14px, 2vh, 20px);
-}
-.pv__stat {
-  display: grid; gap: 6px;
-  padding: clamp(14px, 2vh, 20px) 0 0;
-  border-top: 1px solid rgba(255,255,255,.16);
-}
-.pv__n {
-  font: 800 clamp(30px, 3.6vw, 48px)/1 var(--f-display, var(--f-sans));
-  letter-spacing: -.035em; color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-.pv__stat--date .pv__n { font-size: clamp(24px, 2.6vw, 34px); letter-spacing: -.02em; }
-.pv__k { font: 600 clamp(12px, 1vw, 13.5px)/1.5 var(--f-sans); color: rgba(255,255,255,.66); }
-
-@media (max-width: 900px) {
-  .pv__in { grid-template-columns: minmax(0, 1fr); gap: clamp(30px, 5vh, 48px); }
-  .pv__glow { left: -30%; width: 120%; }
-}
-@media (max-width: 560px) {
-  .pv__cta .btn { width: 100%; justify-content: center; }
-  .pv__soon { max-width: none; }
-}
-
-/* ---------- the two halves of the final score ----------
-   .fmt above it is styled; this row under it was not, so "60% Judges 40% The room" ran
-   together as one line of body text. */
-.split {
-  display: grid; grid-template-columns: 6fr 4fr; align-items: stretch;
-  margin-top: clamp(22px, 3.2vh, 32px); max-width: 540px;
-  border-radius: 10px; overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
-  font: 700 11px/1.3 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
-}
-.split__a, .split__b { display: flex; align-items: baseline; gap: 8px; padding: 13px 15px; min-width: 0; }
-.split__a { background: var(--accent); color: var(--on-accent); }
-.split__b { color: rgba(255,255,255,.82); }
-.split__n { font: 800 clamp(16px, 1.8vw, 21px)/1 var(--f-sans); letter-spacing: -.02em; }
-@media (max-width: 440px) {
-  .split { font-size: 10px; letter-spacing: .1em; }
-  .split__a, .split__b { padding: 11px 12px; }
-}
-
-/* ---------- the stage label on each step ----------
-
-   The markup gained a "Done / Now / Next" line above each step's title; the stylesheet
-   never heard about it. Two things followed. It rendered as a line of body text, and --
-   the part that shows -- .step__in's big number is set to span FOUR rows, which was right
-   when the step had four pieces of content and is one short now. The fifth, the date line,
-   wrapped into the number's column: on the live page "Applications closed October 20" sits
-   under the 01 instead of under the paragraph it belongs to, and it drags that column wide
-   enough to squeeze the text beside it.
-
-   Five, because that is how many pieces of content a step now has. `1 / -1` reads as
-   the obvious answer and is the wrong one: -1 counts back through the EXPLICIT rows,
-   this grid has none, so the span collapses to a single cell and the five items then
-   alternate between the two columns. Measured, not assumed. */
-.step__in > .step__no { grid-row: 1 / span 5; }
-.step__tag {
-  margin: 0 0 6px; display: flex; align-items: center; gap: 7px;
-  font: 800 9.5px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
-  color: var(--ink-3);
-}
-.step__tag::before {
-  content: ""; width: 6px; height: 6px; border-radius: 50%;
-  background: currentColor; opacity: .55;
-}
-.step.is-active .step__tag { color: var(--accent-ink); }
-.step.is-active .step__tag::before { opacity: 1; }

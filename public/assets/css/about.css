@@ -14,14 +14,6 @@
 .ab__p{margin-top:clamp(16px,2.4vh,24px);max-width:46ch;font:500 clamp(17px,1.55vw,24px)/1.5 var(--f-sans);color:var(--ink)}
 .ab__p + .ab__p{margin-top:clamp(14px,2vh,20px);color:var(--ink-2)}
 
-/* "what is nextgen?", over the film.
-
-   It carries .wm, the display face, but nothing ever gave it a size, so it came out at the
-   page's body size -- 17px where every other section title on this page is 83px. A heading
-   that small over a full-width film reads as a stray caption. */
-.ab__film-t{margin:clamp(12px,2vh,22px) 0 clamp(22px,3.6vh,38px);font-size:clamp(34px,5vw,78px);line-height:1.05;letter-spacing:-.035em}
-.ab__film{margin-top:clamp(18px,3vh,30px)}
-
 /* the one moment the page raises its voice */
 .ab--quote{max-width:none;padding-block:clamp(60px,11vh,150px)}
 .ab--quote > *{max-width:var(--maxw);margin-inline:auto}
@@ -40,6 +32,15 @@
 .forwho{list-style:none;margin:clamp(24px,3.6vh,36px) 0 0;padding:0;display:grid;gap:clamp(10px,1.5vh,14px);max-width:60ch}
 .forwho li{padding-left:26px;position:relative;font:700 clamp(17px,1.5vw,23px)/1.45 var(--f-sans);color:var(--ink)}
 .forwho li::before{content:"";position:absolute;left:0;top:.6em;width:12px;height:2px;background:var(--accent)}
+
+/* the Convener's message, on the page's own paper: the film plays in the page (js/film.js, css/film.css) */
+.ab--film{max-width:none;padding-block:clamp(56px,10vh,130px);overflow:hidden}
+.ab--film > *{max-width:var(--maxw);margin-inline:auto}
+/* on paper the player needs a softer shadow than film.css gives it on dark */
+.ab--film .film--inline .film__box{box-shadow:0 44px 90px -46px rgba(var(--shade),.5),0 18px 40px -28px rgba(0,163,230,.35),0 0 0 1px rgba(var(--shade),.06)}
+.ab__film-t{margin-top:clamp(12px,1.8vh,18px);font-size:clamp(42px,7vw,108px);line-height:1.06;letter-spacing:-.035em}
+.ab__film{margin-top:clamp(30px,5vh,60px)}
+.ab__film > *{max-width:1120px}
 
 /* the invitation, on ink */
 .ab--end{max-width:none;background:var(--ink);color:#fff;padding-block:clamp(80px,15vh,180px)}

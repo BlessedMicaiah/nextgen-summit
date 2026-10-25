@@ -1,0 +1,56 @@
+/* ===========================================================================
+   PEOPLE'S CHOICE: THE BRAND LINE, AND A DECK WITHOUT A SCROLLBAR
+   Loaded last on /pitch/peoples-choice/, so it sits on top of peoples-choice.css,
+   founder-feed.css, founder-reels.css and founder-stage.css without editing them.
+
+   The brand line is the film's three colours in equal thirds -- cyan, magenta, yellow --
+   the same rule the Pitch page's stage board carries: 3px on a card or a dialog, as on
+   the board. The reels carry none.
+   =========================================================================== */
+:root {
+  --pc-line: linear-gradient(90deg, var(--cyan) 0 33.33%, var(--magenta) 33.33% 66.66%, var(--yellow) 66.66% 100%);
+}
+
+/* ---- the cards on the page ---- */
+/* the four facts under the title: the panel is a grid, so the line is placed, not flowed */
+.ff-stats { position: relative; }
+.ff-stats::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; z-index: 2;
+  height: 3px; background: var(--pc-line); pointer-events: none;
+}
+/* the three awards */
+.pcz__card { position: relative; overflow: hidden; }
+.pcz__card::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0;
+  height: 3px; background: var(--pc-line); pointer-events: none;
+}
+/* how voting works: the rule over each step becomes the brand line */
+.pcr__item { border-top: 0; position: relative; }
+.pcr__item::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0;
+  height: 3px; background: var(--pc-line);
+}
+
+/* ---- the vote and share dialogs: the line across the top edge. A background layer rather
+   than a pseudo-element, because the vote dialog scrolls and the line must not scroll away. */
+.pcv, .pcs {
+  background-image: var(--pc-line);
+  background-size: 100% 4px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+}
+
+/* ---- the deck: no scrollbar ----
+   The end deck and an opened deck can still scroll when a screen is short -- that is their
+   safety net and it stays -- but neither draws a bar, and on a laptop the deck is sized to
+   fit so the net is not needed: measured at 1366x768 it overran by 41px, at 1024x700 by 69px. */
+.deck, .deck__spread { scrollbar-width: none; }
+.deck::-webkit-scrollbar, .deck__spread::-webkit-scrollbar { display: none; width: 0; height: 0; }
+@media (min-width: 561px) and (max-height: 880px) {
+  .deck { padding-top: max(60px, 8.5vh); padding-bottom: max(24px, 3.5vh); }
+  .deck__t { font-size: clamp(30px, 6.4vh, 60px); }
+  .deck__p { margin-top: 10px; }
+  .deck__stacks { margin-top: clamp(16px, 3.2vh, 44px); }
+  .deck__fan { width: min(100%, 230px, 26vh); }
+  .deck__foot { margin-top: clamp(16px, 3.2vh, 40px); }
+}

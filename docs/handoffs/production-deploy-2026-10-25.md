@@ -2,6 +2,12 @@
 
 **Status: waiting for approval. Nothing below has been deployed to production.**
 
+> **Revised after an adversarial security review (25 Oct, evening).** Six reviewers were
+> pointed at these changes and told to break them. They found twelve real defects, including
+> one in the guard this document proposes and one that would have made the privacy fix do
+> nothing at all. Both are fixed; the change-set below is the revised one. Detail is in the
+> commit `0c3aa0c`.
+
 Everything here is live and tested on `staging.nextgensummit.us`. Production is still running
 `main` @ `0bc483d`, unchanged.
 
@@ -61,9 +67,35 @@ So: one click, every vote gone, and a message saying it did not happen.
 - The `seed` / `reset` POST branch answers **403** and states plainly that nothing changed.
 - The Test data section renders its buttons only when `pc_store_is_review()`, and confirms
   before clearing where it does.
+- The page banner read a hardcoded **"Staging"** on the live site, above the login gate, while
+  offering controls that change a running competition. It now reads the actual environment.
+
+**`tools/deploy.mjs`** — refuses a mismatched archive/domain pair before uploading a byte.
 
 Three layers. Only the innermost is a guarantee — a crafted POST that never loads the page still
 meets `pc_reset()` and is refused there.
+
+### The review broke the first version of this guard, so it changed
+
+The guard originally asked one question: is the data directory called `nextgen-data-staging`?
+`release.py` builds both archives into one folder differing only by a line appended to
+`api/config.php`, and `deploy.mjs` took two bare positional arguments and checked neither against
+the other. So `node tools/deploy.mjs nextgensummit.us release/staging-<sha>.zip` — one wrong word —
+would put the staging config on the live host, where the guard answers **yes on production** and
+the destructive buttons render, while every total reads zero because the live ballot is no longer
+the store being read.
+
+The flaw was not the name check. It was that the only fact consulted **travelled inside the
+archive**, so a misdirected archive carried its own permission with it. The guard now needs three
+things: the directory name, a hostname that is not the live site (a fact a zip cannot carry), and
+a store that already has a database in it.
+
+I proved that exploit the expensive way. Piping that deploy command into `head` to read its output
+started a **real upload of the staging archive to nextgensummit.us**; it got several chunks in
+before the broken pipe killed node short of the deploy call. Production was then verified
+untouched — byte-identical to `main` on four pages, no noindex header, no `/insights/`,
+`sitemap.xml` still served. The `deploy.mjs` guard is the reason that cannot happen twice, and it
+runs *before* the credential check so it is reachable without a token.
 
 ### What does not change
 
@@ -106,6 +138,18 @@ https://staging.nextgensummit.us/... (patched)    ->  244 attendees, no "names" 
 - An empty list now sends **no `names` key at all** rather than `"names": []`.
 - The private snapshot records `names_considered` / `names_agreed` so the owner can see whether
   the order form is actually asking — without that gap being published.
+
+### The review found this fix would not have worked
+
+`attendee-count.php` serves its cached snapshot **before** it considers rebuilding, and that
+snapshot lives outside the web root where no deploy reaches it. Shipping the restored consent
+check alone would have gone on publishing the same names for up to five minutes of ordinary
+traffic — and for a full **24 hours** if the Eventbrite walk kept failing, because a failed walk
+updated only its `checked` stamp and left the names in place — while reporting itself as fixed.
+
+The snapshot now carries a version. A snapshot older than the current consent rule is not trusted
+for names, and a failed walk drops them. **No manual cache-clearing step is needed at deploy
+time**, which matters, because a manual step is one somebody forgets.
 
 ### The consequence you need to decide about
 

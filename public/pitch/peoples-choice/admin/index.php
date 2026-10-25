@@ -530,17 +530,23 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261025-s06">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261025-s06">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261025-s07">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261025-s07">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
 <?php /* This banner used to assert that voter identity was simulated. It stopped being true
          the moment phone verification became the default, and a warning that states the
-         opposite of what the system does is worse than no warning. It now reads the actual
-         setting rather than repeating what was true when it was written. */ ?>
+         opposite of what the system does is worse than no warning.
+
+         It then did the same thing again, in the same place: the word "Staging" was
+         hardcoded, so the LIVE dashboard announced itself as staging to anyone who opened
+         it -- above the gate, so without signing in -- while an operator was about to
+         change the rules of a running competition. Found by an adversarial review on
+         2026-10-25. It now reads the actual environment, like everything else here. */ ?>
   <span class="pcbar__in"><span class="pcbar__dot" aria-hidden="true"></span>
-  Staging &middot; vote rows are real and counted live &middot;
+  <?= pc_store_is_review() ? 'Review site &middot; these rows are the review store&rsquo;s'
+      : 'LIVE &middot; every control on this page changes the real competition' ?> &middot;
   <?= (string) pc_meta('phone_required', '1') === '1'
       ? 'voters must verify a phone number'
       : 'VOTER IDENTITY IS SIMULATED - the vote limit can be walked around' ?></span>
@@ -1101,7 +1107,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261025-s06" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261025-s07" defer></script>
 <?php endif; ?>
 </body>
 </html>

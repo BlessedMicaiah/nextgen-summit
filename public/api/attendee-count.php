@@ -54,8 +54,35 @@ header('Cache-Control: no-store');
 const NGS_EB_TTL = 15;              // seconds a count is considered fresh
 const NGS_EB_KEEP = 86400;          // how long a last good count may stand in during an outage
 const NGS_EB_STATES_TTL = 300;      // seconds a per-state snapshot is considered fresh
+/* Bumped whenever the rule for what may appear in a snapshot changes. A snapshot
+   written by older code carries a lower version, and its names are not served.
+   v2 (2026-10-25): names require a positive opt-in. */
+const NGS_EB_SNAP_V = 2;
 const NGS_EB_MAX_PAGES = 60;        // a walk reads at most this many pages of 50 (3,000 attendees)
 const NGS_EB_NAMES_MAX = 600;       // distinct names sent, newest first (everyone, at this event's size)
+
+/**
+ * Strip names from a snapshot that was written before consent was being checked.
+ *
+ * This is the difference between fixing the leak and only appearing to. The snapshot
+ * lives in the private data folder, outside the web root, so no deploy touches it -- and
+ * the endpoint serves whatever is in it before it considers rebuilding. Shipping the
+ * restored check alone would therefore have published the same pre-fix list for up to
+ * five minutes of normal traffic, and for a full 24 hours if the Eventbrite walk kept
+ * failing, while reporting itself as fixed.
+ *
+ * So the snapshot carries a version, and a snapshot older than the current rule is not
+ * trusted for names. Its totals are still usable: they are counts of people and name
+ * nobody. No manual cache-clearing step is needed on deploy, which matters, because a
+ * manual step is one somebody forgets.
+ */
+function ngs_eb_snapshot_consented(array $snap): array
+{
+    if ((int) ($snap['v'] ?? 0) < NGS_EB_SNAP_V) {
+        unset($snap['names'], $snap['names_considered'], $snap['names_agreed']);
+    }
+    return $snap;
+}
 
 /** The JSON reply: the count, and the per-state totals and opted-in names when there is a snapshot. Does not exit. */
 function ngs_eb_send(?int $count, ?array $states = null, int $status = 200): void
@@ -500,7 +527,7 @@ try {
         $c = is_file($sfile) ? json_decode((string) @file_get_contents($sfile), true) : null;
         return is_array($c) ? $c : [];
     };
-    $snap = $readSnap();
+    $snap = ngs_eb_snapshot_consented($readSnap());
     $usable = isset($snap['at'], $snap['states'], $snap['unknown']) && (time() - (int) $snap['at']) < NGS_EB_KEEP;
     ngs_eb_send($cache['count'], $usable ? $snap : null);
 
@@ -530,9 +557,14 @@ try {
                 $snap = ngs_eb_states(function (string $url) use ($token) {
                     return ngs_eb_get($url, $token);
                 }, $qid, $nqid)
-                    + ['at' => time(), 'checked' => time()];
+                    + ['at' => time(), 'checked' => time(), 'v' => NGS_EB_SNAP_V];
             } catch (Throwable $e) {
                 error_log('Next Gen Summit attendee states: ' . $e->getMessage());
+                /* The walk failed, so the snapshot stays as it was -- EXCEPT the names. Keeping
+                   them would re-publish a list that may predate the consent check, every five
+                   minutes, for the full 24 hours NGS_EB_KEEP allows. Totals are aggregates and
+                   name nobody, so those may go on standing in. */
+                unset($snap['names'], $snap['names_considered'], $snap['names_agreed']);
             }
             @file_put_contents($sfile, json_encode($snap), LOCK_EX);
         }

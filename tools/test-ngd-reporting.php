@@ -511,7 +511,13 @@ echo "\n=== the event collector ===\n";
 /* The invariant that matters is not a number, it is a difference: whatever the collector
    does, the ballot must hold exactly the rows it held before. */
 $ballotBefore = (int) $db->query('SELECT COUNT(*) n FROM pc_votes')->fetch()['n'];
-ok('collection defaults ON for a review build', ngd_flag('collect'));
+/* Collection is OFF by default on EVERY site, review included. It used to default on for
+   staging, on the reasoning that staging is harmless -- and the review that followed found
+   why that was wrong: the review site's analytics folder is a sibling of the live voting
+   database, on one filesystem, under one account, so an unauthenticated flood of the
+   staging collector fills the quota the live ballot needs to commit a vote. */
+same('collection is OFF until somebody turns it on, even on review', false, ngd_flag('collect'));
+ok('and turning it on is a deliberate act', ngd_flag_set('collect', true) && ngd_flag('collect'));
 
 same('a good event is accepted', true,
      ngd_event_record(['kind' => 'page_view', 'page' => '/pitch/peoples-choice/'])['ok']);

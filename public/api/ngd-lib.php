@@ -334,7 +334,24 @@ function ngd_events_db(): ?PDO
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
-        $db->exec('PRAGMA busy_timeout = 4000');
+        /* WAL, and a timeout a web request can actually afford.
+
+           None of the reasoning that keeps the VOTING database in rollback-journal mode
+           applies here: this is a private analytics file that nothing else reads. In WAL a
+           reader and a writer stop excluding each other, which matters because the
+           dashboard reads this file while the public collector writes to it.
+
+           The timeout is short on purpose. This store is best-effort by design, so waiting
+           four seconds for a lock is the wrong trade: the right answer under contention is
+           to drop the event, not to hold a PHP worker. Twenty events at four seconds each
+           was eighty seconds of worker time per request, which is a denial of service with
+           a 4 KB body. */
+        try {
+            $db->exec('PRAGMA journal_mode = WAL');
+        } catch (Throwable $e) {
+            // an old SQLite, or a filesystem that cannot do WAL; the timeout below still helps
+        }
+        $db->exec('PRAGMA busy_timeout = 400');
         $db->exec('CREATE TABLE IF NOT EXISTS ngd_event (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             kind       TEXT NOT NULL,
@@ -342,6 +359,7 @@ function ngd_events_db(): ?PDO
             entrant_id TEXT,
             source     TEXT,
             visitor    TEXT NOT NULL,
+            source_ip  TEXT,
             session    TEXT,
             day        TEXT NOT NULL,
             created_at TEXT NOT NULL,
@@ -352,6 +370,17 @@ function ngd_events_db(): ?PDO
         $db->exec('CREATE INDEX IF NOT EXISTS ngd_event_d ON ngd_event (day, kind)');
         $db->exec('CREATE INDEX IF NOT EXISTS ngd_event_e ON ngd_event (entrant_id, day)');
         $db->exec('CREATE INDEX IF NOT EXISTS ngd_event_v ON ngd_event (visitor, day)');
+        $db->exec('CREATE INDEX IF NOT EXISTS ngd_event_ip ON ngd_event (source_ip, ts)');
+        /* A store created before source_ip existed is migrated in place; the column is
+           nullable, so old rows simply do not participate in rate limiting. */
+        try {
+            $cols = array_column($db->query('PRAGMA table_info(ngd_event)')->fetchAll(), 'name');
+            if (!in_array('source_ip', $cols, true)) {
+                $db->exec('ALTER TABLE ngd_event ADD COLUMN source_ip TEXT');
+            }
+        } catch (Throwable $e) {
+            // the index above will simply not be usable; the ceilings still apply
+        }
         $db->exec('CREATE TABLE IF NOT EXISTS ngd_throttle (
             k          TEXT NOT NULL,
             ts         INTEGER NOT NULL,
@@ -1238,7 +1267,13 @@ function ngd_range(string $source, string $from, string $to, bool $force = false
     if ($path === null) {
         return ['ok' => false, 'error' => 'no voting database found for the ' . $source . ' source'];
     }
-    $db = ngd_ro($path);
+    /* The copy, not the live file -- the same rule as ngd_build(), and for the same
+       reason. This function was reading the live ballot directly on every novel date
+       range, which is exactly the thing the rest of this file exists to avoid: a range
+       nobody had asked for before is a cache miss, and a cache miss was a full scan of
+       the live database while somebody was trying to vote. */
+    $snapTaken = ngd_take_snapshot($path);
+    $db = ngd_ro($snapTaken['path']);
     if ($db === null || !ngd_has_table($db, 'pc_votes')) {
         return ['ok' => false, 'error' => 'the voting database could not be opened read-only'];
     }
@@ -1300,6 +1335,12 @@ function ngd_range(string $source, string $from, string $to, bool $force = false
         }
         usort($out['founders'], static fn($x, $y) => [$x['rank'], $x['id']] <=> [$y['rank'], $y['id']]);
 
+        /* Bound the cache before adding to it. Every distinct from/to pair used to create a
+           file that nothing ever removed, on the same filesystem and the same account quota
+           as the live voting database -- and a full disk is how a vote INSERT fails and the
+           voter is told they used their allowance. An authenticated user clicking through
+           date ranges should not be able to do that by accident. */
+        ngd_range_cache_trim();
         @file_put_contents($key, json_encode($out), LOCK_EX);
         @chmod($key, 0640);
     } catch (Throwable $e) {
@@ -1537,9 +1578,18 @@ function ngd_flags(bool $fresh = false): array
         return $cache;
     }
     $defaults = [
-        /* off on the live site until the owner says otherwise; on for the review site so
-           the funnel can be built and tested without touching production at all */
-        'collect'   => ngd_is_staging(),
+        /* OFF everywhere, including the review site.
+
+           It used to default on for staging, on the reasoning that staging is harmless.
+           That reasoning was wrong, and an adversarial review found why: the review site's
+           analytics folder is a SIBLING of the live voting database, on one filesystem,
+           under one Unix account. An unauthenticated flood of the staging collector fills
+           the shared quota, and a full disk is how a vote INSERT fails -- which pc_cast()
+           reports to the voter as "you have used your allowance" (pc-lib.php:258-265).
+           A test environment that can take votes away from real people is not harmless.
+
+           So it is opt-in on every site, and the owner turns it on from Settings. */
+        'collect'   => false,
         'dashboard' => true,
     ];
     $cache = $defaults;
@@ -1643,16 +1693,32 @@ function ngd_event_record(array $in): array
     $visitor = ngd_visitor_token();
     $now = time();
 
-    /* A ceiling per visitor per minute, so a loop in somebody's console cannot fill the
-       disk. Counted in the same separate store. */
+    /* ---- the ceilings ----
+
+       The first version limited 120 events per minute per VISITOR TOKEN, and the token is
+       a hash of address, user agent and the day. The user agent is a request header, so the
+       attacker chose two thirds of the key: a fresh User-Agent per request produced a fresh
+       bucket and the limit never fired once. The rate key is now the address alone
+       (ngd_ip_key), which is the part a client cannot pick.
+
+       Above that sit two ceilings that hold no matter what the rate limiter does, because
+       the thing being protected is not this store -- it is the SHARED DISK that the live
+       voting database sits on. A full disk is how a vote INSERT fails, and pc_cast()
+       reports that failure to the voter as "you have used your allowance"
+       (pc-lib.php:258-265). So: a hard row cap, and a free-space floor. Both are cached for
+       a minute so they cost one query, not one per event. */
     try {
-        $s = $db->prepare('SELECT COUNT(*) AS n FROM ngd_event WHERE visitor = ? AND ts >= ?');
-        $s->execute([$visitor, $now - 60]);
-        if ((int) $s->fetch()['n'] > 120) {
+        $s = $db->prepare('SELECT COUNT(*) AS n FROM ngd_event WHERE source_ip = ? AND ts >= ?');
+        $s->execute([ngd_ip_key(), $now - 60]);
+        if ((int) $s->fetch()['n'] >= NGD_RATE_PER_MIN) {
             return ['ok' => false, 'reason' => 'rate'];
         }
     } catch (Throwable $e) {
         return ['ok' => false, 'reason' => 'store'];
+    }
+
+    if (!ngd_store_has_room($db)) {
+        return ['ok' => false, 'reason' => 'full'];
     }
 
     /* A path, not a URL: no host, no query string, no fragment, length capped. */
@@ -1702,9 +1768,9 @@ function ngd_event_record(array $in): array
 
     try {
         $s = $db->prepare('INSERT INTO ngd_event
-            (kind, page, entrant_id, source, visitor, session, day, created_at, ts, meta)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        $s->execute([$kind, $page, $entrant, $src, $visitor, $sess,
+            (kind, page, entrant_id, source, visitor, source_ip, session, day, created_at, ts, meta)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $s->execute([$kind, $page, $entrant, $src, $visitor, ngd_ip_key(), $sess,
                      ngd_day($now), ngd_now(), $now, $meta]);
     } catch (Throwable $e) {
         return ['ok' => false, 'reason' => 'store'];
@@ -1831,4 +1897,149 @@ const NGD_READABLE = ['pc_votes', 'pc_meta', 'pc_visits'];
 function ngd_may_read(string $table): bool
 {
     return in_array($table, NGD_READABLE, true);
+}
+
+/* ---------------------------------------------------------------------------
+   15. THE CEILINGS ON THE EVENT STORE
+
+   The collector is the only unauthenticated write in this system, and the thing it can
+   damage is not itself. Its folder is a SIBLING of the live voting database, on one
+   filesystem, under one Unix account -- so disk consumed here is disk the ballot cannot
+   have. SQLite needs room for a rollback journal to commit a vote; without it the INSERT
+   fails, pc_cast() catches the failure per slot as "that slot is taken"
+   (pc-lib.php:258), and the voter is told they have used their allowance
+   (pc-lib.php:265). A flood of analytics is therefore a way to take votes away from real
+   people and blame them for it.
+
+   A per-address rate limit alone is not enough, because an attacker with a handful of
+   addresses still gets through. These two ceilings do not care how the rows arrived:
+
+     NGD_EVENT_MAX     a hard row count. Past it, nothing is recorded until somebody
+                       prunes. Analytics stopping is a nuisance; a competition losing
+                       votes is not.
+     NGD_DISK_FLOOR    free space below which the collector stops writing, leaving the
+                       margin to the thing that matters.
+
+   Both answers are cached for a minute, so they cost one query a minute rather than one
+   per event.
+   ------------------------------------------------------------------------ */
+
+const NGD_RATE_PER_MIN = 90;              // events per minute per address
+const NGD_EVENT_MAX    = 400000;          // hard ceiling on stored rows
+const NGD_DISK_FLOOR   = 300 * 1024 * 1024;   // keep at least this much free for the ballot
+const NGD_PRUNE_DAYS   = 120;             // rows older than this are dropped when pruning
+
+function ngd_store_has_room(PDO $db): bool
+{
+    static $until = 0;
+    static $ok = true;
+    if (time() < $until) {
+        return $ok;
+    }
+    $until = time() + 60;
+    $ok = false;
+
+    try {
+        $n = (int) $db->query('SELECT COUNT(*) AS n FROM ngd_event')->fetch()['n'];
+        if ($n >= NGD_EVENT_MAX) {
+            error_log('NextGen Data: event store at its ceiling (' . $n . ' rows); not recording.');
+            return $ok = false;
+        }
+    } catch (Throwable $e) {
+        return $ok = false;
+    }
+
+    /* disk_free_space() is disabled on some shared hosts; a false return means we cannot
+       tell, and not being able to tell is not permission to keep writing next to a live
+       ballot -- but it is also not a reason to refuse forever, so treat an unavailable
+       answer as room and rely on the row ceiling. */
+    $free = @disk_free_space(ngd_var_dir());
+    if (is_float($free) && $free > 0 && $free < NGD_DISK_FLOOR) {
+        error_log('NextGen Data: only ' . (int) ($free / 1048576) . 'MB free; not recording events.');
+        return $ok = false;
+    }
+    return $ok = true;
+}
+
+/** Drop old events. Nothing calls this automatically; it is for the owner's hand. */
+function ngd_store_prune(int $days = NGD_PRUNE_DAYS): int
+{
+    $db = ngd_events_db();
+    if ($db === null) {
+        return 0;
+    }
+    try {
+        $s = $db->prepare('DELETE FROM ngd_event WHERE ts < ?');
+        $s->execute([time() - $days * 86400]);
+        return $s->rowCount();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   16. THE LOGIN THROTTLE'S OWN FILE
+
+   The sign-in lockout used to count failures in ngd-events.sqlite -- the same file the
+   public collector writes to. That coupling is a way in: flood the collector, the store
+   is busy, the throttle's query throws, it fails open (which is correct for a throttle
+   that must not lock the owner out of their own dashboard), and the brute-force limit is
+   simply gone while the flood lasts.
+
+   Its own small file breaks the coupling. Nothing public writes here.
+   ------------------------------------------------------------------------ */
+
+function ngd_throttle_db(): ?PDO
+{
+    static $pdo = false;
+    if ($pdo !== false) {
+        return $pdo;
+    }
+    $pdo = null;
+    try {
+        $db = new PDO('sqlite:' . ngd_var_dir() . '/ngd-throttle.sqlite', null, null, [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+        try {
+            $db->exec('PRAGMA journal_mode = WAL');
+        } catch (Throwable $e) {
+            // not fatal
+        }
+        $db->exec('PRAGMA busy_timeout = 2000');
+        $db->exec('CREATE TABLE IF NOT EXISTS ngd_throttle (
+            k  TEXT NOT NULL,
+            ts INTEGER NOT NULL,
+            ok INTEGER NOT NULL DEFAULT 0
+        )');
+        $db->exec('CREATE INDEX IF NOT EXISTS ngd_throttle_k ON ngd_throttle (k, ts)');
+        $pdo = $db;
+    } catch (Throwable $e) {
+        error_log('NextGen Data: throttle store unavailable. ' . $e->getMessage());
+        $pdo = null;
+    }
+    return $pdo;
+}
+
+/**
+ * Keep the range cache small.
+ *
+ * Range files are cheap individually and unbounded collectively: one per distinct from/to
+ * pair, in a folder that sits on the same quota as the live ballot. Oldest go first, and
+ * the ceiling is low because these rebuild in milliseconds from the snapshot.
+ */
+function ngd_range_cache_trim(int $keep = 40): void
+{
+    $files = @glob(ngd_var_dir() . '/ngd-range-*.json') ?: [];
+    if (count($files) <= $keep) {
+        return;
+    }
+    $byAge = [];
+    foreach ($files as $f) {
+        $byAge[$f] = (int) @filemtime($f);
+    }
+    asort($byAge);
+    foreach (array_slice(array_keys($byAge), 0, count($files) - $keep) as $old) {
+        @unlink($old);
+    }
 }

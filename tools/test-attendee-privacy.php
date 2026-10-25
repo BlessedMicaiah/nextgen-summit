@@ -197,6 +197,64 @@ foreach (['Ada', 'Smith', 'Bo', 'Cy', 'Di'] as $who) {
 }
 
 /* ---------------------------------------------------------------------------
+   3b. THE CACHE — the hole the first version of these tests did not look at.
+
+   The endpoint serves the snapshot it already has BEFORE it considers rebuilding, and
+   that snapshot lives outside the web root where no deploy reaches it. So restoring the
+   consent check, on its own, would have gone on publishing the pre-fix list for up to
+   five minutes of ordinary traffic -- and for a full 24 hours if the Eventbrite walk
+   kept failing, because a failed walk only updated "checked" and left the names in
+   place. The suite was 49/49 green while the endpoint served 212 non-consenting names,
+   because it only ever tested the collector and never the serving path.
+
+   These cases test the serving path, with a snapshot written by the old code.
+   ------------------------------------------------------------------------ */
+
+echo "
+=== a snapshot written before consent was checked ===
+";
+
+$preFix = [
+    'states'  => [['MD', 3], ['VA', 2]],
+    'unknown' => 0,
+    'names'   => ['Ada S.', 'Bo S.', 'Cy S.', 'Di S.'],   // nobody consented to these
+    'at'      => time() - 30,
+    'checked' => time() - 30,
+    // no 'v' key at all: this is what the old code wrote
+];
+$cleaned = ngs_eb_snapshot_consented($preFix);
+ok('an unversioned snapshot loses its names', !isset($cleaned['names']), json_encode($cleaned['names'] ?? null));
+ok('but keeps its totals, which name nobody', ($cleaned['states'] ?? null) === $preFix['states']);
+
+ob_start();
+ngs_eb_send(5, $cleaned);
+$raw2 = (string) ob_get_clean();
+$body2 = substr($raw2, (int) strpos($raw2, '{'));
+foreach (['Ada', 'Bo S.', 'Cy', 'Di'] as $who) {
+    ok('no trace of ' . $who . ' in what the browser receives', !str_contains($body2, $who));
+}
+$j2 = json_decode($body2, true);
+ok('the count still goes out', ($j2['count'] ?? null) === 5, $body2);
+ok('and the per-state totals still go out', isset($j2['states']));
+
+echo "
+=== a snapshot written by the new code is trusted ===
+";
+$postFix = $preFix + [];
+$postFix['v'] = NGS_EB_SNAP_V;
+$postFix['names'] = ['Maya R.'];
+$kept = ngs_eb_snapshot_consented($postFix);
+ok('its names survive, because consent was checked when it was written',
+   ($kept['names'] ?? []) === ['Maya R.'], json_encode($kept['names'] ?? null));
+
+echo "
+=== and a snapshot one version behind is not trusted ===
+";
+$older = $postFix;
+$older['v'] = NGS_EB_SNAP_V - 1;
+ok('an older version loses its names too', !isset(ngs_eb_snapshot_consented($older)['names']));
+
+/* ---------------------------------------------------------------------------
    4. The outright switch.
    ------------------------------------------------------------------------ */
 

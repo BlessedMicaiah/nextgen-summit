@@ -103,6 +103,27 @@ function ngd_pin_override(): array
     return $cache = ['hash' => $hash, 'salt' => $salt, 'epoch' => $epoch];
 }
 
+/**
+ * A short, non-reversible fingerprint of an account's current credential.
+ *
+ * Stored in the session at sign-in and compared on every request, exactly as the PIN epoch
+ * already is. Without it, changing a password revoked nothing: the old passphrase correctly
+ * stopped working and the new one correctly started, while whoever was already signed in
+ * kept the dashboard and every export for up to eight more hours. "Change the password" is
+ * the instinctive response to a leak, so it has to be the thing that works.
+ *
+ * It is a hash of the stored hash, so the session carries nothing that helps anybody.
+ */
+function ngd_cred_fingerprint(string $user): string
+{
+    $u = strtolower(trim($user));
+    if ($u === 'owner') {
+        return 'owner:' . ngd_auth_epoch();
+    }
+    $row = ngd_users()[$u] ?? null;
+    return $row === null ? '' : substr(hash('sha256', (string) $row['hash']), 0, 16);
+}
+
 function ngd_auth_epoch(): int
 {
     return ngd_pin_override()['epoch'];
@@ -150,7 +171,29 @@ function ngd_seed_accounts(bool $fresh = false): array
     if (!is_string($raw) || $raw === '') {
         return $cache;
     }
-    foreach (explode("\n", $raw) as $line) {
+    /* A line inside a block comment is not an account.
+
+       The per-line anchor already defeats a "//" prefix, and that is the trap: an operator
+       who offboards one person with "//" sees it work, offboards the next by wrapping the
+       line in a block comment, and that one keeps signing in. The file says it is read as
+       text and never executed, which is exactly the sentence that makes somebody reach for
+       PHP comment syntax and expect it to mean something. So now it does. */
+    $inComment = false;
+    foreach (explode("
+", $raw) as $line) {
+        $opens  = substr_count($line, "/" . "*");
+        $closes = substr_count($line, "*" . "/");
+        $started = $inComment;
+        if ($opens > $closes) {
+            $inComment = true;
+        } elseif ($closes > $opens) {
+            $inComment = false;
+        }
+        $openAt = strpos($line, "/" . "*");
+        $acctAt = strpos($line, "NGD_ACCOUNT");
+        if ($started || ($openAt !== false && $acctAt !== false && $acctAt > $openAt)) {
+            continue;
+        }
         if (!preg_match("/^\s*NGD_ACCOUNT\s*=\s*'([^'|]+)\|([^'|]*)\|([^']+)'\s*;/", $line, $m)) {
             continue;
         }
@@ -238,6 +281,19 @@ function ngd_user_save(string $username, string $password, string $display): arr
     if (strlen($password) < 12) {
         return ['ok' => false, 'why' => 'Choose a password of at least 12 characters.'];
     }
+    /* A seeded account's hash lives in config.ngd.php and the seed layer wins on every
+       read, so writing a new hash here would be accepted, stored, and then ignored -- the
+       owner would be told the password was changed while the old one kept working. That is
+       the worst possible answer to "this passphrase has leaked". Refuse instead: a refusal
+       is recoverable, a silent no-op is not. */
+    $existing = ngd_users()[$u] ?? null;
+    if ($existing !== null && !empty($existing['seeded'])) {
+        return ['ok' => false, 'why' => 'That account was provisioned with the deployment, so its '
+            . 'password lives in config.ngd.php and cannot be changed from here. Re-run '
+            . 'tools/make-ngd-user.php ' . $u . ' and redeploy, or suspend it and add a '
+            . 'different username.'];
+    }
+
     $hash = password_hash($password, PASSWORD_DEFAULT);
     unset($password);
     if (!is_string($hash) || $hash === '') {
@@ -403,7 +459,8 @@ function ngd_auth_check(string $username, string $password): array
 
 function ngd_try_check(): array
 {
-    $db = ngd_events_db();
+    /* Its own file, not the collector's. See ngd_throttle_db(). */
+    $db = ngd_throttle_db();
     if ($db === null) {
         return ['ok' => true, 'retry_after' => 0, 'left' => NGD_TRY_MAX];
     }
@@ -427,7 +484,7 @@ function ngd_try_check(): array
 
 function ngd_try_note(bool $success): void
 {
-    $db = ngd_events_db();
+    $db = ngd_throttle_db();
     if ($db === null) {
         return;
     }
@@ -499,6 +556,13 @@ function ngd_user(): ?array
         ngd_logout();
         return null;
     }
+    /* The credential moved under this session -- a password change, or a PIN rotation.
+       Either way the session ends now rather than in eight hours. */
+    $cred = ngd_cred_fingerprint((string) ($_SESSION['ngd_user'] ?? ''));
+    if ($cred === '' || !hash_equals($cred, (string) ($_SESSION['ngd_cred'] ?? ''))) {
+        ngd_logout();
+        return null;
+    }
     if ((int) ($_SESSION['ngd_epoch'] ?? 0) !== ngd_auth_epoch()) {
         ngd_logout();                      // the PIN was rotated: this session is revoked
         return null;
@@ -548,6 +612,7 @@ function ngd_login(string $username, string $password): array
     $_SESSION['ngd_at']    = time();
     $_SESSION['ngd_seen']  = time();
     $_SESSION['ngd_epoch'] = ngd_auth_epoch();
+    $_SESSION['ngd_cred']  = ngd_cred_fingerprint((string) $r['user']);
     $_SESSION['csrf']      = bin2hex(random_bytes(16));
     if ($r['user'] !== 'owner') {
         ngd_user_touch((string) $r['user']);
@@ -588,6 +653,30 @@ function ngd_headers(bool $json = false): void
 }
 
 /** For the JSON endpoints: answer 401 and stop unless signed in. */
+/**
+ * Refuse a request that announces an origin which is not this host.
+ *
+ * SameSite=Strict already withholds the cookie from every cross-site request, so this is
+ * the second lock rather than the first -- and it was missing on export.php, which is the
+ * one endpoint that is a bare GET returning the whole dataset. A backstop that is present
+ * on the cheap endpoint and absent on the expensive one is not a backstop.
+ */
+function ngd_require_same_origin(): void
+{
+    $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
+    if ($origin === '') {
+        return;                              // same-origin GETs send no Origin header
+    }
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    if ($host === '' || parse_url($origin, PHP_URL_HOST) !== $host) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "Refused: cross-origin request.
+";
+        exit;
+    }
+}
+
 function ngd_require_json(): array
 {
     ngd_headers(true);
@@ -601,14 +690,6 @@ function ngd_require_json(): array
     /* A reporting endpoint should only ever be reached by the dashboard itself. SameSite=Strict
        already means no cross-site request carries the cookie; this is the second lock, and it
        costs one header. */
-    $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
-    if ($origin !== '') {
-        $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
-        if ($host === '' || parse_url($origin, PHP_URL_HOST) !== $host) {
-            http_response_code(403);
-            echo json_encode(['ok' => false, 'reason' => 'origin']);
-            exit;
-        }
-    }
+    ngd_require_same_origin();
     return $u;
 }

@@ -33,12 +33,31 @@ $mode = $argv[1] ?? '';
 if ($mode === '') {
     echo "People's Choice — the destructive-control guard\n\n";
     $fail = 0;
-    foreach (['review' => 'nextgen-data-staging', 'live' => 'nextgen-data'] as $case => $dir) {
+    foreach (['review' => ['nextgen-data-staging', 8], 'live' => ['nextgen-data', 11]] as $case => $spec) {
+        [$dir, $minimum] = $spec;
         echo "=== the store is called $dir ===\n";
         $cmd = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__FILE__) . ' ' . escapeshellarg($case);
-        $out = shell_exec($cmd . ' 2>&1');
+        $out = (string) shell_exec($cmd . ' 2>&1');
         echo $out;
-        if (strpos((string) $out, 'CASE FAILED') !== false || strpos((string) $out, 'FAIL ') !== false) {
+
+        /* A child that dies early -- a parse error, a fatal, a missing sandbox -- prints
+           neither "FAIL" nor "CASE FAILED", and the first version of this parent read that
+           silence as success: it announced ALL GOOD having proved nothing, which is the
+           worst thing a test about losing votes can do. Demonstrated by making the child
+           exit(0) before its first assertion; the old parent still said ALL GOOD.
+
+           So the child now reports how many assertions it ran, and the parent requires that
+           number to have arrived and to be at least what this case covers. Absence of
+           failure is not evidence. Presence of the expected work is. */
+        if (!preg_match('/RAN (\d+) ASSERTIONS/', $out, $m)) {
+            echo "  CASE FAILED: no assertion count came back -- the child died early.
+";
+            $fail++;
+        } elseif ((int) $m[1] < $minimum) {
+            echo '  CASE FAILED: only ' . $m[1] . " assertions ran, expected at least $minimum.
+";
+            $fail++;
+        } elseif (strpos($out, 'CASE FAILED') !== false || strpos($out, 'FAIL ') !== false) {
             $fail++;
         }
         echo "\n";
@@ -158,7 +177,8 @@ ok('a store called something else entirely would also refuse',
    basename(ngs_data_dir()) === $dirName);
 
 rmtree($sand);
-echo "  -> $pass passed, $fail failed\n";
+echo '  -> RAN ' . ($pass + $fail) . " ASSERTIONS: $pass passed, $fail failed
+";
 if ($fail > 0) {
     echo "  CASE FAILED\n";
 }

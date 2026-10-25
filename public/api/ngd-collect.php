@@ -69,21 +69,39 @@ if (!is_array($in)) {
     $done();
 }
 
-/* A page may batch a few events into one beacon on unload. Capped, and each one is
-   validated independently inside ngd_event_record(). */
-$batch = (isset($in['events']) && is_array($in['events'])) ? $in['events'] : [$in];
-$batch = array_slice($batch, 0, 20);
+/* A page may batch a few events into one beacon on unload.
 
-foreach ($batch as $one) {
-    if (!is_array($one)) {
-        continue;
+   ONE REQUEST IS ONE WRITE. The first version looped up to twenty events in autocommit,
+   so a single 4 KB POST issued twenty separate write transactions, each able to sit in
+   SQLite's busy handler. With the old four-second timeout that was eighty seconds of PHP
+   worker time for the price of one request -- enough that a few dozen concurrent POSTs
+   would park every worker in the account's pool, and nothing else on the site, including
+   the vote endpoint, would get one. The batch is wrapped in a single transaction and the
+   cap is five, so the worst a request can hold is one short write. */
+$batch = (isset($in['events']) && is_array($in['events'])) ? $in['events'] : [$in];
+$batch = array_slice($batch, 0, 5);
+
+try {
+    $db = ngd_events_db();
+    $tx = $db !== null && $db->beginTransaction();
+    foreach ($batch as $one) {
+        if (is_array($one)) {
+            ngd_event_record($one);
+        }
     }
+    if ($tx && $db->inTransaction()) {
+        $db->commit();
+    }
+} catch (Throwable $e) {
+    /* Swallowed deliberately. A failure here must never reach the page, and must never
+       appear in a response a visitor could read. */
     try {
-        ngd_event_record($one);
-    } catch (Throwable $e) {
-        /* Swallowed deliberately. A failure here must never reach the page, and must
-           never appear in a response a visitor could read. */
-        break;
+        $db = ngd_events_db();
+        if ($db !== null && $db->inTransaction()) {
+            $db->rollBack();
+        }
+    } catch (Throwable $e2) {
+        // nothing further to do; the request is about to answer 204 regardless
     }
 }
 

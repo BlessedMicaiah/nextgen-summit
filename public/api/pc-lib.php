@@ -551,7 +551,41 @@ function pc_rows(int $limit = 500): array
    function says no. Three layers, and the one that matters is the innermost.
 */
 
-/** The review store, positively identified. Anything else -- including not knowing -- is false. */
+/** The live site's own hostname. Everything else is, at most, a review site. */
+const PC_LIVE_HOST = 'nextgensummit.us';
+
+/**
+ * The review store, positively identified, from TWO INDEPENDENT FACTS.
+ *
+ * The first version asked one question: is the data directory called
+ * nextgen-data-staging? An adversarial review broke it in a way worth writing down,
+ * because the lesson is general.
+ *
+ * release.py builds two archives into one folder, and the only difference between them is
+ * a line appended to api/config.php defining NGS_DATA_DIR. deploy.mjs took two bare
+ * positional arguments and checked neither against the other. So
+ * `node tools/deploy.mjs nextgensummit.us release/staging-<sha>.zip` -- one wrong word --
+ * would put the staging config on the live host. ngs_data_dir() then returns a path ending
+ * nextgen-data-staging, the guard answers yes ON PRODUCTION, and the destructive controls
+ * render on the live dashboard. Every total reads zero at the same moment, because the
+ * live ballot is no longer the store being read.
+ *
+ * The flaw was not the name check. It was that the only fact consulted TRAVELLED INSIDE
+ * THE ARCHIVE, so a misdirected archive carried its own permission with it. The fix is a
+ * second fact that cannot travel: the hostname the request arrived on.
+ *
+ *   (a) the store is named as the review store, AND
+ *   (b) this request was not served by the live site, AND
+ *   (c) the store already exists and has a database in it
+ *
+ * (c) catches the same misdeploy a second time: the bad path resolves to a directory that
+ * does not exist, ngs_data_dir() creates it empty, and an empty directory has never been
+ * anybody's review store.
+ *
+ * Under CLI there is no host, so (b) cannot be evaluated, and the tests rely on that. It
+ * is sound because nothing destructive is reachable from a command line: pc_reset() and
+ * pc_seed() have one caller each, the dashboard, and the dashboard is a web page.
+ */
 function pc_store_is_review(): bool
 {
     static $is = null;
@@ -565,8 +599,32 @@ function pc_store_is_review(): bool
         error_log("People's Choice: destructive guard could not resolve the data directory; refusing.");
         return $is = false;
     }
-    $name = basename(rtrim(str_replace('\\', '/', $dir), '/'));
-    return $is = ($name === 'nextgen-data-staging');
+
+    $dir = rtrim(str_replace(DIRECTORY_SEPARATOR, '/', $dir), '/');
+
+    // (a)
+    if (basename($dir) !== 'nextgen-data-staging') {
+        return $is = false;
+    }
+
+    // (b) -- the one fact that does not travel inside an archive
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    $host = (string) preg_replace('/:\d+$/', '', $host);
+    if ($host === PC_LIVE_HOST || $host === 'www.' . PC_LIVE_HOST) {
+        error_log("People's Choice: the store is named for review but this request arrived on the "
+                . "live host. Refusing every destructive control -- api/config.php is probably "
+                . "from the wrong build.");
+        return $is = false;
+    }
+
+    // (c)
+    $has = is_file($dir . '/nextgen-' . NGS_DATA_KEY . '.sqlite') || glob($dir . '/nextgen-*.sqlite');
+    if (!$has) {
+        error_log("People's Choice: the review store holds no database; refusing destructive controls.");
+        return $is = false;
+    }
+
+    return $is = true;
 }
 
 /** The sentence the dashboard shows where the controls used to be. */

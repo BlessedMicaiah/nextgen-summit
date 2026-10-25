@@ -36,6 +36,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/api/ngd-auth.php';
 
 ngd_headers(false);
+ngd_require_same_origin();
 $me = ngd_user();
 if ($me === null) {
     http_response_code(401);
@@ -89,7 +90,23 @@ function ngd_provenance(array $meta, array $tot, string $period, string $source,
                                   : 'Not collected — no page-view or ticket-journey data exists for this period'],
         ['Privacy',             'Contains no email addresses, phone numbers, voter keys or IP data.'],
         [''],
-    ];
+            ];
+
+            /* Only meaningful for the whole competition. In a past one-day window a row
+               called "Points today" is not merely useless, it invites the reader to treat
+               a number from outside the period as part of it. */
+            if ($wholeCompetition) {
+                $rows = array_merge($rows, [
+                    ['Points today',           (string) ($tot['today'] ?? 0)],
+                    ['Voters today',           (string) ($tot['today_voters'] ?? 0)],
+                    ['Points yesterday',       (string) ($tot['yesterday'] ?? 0)],
+                    ['Day-on-day change',      isset($tot['day_growth_pct']) && $tot['day_growth_pct'] !== null
+                                                 ? $tot['day_growth_pct'] . '%' : 'no comparison available'],
+                    ['Last 24 hours',          (string) ($tot['last24'] ?? 0)],
+                    ['Previous 24 hours',      (string) ($tot['prev24'] ?? 0)],
+                    ['Points per voter',       (string) ($tot['points_per_voter'] ?? 0)],
+                ]);
+            }
 }
 
 /* ---------------------------------------------------------------------------
@@ -332,29 +349,30 @@ $build = static function (string $report) use ($founders, $snap, $tot, $meta, $e
 
         case 'executive':
         default:
+            /* The figures for the period the file claims to cover. ngd_range() returns the
+               same shape for a custom window; the all-time totals are used when none was
+               asked for. Everything printed below comes from this one object. */
+            $m = ($range !== null && !empty($range['ok'])) ? $range : $tot;
+            $wholeCompetition = ($range === null || empty($range['ok']));
             $rows = [
-                ['Valid voting points (admin definition)', (string) ($tot['points'] ?? 0)],
-                ['Public standings total (simulated = 0)',  (string) ($tot['points_public'] ?? 0)],
-                ['Verified voting identities', (string) ($tot['voters'] ?? 0)],
-                ['Points per voter',           (string) ($tot['points_per_voter'] ?? 0)],
-                ['Points today',               (string) ($tot['today'] ?? 0)],
-                ['Voters today',               (string) ($tot['today_voters'] ?? 0)],
-                ['Points yesterday',           (string) ($tot['yesterday'] ?? 0)],
-                ['Day-on-day change',          isset($tot['day_growth_pct']) && $tot['day_growth_pct'] !== null
-                                                 ? $tot['day_growth_pct'] . '%' : 'no comparison available'],
-                ['Last 24 hours',              (string) ($tot['last24'] ?? 0)],
-                ['Previous 24 hours',          (string) ($tot['prev24'] ?? 0)],
-                ['Rolling 24h change',         isset($tot['rolling_growth_pct']) && $tot['rolling_growth_pct'] !== null
-                                                 ? $tot['rolling_growth_pct'] . '%' : 'no comparison available'],
-                ['Standard points',            (string) ($tot['standard'] ?? 0)],
-                ['Registration bonus points',  (string) ($tot['bonus'] ?? 0)],
-                ['Bonus share',                ($tot['bonus_share_pct'] ?? 0) . '%'],
-                ['Verified points',            (string) ($tot['verified'] ?? 0)],
-                ['Unverified points',          (string) ($tot['unverified'] ?? 0)],
-                ['Verified share',             ($tot['verified_share_pct'] ?? 0) . '%'],
-                ['Test points included',       (string) ($tot['test'] ?? 0)],
-                ['Invalidated points excluded', (string) ($tot['invalid'] ?? 0)],
-                ['Days of voting',             (string) ($tot['days_active'] ?? 0)],
+                /* These come from $m, which is the range when one was asked for and the whole
+                   competition otherwise -- the SAME object the provenance block above names as the
+                   reporting period.
+                
+                   They used to come from $tot unconditionally while the header printed the range, so
+                   a one-day export carried the entire competition's totals under a one-day heading,
+                   next to a Top-ten sheet that HAD been range-scoped. One spreadsheet asserting two
+                   different totals is worse than one that is simply wrong, because the share column
+                   is then a percentage of a denominator that is not on the page. */
+                ['Valid voting points (admin definition)', (string) ($m['points'] ?? 0)],
+                ['Public standings total (simulated = 0)',  (string) ($m['verified'] ?? $m['points_public'] ?? 0)],
+                ['Verified voting identities', (string) ($m['voters'] ?? 0)],
+                ['Standard points',            (string) ($m['standard'] ?? 0)],
+                ['Registration points (slot 2-3)', (string) ($m['bonus'] ?? 0)],
+                ['Unverified points',          (string) ($m['unverified'] ?? 0)],
+                ['Test points included',       (string) ($m['test'] ?? 0)],
+                ['Invalidated points excluded', (string) ($m['invalid'] ?? 0)],
+                ['Days with voting in this period', (string) ($m['days'] ?? $tot['days_active'] ?? 0)],
                 ['Voting opened',              (string) ($tot['launch_et'] ?? '')],
                 ['Most recent point',          (string) ($tot['last_point_et'] ?? '')],
                 ['Busiest hour (Eastern)',     isset($tot['peak_hour']) && $tot['peak_hour'] !== null
@@ -611,14 +629,66 @@ final class NgdPdf
         }
     }
 
-    /** WinAnsi-safe: the standard faces have no glyph for a curly quote or a dash. */
+    /** WinAnsi-safe, and a name is never silently mangled.
+     *
+     * The standard PDF faces have no glyph for a curly quote or an em dash, so those fold to
+     * their ASCII cousins. Accented LETTERS are a different matter: the first version deleted
+     * every non-ASCII byte, which turned a real semifinalist's name into a misspelling inside
+     * a leadership report. Dropping a letter from somebody's name is not a rendering
+     * compromise, it is getting their name wrong.
+     *
+     * The explicit table goes first and iconv is only a fallback, which is the opposite of
+     * the obvious order and was decided by measurement: iconv's //TRANSLIT is
+     * implementation-dependent, and the libiconv build on this platform renders e-acute as
+     * "'e" and n-tilde as "~n". "Jos'e Mu~noz" in a board pack is worse than "Jose Munoz",
+     * and both are worse than being right. So the table wins, iconv sees only what the table
+     * did not know, and its answer is rejected if it put punctuation where a letter was.
+     */
     private static function flat(string $s): string
     {
         $s = strtr($s, [
             "\u{2014}" => '-', "\u{2013}" => '-', "\u{2019}" => "'", "\u{2018}" => "'",
             "\u{201C}" => '"', "\u{201D}" => '"', "\u{2026}" => '...', "\u{00A0}" => ' ',
         ]);
-        $s = (string) preg_replace('/[^\x20-\x7E]/', '', $s);
+
+        if (preg_match('/[^\x20-\x7E]/', $s)) {
+            $s = strtr($s, [
+                "\u{00E1}" => 'a', "\u{00E0}" => 'a', "\u{00E2}" => 'a', "\u{00E4}" => 'a',
+                "\u{00E3}" => 'a', "\u{00E5}" => 'a', "\u{0101}" => 'a',
+                "\u{00E9}" => 'e', "\u{00E8}" => 'e', "\u{00EA}" => 'e', "\u{00EB}" => 'e',
+                "\u{0113}" => 'e', "\u{0119}" => 'e',
+                "\u{00ED}" => 'i', "\u{00EC}" => 'i', "\u{00EE}" => 'i', "\u{00EF}" => 'i',
+                "\u{012B}" => 'i', "\u{0131}" => 'i',
+                "\u{00F3}" => 'o', "\u{00F2}" => 'o', "\u{00F4}" => 'o', "\u{00F6}" => 'o',
+                "\u{00F5}" => 'o', "\u{00F8}" => 'o', "\u{014D}" => 'o',
+                "\u{00FA}" => 'u', "\u{00F9}" => 'u', "\u{00FB}" => 'u', "\u{00FC}" => 'u',
+                "\u{016B}" => 'u',
+                "\u{00F1}" => 'n', "\u{0144}" => 'n', "\u{00E7}" => 'c', "\u{0107}" => 'c',
+                "\u{0161}" => 's', "\u{015B}" => 's', "\u{015F}" => 's',
+                "\u{017E}" => 'z', "\u{017C}" => 'z', "\u{017A}" => 'z',
+                "\u{00FD}" => 'y', "\u{00FF}" => 'y', "\u{0142}" => 'l', "\u{0111}" => 'd',
+                "\u{011F}" => 'g',
+                "\u{00C1}" => 'A', "\u{00C0}" => 'A', "\u{00C2}" => 'A', "\u{00C4}" => 'A',
+                "\u{00C3}" => 'A', "\u{00C5}" => 'A',
+                "\u{00C9}" => 'E', "\u{00C8}" => 'E', "\u{00CA}" => 'E', "\u{00CB}" => 'E',
+                "\u{00CD}" => 'I', "\u{00CC}" => 'I', "\u{00CE}" => 'I', "\u{00CF}" => 'I',
+                "\u{00D3}" => 'O', "\u{00D2}" => 'O', "\u{00D4}" => 'O', "\u{00D6}" => 'O',
+                "\u{00D5}" => 'O', "\u{00D8}" => 'O',
+                "\u{00DA}" => 'U', "\u{00D9}" => 'U', "\u{00DB}" => 'U', "\u{00DC}" => 'U',
+                "\u{00D1}" => 'N', "\u{00C7}" => 'C', "\u{0160}" => 'S', "\u{017D}" => 'Z',
+                "\u{00DD}" => 'Y', "\u{0141}" => 'L',
+                "\u{00E6}" => 'ae', "\u{00C6}" => 'AE', "\u{0153}" => 'oe',
+                "\u{0152}" => 'OE', "\u{00DF}" => 'ss',
+            ]);
+
+            if (preg_match('/[^\x20-\x7E]/', $s)) {
+                $try = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s);
+                if (is_string($try) && $try !== '' && !preg_match('/[\'"~^`]/', $try)) {
+                    $s = $try;
+                }
+            }
+            $s = (string) preg_replace('/[^\x20-\x7E]/', '', $s);
+        }
         return strtr($s, ['\\' => '\\\\', '(' => '\\(', ')' => '\\)']);
     }
 

@@ -42,10 +42,26 @@
     if (window.dataLayer) window.dataLayer.push({ event: 'nextgen_ticket_order_complete' });
   }
 
-  /* Eventbrite draws the modal as an iframe; anything else with their id prefix except our own
-     trigger button counts as the modal being up. */
+  /* Is the checkout actually in front of the visitor?
+
+     This used to answer "yes" to any element whose id began eventbrite-widget-modal, other
+     than our own trigger. That was wrong, and it quietly disabled the fallback below.
+     createWidget inserts <div id="eventbrite-widget-modal-overlay"> at the moment the widget
+     is CREATED, long before anyone clicks -- verified on staging: with no modal open and no
+     iframe on the page, the old test still returned true.
+
+     So the 1500ms escape hatch could never fire. A visitor whose modal failed to draw -- an
+     in-app browser, a blocked third-party frame -- got a button that did nothing at all,
+     rather than being carried out to Eventbrite. That is the worst of the three outcomes and
+     the only one nobody designed.
+
+     The iframe is the real signal. The overlay counts only when it is genuinely displayed. */
   function modalIsOpen() {
-    return !!document.querySelector('iframe[src*="eventbrite"], [id^="eventbrite-widget-modal"]:not(#' + TRIGGER_ID + ')');
+    if (document.querySelector('iframe[src*="eventbrite"]')) return true;
+    var o = document.getElementById('eventbrite-widget-modal-overlay');
+    if (!o) return false;
+    var cs = getComputedStyle(o);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && o.getBoundingClientRect().height > 0;
   }
 
   var wired = false;                                   // createWidget must never run twice

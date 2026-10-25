@@ -28,9 +28,6 @@
     "find-your-mission-corp": "entrant-20"
   },
   "_reviewed_note": "Confirmed by the project owner on 2026-10-23. At the same time the 10 staging test votes that sat on entrant-01 and entrant-07 were set to valid=0 so the real founders start at zero. No row was deleted; the admin dashboard can restore any of them.",
-  "focal": {
-    "light": "50% 24%",
-    "find-your-mission-corp": "50% 42%"
-  },
-  "_focal_note": "Per-founder crop positions. build-founders.py derives a default from each image shape; anything listed here overrides it. Added 2026-10-23 for the two headshots leadership supplied."
+  "focal": {},
+  "_focal_note": "Per-founder crop positions, and currently empty on purpose. The branded set in docs/founder-images-branded/ ships its own focal.txt per founder, already expressed relative to the crop, and those agree with each other to within a few per cent -- which is the consistency the set exists to provide. The two values that used to live here (light, find-your-mission-corp) were tuned for the portraits those replaced, and re-applying them to a differently cropped image would have put two heads back out of line with the other fifteen. Anything added here still wins, for the case where one founder genuinely needs it."
 }

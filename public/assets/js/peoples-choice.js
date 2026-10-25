@@ -113,6 +113,15 @@
          block stays shut, not padded. */
       base.bio = f.bio || null;
       base.shot = f.shot || null;
+      /* The branded set ships four files per founder: a card at two densities and a square,
+         face-framed crop for the story circle at two more. A bubble is 76 pixels across and
+         was loading the full card portrait -- twenty of them before anything else on the
+         page. The square is a tenth of the weight and is cropped for a circle, which the
+         card never was. */
+      base.shot2x = f.shot2x || null;
+      base.story = f.story || null;
+      base.story2x = f.story2x || null;
+      base.storyFocal = f.storyFocal || null;
       /* The company mark, for the small thumbnail on the back of the card. Several of
          these were already in the project -- they had simply been placed on the FRONT,
          standing in for the founder's face. Nothing was re-sourced; they moved. */
@@ -338,6 +347,15 @@
     if (img) {
       if (e.shot) {
         img.src = e.shot;
+        /* The only place the portrait is drawn large enough to want the 1600. Everywhere
+           else keeps the 800, which is already sharp at the sizes they use. */
+        if (e.shot2x) {
+          img.setAttribute('srcset', e.shot + ' 800w, ' + e.shot2x + ' 1600w');
+          img.setAttribute('sizes', '(max-width: 560px) 94vw, 380px');
+        } else {
+          img.removeAttribute('srcset');
+          img.removeAttribute('sizes');
+        }
         img.alt = e.company + ' - ' + e.name;
         img.hidden = false;
         if (e.shotFit !== 'contain' && e.focal) img.style.objectPosition = e.focal;
@@ -2522,9 +2540,17 @@
      That is the server's tiebreak showing through, not a decision made here. */
   function bubbleHtml(e) {
     var fit = e.shotFit === 'contain' ? ' class="is-contain"' : '';
-    var bpos = e.shotFit === 'contain' ? '' : ' style="object-position:' + esc(e.focal) + '"';
-    var face = e.shot
-      ? '<img src="' + e.shot + '"' + fit + bpos + ' alt="" loading="lazy" decoding="async">'
+    /* The square crop where there is one, the card portrait where there is not. Both are
+       the same <img> in the same ring -- nothing about the bubble's design changes, only
+       which file it asks for and how big that file is. */
+    var src = e.story || e.shot;
+    var pos = e.shotFit === 'contain' ? '' :
+      ' style="object-position:' + esc((e.story ? e.storyFocal : null) || e.focal) + '"';
+    var set = (e.story && e.story2x)
+      ? ' srcset="' + esc(e.story) + ' 320w, ' + esc(e.story2x) + ' 640w" sizes="96px"'
+      : '';
+    var face = src
+      ? '<img src="' + src + '"' + set + fit + pos + ' alt="" loading="lazy" decoding="async">'
       : '<span class="ff-bub__mono">' + esc(initials(e)) + '</span>';
 
     var st = standing(e);

@@ -201,6 +201,50 @@ def main():
         # whitespace around it instead of being cropped to fill a 5:7 card. Credible
         # blossom sent a brand sheet rather than a headshot, and covering it cut the
         # company name off at both ends.
+        # A BRANDED SET, already cropped and already optimised, takes precedence over
+        # everything below and is copied through untouched.
+        #
+        # docs/founder-images-branded/<slug>/ holds card.webp, card@2x.webp, story.webp,
+        # story@2x.webp and focal.txt. Re-encoding those would be the one thing guaranteed
+        # to make them worse: they arrived face-framed at four sizes, and the whole point of
+        # them is that the head sits in the same place for every founder.
+        #
+        # focal.txt carries two lines, card then story, already expressed RELATIVE TO THE
+        # CROP. The supplied manifest gives focal points relative to the original 3875x5462
+        # source, which would be wrong here by exactly the crop offset -- applying those raw
+        # would misplace every head, which is the fault this set exists to fix.
+        branded = os.path.join(ROOT, 'docs', 'founder-images-branded', slug)
+        bcard = os.path.join(branded, 'card.webp')
+        if os.path.isfile(bcard):
+            os.makedirs(IMGDIR, exist_ok=True)
+            for src_name, dst_name, field in (
+                    ('card.webp',     slug + '.webp',          'shot'),
+                    ('card@2x.webp',  slug + '@2x.webp',       'shot2x'),
+                    ('story.webp',    slug + '-story.webp',    'story'),
+                    ('story@2x.webp', slug + '-story@2x.webp', 'story2x')):
+                srcp = os.path.join(branded, src_name)
+                if not os.path.isfile(srcp):
+                    continue
+                dstp = os.path.join(IMGDIR, dst_name)
+                shutil.copyfile(srcp, dstp)
+                rec[field] = '/assets/img/founders/' + dst_name + stamp(dstp)
+            rec['shotFit'] = 'cover'
+            rec['branded'] = True
+            try:
+                lines = io.open(os.path.join(branded, 'focal.txt'),
+                                  encoding='utf-8').read().strip().splitlines()
+                rec['focal'] = (focal_overrides.get(slug) or lines[0].strip())
+                if len(lines) > 1:
+                    rec['storyFocal'] = lines[1].strip()
+            except Exception:
+                rec['focal'] = focal_overrides.get(slug) or '50% 36%'
+            try:
+                with Image.open(bcard) as bim:
+                    rec['shotW'], rec['shotH'] = bim.size
+            except Exception:
+                pass
+            rec['shotFrom'] = 'branded portrait supplied by the NextGen team'
+
         supplied = None
         supplied_logo = False
         for mark, flag in (('.logo', True), ('', False)):
@@ -213,6 +257,11 @@ def main():
                 break
 
         iu = c.get('image_source_url')
+        # A branded set has already supplied the portrait at four sizes. Running the
+        # re-encode below would overwrite it with a single resized copy and throw the
+        # other three away.
+        if rec.get('branded'):
+            supplied, iu = None, None
         if supplied or iu:
             raw = None
             cpath = os.path.join(CACHE, slug + '.src')

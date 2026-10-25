@@ -599,3 +599,34 @@ html.pc-live [data-announce] { display: none !important; }
    layout and it is leadership's call whether to pay it; nothing here should quietly
    trade the gallery away to buy it back. */
 .reel:not(.is-live) .reel__up { display: none; }
+
+/* ---- previous and next, for a pointer ----
+   Touch has the swipe and the hint that teaches it. A mouse does not: a wheel notch is
+   roughly a ninth of a panel and mandatory snapping returns anything under half a panel
+   to where it started, which is why the feed could feel stuck on a desktop. */
+.reel__nav {
+  position: fixed; z-index: 94;
+  right: max(14px, env(safe-area-inset-right));
+  top: 50%; transform: translateY(-50%);
+  display: none; flex-direction: column; gap: 10px;
+}
+.reel__nav.is-on { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 700px) {
+  .reel__nav.is-on { display: flex; }
+}
+.reel__step {
+  display: inline-grid; place-items: center;
+  width: 44px; height: 44px;
+  border: 0; border-radius: 999px; padding: 0;
+  background: rgba(8,10,14,.56); color: #fff;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.17);
+  cursor: pointer;
+  transition: background-color .25s var(--ease, ease), opacity .25s var(--ease, ease);
+}
+.reel__step svg { width: 20px; height: 20px; }
+.reel__step:hover { background: rgba(8,10,14,.86); }
+.reel__step:focus-visible { outline: 2px solid var(--accent, #39D8C8); outline-offset: 3px; }
+.reel__step[disabled] { opacity: .32; cursor: default; }
+.reel__step[disabled]:hover { background: rgba(8,10,14,.56); }
+@media (prefers-reduced-motion: reduce) { .reel__step { transition: none; } }

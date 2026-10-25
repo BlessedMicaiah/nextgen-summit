@@ -162,13 +162,20 @@
         : '<img src="' + esc(e.shot) + '" alt="" loading="lazy" decoding="async">';
       /* The two kinds of place on this rail are different claims and are marked differently:
          one is an editorial choice, the other is where the public has put them. */
+      /* The two kinds of place on this rail are different claims. An editorial pick gets a
+         plain accent dot and says so in its label; a leaderboard founder gets the position
+         the public has actually put them in. At this size a word does not fit legibly, so
+         the distinction that matters visually is dot versus number, and the full sentence
+         lives in the accessible name. */
       var flag = c.editorial
-        ? '<span class="pcs__flag">Featured</span>'
+        ? '<span class="pcs__flag" aria-hidden="true"></span>'
         : (c.place ? '<span class="pcs__flag pcs__flag--rank">' + esc(ordinal(c.place)) + '</span>' : '');
+      var label = e.company + ' — ' + e.name +
+        (c.editorial ? ' (featured)' : (c.place ? ' (' + ordinal(c.place) + ' in the public vote)' : ''));
       return '<li role="presentation">' +
         '<button class="pcs__bub" type="button" role="tab" id="pcs-tab-' + i + '"' +
         ' aria-selected="' + (i === 0 ? 'true' : 'false') + '" tabindex="' + (i === 0 ? '0' : '-1') + '"' +
-        ' data-pcs-pick="' + i + '" aria-label="' + esc(e.company + ' — ' + e.name) + '">' +
+        ' data-pcs-pick="' + i + '" aria-label="' + esc(label) + '">' +
         img + flag + '</button></li>';
     }).join('');
   }
@@ -176,10 +183,11 @@
   function paintNow(i) {
     var e = cast[i].f;
     var write = function () {
+      /* Company and founder, and nothing else. The blurb that used to sit here was three
+         lines of text over the one thing the section exists to show. */
       nowBox.innerHTML =
         '<span class="pcs__now-co">' + esc(e.company) + '</span>' +
-        '<span class="pcs__now-by">' + esc(e.name) + '</span>' +
-        '<p class="pcs__now-blurb">' + esc(e.blurb || '') + '</p>';
+        '<span class="pcs__now-by">' + esc(e.name) + '</span>';
       nowBox.classList.remove('is-turning');
     };
     if (reduced.matches) { write(); return; }
@@ -194,15 +202,39 @@
 
   function layerFor(i) { return layers[i]; }
 
+  /* Does this footage fill the stage, or sit inside it?
+
+     Twenty pitches arrive as eleven 1280x720 landscapes and seven portraits of four
+     different shapes. Covering with all of them would crop a portrait's head off on a
+     desktop and a landscape's sides off on a phone; fitting all of them would letterbox
+     Myron and Vishwa on a desktop, where they currently look right.
+
+     So it is decided per founder, from the file's own dimensions, against the stage's
+     actual aspect at this moment. Close enough to the stage and it fills; meaningfully
+     different and it fits, and the space left over is dressed with the blurred poster
+     rather than left black. Measured: a 16:9 pitch on a 1440x900 desktop comes out at 1.11
+     and fills; the same pitch on a 390x844 phone comes out at 3.85 and fits. */
+  function decideFit(layer, vw, vh) {
+    if (!vw || !vh) return;
+    var r = sec.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var ratio = (vw / vh) / (r.width / r.height);
+    layer.setAttribute('data-fit', (ratio > 0.82 && ratio < 1.25) ? 'cover' : 'contain');
+  }
+
   function dress(layer, e) {
+    var poster = esc(e.poster || '');
+    layer.setAttribute('data-fit', 'cover');          // until the header says otherwise
     layer.innerHTML =
-      '<img src="' + esc(e.poster || '') + '" alt="" decoding="async">' +
-      '<video playsinline muted loop preload="none" tabindex="-1" aria-hidden="true"></video>';
+      '<div class="pcs__bg" style="background-image:url(&quot;' + poster + '&quot;)"></div>' +
+      '<img class="pcs__still" src="' + poster + '" alt="" decoding="async">' +
+      '<video class="pcs__fg" playsinline muted loop preload="none" tabindex="-1" aria-hidden="true"></video>';
     return layer;
   }
 
   function release(layer) {
     var v = $('video', layer);
+    layer.removeAttribute('data-fit');
     if (!v) return;
     try { v.pause(); v.removeAttribute('src'); v.load(); } catch (err) {}
     layer.classList.remove('is-playing');
@@ -227,6 +259,10 @@
       try { go = v.play(); } catch (err) {}
       var mark = function () { if (!v.paused) back.classList.add('is-playing'); };
       v.addEventListener('playing', mark, { once: true });
+      /* the only honest source for the shape is the file itself */
+      var shape = function () { decideFit(back, v.videoWidth, v.videoHeight); };
+      if (v.readyState >= 1) shape();
+      else v.addEventListener('loadedmetadata', shape, { once: true });
       if (go && go.catch) {
         go.catch(function () {
           /* Autoplay refused — Low Power Mode, or no gesture yet. The poster is already
@@ -382,6 +418,17 @@
     });
 
     soundBtn.addEventListener('click', function () { setSound(muted); });
+
+    /* Turning a phone over changes which way the footage should be handled, so the decision
+       is taken again rather than kept from load. */
+    var reflow;
+    addEventListener('resize', function () {
+      clearTimeout(reflow);
+      reflow = setTimeout(function () {
+        var l = layerFor(front), v = $('video', l);
+        if (v && v.videoWidth) decideFit(l, v.videoWidth, v.videoHeight);
+      }, 180);
+    }, { passive: true });
     $$('[data-pcs-enter]').forEach(function (b) { b.addEventListener('click', enter); });
 
     /* Stop paying for a film nobody is looking at. */

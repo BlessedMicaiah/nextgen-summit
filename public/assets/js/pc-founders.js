@@ -46,8 +46,8 @@ window.NGS_FOUNDERS = [
       "type": "file",
       "src": "/assets/video/credible-blossom.mp4?v=551587a5"
     },
-    "story": "/assets/img/founders/credible-blossom-story.webp?v=8805cec4",
-    "story2x": "/assets/img/founders/credible-blossom-story@2x.webp?v=16fa29eb",
+    "story": "/assets/img/founders/credible-blossom-story.webp?v=b6ae6479",
+    "story2x": "/assets/img/founders/credible-blossom-story@2x.webp?v=901730f6",
     "storyFocal": "50% 45%",
     "shotFrom": "headshot supplied by the NextGen team",
     "shotW": 780,
@@ -343,7 +343,7 @@ window.NGS_FOUNDERS = [
     "entrant": "entrant-13",
     "shot": "/assets/img/founders/offguardz.webp?v=3b163e1b",
     "shotFit": "cover",
-    "logo": null,
+    "logo": "/assets/img/logos/offguardz.webp?v=597b1a1c",
     "video": {
       "type": "file",
       "src": "/assets/video/offguardz.mp4?v=3ee51efb"

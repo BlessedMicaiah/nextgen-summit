@@ -1,157 +1,265 @@
 /* ============================================================================
    NextGen Summit — the People's Choice Awards stage, on the homepage.
 
-   A full-viewport cinematic band that sits directly under the featured speakers and
-   replaces the old .pcta pitch teaser. Five founders: Myron and Vishwa always, then the
-   three highest-ranked by valid points. Pointing at a portrait changes the film behind it.
+   A cinematic band directly ABOVE the featured speakers. Five founders; point at one and
+   the film behind the words becomes their pitch.
 
-   Composition only. Every colour, face and easing comes from site.css; this file arranges
-   them. The one thing it owns outright is the branded transition at the bottom, and even
-   that borrows the Experience entrance's language — black ground, the wordmark written in
-   Fraunces 900, the accent/cyan/magenta/yellow gradient clipped to the letters — so that
-   arriving at the reels feels like the same site rather than a second one.
+   Composition only: every colour, face and easing comes from site.css. The one thing this
+   file owns outright is the branded transition at the foot, and even that borrows the
+   Experience entrance's language so that arriving at the reels feels like the same site.
 
-   TWO RULES THIS FILE KEEPS
+   THREE RULES IT KEEPS
 
-   Nothing here may cost anything to a visitor who never scrolls this far. The section
-   paints from a poster image; no <video> is given a source until the section is near the
-   viewport, and never more than two at once, which is the same discipline the founder
-   reels already keep.
+   It costs nothing to a visitor who never scrolls to it. No poster and no frame of video is
+   requested until pc-stage.js decides the section is near.
 
-   The footage is mixed: eleven of the twenty pitches are landscape 1280x720 and seven are
-   portrait. object-fit: cover on a full-bleed stage handles both, and the grade underneath
-   means a letterboxed edge never reads as a broken player.
+   It fits a phone. The whole composition — clock, headline, founder, both buttons and the
+   five portraits — is meant to land inside one screen, so the section is sized in svh and
+   paced to the space actually left under the sticky bar. On a genuinely short screen it
+   grows and scrolls rather than clipping anything.
+
+   It never distorts footage. The twenty pitches are a mix of 1280x720 landscape and several
+   portrait shapes; the stage decides per founder whether to fill or to fit, and dresses the
+   leftover space with a blurred still rather than letterboxing it black.
    ========================================================================= */
 
 .pcs {
-  /* --seam is read by site.js to decide the nav bar's colour: it means "the top N pixels of
-     this section are not solid". This section IS solid from its first pixel -- it opens on
-     the same black the speakers section closes on -- so the nav should treat all of it as
+  /* --seam is read by site.js to colour the nav bar: it means "the top N pixels are not
+     solid". This section IS solid from its first pixel, so the nav treats all of it as
      photo. The visual ramp has its own variable. */
   --seam: 0px;
-  --pcs-seam: clamp(80px, 14vh, 160px);
-  --rail-size: clamp(54px, 4.4vw, 74px);
+  --pcs-seam: clamp(54px, 9vh, 120px);
+  --rail-size: clamp(46px, 3.8vw, 64px);
   position: relative;
   display: flex;
-  align-items: flex-end;
-  min-height: clamp(620px, 100svh, 1000px);
-  padding: 0;
+  align-items: stretch;
+  min-height: min(100svh, 980px);
   overflow: hidden;
   background: #05080B;
   color: #fff;
   isolation: isolate;
 }
 
+/* ---------- the join with the sections either side ----------
+
+   Above is .xp, which sits on paper, so this section rises out of paper. Below is .room,
+   which fades its own TOP edge down from paper for the experience section that used to
+   precede it — against this section that paints a bright line between two dark blocks.
+   site.css already knows that fault and names it in its own comment where the invitation
+   follows the stage; the same remedy is applied here rather than in site.css, which carries
+   work that reaches production from outside this repository. */
+.pcs + .room { --seam-top: 0px; }
+.pcs + .room::before { display: none; }
+
 /* ---------- the film ----------
-   Two layers that cross-fade, so changing founder is a dissolve rather than a cut. Only
-   one of them holds a source at rest; the other is loaded on intent and swapped in. */
+   Two layers that cross-fade, so changing founder is a dissolve rather than a cut. Only one
+   holds a source at rest; the other is dressed on demand and the outgoing one is released. */
 
 .pcs__stage { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 
 .pcs__layer {
   position: absolute; inset: 0;
   opacity: 0;
-  transition: opacity .9s var(--ease), transform 1.6s var(--ease);
-  transform: scale(1.04);
+  transition: opacity .9s var(--ease);
   will-change: opacity;
 }
-.pcs__layer.is-on { opacity: 1; transform: scale(1); }
+.pcs__layer.is-on { opacity: 1; }
 
-.pcs__layer video,
-.pcs__layer img {
+/* The blurred ground.
+
+   A pitch filmed landscape, shown on a phone, and a pitch filmed portrait, shown on a
+   desktop, both leave space the footage cannot fill. Cropping to fill would take the
+   founder's face; black bars would read as a broken player. So the leftover is dressed with
+   that founder's own poster frame, scaled up and blurred past recognition, which keeps the
+   colour and light of the shot without competing with it.
+
+   A still rather than a second copy of the video, on purpose: a duplicate decode per
+   founder is a real cost on a phone and buys almost nothing at this blur radius. */
+.pcs__bg {
+  position: absolute; inset: -8%;
+  background-size: cover; background-position: 50% 45%;
+  filter: blur(44px) saturate(1.2) brightness(.72);
+  transform: scale(1.12);
+}
+
+.pcs__fg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  object-fit: cover;              /* the default; the script switches it per founder */
+  object-position: 50% 42%;
+  opacity: 0;
+  transition: opacity .5s var(--ease);
+}
+.pcs__layer.is-playing .pcs__fg { opacity: 1; }
+
+/* The poster, under its own video, so a buffering moment shows the founder rather than a
+   hole. Same fit as the footage it stands in for. */
+.pcs__still {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover; object-position: 50% 42%;
   display: block;
 }
-/* The poster sits under its own video so a buffering moment shows the founder, never a
-   black hole. It is removed from the flow once the footage is actually running. */
-.pcs__layer img { z-index: 0; }
-.pcs__layer video { z-index: 1; opacity: 0; transition: opacity .5s var(--ease); }
-.pcs__layer.is-playing video { opacity: 1; }
 
-/* The grade. Dark enough at the left and foot for type to sit on footage of any exposure,
-   open enough in the middle that the film is still the subject. */
-/* Type has to stay legible over twenty different exposures, so the grade is four washes
-   rather than one: the left for the words, the foot for the controls, a corner for the
-   clock, and a turquoise bloom that keeps the middle feeling lit rather than merely dark. */
+/* Fit rather than fill, when the shapes genuinely disagree. Set by the script from the
+   file's own dimensions once its header arrives — never from the extension, and never
+   guessed from the slug. */
+.pcs__layer[data-fit="contain"] .pcs__fg,
+.pcs__layer[data-fit="contain"] .pcs__still { object-fit: contain; object-position: 50% 50%; }
+
+/* On a phone a landscape pitch fits as a band with a lot of room left over, and centring
+   that band puts an expanse of blur above it while the words sit underneath. Lifting it
+   into the upper third gives the footage the clear part of the frame and leaves the
+   remainder where the grade is already dark, so the blur reads as staging rather than as
+   space nobody filled. A portrait pitch on a desktop is the opposite case and stays
+   centred, which is where a tall shot belongs. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .pcs__layer[data-fit="contain"] .pcs__fg,
+  .pcs__layer[data-fit="contain"] .pcs__still { object-position: 50% 32%; }
+}
+
+/* The grade. Type has to stay legible over twenty different exposures, so it is four
+   washes: the left for the words, the foot for the controls, a corner for the clock, and a
+   turquoise bloom so the middle reads as lit rather than merely dark. */
 .pcs__grade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background:
-    linear-gradient(100deg, rgba(3,6,9,.93) 0%, rgba(3,6,9,.76) 26%, rgba(3,6,9,.2) 56%, rgba(3,6,9,.44) 100%),
-    linear-gradient(0deg, rgba(3,6,9,.95) 0%, rgba(3,6,9,.46) 26%, rgba(3,6,9,0) 54%),
-    radial-gradient(44% 34% at 100% 0%, rgba(3,6,9,.82) 0%, rgba(3,6,9,0) 100%),
-    radial-gradient(120% 78% at 62% 38%, rgba(31,199,190,.12) 0%, rgba(31,199,190,0) 62%);
+    linear-gradient(100deg, rgba(3,6,9,.93) 0%, rgba(3,6,9,.74) 26%, rgba(3,6,9,.16) 58%, rgba(3,6,9,.4) 100%),
+    linear-gradient(0deg, rgba(3,6,9,.94) 0%, rgba(3,6,9,.4) 28%, rgba(3,6,9,0) 56%),
+    radial-gradient(42% 32% at 100% 0%, rgba(3,6,9,.8) 0%, rgba(3,6,9,0) 100%),
+    radial-gradient(120% 78% at 62% 40%, rgba(31,199,190,.1) 0%, rgba(31,199,190,0) 62%);
 }
-/* The seam into the section above.
-
-   It fades from #04080A, which is the speakers section's own background -- NOT from
-   --paper. Paper is what the sections either side of the old pitch teaser used, and
-   carrying that assumption here painted a white band across the top of a dark section
-   sitting under another dark one. */
+/* rising out of the paper section above */
 .pcs__grade::after {
   content: ""; position: absolute; inset: 0 0 auto; height: var(--pcs-seam);
-  background: linear-gradient(180deg, #04080A 0%, rgba(4,8,10,0) 100%);
+  background: linear-gradient(180deg, var(--paper) 0%, rgba(250,250,248,.5) 34%, rgba(250,250,248,0) 100%);
 }
 
-/* ---------- the join with the speakers above ----------
+/* ---------- the composition ----------
+   Three corners carry the frame and the middle is left to the film: the clock top right,
+   the words and the rail along the foot. */
 
-   The stage section fades its bottom edge up to paper, because for most of this page's life
-   the sponsors section followed it. site.css already knows this is wrong between two dark
-   blocks and says so in its own comment where the invitation follows: "fading the stage up
-   to paper first laid a bright line across the page between two dark blocks". Putting this
-   section there brought that bright line back, so the same remedy applies, written here
-   rather than in site.css because site.css carries work that reaches production from
-   outside this repository and a new file cannot collide with it. */
-.room:has(+ .pcs) { --seam-bottom: 0px; }
-.room:has(+ .pcs)::after { display: none; }
-
-/* ---------- the content ---------- */
-
-/* Three corners carry the frame and the middle stays empty, which is the point of a section
-   whose subject is the film. The clock takes the top right on its own; the rail and the words
-   sit along the foot. The first version stacked everything into the bottom left and left two
-   thirds of the picture doing nothing at all. */
 .pcs__in {
   position: relative; z-index: 3;
   width: 100%;
   max-width: var(--maxw); margin-inline: auto;
-  padding: calc(var(--pcs-seam) + clamp(14px, 2.6vh, 30px)) var(--gutter) clamp(30px, 5.4vh, 64px);
+  padding: calc(var(--nav-h, 64px) + clamp(10px, 2vh, 22px)) var(--gutter) clamp(22px, 4vh, 54px);
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   align-items: end;
-  gap: clamp(20px, 3vh, 40px) clamp(22px, 3.2vw, 54px);
+  gap: clamp(14px, 2.2vh, 28px) clamp(20px, 3vw, 48px);
 }
-.pcs__meta { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; text-align: right; }
-.pcs__rail { grid-column: 1; grid-row: 2; align-self: end; }
-.pcs__copy { grid-column: 2; grid-row: 2; align-self: end; }
+.pcs__meta { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; }
+.pcs__copy {
+  grid-column: 1; grid-row: 2; align-self: end;
+  min-width: 0; display: grid; justify-items: start; gap: clamp(7px, 1.1vh, 14px);
+}
+.pcs__copy > * { min-width: 0; max-width: 100%; }
+.pcs__rail { grid-column: 1 / -1; grid-row: 3; }
 
-/* ---------- the founder rail ----------
-   Five portraits in a column. The ring is the affordance: at rest it is a thin wash, on
-   the live founder it is the accent, drawn all the way round. */
+/* ---------- the words ---------- */
+
+.pcs__k {
+  margin: 0;
+  font: 800 clamp(9.5px, .8vw, 11.5px)/1.3 var(--f-sans);
+  letter-spacing: .24em; text-transform: uppercase; color: var(--accent);
+}
+.pcs__t {
+  margin: 0 0 clamp(2px, .6vh, 8px);
+  font-size: clamp(31px, 4.6vw, 76px); line-height: 1.03; letter-spacing: -.04em;
+  text-shadow: 0 2px 44px rgba(3,6,9,.6);
+}
+
+/* the live founder: the one piece of the composition that changes with the film */
+.pcs__now {
+  display: grid; gap: 2px; min-height: 2.9em; align-content: start;
+  transition: opacity .34s var(--ease), transform .34s var(--ease);
+}
+.pcs__now.is-turning { opacity: 0; transform: translateY(6px); }
+.pcs__now-co { font: 800 clamp(15px, 1.5vw, 21px)/1.2 var(--f-sans); letter-spacing: -.014em; color: #fff; }
+.pcs__now-by { font: 700 clamp(10px, .9vw, 12px)/1.3 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+
+.pcs__fine {
+  margin: 0;
+  font: 500 clamp(11px, .88vw, 12.5px)/1.5 var(--f-sans); color: rgba(255,255,255,.6);
+}
+
+/* ---------- the clock ----------
+   Small on purpose. It is a fact, not a feature. */
+
+.pcs__clock { display: grid; justify-items: end; gap: 5px; }
+.pcs__clock[hidden] { display: none; }
+.pcs__clock-k {
+  font: 800 8.5px/1.3 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(255,255,255,.7); text-shadow: 0 1px 12px rgba(3,6,9,.9);
+}
+.pcs__clock-t { display: flex; align-items: flex-end; gap: clamp(5px, .6vw, 9px); }
+.pcs__u { display: grid; justify-items: center; gap: 1px; min-width: 2em; }
+.pcs__n {
+  font: 800 clamp(17px, 1.9vw, 28px)/1 var(--f-sans); letter-spacing: -.03em; color: #fff;
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+  text-shadow: 0 2px 18px rgba(3,6,9,.9);
+}
+.pcs__l {
+  font: 700 7px/1 var(--f-sans); letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(255,255,255,.55); text-shadow: 0 1px 10px rgba(3,6,9,.9);
+}
+.pcs__sep { font: 800 clamp(12px, 1.3vw, 18px)/1 var(--f-sans); color: rgba(255,255,255,.22); padding-bottom: 9px; }
+.pcs__closed {
+  margin: 0; font: 800 clamp(11px, 1vw, 14px)/1.4 var(--f-sans);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+}
+
+/* ---------- the ways on ----------
+   A size down from the site's large button: this section has a lot to fit into one screen
+   and the film is the subject. */
+
+.pcs__cta {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 10px clamp(10px, 1.2vw, 16px); margin-top: clamp(2px, .6vh, 8px);
+}
+.pcs__go, .pcs__alt { --h: 44px; font-size: 12px; }
+
+/* ---------- sound ---------- */
+
+.pcs__sound {
+  position: absolute; z-index: 4;
+  right: var(--gutter); bottom: clamp(22px, 4vh, 54px);
+  display: inline-grid; place-items: center;
+  width: 38px; height: 38px;
+  border: 0; border-radius: 99px; padding: 0;
+  background: rgba(8,12,16,.52); color: #fff;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+  cursor: pointer;
+  transition: background-color .3s var(--ease);
+}
+.pcs__sound:hover { background: rgba(8,12,16,.84); }
+.pcs__sound:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.pcs__sound svg { width: 16px; height: 16px; }
+.pcs__sound.is-on { background: var(--accent); color: var(--on-accent); box-shadow: none; }
+
+/* ---------- the five ----------
+   A row at every width. A column down the side of a phone took a third of the screen and
+   left the caption nowhere to go, and two arrangements is two things to keep right. */
 
 .pcs__rail {
   list-style: none; margin: 0; padding: 0;
-  display: grid; gap: clamp(12px, 1.5vh, 20px);
-  justify-items: start;
+  display: flex; align-items: center;
+  gap: clamp(10px, 1.6vw, 18px);
 }
 
 .pcs__bub {
   position: relative;
   width: var(--rail-size); height: var(--rail-size);
+  flex: 0 0 auto;
   padding: 0; border: 0; background: none;
   border-radius: 50%;
   cursor: pointer;
-  transition: transform .5s var(--ease);
+  transition: transform .45s var(--ease);
   -webkit-tap-highlight-color: transparent;
-}
-.pcs__bub::before {
-  /* the ring, its own element so it can scale without touching the portrait */
-  content: ""; position: absolute; inset: -4px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.34);
-  transition: box-shadow .45s var(--ease), transform .55s var(--ease);
 }
 .pcs__bub img {
   width: 100%; height: 100%;
@@ -159,184 +267,107 @@
   object-fit: cover;
   object-position: var(--focal, 50% 45%);
   display: block;
-  filter: saturate(.86) brightness(.82);
-  transition: filter .5s var(--ease);
+  filter: saturate(.85) brightness(.78);
+  transition: filter .45s var(--ease);
 }
-@media (hover: hover) {
-  .pcs__bub:hover { transform: scale(1.06); }
-  .pcs__bub:hover img { filter: saturate(1) brightness(1); }
-  .pcs__bub:hover::before { box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); }
+
+/* the ring is the whole affordance, and the only thing that moves */
+.pcs__bub::before {
+  content: ""; position: absolute; inset: -3px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.34);
+  transition: box-shadow .4s var(--ease), transform .5s var(--ease);
 }
-.pcs__bub[aria-selected="true"] { transform: scale(1.08); }
+
+/* A slow breath on the one that is live. It is the only animation in the section, it runs
+   at four seconds, and all it does is push a turquoise ring out by seven pixels — enough to
+   read as alive from the corner of an eye, not enough to pull attention off the film. */
+.pcs__bub[aria-selected="true"]::after {
+  content: ""; position: absolute; inset: -3px;
+  border-radius: 50%;
+  animation: pcs-breathe 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes pcs-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31,199,190,.42); }
+  50%      { box-shadow: 0 0 0 7px rgba(31,199,190,0); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pcs__bub:hover { transform: scale(1.09); }
+  .pcs__bub:hover img { filter: none; }
+  .pcs__bub:hover::before { box-shadow: inset 0 0 0 2px rgba(255,255,255,.75); }
+}
+.pcs__bub[aria-selected="true"] { transform: scale(1.1); }
 .pcs__bub[aria-selected="true"] img { filter: none; }
-.pcs__bub[aria-selected="true"]::before {
-  box-shadow: inset 0 0 0 2.5px var(--accent), 0 0 26px -6px rgba(31,199,190,.8);
-}
-.pcs__bub:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+.pcs__bub[aria-selected="true"]::before { box-shadow: inset 0 0 0 2.5px var(--accent); }
+.pcs__bub:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
 
-/* The two editorially featured founders are marked, so nobody reads the rail as a pure
-   leaderboard. A small lozenge rather than a word: the rail is 54-74px wide. */
+/* The two leadership chose are marked, so the rail is not read as a pure leaderboard. A dot
+   rather than a word: at this size there is no room for a word that stays legible. */
 .pcs__flag {
-  position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%);
-  display: block; min-width: 22px; height: 15px; padding: 0 5px;
+  position: absolute; right: -1px; bottom: -1px;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px #05080B;
+}
+.pcs__flag--rank {
+  width: auto; min-width: 17px; height: 15px; padding: 0 4px;
+  right: 50%; bottom: -6px; transform: translateX(50%);
   border-radius: 99px;
-  background: var(--accent); color: var(--on-accent);
-  font: 800 8px/15px var(--f-sans); letter-spacing: .1em; text-transform: uppercase;
-  white-space: nowrap;
-  box-shadow: 0 2px 10px -2px rgba(0,0,0,.8);
-}
-.pcs__flag--rank { background: rgba(10,14,18,.86); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
-
-/* ---------- the words ---------- */
-
-/* justify-items: start keeps each line to its own measure rather than stretching the
-   buttons across the frame. The children still need min-width: 0, or a paragraph with a
-   max-width wider than a phone overflows the grid instead of wrapping inside it. */
-.pcs__copy { min-width: 0; display: grid; justify-items: start; gap: clamp(10px, 1.4vh, 16px); }
-.pcs__copy > * { min-width: 0; max-width: 100%; }
-
-.pcs__k {
-  margin: 0;
-  font: 800 clamp(10px, .86vw, 12px)/1.3 var(--f-sans);
-  letter-spacing: .24em; text-transform: uppercase; color: var(--accent);
-}
-.pcs__t {
-  margin: 0 0 clamp(6px, 1.4vh, 16px);
-  font-size: clamp(36px, 5.2vw, 86px); line-height: 1.02; letter-spacing: -.04em;
-  text-shadow: 0 2px 44px rgba(3,6,9,.6);
+  background: rgba(8,12,16,.9); color: #fff;
+  font: 800 8px/15px var(--f-sans); letter-spacing: .04em; text-align: center;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
 }
 
-/* the live founder: the one piece of the composition that changes with the film */
-.pcs__now { display: grid; gap: 3px; min-height: 4.4em; align-content: start; }
-.pcs__now-co {
-  font: 800 clamp(16px, 1.7vw, 23px)/1.2 var(--f-sans); letter-spacing: -.014em; color: #fff;
-}
-.pcs__now-by {
-  font: 700 clamp(11px, .95vw, 13px)/1.3 var(--f-sans); letter-spacing: .1em;
-  text-transform: uppercase; color: var(--accent);
-}
-.pcs__now-blurb {
-  margin: 4px 0 0; max-width: 46ch;
-  font: 500 clamp(13.5px, 1.05vw, 16px)/1.55 var(--f-sans); color: rgba(255,255,255,.78);
-}
-/* the swap itself: a short lift, so the words change with the picture */
-.pcs__now.is-turning { opacity: 0; transform: translateY(7px); }
-.pcs__now { transition: opacity .34s var(--ease), transform .34s var(--ease); }
-
-/* ---------- the clock ---------- */
-
-.pcs__clock { display: grid; justify-items: end; gap: 7px; }
-.pcs__clock-t { display: flex; align-items: flex-end; gap: clamp(7px, .8vw, 12px); }
-.pcs__clock[hidden] { display: none; }
-.pcs__clock-k {
-  font: 800 9.5px/1.3 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
-  color: rgba(255,255,255,.72); text-shadow: 0 1px 12px rgba(3,6,9,.9);
-}
-.pcs__u { display: grid; justify-items: center; gap: 2px; min-width: 2.4em; }
-.pcs__n {
-  font: 800 clamp(22px, 2.6vw, 38px)/1 var(--f-sans); letter-spacing: -.03em; color: #fff;
-  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
-  text-shadow: 0 2px 18px rgba(3,6,9,.9);
-}
-.pcs__l {
-  font: 700 8px/1 var(--f-sans); letter-spacing: .18em; text-transform: uppercase;
-  color: rgba(255,255,255,.56); text-shadow: 0 1px 10px rgba(3,6,9,.9);
-}
-.pcs__sep {
-  font: 800 clamp(16px, 1.8vw, 24px)/1 var(--f-sans); color: rgba(255,255,255,.22);
-  padding-bottom: 12px;
-}
-.pcs__closed {
-  margin: 0; font: 800 clamp(12px, 1.1vw, 15px)/1.4 var(--f-sans);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
-}
-
-/* ---------- the ways in ---------- */
-
-.pcs__cta {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px clamp(14px, 1.6vw, 22px);
-  margin-top: clamp(8px, 1.4vh, 16px);
-}
-.pcs__fine {
-  margin: clamp(2px, .8vh, 8px) 0 0; max-width: 60ch;
-  font: 500 clamp(12px, .95vw, 13.5px)/1.75 var(--f-sans); color: rgba(255,255,255,.66);
-}
-.pcs__fine a { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.45); }
-.pcs__fine a:hover { text-decoration-color: #fff; }
-.pcs__fine b { color: var(--accent); font-weight: 700; }
-
-/* ---------- sound ---------- */
-
-.pcs__sound {
-  position: absolute; z-index: 4;
-  right: var(--gutter); bottom: clamp(30px, 5.4vh, 64px);
-  display: inline-flex; align-items: center; gap: 9px;
-  min-height: 40px; padding: 0 15px 0 12px;
-  border: 0; border-radius: 99px;
-  background: rgba(8,12,16,.52); color: #fff;
-  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
-  font: 800 9.5px/1 var(--f-sans); letter-spacing: .16em; text-transform: uppercase;
-  cursor: pointer;
-  transition: background-color .3s var(--ease), box-shadow .3s var(--ease);
-}
-.pcs__sound:hover { background: rgba(8,12,16,.82); }
-.pcs__sound:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.pcs__sound svg { width: 16px; height: 16px; flex: none; }
-.pcs__sound.is-on { background: var(--accent); color: var(--on-accent); box-shadow: none; }
-
-/* ---------- phone and tablet ----------
-   The rail turns and goes under the words. A column of portraits down the side of a phone
-   would take a third of the width and leave the caption nowhere to go. */
+/* ---------- phone and tablet ---------- */
 
 @media (max-width: 900px) {
-  .pcs { align-items: flex-end; min-height: clamp(580px, 100svh, 900px); }
+  .pcs {
+    --rail-size: clamp(44px, 12.5vw, 56px);
+    min-height: 100svh;
+  }
   .pcs__in {
     grid-template-columns: minmax(0, 1fr);
-    gap: clamp(18px, 3vh, 28px);
-    padding-bottom: clamp(28px, 5vh, 48px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: clamp(10px, 1.8vh, 20px);
+    padding-top: calc(var(--nav-h, 58px) + clamp(8px, 1.6vh, 16px));
+    padding-bottom: max(clamp(18px, 3vh, 34px), env(safe-area-inset-bottom));
   }
+  .pcs__meta { grid-column: 1; justify-self: start; }
+  .pcs__clock { justify-items: start; }
+  .pcs__copy { grid-column: 1; }
   .pcs__rail {
-    grid-auto-flow: column; grid-auto-columns: max-content;
-    justify-content: start; gap: 12px;
-    /* it can run past the gutter on a narrow phone, so let it scroll rather than wrap */
+    grid-column: 1;
+    /* it can out-run the gutter on a narrow phone, so let it scroll rather than wrap or clip */
     overflow-x: auto; overflow-y: hidden;
-    margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter);
+    margin-inline: calc(var(--gutter) * -1); padding: 6px var(--gutter);
     scrollbar-width: none; -webkit-overflow-scrolling: touch;
   }
   .pcs__rail::-webkit-scrollbar { display: none; }
-  /* one column: the clock first, then the words, then the rail under them as a row */
-  .pcs__meta { grid-column: 1; grid-row: 1; justify-self: start; text-align: left; }
-  .pcs__clock { justify-items: start; }
-  .pcs__clock-t { gap: 10px; }
-  .pcs__rail { grid-column: 1; grid-row: 3; }
-  .pcs__copy { grid-column: 1; grid-row: 2; }
-  .pcs__sound { top: calc(var(--pcs-seam) + 10px); bottom: auto; }
-}
-@media (max-width: 560px) {
-  .pcs { --rail-size: 52px; }
-  .pcs__t { font-size: clamp(32px, 10vw, 46px); }
-  .pcs__now { min-height: 5.6em; }
-  .pcs__now-blurb { display: none; }     /* the film is the pitch on a phone; the line is not */
-  .pcs__cta { width: 100%; }
-  /* The label is longer than a phone is wide and .btn sets white-space: nowrap, so without
-     this it runs out of the button and the section's overflow: hidden clips it. The same
-     remedy site.css already uses on .speakq__cta at this width. */
-  .pcs__cta .btn {
-    width: 100%; justify-content: center;
-    white-space: normal; text-align: center; line-height: 1.25;
-    padding: 13px 1em; letter-spacing: .07em;
-  }
-  .pcs__clock-k { display: none; }
-  .pcs__u { min-width: 2.1em; }
+  .pcs__sound { top: calc(var(--nav-h, 58px) + 10px); bottom: auto; }
 }
 
-/* ---------- less motion, less data ---------- */
+@media (max-width: 560px) {
+  .pcs__t { font-size: clamp(27px, 8.4vw, 40px); }
+  .pcs__cta { width: 100%; gap: 8px; }
+  .pcs__go, .pcs__alt {
+    --h: 42px; flex: 1 1 100%; justify-content: center;
+    white-space: normal; text-align: center; line-height: 1.25;
+    padding: 11px 1em; letter-spacing: .07em;
+  }
+}
+
+/* On a genuinely short screen, growing and scrolling beats clipping the rail off the foot. */
+@media (max-height: 620px) {
+  .pcs { min-height: 0; }
+  .pcs__in { padding-block: calc(var(--nav-h, 58px) + 14px) 26px; row-gap: 12px; }
+  .pcs__t { font-size: clamp(24px, 6vw, 34px); }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .pcs__layer, .pcs__now, .pcs__bub, .pcs__bub::before { transition: none; }
-  .pcs__layer { transform: none; }
-  .pcs__layer.is-on { transform: none; }
+  .pcs__layer, .pcs__now, .pcs__bub, .pcs__bub::before, .pcs__fg { transition: none; }
+  .pcs__bub[aria-selected="true"]::after { animation: none; }
 }
 
 /* ============================================================================

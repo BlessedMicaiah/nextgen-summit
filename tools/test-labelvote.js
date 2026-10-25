@@ -20,7 +20,14 @@ const grab = (name) => {
   if (!m) { console.error(name + ' not found in ' + path); process.exit(1); }
   return m[0];
 };
-const body = grab('idleLabel') + grab('labelVoteButton');
+/* left() and spread() are one-liners, which the block matcher above cannot see. They are
+   lifted the same way -- out of the shipped file, never retyped here. */
+const grabLine = (name) => {
+  const m = src.match(new RegExp('\\n  function ' + name + '\\(.*\\n'));
+  if (!m) { console.error(name + ' not found in ' + path); process.exit(1); }
+  return m[0];
+};
+const body = grabLine('left') + grabLine('spread') + grab('idleLabel') + grab('labelVoteButton');
 
 const COPY = {
   'open':        { vote: 'Vote for this pitch' },
@@ -112,7 +119,8 @@ t('not opened yet',                 VISITOR,  'entrant-05',
    it went live saying "Closed" in both not-open states, so for the days before voting opened
    all twenty founder cards told visitors the vote was over. */
 const reel = (state) =>
-  new Function('STATE', '$', grab('labelReelVote') + '; return labelReelVote;')(
+  new Function('STATE', '$',
+    grabLine('left') + grabLine('spread') + grab('labelReelVote') + '; return labelReelVote;')(
     state, (sel, root) => (sel === 'small' ? root.small : null));
 
 function rbtn(id) {
@@ -154,5 +162,44 @@ r('their founder, all three spent',    'open',        ALLTHREE, 'entrant-01',
   { label: 'Voted', on: true });
 r('a different founder, after +1',     'open',        PLUS1,    'entrant-07', { label: 'Used' });
 
-console.log(fails ? '\n' + fails + ' FAILED' : '\nall ' + 20 + ' pass');
+/* ---------------------------------------------------------------------------
+   The flexible rule, trialled on staging.
+
+   Three votes a day for a registered attendee, spent on whoever they like. The question a
+   button answers stops being "which founder did you back" and becomes "how many votes have
+   you left", which is why every one of these cases fixes the label for a founder the voter
+   has NOT backed -- entrant-07 throughout, while today_entrant is entrant-01.
+
+   Under the old rule all of them read "Today's vote is used". With two votes still in hand
+   that sentence is false, and false on nineteen cards at once.
+   --------------------------------------------------------------------------- */
+const sp = (o) => Object.assign({ verified: true, spread: true, mode: 'daily' }, o);
+
+const S_FRESH3 = sp({ allowance: 3, used: 0, remaining: 3 });
+const S_LEFT2  = sp({ allowance: 3, used: 1, remaining: 2, today_entrant: 'entrant-01' });
+const S_LEFT1  = sp({ allowance: 3, used: 2, remaining: 1, today_entrant: 'entrant-01' });
+const S_SPENT3 = sp({ allowance: 3, used: 3, remaining: 0, today_entrant: 'entrant-01' });
+const S_FRESH1 = sp({ allowance: 1, used: 0, remaining: 1 });
+const S_SPENT1 = sp({ allowance: 1, used: 1, remaining: 0, today_entrant: 'entrant-05' });
+const S_UNVER  = { verified: false, spread: true };
+
+console.log('\n--- the flexible rule: the gallery ---');
+STATE = 'open';
+t('attendee, nothing spent',        S_FRESH3, 'entrant-07', { label: 'Vote' });
+t('attendee, one spent, two left',  S_LEFT2,  'entrant-07', { label: 'Vote · 2 left' });
+t('attendee, two spent, one left',  S_LEFT1,  'entrant-07', { label: 'Vote · 1 left' });
+t('attendee, all three spent',      S_SPENT3, 'entrant-07', { label: 'All votes used today', ghost: true });
+t('the founder they already backed, votes left', S_LEFT2, 'entrant-01', { label: 'Vote · 2 left' });
+t('not registered, their one vote intact', S_FRESH1, 'entrant-07', { label: 'Vote' });
+t('not registered, vote spent',     S_SPENT1, 'entrant-07', { label: 'All votes used today', ghost: true });
+t('not verified at all',            S_UNVER,  'entrant-07', { label: 'Vote' });
+
+console.log('\n--- the flexible rule: the reel rail ---');
+r('attendee, nothing spent',        'open', S_FRESH3, 'entrant-07', { label: 'Vote' });
+r('attendee, two left',             'open', S_LEFT2,  'entrant-07', { label: '2 left' });
+r('attendee, one left',             'open', S_LEFT1,  'entrant-07', { label: '1 left' });
+r('attendee, all three spent',      'open', S_SPENT3, 'entrant-07', { label: 'Used', on: true });
+r('not registered, vote intact',    'open', S_FRESH1, 'entrant-07', { label: 'Vote' });
+
+console.log(fails ? '\n' + fails + ' FAILED' : '\nall 33 pass');
 process.exit(fails ? 1 : 0);

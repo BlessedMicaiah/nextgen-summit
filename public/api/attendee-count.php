@@ -27,13 +27,21 @@
    sent whenever the server allows it.
 
    Who's coming: the same walk collects "names": ["Maya R.", ...], each name once, newest
-   registration first, at most NGS_EB_NAMES_MAX. TEMPORARY (2026-10-09): every attending person is listed; the opt-in
-   check is switched off (see ngs_eb_states). With it on, a name is listed only when that
-   attendee answered yes to the opt-in question on the Eventbrite order form ("Show my first name
-   on the NextGen website?"; NGS_EB_NAMES_QUESTION in config.php pins its id, otherwise a question
-   asking to show or display a name on the website). Only the first name and the first letter of
-   the last name are kept, cleaned to letters, hyphens, apostrophes and spaces; anything else is
-   left out. */
+   registration first, at most NGS_EB_NAMES_MAX. A name is listed ONLY when that attendee
+   answered yes to the opt-in question on the Eventbrite order form ("Show my first name on
+   the NextGen website?"; NGS_EB_NAMES_QUESTION in config.php pins its id, otherwise a
+   question asking to show or display a name on a website). Only the first name and the first
+   letter of the last name are kept, cleaned to letters, hyphens, apostrophes and spaces;
+   anything else is left out, and anything uncertain is left out too -- see
+   ngs_eb_attendee_opted_in().
+
+   That check was commented out on 2026-10-09 and marked TEMPORARY, and for the sixteen days
+   that followed this endpoint published the name of every attending person regardless. It was
+   restored on 2026-10-25. If the order form carries no such question then nobody opts in, no
+   "names" key is sent at all, and the count and per-state totals carry on unaffected -- they
+   are totals over people and name nobody.
+
+   Setting NGS_EB_PUBLIC_NAMES to false in config.php turns the list off outright. */
 declare(strict_types=1);
 
 require __DIR__ . '/_lib.php';
@@ -56,7 +64,9 @@ function ngs_eb_send(?int $count, ?array $states = null, int $status = 200): voi
     if ($count !== null && $states !== null && isset($states['states'], $states['unknown'])) {
         $out['states'] = $states['states'];
         $out['unknown'] = $states['unknown'];
-        if (isset($states['names']) && is_array($states['names'])) {
+        /* Empty means nobody agreed, and the right way to say that is to say nothing:
+           an empty "names" key reads to a client like a list that failed to load. */
+        if (!empty($states['names']) && is_array($states['names'])) {
             $out['names'] = $states['names'];
         }
     }
@@ -265,23 +275,79 @@ function ngs_eb_attendee_state(array $a, string $questionId = ''): string
     return '';
 }
 
-/** True when this attendee answered yes to the "show my name on the website" question.
- *function ngs_eb_attendee_opted_in(array $a, string $questionId = ''): bool
- *{
- *   foreach (($a['answers'] ?? []) as $ans) {
- *       if (!is_array($ans)) {
- *           continue;
- *       }
- *       $mine = $questionId !== ''
- *           ? (string) ($ans['question_id'] ?? '') === $questionId
- *           : (bool) preg_match('/\b(show|display)\b.*\bname\b.*\bwebsite\b/i', (string) ($ans['question'] ?? ''));
- *       if ($mine) {
- *           return (bool) preg_match('/^\s*y(es)?\b/i', (string) ($ans['answer'] ?? ''));
- *       }
- *   }
- *   return false;
- *}
- */
+/* Is a name allowed to appear on the public website?
+
+   RESTORED 2026-10-25, after sixteen days switched off.
+
+   On 2026-10-09 this check was commented out and marked TEMPORARY, and from that moment the
+   endpoint published the first name and last initial of every attending person -- 228 of them
+   on the live site -- whether or not they had agreed to it. The comment left behind said
+   exactly how to put it back, which is what this is.
+
+   IT FAILS CLOSED, IN EVERY DIRECTION
+
+   A name is published only when this function can point at a specific answer, from a specific
+   question, that positively says yes. Every other outcome is a no:
+
+     - the attendee has no answers at all              -> no
+     - the question is not among their answers         -> no
+     - the answer is blank, "No", or anything unclear  -> no
+     - the question id is not configured AND no question text looks like the right one -> no
+     - the Eventbrite payload is shaped unexpectedly   -> no
+
+   That last group matters most. The previous failure was not that somebody chose to publish
+   names; it was that the absence of a check read as permission. Absence now reads as refusal,
+   so if the opt-in question is ever removed from the order form, or renamed, or the id in
+   config.php stops matching, the list goes quiet by itself rather than opening up by itself.
+
+   WHAT THE OWNER WILL SEE
+
+   If no attendee opts in -- which is what happens when the order form has no such question --
+   the public reply carries no "names" key at all, and the count and the per-state totals are
+   unaffected. Those are aggregates over people and carry nobody's identity. The snapshot
+   written to the private data folder records how many were considered and how many agreed, so
+   the gap between the two is visible to whoever is allowed to look, without being published.
+*/
+function ngs_eb_attendee_opted_in(array $a, string $questionId = ''): bool
+{
+    $answers = $a['answers'] ?? null;
+    if (!is_array($answers) || !$answers) {
+        return false;                       // nothing to consent with
+    }
+    foreach ($answers as $ans) {
+        if (!is_array($ans)) {
+            continue;
+        }
+        if ($questionId !== '') {
+            /* An id was pinned in config.php: only that question counts. Nothing is inferred
+               from question text, because a second question that merely mentions a name and a
+               website would otherwise be able to stand in for consent. */
+            if ((string) ($ans['question_id'] ?? '') !== $questionId) {
+                continue;
+            }
+        } else {
+            /* No id pinned, so fall back to recognising the question by its wording -- and
+               require all three ideas to be present, not any of them. */
+            $q = (string) ($ans['question'] ?? '');
+            if ($q === '' || !preg_match('/\b(show|display|list|include)\b/i', $q)
+                || !preg_match('/\bname\b/i', $q)
+                || !preg_match('/\b(web ?site|online|public(ly)?|page)\b/i', $q)) {
+                continue;
+            }
+        }
+        /* Found the question. Whatever it says now decides, and only an explicit yes passes.
+           Eventbrite returns checkbox answers variously as "Yes", "true", "on" or "1". */
+        $v = trim((string) ($ans['answer'] ?? ''));
+        return (bool) preg_match('/^(y|yes|true|1|on|checked|i agree|agree|i consent|consent)\b/i', $v);
+    }
+    return false;                           // the question was never asked of this attendee
+}
+
+/** Has the owner switched public names off entirely, regardless of opt-ins? */
+function ngs_eb_names_allowed(): bool
+{
+    return !defined('NGS_EB_PUBLIC_NAMES') || (bool) constant('NGS_EB_PUBLIC_NAMES');
+}
 
 /** "Maya R." from an attendee's profile, or '' if the first name is missing or not plainly a name. */
 function ngs_eb_public_name(array $a): string
@@ -308,6 +374,8 @@ function ngs_eb_states(callable $get, string $questionId = '', string $namesQues
     $tally = [];
     $unknown = 0;
     $named = [];
+    $considered = 0;
+    $agreed = 0;
     $page = $get($base);
     for ($i = 0; $i < NGS_EB_MAX_PAGES; $i++) {
         foreach (($page['attendees'] ?? []) as $a) {
@@ -320,12 +388,17 @@ function ngs_eb_states(callable $get, string $questionId = '', string $namesQues
             } else {
                 $tally[$code] = ($tally[$code] ?? 0) + 1;
             }
-            // TEMPORARY (2026-10-09): the opt-in check is off, so every attending person is listed.
-            // To restore it, uncomment ngs_eb_attendee_opted_in() above and only add the name
-            // when ngs_eb_attendee_opted_in($a, $namesQuestion) is true.
-            $name = ngs_eb_public_name($a);
-            if ($name !== '') {
-                $named[] = [(string) ($a['created'] ?? ''), $name];
+            /* A name is published only with this person's explicit permission. The two
+               counters around the check are what tells the owner whether the opt-in
+               question is reaching anybody at all; they stay in the private snapshot and
+               are never sent to a browser. */
+            $considered++;
+            if (ngs_eb_names_allowed() && ngs_eb_attendee_opted_in($a, $namesQuestion)) {
+                $agreed++;
+                $name = ngs_eb_public_name($a);
+                if ($name !== '') {
+                    $named[] = [(string) ($a['created'] ?? ''), $name];
+                }
             }
         }
         $p = is_array($page['pagination'] ?? null) ? $page['pagination'] : [];
@@ -357,7 +430,8 @@ function ngs_eb_states(callable $get, string $questionId = '', string $namesQues
                     break;
                 }
             }
-            return ['states' => $states, 'unknown' => $unknown, 'names' => $names];
+            return ['states' => $states, 'unknown' => $unknown, 'names' => $names,
+                    'names_considered' => $considered, 'names_agreed' => $agreed];
         }
         $page = $get($base . '&continuation=' . rawurlencode((string) $p['continuation']));
     }

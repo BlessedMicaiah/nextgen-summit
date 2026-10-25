@@ -523,17 +523,116 @@ function pc_rows(int $limit = 500): array
     return array_slice($v, 0, $limit);
 }
 
-/** Only ever used on test data. */
-function pc_reset(): void
+/* ---------- destructive operations ----------
+
+   WHAT WENT WRONG, SO IT IS NOT REINTRODUCED
+
+   The People's Choice dashboard carries "Add test votes" and "Clear all votes" under a
+   heading that reads "Staging only. These write to the staging data directory, which is a
+   different file from the live one." That sentence was a description of INTENT, not a
+   restriction: nothing checked. The controls rendered on production exactly as they do on
+   the review site, pc_reset() ran DELETE FROM pc_votes against whatever pc_db() resolved
+   to -- on production, the live ballot -- and the success notice then said the votes had
+   been "cleared from the staging store". One click, every vote in the competition gone,
+   and a confirmation message saying it had not happened.
+
+   THE RULE NOW
+
+   A destructive operation is permitted only where the store is POSITIVELY identified as
+   the review store. Not "is not production" -- that fails open the moment anything about
+   the path is unexpected. The check asks for one specific directory name and treats
+   everything else, including an exception while working it out, as a refusal.
+
+   WHERE IT IS ENFORCED
+
+   Here, in the library, because that is the only layer a caller cannot skip. The dashboard
+   also hides the controls and its POST handler refuses the action, but neither of those is
+   the guarantee: a crafted POST straight at the endpoint meets this function, and this
+   function says no. Three layers, and the one that matters is the innermost.
+*/
+
+/** The review store, positively identified. Anything else -- including not knowing -- is false. */
+function pc_store_is_review(): bool
 {
+    static $is = null;
+    if ($is !== null) {
+        return $is;
+    }
+    try {
+        $dir = ngs_data_dir();
+    } catch (Throwable $e) {
+        /* No data directory means no way to tell which database this is. Refuse. */
+        error_log("People's Choice: destructive guard could not resolve the data directory; refusing.");
+        return $is = false;
+    }
+    $name = basename(rtrim(str_replace('\\', '/', $dir), '/'));
+    return $is = ($name === 'nextgen-data-staging');
+}
+
+/** The sentence the dashboard shows where the controls used to be. */
+function pc_destructive_note(): string
+{
+    return pc_store_is_review()
+        ? 'This is the review site. These write to ' . basename(ngs_data_dir())
+          . ', which is a different file from the live ballot.'
+        : 'Disabled on this site. These controls only ever run against the review store, and '
+          . 'this is not it. The restriction is enforced in pc-lib.php, not by hiding the '
+          . 'buttons: a request sent straight to the endpoint is refused the same way.';
+}
+
+/**
+ * Clear every vote in the competition. Review store only.
+ *
+ * @return bool true when rows were actually cleared; false means the request was refused,
+ *              and the caller must say so rather than reporting success.
+ */
+function pc_reset(): bool
+{
+    if (!pc_store_is_review()) {
+        error_log("People's Choice: pc_reset() refused -- this is not the review store.");
+        return false;
+    }
     $db = pc_db();
     if ($db) {
         $db->prepare('DELETE FROM pc_votes WHERE competition = ?')->execute([PC_COMPETITION]);
-        return;
+        return true;
     }
     $d = pc_file_read();
     $d['votes'] = [];
     pc_file_write($d);
+    return true;
+}
+
+/**
+ * Write the dashboard's demonstration rows. Review store only.
+ *
+ * It lives here rather than inline in the dashboard so that it sits behind the same guard
+ * as pc_reset(): seeding production is less destructive than clearing it, but it still puts
+ * rows a nobody cast into a live competition's totals, and it momentarily forces the state
+ * to open while it does so.
+ *
+ * @return int how many rows were written; 0 means refused or nothing took.
+ */
+function pc_seed(): int
+{
+    if (!pc_store_is_review()) {
+        error_log("People's Choice: pc_seed() refused -- this is not the review store.");
+        return 0;
+    }
+    $ids = array_column(pc_entrants(), 'id');
+    $was = pc_state();
+    pc_set_meta('state', 'open');
+    $n = 0;
+    $plan = [0 => 7, 1 => 5, 2 => 4, 3 => 2, 4 => 2, 5 => 1];
+    foreach ($plan as $i => $count) {
+        for ($j = 0; $j < $count; $j++) {
+            if (pc_cast('seed:' . $i . ':' . $j . ':' . bin2hex(random_bytes(4)), $ids[$i], true)['ok']) {
+                $n++;
+            }
+        }
+    }
+    pc_set_meta('state', $was);
+    return $n;
 }
 
 /* ---------- the voter's session ----------

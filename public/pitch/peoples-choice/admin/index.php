@@ -460,27 +460,28 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 . ' skipped; a phone proves a number, not an address';
         }
         $notice = ucfirst(implode('. ', $say)) . '.';
-    } elseif ($authed && $action === 'seed') {
-        /* Test rows, so the dashboard can be shown doing its job before any real ballot
-           exists. They are votes like any other -- same table, same counting -- and they go
-           in the staging data directory, never beside live results. */
-        $ids = array_column(pc_entrants(), 'id');
-        $was = pc_state();
-        pc_set_meta('state', 'open');
-        $n = 0;
-        $plan = [0 => 7, 1 => 5, 2 => 4, 3 => 2, 4 => 2, 5 => 1];
-        foreach ($plan as $i => $count) {
-            for ($j = 0; $j < $count; $j++) {
-                if (pc_cast('seed:' . $i . ':' . $j . ':' . bin2hex(random_bytes(4)), $ids[$i], true)['ok']) {
-                    $n++;
-                }
-            }
+    } elseif ($authed && ($action === 'seed' || $action === 'reset')) {
+        /* The destructive pair, refused here as well as inside pc-lib.
+
+           On its own this branch would be worth little: a crafted POST that never loaded
+           this page would miss it. It exists so the refusal is VISIBLE -- so that anyone
+           who does reach the action is told plainly that nothing happened, instead of
+           being handed the old message claiming the staging store had been cleared. The
+           guarantee is in pc_reset() and pc_seed(); this is the part that tells the truth
+           about it. */
+        if (!pc_store_is_review()) {
+            http_response_code(403);
+            $notice = 'Refused: this is the live site. The test-data controls only ever run '
+                    . 'against the review store, and nothing was changed.';
+            error_log("People's Choice: '" . $action . "' refused on a non-review store.");
+        } elseif ($action === 'seed') {
+            $n = pc_seed();
+            $notice = $n . ' test votes added to ' . basename(ngs_data_dir()) . '.';
+        } else {
+            $notice = pc_reset()
+                ? "All People's Choice votes cleared from " . basename(ngs_data_dir()) . '.'
+                : 'Refused: nothing was cleared.';
         }
-        pc_set_meta('state', $was);
-        $notice = $n . ' test votes added.';
-    } elseif ($authed && $action === 'reset') {
-        pc_reset();
-        $notice = 'All People\'s Choice votes cleared from the staging store.';
     }
 }
 
@@ -529,8 +530,8 @@ foreach ($standings as $r) {
 <meta name="robots" content="noindex, nofollow">
 <title>People&rsquo;s Choice results &middot; NextGen Summit admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261025-s05">
-<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261025-s05">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261025-s06">
+<link rel="stylesheet" href="/assets/css/pc-admin.css?v=20261025-s06">
 </head>
 <body class="admbody has-pcbar">
 <div class="pcbar" role="status">
@@ -1075,15 +1076,18 @@ foreach ($standings as $r) {
 
     <section class="adm__sec">
       <p class="adm__h">Test data</p>
-      <p class="adm__p">Staging only. These write to the staging data directory, which is a different file from the live one.</p>
+      <p class="adm__p"><?= h(pc_destructive_note()) ?></p>
+      <?php if (pc_store_is_review()): ?>
       <div class="adm__bar">
         <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
           <input type="hidden" name="action" value="seed">
           <button class="adm__btn" type="submit">Add test votes</button></form>
-        <form method="post"><input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <form method="post" onsubmit="return confirm('Clear every vote in <?= h(basename(ngs_data_dir())) ?>? This cannot be undone.')">
+          <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
           <input type="hidden" name="action" value="reset">
           <button class="adm__btn adm__btn--warn" type="submit">Clear all votes</button></form>
       </div>
+      <?php endif; ?>
     </section>
 
     <div class="adm__note"><b>Where this is still short of real:</b>
@@ -1097,7 +1101,7 @@ foreach ($standings as $r) {
     <p class="adm__p" style="margin-top:22px"><a class="linkish" href="/pitch/peoples-choice/">&larr; The public People&rsquo;s Choice page</a></p>
   </div>
 </main>
-<script src="/assets/js/pc-admin.js?v=20261025-s05" defer></script>
+<script src="/assets/js/pc-admin.js?v=20261025-s06" defer></script>
 <?php endif; ?>
 </body>
 </html>

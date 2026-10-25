@@ -87,7 +87,7 @@ function hh($v): string
     return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 }
 
-$stamp = '20261025-s05';
+$stamp = '20261025-s06';
 ?>
 <!doctype html>
 <html lang="en">
@@ -440,7 +440,9 @@ $dashOn = ngd_flag('dashboard');
         <?php foreach ($users as $u => $r): ?>
           <tr>
             <td><code><?= hh($u) ?></code></td>
-            <td><?= hh($r['name']) ?></td>
+            <td><?= hh($r['name']) ?><?php if (!empty($r['seeded'])): ?>
+              <i style="display:block;font-size:11px;color:var(--fg-3)">provisioned with the deploy &mdash; suspend here, or remove its line from config.ngd.php</i>
+            <?php endif; ?></td>
             <td class="num"><?= hh(substr((string) $r['added'], 0, 10)) ?></td>
             <td class="num"><?= hh($r['last'] ? substr((string) $r['last'], 0, 16) . 'Z' : 'never') ?></td>
             <td><?= $r['active'] ? '<span class="pill pill--ok">active</span>' : '<span class="pill pill--off">suspended</span>' ?></td>
@@ -451,12 +453,14 @@ $dashOn = ngd_flag('dashboard');
                 <input type="hidden" name="u" value="<?= hh($u) ?>">
                 <button class="btn btn--ghost btn--sm" type="submit"><?= $r['active'] ? 'Suspend' : 'Restore' ?></button>
               </form>
+              <?php if (empty($r['seeded'])): ?>
               <form method="post" onsubmit="return confirm('Remove <?= hh($u) ?> for good?')">
                 <input type="hidden" name="csrf" value="<?= hh($csrf) ?>">
                 <input type="hidden" name="action" value="account_remove">
                 <input type="hidden" name="u" value="<?= hh($u) ?>">
                 <button class="btn btn--warn btn--sm" type="submit">Remove</button>
               </form>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>

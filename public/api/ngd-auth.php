@@ -113,6 +113,61 @@ function ngd_users_file(): string
     return ngd_var_dir() . '/ngd-users.json';
 }
 
+/**
+ * Accounts provisioned with the deployment, from public/api/config.ngd.php.
+ *
+ * There are two places a leadership account can come from, and they answer different
+ * problems. Accounts the owner adds from the dashboard live in ngd-users.json, outside
+ * the web root, where no deploy can disturb them. That is right for everything except
+ * the FIRST account, because there is no way to put a file outside the web root without
+ * a shell, and nobody has one.
+ *
+ * So provisioning rides along with the release instead: tools/make-ngd-user.php writes a
+ * line per account into public/api/config.ngd.php, api/.htaccess already refuses to serve
+ * anything matching config.*.php, and .gitignore already keeps config.*.php out of the
+ * repository. The file holds bcrypt hashes and no passphrase, so reading it does not let
+ * anybody in.
+ *
+ * READ AS TEXT, NEVER EXECUTED -- the same decision, for the same reason, as
+ * pc_admin_override() (pc-admin-pin.php:66): the file holds two strings per account and
+ * nothing about it needs to be code, so parsing it removes an execution path that had no
+ * reason to exist.
+ *
+ * @return array<string, array{hash:string,name:string}>
+ */
+function ngd_seed_accounts(): array
+{
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+    $cache = [];
+    $f = __DIR__ . '/config.ngd.php';
+    if (!is_file($f) || !is_readable($f)) {
+        return $cache;                       // no accounts provisioned; the PIN is the only door
+    }
+    $raw = @file_get_contents($f);
+    if (!is_string($raw) || $raw === '') {
+        return $cache;
+    }
+    foreach (explode("\n", $raw) as $line) {
+        if (!preg_match("/^\s*NGD_ACCOUNT\s*=\s*'([^'|]+)\|([^'|]*)\|([^']+)'\s*;/", $line, $m)) {
+            continue;
+        }
+        $u = strtolower(trim($m[1]));
+        $hash = trim($m[3]);
+        /* Only a real bcrypt/argon hash counts. A line carrying anything else is ignored
+           rather than trusted, because a malformed hash that happened to match some input
+           would be an open door. */
+        if ($u === '' || strlen($hash) < 50 || $hash[0] !== '$') {
+            continue;
+        }
+        $cache[$u] = ['hash' => $hash, 'name' => trim($m[2]) !== '' ? trim($m[2]) : $u];
+    }
+    unset($raw);
+    return $cache;
+}
+
 /** @return array<string, array{hash:string,name:string,added:string,active:bool,last:?string}> */
 function ngd_users(bool $fresh = false): array
 {
@@ -121,6 +176,14 @@ function ngd_users(bool $fresh = false): array
         return $cache;
     }
     $cache = [];
+
+    /* Accounts that came with the deployment first, so that one exists even on a server
+       where nothing has ever been written outside the web root. */
+    foreach (ngd_seed_accounts() as $u => $r) {
+        $cache[$u] = ['hash' => $r['hash'], 'name' => $r['name'], 'added' => '',
+                      'active' => true, 'last' => null, 'seeded' => true];
+    }
+
     $f = ngd_users_file();
     if (!is_file($f) || !is_readable($f)) {
         return $cache;
@@ -133,16 +196,33 @@ function ngd_users(bool $fresh = false): array
     if (!is_array($d) || !isset($d['users']) || !is_array($d['users'])) {
         return $cache;
     }
+
+    /* The writable store layers over the top. For a seeded account it carries only the
+       things the dashboard is allowed to change -- whether it is suspended, and when it
+       last signed in -- and never replaces the hash, so suspending one here cannot be
+       undone by editing the file, and a deploy cannot quietly reinstate a suspension the
+       owner lifted. */
     foreach ($d['users'] as $u => $r) {
-        if (!is_string($u) || !is_array($r) || !isset($r['hash']) || !is_string($r['hash'])) {
+        $u = strtolower((string) $u);
+        if (isset($cache[$u]) && !empty($cache[$u]['seeded'])) {
+            if (isset($r['active'])) {
+                $cache[$u]['active'] = $r['active'] === true;
+            }
+            if (isset($r['last']) && is_string($r['last'])) {
+                $cache[$u]['last'] = $r['last'];
+            }
             continue;
         }
-        $cache[strtolower($u)] = [
+        if (!is_array($r) || !isset($r['hash']) || !is_string($r['hash'])) {
+            continue;
+        }
+        $cache[$u] = [
             'hash'   => $r['hash'],
             'name'   => isset($r['name']) && is_string($r['name']) ? $r['name'] : $u,
             'added'  => isset($r['added']) && is_string($r['added']) ? $r['added'] : '',
             'active' => !isset($r['active']) || $r['active'] === true,
             'last'   => isset($r['last']) && is_string($r['last']) ? $r['last'] : null,
+            'seeded' => false,
         ];
     }
     return $cache;
@@ -192,12 +272,27 @@ function ngd_user_remove(string $username): bool
     if (!isset($users[$u])) {
         return false;
     }
+    if (!empty($users[$u]['seeded'])) {
+        /* It would come back on the next deploy. A delete that silently undoes itself is
+           worse than no delete, so this refuses and the dashboard offers Suspend instead. */
+        return false;
+    }
     unset($users[$u]);
     return ngd_users_write($users);
 }
 
 function ngd_users_write(array $users): bool
 {
+    /* A seeded account keeps its hash in config.ngd.php and nowhere else. Only the two
+       fields the dashboard may change are written here, so the writable store can never
+       become a stale second copy of a credential -- and removing an account's line from
+       config.ngd.php really does remove it, rather than leaving a working copy behind. */
+    foreach ($users as $u => $r) {
+        if (!empty($r['seeded'])) {
+            $users[$u] = ['seeded' => true, 'active' => !empty($r['active']),
+                          'last' => $r['last'] ?? null];
+        }
+    }
     $f = ngd_users_file();
     $body = json_encode(['version' => 1, 'updated' => ngd_now(), 'users' => $users],
                         JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);

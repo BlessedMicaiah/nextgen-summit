@@ -131,3 +131,42 @@ a.spon__card:focus-visible{outline-offset:-2px}
   .spon__mark{grid-column:1 / -1;margin-bottom:6px}
   .spon__partner .spon__go{width:36px;height:36px}
 }
+
+/* ---------- the prime sponsor ----------
+   One card above the directory, because that sponsor paid for the position. It is the only
+   logo on the page with its own ground, and the only one shown at a size you read rather
+   than scan. None of this was in the stylesheet either. */
+.spon__prime-row { margin-top: clamp(28px, 4.6vh, 52px); }
+.spon__prime {
+  position: relative;
+  display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  align-items: center; gap: clamp(18px, 3vw, 44px);
+  padding: clamp(22px, 3.4vh, 34px) clamp(20px, 3vw, 36px);
+  border-radius: 14px; background: var(--paper-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  text-decoration: none; color: inherit;
+  transition: box-shadow .35s var(--ease), background-color .35s var(--ease);
+}
+.spon__prime img { width: auto; max-width: 100%; height: clamp(44px, 6vw, 72px); object-fit: contain; }
+.spon__prime-k {
+  grid-column: 2; align-self: end;
+  font: 800 9.5px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.spon__prime-site {
+  grid-column: 2; grid-row: 2; align-self: start; margin-top: 5px;
+  font: 600 clamp(12px, 1vw, 13.5px)/1.4 var(--f-sans); color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.spon__prime > img { grid-row: 1 / span 2; }
+.spon__prime > .spon__go { grid-column: 3; grid-row: 1 / span 2; }
+@media (hover: hover) {
+  .spon__prime:hover { background: #fff; box-shadow: inset 0 0 0 1px var(--rule-strong); }
+}
+@media (max-width: 640px) {
+  .spon__prime { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; }
+  .spon__prime > img { grid-row: 1; grid-column: 1 / -1; margin-bottom: 10px; }
+  .spon__prime-k { grid-column: 1; grid-row: 2; }
+  .spon__prime-site { grid-column: 1; grid-row: 3; }
+  .spon__prime > .spon__go { grid-column: 2; grid-row: 2 / span 2; }
+}

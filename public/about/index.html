@@ -41,18 +41,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261024-100">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261024-100">
-<link rel="stylesheet" href="/assets/css/about.css?v=20261024-100">
-<link rel="stylesheet" href="/assets/css/sponsors.css?v=20261024-100">
-<link rel="stylesheet" href="/assets/css/film.css?v=20261024-100">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261024-101">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261024-101">
+<link rel="stylesheet" href="/assets/css/about.css?v=20261024-101">
+<link rel="stylesheet" href="/assets/css/sponsors.css?v=20261024-101">
+<link rel="stylesheet" href="/assets/css/film.css?v=20261024-101">
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261024-100" defer></script>
-<script src="/assets/js/announce.js?v=20261024-100" defer></script>
-<script src="/assets/js/depart.js?v=20261024-100" defer></script>
-<script src="/assets/js/sponsors.js?v=20261024-100" defer></script>
-<script src="/assets/js/film.js?v=20261024-100" defer></script>
+<script src="/assets/js/site.js?v=20261024-101" defer></script>
+<script src="/assets/js/announce.js?v=20261024-101" defer></script>
+<script src="/assets/js/depart.js?v=20261024-101" defer></script>
+<script src="/assets/js/sponsors.js?v=20261024-101" defer></script>
+<script src="/assets/js/film.js?v=20261024-101" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -146,10 +146,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </ul>
   </section>
 
-  <!-- Sponsor directory: keep these six entries in sync with the homepage marquee. -->
+  <!-- Sponsor directory: the prime sponsor on its own card, then the six that are also
+     in the homepage marquee. Keep those six in sync with it. -->
   <section class="ab ab--spon" id="sponsors" aria-labelledby="ab-spon">
     <p class="ab__k rv">Our sponsors</p>
     <h2 class="spon__directory-title wm rv" id="ab-spon">The brands making NextGen possible.</h2>
+    <!-- the prime sponsor leads the directory on a card of its own -->
+    <div class="spon__prime-row rv" style="--d:.05s">
+      <a class="spon__prime" href="https://www.blwoasis.com" target="_blank" rel="noopener">
+        <img src="/assets/img/sponsors/blw-oasis.png" width="720" height="246" alt="BLW Oasis" loading="lazy" decoding="async">
+        <span class="spon__prime-k">Prime sponsor</span>
+        <span class="spon__prime-site">www.blwoasis.com<span class="sr"> (opens in a new tab)</span></span>
+        <span class="spon__go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
     <ul class="spon__grid rv" role="list" style="--d:.1s">
       <li class="spon__partner" style="--h:44px"><a class="spon__card" href="https://kingspayweb.com/" target="_blank" rel="noopener">
         <span class="spon__mark"><img src="/assets/img/sponsors/kingspay.png" width="406" height="106" alt="" loading="lazy" decoding="async"></span>

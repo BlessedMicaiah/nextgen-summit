@@ -215,13 +215,29 @@ def main():
         # would misplace every head, which is the fault this set exists to fix.
         branded = os.path.join(ROOT, 'docs', 'founder-images-branded', slug)
         bcard = os.path.join(branded, 'card.webp')
+
+        # The square story crop is handled on its own, because three founders have one
+        # without a branded card. Their portraits were already on brand and were left
+        # alone; what they did not have was a crop framed for a 76-pixel circle, so their
+        # heads sat smaller than everyone else's in the one place the heads sit side by
+        # side. The card keeps their existing image; only the bubble changes.
+        for src_name, dst_name, field in (('story.webp', slug + '-story.webp', 'story'),
+                                          ('story@2x.webp', slug + '-story@2x.webp', 'story2x')):
+            srcp = os.path.join(branded, src_name)
+            if os.path.isfile(srcp):
+                os.makedirs(IMGDIR, exist_ok=True)
+                dstp = os.path.join(IMGDIR, dst_name)
+                shutil.copyfile(srcp, dstp)
+                rec[field] = '/assets/img/founders/' + dst_name + stamp(dstp)
+        sfoc = os.path.join(branded, 'story-focal.txt')
+        if os.path.isfile(sfoc):
+            rec['storyFocal'] = io.open(sfoc, encoding='utf-8').read().strip()
+
         if os.path.isfile(bcard):
             os.makedirs(IMGDIR, exist_ok=True)
             for src_name, dst_name, field in (
-                    ('card.webp',     slug + '.webp',          'shot'),
-                    ('card@2x.webp',  slug + '@2x.webp',       'shot2x'),
-                    ('story.webp',    slug + '-story.webp',    'story'),
-                    ('story@2x.webp', slug + '-story@2x.webp', 'story2x')):
+                    ('card.webp',    slug + '.webp',    'shot'),
+                    ('card@2x.webp', slug + '@2x.webp', 'shot2x')):
                 srcp = os.path.join(branded, src_name)
                 if not os.path.isfile(srcp):
                     continue

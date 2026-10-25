@@ -392,6 +392,25 @@
     if (!box) return;
     box.innerHTML = '';
     var t = d.totals || {};
+
+    /* If the source could not be read and there is no earlier snapshot to fall back on,
+       every total below would be a zero -- and a zero is indistinguishable from a real
+       figure on a KPI card. "No votes" and "we could not look" are completely different
+       facts for a leadership team, so the cards are replaced rather than filled with
+       nought. The alert above already says what went wrong. */
+    if (d.meta && d.meta.ok === false && !t.points) {
+      var card = el('div', 'kpi kpi--hero');
+      card.appendChild(el('div', 'kpi__k', 'The competition data could not be read'));
+      card.appendChild(el('div', 'kpi__v', '—'));
+      card.appendChild(el('div', 'kpi__n',
+        (d.meta.error ? d.meta.error.charAt(0).toUpperCase() + d.meta.error.slice(1) + '. ' : '') +
+        'These cards are blank on purpose: showing zero here would read as "nobody has voted", ' +
+        'which is a different thing entirely. Voting and ticketing are unaffected — nothing ' +
+        'in those paths reads this dashboard.'));
+      box.appendChild(card);
+      return;
+    }
+
     var w = windowTotals();
     var trend = (d.daily || []).map(function (r) { return n(r.points); });
     var rules = d.rules || {};

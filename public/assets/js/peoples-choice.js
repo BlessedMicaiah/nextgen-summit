@@ -2990,11 +2990,33 @@
     try {
       history.replaceState(null, '', location.pathname + (location.hash || ''));
     } catch (e) {}
+    var target = byId[want] ? want : null;
     /* after paint, so the panels exist and reelEnter can land on an offsetTop that is real */
     setTimeout(function () {
-      reelEnter(byId[want] ? want : null);
-      track('reel_enter_from_home', { entrant_id: byId[want] ? want : null });
+      reelEnter(target);
+      track('reel_enter_from_home', { entrant_id: target });
     }, 60);
+
+    /* And then hold it there for a moment.
+
+       paintFeedFurniture() paints the feed twice: once immediately in contestant order, and
+       again when loadRanking() answers and the panels are re-laid in standings order. That
+       second paint replaces reelTrack's innerHTML, which throws away the scroll position --
+       so arriving from the homepage on Myron put you on whoever happened to be first by the
+       time the standings landed. Measured on staging: asked for entrant-16, arrived at 1/20.
+
+       Rather than reorder the paint, re-assert the destination until it sticks or until the
+       feed has clearly settled. It stops the moment the right panel is live, so in the
+       common case it costs two comparisons. */
+    if (target) {
+      var tries = 0;
+      var hold = setInterval(function () {
+        if (!reelLive || ++tries > 12) { clearInterval(hold); return; }
+        var at = reelActive && reelActive.getAttribute('data-reel-panel');
+        if (at === target) { clearInterval(hold); return; }
+        reelGoTo(target, false);
+      }, 180);
+    }
   } else {
     fromHash();
   }

@@ -1,0 +1,456 @@
+/* ============================================================================
+   NextGen Summit — the People's Choice Awards stage, on the homepage.
+
+   A full-viewport cinematic band that sits directly under the featured speakers and
+   replaces the old .pcta pitch teaser. Five founders: Myron and Vishwa always, then the
+   three highest-ranked by valid points. Pointing at a portrait changes the film behind it.
+
+   Composition only. Every colour, face and easing comes from site.css; this file arranges
+   them. The one thing it owns outright is the branded transition at the bottom, and even
+   that borrows the Experience entrance's language — black ground, the wordmark written in
+   Fraunces 900, the accent/cyan/magenta/yellow gradient clipped to the letters — so that
+   arriving at the reels feels like the same site rather than a second one.
+
+   TWO RULES THIS FILE KEEPS
+
+   Nothing here may cost anything to a visitor who never scrolls this far. The section
+   paints from a poster image; no <video> is given a source until the section is near the
+   viewport, and never more than two at once, which is the same discipline the founder
+   reels already keep.
+
+   The footage is mixed: eleven of the twenty pitches are landscape 1280x720 and seven are
+   portrait. object-fit: cover on a full-bleed stage handles both, and the grade underneath
+   means a letterboxed edge never reads as a broken player.
+   ========================================================================= */
+
+.pcs {
+  /* --seam is read by site.js to decide the nav bar's colour: it means "the top N pixels of
+     this section are not solid". This section IS solid from its first pixel -- it opens on
+     the same black the speakers section closes on -- so the nav should treat all of it as
+     photo. The visual ramp has its own variable. */
+  --seam: 0px;
+  --pcs-seam: clamp(80px, 14vh, 160px);
+  --rail-size: clamp(54px, 4.4vw, 74px);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: clamp(620px, 100svh, 1000px);
+  padding: 0;
+  overflow: hidden;
+  background: #05080B;
+  color: #fff;
+  isolation: isolate;
+}
+
+/* ---------- the film ----------
+   Two layers that cross-fade, so changing founder is a dissolve rather than a cut. Only
+   one of them holds a source at rest; the other is loaded on intent and swapped in. */
+
+.pcs__stage { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+
+.pcs__layer {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity .9s var(--ease), transform 1.6s var(--ease);
+  transform: scale(1.04);
+  will-change: opacity;
+}
+.pcs__layer.is-on { opacity: 1; transform: scale(1); }
+
+.pcs__layer video,
+.pcs__layer img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: 50% 42%;
+  display: block;
+}
+/* The poster sits under its own video so a buffering moment shows the founder, never a
+   black hole. It is removed from the flow once the footage is actually running. */
+.pcs__layer img { z-index: 0; }
+.pcs__layer video { z-index: 1; opacity: 0; transition: opacity .5s var(--ease); }
+.pcs__layer.is-playing video { opacity: 1; }
+
+/* The grade. Dark enough at the left and foot for type to sit on footage of any exposure,
+   open enough in the middle that the film is still the subject. */
+/* Type has to stay legible over twenty different exposures, so the grade is four washes
+   rather than one: the left for the words, the foot for the controls, a corner for the
+   clock, and a turquoise bloom that keeps the middle feeling lit rather than merely dark. */
+.pcs__grade {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    linear-gradient(100deg, rgba(3,6,9,.93) 0%, rgba(3,6,9,.76) 26%, rgba(3,6,9,.2) 56%, rgba(3,6,9,.44) 100%),
+    linear-gradient(0deg, rgba(3,6,9,.95) 0%, rgba(3,6,9,.46) 26%, rgba(3,6,9,0) 54%),
+    radial-gradient(44% 34% at 100% 0%, rgba(3,6,9,.82) 0%, rgba(3,6,9,0) 100%),
+    radial-gradient(120% 78% at 62% 38%, rgba(31,199,190,.12) 0%, rgba(31,199,190,0) 62%);
+}
+/* The seam into the section above.
+
+   It fades from #04080A, which is the speakers section's own background -- NOT from
+   --paper. Paper is what the sections either side of the old pitch teaser used, and
+   carrying that assumption here painted a white band across the top of a dark section
+   sitting under another dark one. */
+.pcs__grade::after {
+  content: ""; position: absolute; inset: 0 0 auto; height: var(--pcs-seam);
+  background: linear-gradient(180deg, #04080A 0%, rgba(4,8,10,0) 100%);
+}
+
+/* ---------- the join with the speakers above ----------
+
+   The stage section fades its bottom edge up to paper, because for most of this page's life
+   the sponsors section followed it. site.css already knows this is wrong between two dark
+   blocks and says so in its own comment where the invitation follows: "fading the stage up
+   to paper first laid a bright line across the page between two dark blocks". Putting this
+   section there brought that bright line back, so the same remedy applies, written here
+   rather than in site.css because site.css carries work that reaches production from
+   outside this repository and a new file cannot collide with it. */
+.room:has(+ .pcs) { --seam-bottom: 0px; }
+.room:has(+ .pcs)::after { display: none; }
+
+/* ---------- the content ---------- */
+
+/* Three corners carry the frame and the middle stays empty, which is the point of a section
+   whose subject is the film. The clock takes the top right on its own; the rail and the words
+   sit along the foot. The first version stacked everything into the bottom left and left two
+   thirds of the picture doing nothing at all. */
+.pcs__in {
+  position: relative; z-index: 3;
+  width: 100%;
+  max-width: var(--maxw); margin-inline: auto;
+  padding: calc(var(--pcs-seam) + clamp(14px, 2.6vh, 30px)) var(--gutter) clamp(30px, 5.4vh, 64px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: end;
+  gap: clamp(20px, 3vh, 40px) clamp(22px, 3.2vw, 54px);
+}
+.pcs__meta { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; text-align: right; }
+.pcs__rail { grid-column: 1; grid-row: 2; align-self: end; }
+.pcs__copy { grid-column: 2; grid-row: 2; align-self: end; }
+
+/* ---------- the founder rail ----------
+   Five portraits in a column. The ring is the affordance: at rest it is a thin wash, on
+   the live founder it is the accent, drawn all the way round. */
+
+.pcs__rail {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: clamp(12px, 1.5vh, 20px);
+  justify-items: start;
+}
+
+.pcs__bub {
+  position: relative;
+  width: var(--rail-size); height: var(--rail-size);
+  padding: 0; border: 0; background: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform .5s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.pcs__bub::before {
+  /* the ring, its own element so it can scale without touching the portrait */
+  content: ""; position: absolute; inset: -4px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.34);
+  transition: box-shadow .45s var(--ease), transform .55s var(--ease);
+}
+.pcs__bub img {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: var(--focal, 50% 45%);
+  display: block;
+  filter: saturate(.86) brightness(.82);
+  transition: filter .5s var(--ease);
+}
+@media (hover: hover) {
+  .pcs__bub:hover { transform: scale(1.06); }
+  .pcs__bub:hover img { filter: saturate(1) brightness(1); }
+  .pcs__bub:hover::before { box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); }
+}
+.pcs__bub[aria-selected="true"] { transform: scale(1.08); }
+.pcs__bub[aria-selected="true"] img { filter: none; }
+.pcs__bub[aria-selected="true"]::before {
+  box-shadow: inset 0 0 0 2.5px var(--accent), 0 0 26px -6px rgba(31,199,190,.8);
+}
+.pcs__bub:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+
+/* The two editorially featured founders are marked, so nobody reads the rail as a pure
+   leaderboard. A small lozenge rather than a word: the rail is 54-74px wide. */
+.pcs__flag {
+  position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%);
+  display: block; min-width: 22px; height: 15px; padding: 0 5px;
+  border-radius: 99px;
+  background: var(--accent); color: var(--on-accent);
+  font: 800 8px/15px var(--f-sans); letter-spacing: .1em; text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px -2px rgba(0,0,0,.8);
+}
+.pcs__flag--rank { background: rgba(10,14,18,.86); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+
+/* ---------- the words ---------- */
+
+/* justify-items: start keeps each line to its own measure rather than stretching the
+   buttons across the frame. The children still need min-width: 0, or a paragraph with a
+   max-width wider than a phone overflows the grid instead of wrapping inside it. */
+.pcs__copy { min-width: 0; display: grid; justify-items: start; gap: clamp(10px, 1.4vh, 16px); }
+.pcs__copy > * { min-width: 0; max-width: 100%; }
+
+.pcs__k {
+  margin: 0;
+  font: 800 clamp(10px, .86vw, 12px)/1.3 var(--f-sans);
+  letter-spacing: .24em; text-transform: uppercase; color: var(--accent);
+}
+.pcs__t {
+  margin: 0 0 clamp(6px, 1.4vh, 16px);
+  font-size: clamp(36px, 5.2vw, 86px); line-height: 1.02; letter-spacing: -.04em;
+  text-shadow: 0 2px 44px rgba(3,6,9,.6);
+}
+
+/* the live founder: the one piece of the composition that changes with the film */
+.pcs__now { display: grid; gap: 3px; min-height: 4.4em; align-content: start; }
+.pcs__now-co {
+  font: 800 clamp(16px, 1.7vw, 23px)/1.2 var(--f-sans); letter-spacing: -.014em; color: #fff;
+}
+.pcs__now-by {
+  font: 700 clamp(11px, .95vw, 13px)/1.3 var(--f-sans); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent);
+}
+.pcs__now-blurb {
+  margin: 4px 0 0; max-width: 46ch;
+  font: 500 clamp(13.5px, 1.05vw, 16px)/1.55 var(--f-sans); color: rgba(255,255,255,.78);
+}
+/* the swap itself: a short lift, so the words change with the picture */
+.pcs__now.is-turning { opacity: 0; transform: translateY(7px); }
+.pcs__now { transition: opacity .34s var(--ease), transform .34s var(--ease); }
+
+/* ---------- the clock ---------- */
+
+.pcs__clock { display: grid; justify-items: end; gap: 7px; }
+.pcs__clock-t { display: flex; align-items: flex-end; gap: clamp(7px, .8vw, 12px); }
+.pcs__clock[hidden] { display: none; }
+.pcs__clock-k {
+  font: 800 9.5px/1.3 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(255,255,255,.72); text-shadow: 0 1px 12px rgba(3,6,9,.9);
+}
+.pcs__u { display: grid; justify-items: center; gap: 2px; min-width: 2.4em; }
+.pcs__n {
+  font: 800 clamp(22px, 2.6vw, 38px)/1 var(--f-sans); letter-spacing: -.03em; color: #fff;
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+  text-shadow: 0 2px 18px rgba(3,6,9,.9);
+}
+.pcs__l {
+  font: 700 8px/1 var(--f-sans); letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(255,255,255,.56); text-shadow: 0 1px 10px rgba(3,6,9,.9);
+}
+.pcs__sep {
+  font: 800 clamp(16px, 1.8vw, 24px)/1 var(--f-sans); color: rgba(255,255,255,.22);
+  padding-bottom: 12px;
+}
+.pcs__closed {
+  margin: 0; font: 800 clamp(12px, 1.1vw, 15px)/1.4 var(--f-sans);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+}
+
+/* ---------- the ways in ---------- */
+
+.pcs__cta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px clamp(14px, 1.6vw, 22px);
+  margin-top: clamp(8px, 1.4vh, 16px);
+}
+.pcs__fine {
+  margin: clamp(2px, .8vh, 8px) 0 0; max-width: 60ch;
+  font: 500 clamp(12px, .95vw, 13.5px)/1.75 var(--f-sans); color: rgba(255,255,255,.66);
+}
+.pcs__fine a { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.45); }
+.pcs__fine a:hover { text-decoration-color: #fff; }
+.pcs__fine b { color: var(--accent); font-weight: 700; }
+
+/* ---------- sound ---------- */
+
+.pcs__sound {
+  position: absolute; z-index: 4;
+  right: var(--gutter); bottom: clamp(30px, 5.4vh, 64px);
+  display: inline-flex; align-items: center; gap: 9px;
+  min-height: 40px; padding: 0 15px 0 12px;
+  border: 0; border-radius: 99px;
+  background: rgba(8,12,16,.52); color: #fff;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+  font: 800 9.5px/1 var(--f-sans); letter-spacing: .16em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color .3s var(--ease), box-shadow .3s var(--ease);
+}
+.pcs__sound:hover { background: rgba(8,12,16,.82); }
+.pcs__sound:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.pcs__sound svg { width: 16px; height: 16px; flex: none; }
+.pcs__sound.is-on { background: var(--accent); color: var(--on-accent); box-shadow: none; }
+
+/* ---------- phone and tablet ----------
+   The rail turns and goes under the words. A column of portraits down the side of a phone
+   would take a third of the width and leave the caption nowhere to go. */
+
+@media (max-width: 900px) {
+  .pcs { align-items: flex-end; min-height: clamp(580px, 100svh, 900px); }
+  .pcs__in {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(18px, 3vh, 28px);
+    padding-bottom: clamp(28px, 5vh, 48px);
+  }
+  .pcs__rail {
+    grid-auto-flow: column; grid-auto-columns: max-content;
+    justify-content: start; gap: 12px;
+    /* it can run past the gutter on a narrow phone, so let it scroll rather than wrap */
+    overflow-x: auto; overflow-y: hidden;
+    margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter);
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .pcs__rail::-webkit-scrollbar { display: none; }
+  /* one column: the clock first, then the words, then the rail under them as a row */
+  .pcs__meta { grid-column: 1; grid-row: 1; justify-self: start; text-align: left; }
+  .pcs__clock { justify-items: start; }
+  .pcs__clock-t { gap: 10px; }
+  .pcs__rail { grid-column: 1; grid-row: 3; }
+  .pcs__copy { grid-column: 1; grid-row: 2; }
+  .pcs__sound { top: calc(var(--pcs-seam) + 10px); bottom: auto; }
+}
+@media (max-width: 560px) {
+  .pcs { --rail-size: 52px; }
+  .pcs__t { font-size: clamp(32px, 10vw, 46px); }
+  .pcs__now { min-height: 5.6em; }
+  .pcs__now-blurb { display: none; }     /* the film is the pitch on a phone; the line is not */
+  .pcs__cta { width: 100%; }
+  /* The label is longer than a phone is wide and .btn sets white-space: nowrap, so without
+     this it runs out of the button and the section's overflow: hidden clips it. The same
+     remedy site.css already uses on .speakq__cta at this width. */
+  .pcs__cta .btn {
+    width: 100%; justify-content: center;
+    white-space: normal; text-align: center; line-height: 1.25;
+    padding: 13px 1em; letter-spacing: .07em;
+  }
+  .pcs__clock-k { display: none; }
+  .pcs__u { min-width: 2.1em; }
+}
+
+/* ---------- less motion, less data ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .pcs__layer, .pcs__now, .pcs__bub, .pcs__bub::before { transition: none; }
+  .pcs__layer { transform: none; }
+  .pcs__layer.is-on { transform: none; }
+}
+
+/* ============================================================================
+   The branded way in.
+
+   Black, the wordmark, the People's Choice lockup, then the reels. It reuses the
+   Experience entrance's vocabulary on purpose: same ground (#04090A), same Fraunces 900
+   wordmark, same accent/cyan/magenta/yellow gradient clipped to the letters, same
+   per-letter rise out of blur. A visitor who has seen the Experience open will recognise
+   this as the same hand.
+
+   The whole thing runs in about 1.9 seconds and can be skipped by clicking, by Escape, or
+   by asking for reduced motion, in which case it collapses to a short fade.
+   ========================================================================= */
+
+.pcx {
+  position: fixed; inset: 0; z-index: 500;
+  display: grid; place-items: center;
+  background: #04090A;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .42s cubic-bezier(.4, 0, .6, 1);
+}
+.pcx[hidden] { display: none; }
+.pcx.is-on { opacity: 1; pointer-events: auto; }
+
+.pcx__frame { position: relative; display: grid; place-items: center; width: min(90vw, 1100px); }
+
+/* --- scene 2: the wordmark --- */
+.pcx__wm {
+  position: absolute;
+  display: flex; align-items: baseline; justify-content: center; gap: .1em;
+  font-family: var(--f-display); font-weight: 900; font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 144;
+  font-size: clamp(44px, 11vw, 150px); line-height: .9; letter-spacing: -.04em;
+  color: #fff;
+  opacity: 0;
+  transition: opacity .5s var(--ease), transform .8s var(--ease), filter .6s var(--ease);
+  transform: translate3d(0, .12em, 0); filter: blur(8px);
+}
+.pcx.s-wm .pcx__wm { opacity: 1; transform: none; filter: blur(0); }
+.pcx.s-logo .pcx__wm { opacity: 0; transform: translate3d(0, -.1em, 0) scale(.94); filter: blur(6px); }
+
+.pcx__wm i {
+  font-style: normal; display: inline-block;
+  opacity: 0; transform: translate3d(0, .3em, 0); filter: blur(10px);
+  transition: opacity .5s var(--ease) calc(var(--i) * 52ms),
+              transform .8s var(--ease) calc(var(--i) * 52ms),
+              filter .6s var(--ease) calc(var(--i) * 52ms);
+}
+.pcx.s-wm .pcx__wm i { opacity: 1; transform: none; filter: blur(0); }
+
+/* the second copy of the word, gradient-filled, flowing — straight from the Experience */
+.pcx__wm--on {
+  background: linear-gradient(90deg, var(--accent), var(--cyan) 12.5%, var(--magenta) 25%, var(--yellow) 37.5%,
+    var(--accent) 50%, var(--cyan) 62.5%, var(--magenta) 75%, var(--yellow) 87.5%, var(--accent));
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  animation: pcx-flow 2.6s linear infinite;
+}
+@keyframes pcx-flow { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+
+.pcx__summit {
+  position: absolute; top: calc(50% + clamp(26px, 6vw, 78px)); left: 50%; transform: translateX(-50%);
+  font: 800 clamp(9px, 1vw, 12px)/1 var(--f-sans);
+  letter-spacing: 1.3em; text-indent: 1.3em; text-transform: uppercase;
+  color: rgba(255,255,255,.72);
+  opacity: 0;
+  transition: opacity .5s var(--ease), letter-spacing 1s var(--ease);
+  white-space: nowrap;
+}
+.pcx.s-wm .pcx__summit { opacity: 1; letter-spacing: .62em; text-indent: .62em; }
+.pcx.s-logo .pcx__summit { opacity: 0; }
+
+/* --- scene 3: the People's Choice lockup ---
+   The artwork is supplied, not drawn here. Until the file is dropped in, the slot holds
+   the awards name set in the site's own faces, so the sequence is complete and testable
+   and nothing invents a second brand. Swap the <img> in and the fallback stands down. */
+.pcx__logo {
+  display: grid; place-items: center; gap: clamp(10px, 1.6vh, 18px);
+  opacity: 0; transform: scale(.94);
+  transition: opacity .55s var(--ease), transform .9s var(--ease);
+}
+.pcx.s-logo .pcx__logo { opacity: 1; transform: none; }
+.pcx__logo img { display: block; width: min(78vw, 820px); height: auto; }
+.pcx__logo img[hidden] + .pcx__fallback { display: grid; }
+
+.pcx__fallback { display: grid; justify-items: center; gap: clamp(6px, 1.2vh, 12px); text-align: center; }
+.pcx__fb-1 {
+  font-family: var(--f-display); font-weight: 900; font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 144;
+  font-size: clamp(34px, 8.4vw, 110px); line-height: .92; letter-spacing: -.04em; color: #fff;
+}
+.pcx__fb-2 {
+  font-family: var(--f-display); font-weight: 900; font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 144;
+  font-size: clamp(34px, 8.4vw, 110px); line-height: .92; letter-spacing: -.04em;
+  color: var(--accent);
+}
+.pcx__fb-3 {
+  margin-top: 4px; padding: 7px 16px; border-radius: 99px;
+  background: var(--magenta, #E6007E); color: #fff;
+  font: 800 clamp(10px, 1.4vw, 15px)/1 var(--f-sans); letter-spacing: .22em; text-transform: uppercase;
+}
+
+.pcx__skip {
+  position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
+  border: 0; border-radius: 99px; padding: 10px 16px;
+  background: rgba(255,255,255,.1); color: rgba(255,255,255,.8);
+  font: 800 9.5px/1 var(--f-sans); letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer; opacity: 0; transition: opacity .4s var(--ease);
+}
+.pcx.is-on .pcx__skip { opacity: 1; }
+.pcx__skip:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pcx__wm, .pcx__wm i, .pcx__summit, .pcx__logo { transition-duration: .01ms !important; animation: none !important; }
+  .pcx__wm--on { animation: none; }
+}

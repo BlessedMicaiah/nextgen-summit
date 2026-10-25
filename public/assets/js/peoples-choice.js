@@ -2964,10 +2964,37 @@
     if (byId[id]) openProfile(id, true);
   }
   addEventListener('hashchange', fromHash);
+
+  /* ?reels=1 lands the visitor INSIDE the full-screen feed.
+
+     Until now no URL could do that: reelLive was set only by reelEnter(), reached only by a
+     click, and a #entrant-NN fragment opens the profile card rather than the feed. The
+     homepage's cinematic section needs a handoff -- it has already played the branded
+     introduction, so arriving at the page and then asking the visitor to press "enter the
+     reels" would be the same door twice.
+
+     The parameter is dropped from the address straight away with replaceState, so Back
+     returns to the homepage rather than re-entering the feed, and a link anyone copies from
+     here is an ordinary page link. A fragment alongside it still names the founder, which is
+     how the visitor lands on the one they were watching rather than at the top. */
+  function wantsReels() {
+    try { return new URLSearchParams(location.search).get('reels') === '1'; } catch (e) { return false; }
+  }
+
   if (window.__pcOpen && byId[window.__pcOpen]) {
     reelGoTo(window.__pcOpen, false);
     openProfile(window.__pcOpen, true);
     track('entrant_link_visit', { entrant_id: window.__pcOpen, source: window.__pcSource || 'direct' });
+  } else if (wantsReels()) {
+    var want = location.hash.replace('#', '');
+    try {
+      history.replaceState(null, '', location.pathname + (location.hash || ''));
+    } catch (e) {}
+    /* after paint, so the panels exist and reelEnter can land on an offsetTop that is real */
+    setTimeout(function () {
+      reelEnter(byId[want] ? want : null);
+      track('reel_enter_from_home', { entrant_id: byId[want] ? want : null });
+    }, 60);
   } else {
     fromHash();
   }

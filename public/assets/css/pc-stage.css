@@ -453,23 +453,20 @@
 }
 .pcx.s-logo .pcx__logo { opacity: 1; transform: none; }
 .pcx__logo img { display: block; width: min(78vw, 820px); height: auto; }
-.pcx__logo img[hidden] + .pcx__fallback { display: grid; }
+/* The lettering steps aside the moment the real lockup is given a source. */
+.pcx__logo:has(img:not([hidden])) .pcx__words { display: none; }
 
-.pcx__fallback { display: grid; justify-items: center; gap: clamp(6px, 1.2vh, 12px); text-align: center; }
-.pcx__fb-1 {
-  font-family: var(--f-display); font-weight: 900; font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 144;
-  font-size: clamp(34px, 8.4vw, 110px); line-height: .92; letter-spacing: -.04em; color: #fff;
+/* Set in the same face as the wordmark that precedes it, so the two scenes read as one
+   hand: Fraunces 900 at display optical size, the second line taking the accent the way
+   the stage's own headline does. */
+.pcx__words { display: grid; justify-items: center; gap: clamp(2px, .6vh, 8px); text-align: center; }
+.pcx__w1, .pcx__w2 {
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 144;
+  line-height: .92; letter-spacing: -.04em;
 }
-.pcx__fb-2 {
-  font-family: var(--f-display); font-weight: 900; font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 144;
-  font-size: clamp(34px, 8.4vw, 110px); line-height: .92; letter-spacing: -.04em;
-  color: var(--accent);
-}
-.pcx__fb-3 {
-  margin-top: 4px; padding: 7px 16px; border-radius: 99px;
-  background: var(--magenta, #E6007E); color: #fff;
-  font: 800 clamp(10px, 1.4vw, 15px)/1 var(--f-sans); letter-spacing: .22em; text-transform: uppercase;
-}
+.pcx__w1 { font-size: clamp(26px, 6vw, 76px); color: #fff; }
+.pcx__w2 { font-size: clamp(40px, 10.5vw, 136px); color: var(--accent); }
 
 .pcx__skip {
   position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));

@@ -345,18 +345,24 @@ def main():
         # file with faststart into public/assets/video/<slug>.mp4; serving that instead of
         # hot-linking Typeform means the pitch keeps playing whether or not a form provider
         # we do not control is up, and it is byte-range served and cached by our own host.
+        # Which SOURCE wins, decided on its own. This used to be an if/elif chain that began
+        # with the POSTER check, so "no poster" fell through to "use YouTube" and quietly
+        # discarded a local file sitting right there. Dropping a founder's mp4 in therefore
+        # appeared to do nothing at all.
         local = os.path.join(ROOT, 'public', 'assets', 'video', slug + '.mp4')
         if os.path.isfile(local) and os.path.getsize(local) > 0:
             rec['video'] = {'type': 'file',
                             'src': '/assets/video/' + slug + '.mp4' + stamp(local)}
             rec['selfHosted'] = True
-        poster = os.path.join(ROOT, 'public', 'assets', 'video', slug + '-poster.jpg')
-        if os.path.isfile(poster):
-            rec['poster'] = '/assets/video/' + slug + '-poster.jpg' + stamp(poster)
         elif kind == 'youtube':
             rec['video'] = {'type': 'youtube', 'id': ref}
         elif kind == 'drive':
             rec['video'] = {'type': 'drive', 'id': ref}
+
+        # And the poster, which is a separate question entirely.
+        poster = os.path.join(ROOT, 'public', 'assets', 'video', slug + '-poster.jpg')
+        if os.path.isfile(poster):
+            rec['poster'] = '/assets/video/' + slug + '-poster.jpg' + stamp(poster)
         if kind not in ('file', 'youtube', 'drive'):
             issues.append((c['business_name'], 'pitch', note))
         rec['pitchNote'] = note

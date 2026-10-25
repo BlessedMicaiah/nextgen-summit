@@ -38,13 +38,15 @@ window.NGS_FOUNDERS = [
     "shotFit": "cover",
     "logo": "/assets/img/logos/credible-blossom.webp?v=0028a0df",
     "video": {
-      "type": "youtube",
-      "id": "RbY4Zs6kPMw"
+      "type": "file",
+      "src": "/assets/video/credible-blossom.mp4?v=551587a5"
     },
     "shotFrom": "headshot supplied by the NextGen team",
     "shotW": 780,
     "shotH": 1100,
     "focal": "50% 22%",
+    "selfHosted": true,
+    "poster": "/assets/video/credible-blossom-poster.jpg?v=b9c278b9",
     "pitchNote": "YouTube link supplied directly"
   },
   {
@@ -195,12 +197,14 @@ window.NGS_FOUNDERS = [
     "shotFit": "cover",
     "logo": null,
     "video": {
-      "type": "youtube",
-      "id": "C6rbn3p3CpY"
+      "type": "file",
+      "src": "/assets/video/rest.mp4?v=4db2e035"
     },
     "shotW": 1100,
     "shotH": 733,
     "focal": "50% 45%",
+    "selfHosted": true,
+    "poster": "/assets/video/rest-poster.jpg?v=8c9b89c7",
     "pitchNote": "YouTube link found inside the PDF"
   },
   {
@@ -282,12 +286,14 @@ window.NGS_FOUNDERS = [
     "shotFit": "cover",
     "logo": null,
     "video": {
-      "type": "youtube",
-      "id": "iyaFaszOWH0"
+      "type": "file",
+      "src": "/assets/video/offguardz.mp4?v=3ee51efb"
     },
     "shotW": 280,
     "shotH": 334,
     "focal": "50% 22%",
+    "selfHosted": true,
+    "poster": "/assets/video/offguardz-poster.jpg?v=851bb355",
     "pitchNote": "YouTube link supplied directly"
   },
   {
@@ -302,13 +308,15 @@ window.NGS_FOUNDERS = [
     "shotFit": "cover",
     "logo": "/assets/img/logos/k8culture-productions.webp?v=8264640d",
     "video": {
-      "type": "youtube",
-      "id": "MKFA5YWMyiM"
+      "type": "file",
+      "src": "/assets/video/k8culture-productions.mp4?v=9213376f"
     },
     "shotFrom": "headshot supplied by the NextGen team",
     "shotW": 780,
     "shotH": 1100,
     "focal": "50% 22%",
+    "selfHosted": true,
+    "poster": "/assets/video/k8culture-productions-poster.jpg?v=2d42eb30",
     "pitchNote": "YouTube link found inside the PDF"
   },
   {
@@ -368,13 +376,15 @@ window.NGS_FOUNDERS = [
     "shotFit": "cover",
     "logo": "/assets/img/logos/beauty-boot-camp.webp?v=7e50ae25",
     "video": {
-      "type": "youtube",
-      "id": "QyB1Sly5cYk"
+      "type": "file",
+      "src": "/assets/video/beauty-boot-camp.mp4?v=705dc3f6"
     },
     "shotFrom": "headshot supplied by the NextGen team",
     "shotW": 471,
     "shotH": 409,
     "focal": "50% 45%",
+    "selfHosted": true,
+    "poster": "/assets/video/beauty-boot-camp-poster.jpg?v=527dfdea",
     "pitchNote": "YouTube link found inside the .docx"
   },
   {
@@ -389,13 +399,15 @@ window.NGS_FOUNDERS = [
     "shotFit": "cover",
     "logo": "/assets/img/logos/nextofferup.webp?v=6d77b1d7",
     "video": {
-      "type": "youtube",
-      "id": "Diqye88F3Rw"
+      "type": "file",
+      "src": "/assets/video/nextofferup.mp4?v=c95279c6"
     },
     "shotFrom": "headshot supplied by the NextGen team",
     "shotW": 780,
     "shotH": 1100,
     "focal": "50% 22%",
+    "selfHosted": true,
+    "poster": "/assets/video/nextofferup-poster.jpg?v=682227a6",
     "pitchNote": "YouTube link supplied directly"
   },
   {

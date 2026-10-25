@@ -1,8 +1,18 @@
 /* ============================================================================
-   NextGen Summit — the extended pitch deadline
-   1. .dl  the old date struck through in red, the new
-           date written in beside it. Drawn once when it scrolls into view.
-   Colours come from the tokens in site.css. The pop-up that shared this file was removed after October 20.
+   NextGen Summit — announcements
+   1. .dl  the old date struck through in red, the new date written in beside it.
+           Drawn once when it scrolls into view.
+   2. .ann the dialog an announcement opens in, a few seconds into a visit, once a session.
+   3. .pcp the People's Choice invitation, which is .ann wearing different clothes.
+
+   Colours come from the tokens in site.css.
+
+   A NOTE ON (2), BECAUSE IT HAS BEEN LOST ONCE ALREADY. These rules were deleted in
+   "Removed the pitch deadline pop-up" along with the announcement they were written for.
+   announce.js was later rewritten to show the People's Choice invitation using the very
+   same class names, so the dialog went out with no dialog styling at all -- five portraits
+   at natural size in a bulleted list. Do not delete .ann with the next announcement that
+   retires: delete the markup and leave the shell.
    ========================================================================= */
 
 /* ---------- 1. the struck date ---------- */
@@ -18,6 +28,154 @@
 .js .dl:not(.is-on) .dl__old::after{transform:scaleX(0)}
 .js .dl:not(.is-on) .dl__new{opacity:0;transform:translate3d(0,.35em,0)}
 
+/* ---------- 2. the announcement ---------- */
+.ann{width:min(520px,calc(100% - 32px));max-height:calc(100% - 32px);margin:auto;padding:0;border:0;border-radius:14px;background:var(--paper);color:var(--ink);box-shadow:0 30px 80px -20px rgba(var(--shade),.45);overflow:auto;overscroll-behavior:contain}
+.ann::backdrop{background:rgba(var(--shade),.55)}
+.ann[open]{animation:ann-in .7s var(--ease) both}
+.ann[open]::backdrop{animation:ann-fade .5s var(--ease) both}
+.ann.is-leaving{animation:ann-out .3s var(--ease-io) both}
+.ann.is-leaving::backdrop{animation:ann-fade .3s var(--ease-io) reverse both}
+@keyframes ann-in{from{opacity:0;transform:translate3d(0,24px,0) scale(.97)}to{opacity:1;transform:none}}
+@keyframes ann-out{to{opacity:0;transform:translate3d(0,12px,0) scale(.98)}}
+@keyframes ann-fade{from{opacity:0}to{opacity:1}}
+
+.ann__bar{height:6px;background:linear-gradient(90deg,var(--cyan) 0 33.3%,var(--magenta) 33.3% 66.6%,var(--yellow) 66.6%)}
+.ann__in{position:relative;outline:none;padding:clamp(26px,5vw,40px) clamp(22px,5vw,40px) clamp(24px,4.6vw,34px)}
+.ann__close{position:absolute;top:10px;right:10px;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:8px;transition:background-color .3s var(--ease)}
+.ann__close:hover{background:var(--paper-2)}
+.ann__close svg{width:16px;height:16px}
+.ann__kicker{display:inline-flex;align-items:center;gap:10px;font:700 11px/1.3 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
+.ann__kicker::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.ann__title{margin-top:14px;padding-right:28px;font-size:clamp(40px,8vw,58px);line-height:.9;padding-bottom:.04em}
+.ann__date{margin-top:18px;font:800 clamp(22px,4.4vw,30px)/1.2 var(--f-sans);letter-spacing:.01em}
+.ann__copy{margin-top:12px;max-width:40ch;font:500 16px/1.55 var(--f-sans);color:var(--ink-2)}
+.ann__cta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px;margin-top:clamp(20px,3.6vw,28px)}
+.ann__later{min-height:44px;font:700 12px/1 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);transition:color .3s var(--ease)}
+.ann__later:hover{color:var(--ink)}
+@media (max-width:480px){
+  .ann__cta .btn{width:100%}
+  .ann__later{width:100%;text-align:center}
+}
+
 @media (prefers-reduced-motion:reduce){
   .js .dl__old::after,.js .dl__new{transition:none}
+  .ann[open],.ann[open]::backdrop,.ann.is-leaving,.ann.is-leaving::backdrop{animation:none}
+}
+
+/* ============================================================================
+   3. .pcp — the People's Choice invitation, four seconds into a visit.
+
+   It is the .ann dialog above wearing different clothes: announce.js builds the same
+   shell and adds a .pcp class, a row of founder faces and a live indicator.
+
+   These rules did not exist. The .ann block above was deleted in "Removed the pitch
+   deadline pop-up" when that announcement was retired, and announce.js was later rewritten
+   to reuse the same class names for this one without the stylesheet coming back. The
+   result on the live site was a dialog with no dialog styling at all: a bulleted list of
+   five portraits at their natural size, the heading below them, running off the screen.
+
+   Preview it at any time with ?pcpopup=1 on any page.
+   ========================================================================= */
+
+/* ---------- the kicker, with a live dot ----------
+   .ann__kicker draws its own dot with ::before. This variant supplies a real element so it
+   can pulse, so the inherited one stands down rather than giving us two. */
+.pcp__kicker::before { display: none; }
+.pcp__live {
+  flex: none; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-ink);
+  box-shadow: 0 0 0 0 rgba(31, 199, 190, .55);
+  animation: pcp-live 2.4s var(--ease-io, ease-in-out) infinite;
+}
+@keyframes pcp-live {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31, 199, 190, .55); }
+  60%      { box-shadow: 0 0 0 7px rgba(31, 199, 190, 0); }
+}
+.pcp__kt { min-width: 0; }
+.pcp__sep { color: var(--ink-3); margin: 0 2px; }
+.pcp__now { color: var(--accent-ink); }
+
+/* ---------- the faces ----------
+   Five founders, picked at random on every open so the invitation never favours anyone.
+   Overlapped like a group photo rather than spaced out: it reads as "these people" at a
+   glance and costs a third of the width.
+
+   The circles come in one after another, 70ms apart, using the --i that announce.js
+   already writes on each item. */
+.pcp__stage {
+  position: relative;
+  display: flex; justify-content: center;
+  margin-top: clamp(18px, 3.4vw, 26px);
+  padding: 6px 0;
+}
+.pcp__faces {
+  position: relative; z-index: 1;
+  list-style: none; margin: 0; padding: 0;
+  display: flex; align-items: center;
+}
+.pcp__face {
+  width: clamp(52px, 13vw, 64px); height: clamp(52px, 13vw, 64px);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--paper-2);
+  box-shadow: 0 0 0 3px var(--paper), 0 6px 18px -8px rgba(var(--shade), .5);
+  animation: pcp-face-in .6s var(--ease) both;
+  animation-delay: calc(var(--i) * 70ms + 120ms);
+}
+.pcp__face + .pcp__face { margin-left: clamp(-16px, -3.2vw, -12px); }
+.pcp__face img {
+  width: 100%; height: 100%;
+  display: block;
+  object-fit: cover;
+  /* the square story crops are already framed on the face; this is the safety net for a
+     founder who only has the tall card portrait */
+  object-position: 50% 32%;
+}
+@keyframes pcp-face-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.88); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- the burst ----------
+   Fourteen small marks thrown out from behind the faces in the three print colours. They
+   are decoration and nothing else: aria-hidden, behind the portraits, and gone entirely
+   for anyone who asked for less motion. */
+.pcp__burst {
+  position: absolute; z-index: 0; left: 50%; top: 50%;
+  width: 0; height: 0;
+  pointer-events: none;
+}
+.pcp__bit {
+  position: absolute; left: 0; top: 0;
+  width: 6px; height: 6px; margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--cyan);
+  opacity: 0;
+  transform: rotate(calc(var(--k) * 25.7deg)) translateY(-18px);
+  animation: pcp-bit .9s var(--ease) both;
+  animation-delay: calc(var(--k) * 28ms + 260ms);
+}
+.pcp__bit:nth-child(3n + 2) { background: var(--magenta); width: 5px; height: 5px; }
+.pcp__bit:nth-child(3n + 3) { background: var(--yellow); width: 7px; height: 7px; }
+@keyframes pcp-bit {
+  from { opacity: 0; transform: rotate(calc(var(--k) * 25.7deg)) translateY(-12px) scale(.4); }
+  55%  { opacity: .9; }
+  to   { opacity: 0; transform: rotate(calc(var(--k) * 25.7deg)) translateY(-104px) scale(1); }
+}
+
+/* ---------- the words ----------
+   The faces take the room the date used to, so the heading comes down a size and the
+   measure tightens. */
+.pcp__title { margin-top: clamp(16px, 3vw, 22px); font-size: clamp(34px, 7.2vw, 50px); }
+.pcp__copy { max-width: 42ch; }
+
+@media (max-width: 400px) {
+  .pcp__face { width: 50px; height: 50px; }
+  .pcp__face + .pcp__face { margin-left: -14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pcp__live, .pcp__face, .pcp__bit { animation: none; }
+  .pcp__bit { display: none; }
+  .pcp__face { opacity: 1; transform: none; }
 }

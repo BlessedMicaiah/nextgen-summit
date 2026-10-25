@@ -45,7 +45,10 @@
 
   function pcBuild(closes) {
     var faces = pick(PC_FACES, 5).map(function (slug, i) {
-      return '<li class="pcp__face" style="--i:' + i + '"><img src="/assets/img/founders/' + slug + '.webp" alt="" width="112" height="112" decoding="async"></li>';
+      /* The square story crop, not the tall card portrait. These are cut for a circle and
+         already framed on the face, and they are a fraction of the weight: five card
+         portraits came to roughly 350 KB for five 60px circles. */
+      return '<li class="pcp__face" style="--i:' + i + '"><img src="/assets/img/founders/' + slug + '-story.webp" alt="" width="112" height="112" loading="lazy" decoding="async"></li>';
     }).join('');
     var bits = '';
     for (var k = 0; k < 14; k++) bits += '<span class="pcp__bit" style="--k:' + k + '"></span>';

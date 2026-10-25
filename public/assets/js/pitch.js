@@ -196,6 +196,58 @@
      disagreed, the page would be counting down to the wrong moment -- and the one on the
      page is the one people plan around. The dates in the markup are the fallback for when
      the endpoint cannot be reached. */
+  /* ---------- one answer about voting, shared ----------
+     Both the countdown and the vote buttons need to know the same thing, and asking twice
+     would be two requests for one fact. */
+  var pcWaiting = [];
+  var pcAnswer;
+  function pcStatus(cb) {
+    if (pcAnswer !== undefined) { cb(pcAnswer); return; }
+    pcWaiting.push(cb);
+    if (pcWaiting.length > 1) return;
+    fetch('/api/pc-otp.php?action=status', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .catch(function () { return null; })
+      .then(function (d) {
+        pcAnswer = (d && d.ok) ? d : null;
+        pcWaiting.splice(0).forEach(function (f) { f(pcAnswer); });
+      });
+  }
+
+  /* ---------- the vote buttons say what is actually true ----------
+
+     These three links shipped with the `hidden` attribute and a line of copy underneath
+     saying the vote "opens soon", from the weeks before it did. Nothing ever took the
+     attribute off: no script on this page read the voting state, so the Pitch Competition
+     page went on telling visitors they could not vote yet -- with no way through -- for
+     the whole of the live vote. The links are now visible in the markup, and this only
+     corrects them downwards if the endpoint says voting is not open. Failing that way
+     round means a visitor who loses the request still gets the link. */
+  function initPcState() {
+    var links = $$('[data-pc-link]');
+    var notes = $$('[data-pc-soon]');
+    if (!links.length && !notes.length) return;
+    pcStatus(function (d) {
+      if (!d) return;                                  // no answer: leave the markup alone
+      var state = d.state || (d.open ? 'open' : '');
+      if (state === 'open') return;                    // which is what the markup says
+      if (state === 'coming-soon') {
+        links.forEach(function (a) { a.hidden = true; });
+        notes.forEach(function (p) { p.hidden = false; });
+        return;
+      }
+      // closed: the gallery and the result are still worth reaching
+      links.forEach(function (a) {
+        var l = a.querySelector('[data-pc-label]');
+        if (l) l.textContent = 'See the People\u2019s Choice';
+      });
+      notes.forEach(function (p) {
+        p.hidden = false;
+        p.textContent = 'Voting has closed. The result is on the People\u2019s Choice page.';
+      });
+    });
+  }
+
   function initBoard() {
     var board = document.querySelector('[data-board]');
     if (!board) return;
@@ -265,14 +317,11 @@
 
     /* The authoritative deadline, if the endpoint will give one. A failure here is not
        worth showing anyone: the fallback is already counting. */
-    fetch('/api/pc-otp.php?action=status', { credentials: 'same-origin', cache: 'no-store' })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d || !d.ok || !d.deadline) return;
-        var t = Date.parse(d.deadline);
-        if (isFinite(t)) { deadline = t; paint(); }
-      })
-      .catch(function () {});
+    pcStatus(function (d) {
+      if (!d || !d.deadline) return;
+      var t = Date.parse(d.deadline);
+      if (isFinite(t)) { deadline = t; paint(); }
+    });
   }
 
   initSteps();
@@ -280,4 +329,5 @@
   initVote();
   initScrollLinks();
   initBoard();
+  initPcState();
 })();

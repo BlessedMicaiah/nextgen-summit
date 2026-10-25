@@ -200,3 +200,120 @@
   .steps.has-active .step:not(.is-active) .step__in{opacity:1}
   .step__no{color:var(--accent-ink)}
 }
+
+/* ============================================================================
+   The People's Choice section, and two pieces of the live-final section.
+
+   These had no rules at all. The markup arrived from a later build of the page than the
+   stylesheet did, so #vote rendered as unstyled running text at the window edge -- no
+   section padding, no ground, the headline at body size and the three figures as a
+   bulleted list. It has been live that way. Composition only: every colour, face and
+   easing is site.css's.
+   ========================================================================= */
+
+.pv {
+  position: relative; isolation: isolate;
+  background: var(--ink); color: #fff;
+  padding: clamp(72px, 11vw, 150px) 0;
+  overflow: hidden;
+}
+/* a single soft light behind the copy, the same turquoise the page uses elsewhere */
+.pv__glow {
+  position: absolute; z-index: -1; pointer-events: none;
+  left: -10%; top: -30%; width: 70%; height: 130%;
+  background: radial-gradient(50% 42% at 42% 50%, rgba(31,199,190,.20) 0%, rgba(31,199,190,0) 72%);
+}
+.pv__in {
+  max-width: var(--maxw); margin-inline: auto; padding-inline: var(--gutter);
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 86px); align-items: center;
+}
+.pv__copy { min-width: 0; }
+.pv__title {
+  margin: clamp(16px, 2.4vh, 26px) 0 0;
+  font-size: clamp(38px, 5.4vw, 86px); line-height: 1.04; letter-spacing: -.035em;
+}
+.pv__hi { color: var(--accent); }
+.pv__lede {
+  margin: clamp(18px, 2.6vh, 26px) 0 0; max-width: 46ch;
+  font: 500 clamp(15.5px, 1.3vw, 19px)/1.6 var(--f-sans); color: rgba(255,255,255,.76);
+}
+.pv__cta { margin-top: clamp(24px, 3.4vh, 36px); display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; }
+.pv__soon {
+  margin: 0; max-width: 34ch;
+  font: 700 12px/1.5 var(--f-sans); letter-spacing: .04em; color: rgba(255,255,255,.58);
+}
+.pv__soon[hidden] { display: none; }
+
+/* the three figures: a ruled column, not a bulleted list */
+.pv__stats {
+  list-style: none; margin: 0; padding: 0; min-width: 0;
+  display: grid; gap: clamp(14px, 2vh, 20px);
+}
+.pv__stat {
+  display: grid; gap: 6px;
+  padding: clamp(14px, 2vh, 20px) 0 0;
+  border-top: 1px solid rgba(255,255,255,.16);
+}
+.pv__n {
+  font: 800 clamp(30px, 3.6vw, 48px)/1 var(--f-display, var(--f-sans));
+  letter-spacing: -.035em; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.pv__stat--date .pv__n { font-size: clamp(24px, 2.6vw, 34px); letter-spacing: -.02em; }
+.pv__k { font: 600 clamp(12px, 1vw, 13.5px)/1.5 var(--f-sans); color: rgba(255,255,255,.66); }
+
+@media (max-width: 900px) {
+  .pv__in { grid-template-columns: minmax(0, 1fr); gap: clamp(30px, 5vh, 48px); }
+  .pv__glow { left: -30%; width: 120%; }
+}
+@media (max-width: 560px) {
+  .pv__cta .btn { width: 100%; justify-content: center; }
+  .pv__soon { max-width: none; }
+}
+
+/* ---------- the two halves of the final score ----------
+   .fmt above it is styled; this row under it was not, so "60% Judges 40% The room" ran
+   together as one line of body text. */
+.split {
+  display: grid; grid-template-columns: 6fr 4fr; align-items: stretch;
+  margin-top: clamp(22px, 3.2vh, 32px); max-width: 540px;
+  border-radius: 10px; overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+  font: 700 11px/1.3 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+}
+.split__a, .split__b { display: flex; align-items: baseline; gap: 8px; padding: 13px 15px; min-width: 0; }
+.split__a { background: var(--accent); color: var(--on-accent); }
+.split__b { color: rgba(255,255,255,.82); }
+.split__n { font: 800 clamp(16px, 1.8vw, 21px)/1 var(--f-sans); letter-spacing: -.02em; }
+@media (max-width: 440px) {
+  .split { font-size: 10px; letter-spacing: .1em; }
+  .split__a, .split__b { padding: 11px 12px; }
+}
+
+/* ---------- the stage label on each step ----------
+
+   The markup gained a "Done / Now / Next" line above each step's title; the stylesheet
+   never heard about it. Two things followed. It rendered as a line of body text, and --
+   the part that shows -- .step__in's big number is set to span FOUR rows, which was right
+   when the step had four pieces of content and is one short now. The fifth, the date line,
+   wrapped into the number's column: on the live page "Applications closed October 20" sits
+   under the 01 instead of under the paragraph it belongs to, and it drags that column wide
+   enough to squeeze the text beside it.
+
+   Five, because that is how many pieces of content a step now has. `1 / -1` reads as
+   the obvious answer and is the wrong one: -1 counts back through the EXPLICIT rows,
+   this grid has none, so the span collapses to a single cell and the five items then
+   alternate between the two columns. Measured, not assumed. */
+.step__in > .step__no { grid-row: 1 / span 5; }
+.step__tag {
+  margin: 0 0 6px; display: flex; align-items: center; gap: 7px;
+  font: 800 9.5px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.step__tag::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; opacity: .55;
+}
+.step.is-active .step__tag { color: var(--accent-ink); }
+.step.is-active .step__tag::before { opacity: 1; }

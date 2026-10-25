@@ -1184,6 +1184,8 @@
     if (t.closest('[data-ff-next-rail]')) { railStep(1); return; }
     if (t.closest('[data-fci-skip]')) { introEnd(true); return; }
     if (t.closest('[data-reel-exit]')) { reelExit(); return; }
+    if (t.closest('[data-reel-prev]')) { reelStep(-1); return; }
+    if (t.closest('[data-reel-next]')) { reelStep(1); return; }
     if (t.closest('[data-reel-tap]')) { reelToggle(); return; }
     if ((el = t.closest('[data-deck-open]'))) { deckSpread(+el.getAttribute('data-deck-open')); return; }
     if (t.closest('[data-deck-close]')) { deckSpreadClose(); return; }
@@ -2106,6 +2108,23 @@
       document.addEventListener(ev, reelUnlock, { passive: true, capture: true });
     });
 
+    /* A wheel gesture moves one founder, the same step the arrow keys take.
+
+       Without this the feed barely moves on a desktop, for the reason set out on reelStep.
+       The cooldown is what keeps a trackpad honest: momentum arrives as dozens of events
+       over a second or so, and one founder per flick is the behaviour being copied. */
+    var wheelAt = 0;
+    document.addEventListener('wheel', function (ev) {
+      if (!reelLive || !reel || !reel.contains(ev.target)) return;
+      if (Math.abs(ev.deltaY) <= Math.abs(ev.deltaX)) return;   // a sideways scroll is not ours
+      ev.preventDefault();
+      if (Math.abs(ev.deltaY) < 4) return;                      // the tail of a flick
+      var now = Date.now();
+      if (now - wheelAt < 520) return;
+      wheelAt = now;
+      reelStep(ev.deltaY > 0 ? 1 : -1);
+    }, { passive: false, capture: true });
+
     /* And a slow heartbeat, because neither of the event-driven routes can be relied on.
 
        Measured in this build: IntersectionObserver delivers no callbacks for a page that is
@@ -2152,6 +2171,38 @@
     return true;
   }
 
+  /* One founder per step, whoever asks for it.
+
+     Immersive mode snaps mandatorily, one panel per screen, with scroll-snap-stop: always.
+     A mouse wheel notch is about a hundred pixels and a panel is the height of the screen,
+     so the browser treats a notch as a scroll that did not reach the next snap point and
+     puts it back. Measured on staging at 1280x900: fourteen notches, scrollTop still 0.
+     Every route that advances the feed -- the buttons, the arrow keys, a wheel gesture --
+     comes through here and moves exactly one. */
+  function reelStep(dir) {
+    if (!reelTrack) return;
+    var panels = $$('[data-reel-panel]', reelTrack);
+    if (!panels.length) return;
+    var at = reelActive ? panels.indexOf(reelActive) : -1;
+    if (at < 0) {
+      /* Nothing is live: either the feed has just opened, or the visitor is on the closing
+         card. Stepping back from the card belongs at the last founder, not the first. */
+      reelGoTo(panels[dir < 0 ? panels.length - 1 : 0].getAttribute('data-reel-panel'));
+      return;
+    }
+    var to = at + dir;
+    if (to < 0) return;
+    if (to >= panels.length) {
+      // past the last founder is the closing card, which is a destination, not a dead end
+      if (reelLive && reel && typeof reel.scrollTo === 'function') {
+        reel.scrollTo({ top: reel.scrollHeight, behavior: 'smooth' });
+        setTimeout(reelQueue, 700);
+      }
+      return;
+    }
+    reelGoTo(panels[to].getAttribute('data-reel-panel'));
+  }
+
   function reelSetSound(on) {
     reelMuted = !on;
     $$('[data-reel-video]', reelTrack).forEach(function (v) { v.muted = reelMuted; });
@@ -2176,6 +2227,7 @@
      and one swipe moves exactly one founder. */
 
   var reelBar = $('[data-reel-bar]');
+  var reelNav = $('[data-reel-nav]');
   var reelLive = false;
   var reelReturn = 0;        // where the page was before we took it over
   var reelHeld = false;      // paused by a tap, rather than by scrolling away
@@ -2191,6 +2243,7 @@
     document.body.classList.add('pc-reel-live');   // the jump arrows stand down
     reel.classList.remove('is-moved');
     if (reelBar) { reelBar.hidden = false; reelBar.classList.add('is-on'); }
+    if (reelNav) { reelNav.hidden = false; reelNav.classList.add('is-on'); }
     reelTicks();
     /* Land on the founder asked for, with no visible travel: scrollTop rather than a
        smooth scroll, because nobody asked to watch the feed scroll to the start. */
@@ -2212,6 +2265,7 @@
     reel.classList.remove('is-live');
     document.body.classList.remove('pc-reel-live');
     if (reelBar) { reelBar.hidden = true; reelBar.classList.remove('is-on'); }
+    if (reelNav) { reelNav.hidden = true; reelNav.classList.remove('is-on'); }
     /* Silence first, then put the page back. Leaving the feed must stop the sound, and
        the sync pass that follows decides for itself whether an in-flow panel is live. */
     $$('[data-reel-video]', reelTrack).forEach(function (v) { try { v.pause(); } catch (e) {} });
@@ -2257,6 +2311,11 @@
       t.classList.toggle('is-on', i === at);
       t.classList.toggle('is-seen', at >= 0 && i < at);
     });
+    if (reelNav) {
+      var prev = $('[data-reel-prev]', reelNav), next = $('[data-reel-next]', reelNav);
+      if (prev) prev.disabled = at <= 0;
+      if (next) next.disabled = at < 0;      // already on the closing card
+    }
     var of = $('[data-reel-of]');
     if (of) of.textContent = at >= 0 ? (at + 1) + ' / ' + panels.length : 'The deck';
     if (at > 0) reel.classList.add('is-moved');       // the swipe hint has done its job
@@ -2473,15 +2532,12 @@
     if (deckWrap && deckWrap.classList.contains('is-on')) return;
     var tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    var panels = $$('[data-reel-panel]', reelTrack);
-    var at = reelActive ? panels.indexOf(reelActive) : -1;
     if (ev.key === 'ArrowDown' || ev.key === 'PageDown') {
       ev.preventDefault();
-      if (at >= 0 && panels[at + 1]) reelGoTo(panels[at + 1].getAttribute('data-reel-panel'));
-      else if (at === panels.length - 1) reel.scrollTo({ top: reel.scrollHeight, behavior: 'smooth' });
+      reelStep(1);
     } else if (ev.key === 'ArrowUp' || ev.key === 'PageUp') {
       ev.preventDefault();
-      if (at > 0) reelGoTo(panels[at - 1].getAttribute('data-reel-panel'));
+      reelStep(-1);
     } else if (ev.key === ' ' || ev.key === 'Spacebar') {
       if (ev.target === document.body || (ev.target && ev.target.hasAttribute('data-reel-tap'))) {
         ev.preventDefault();

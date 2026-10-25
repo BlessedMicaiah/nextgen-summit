@@ -6,10 +6,12 @@
    from site.css; the section itself is an About section (.ab, about.css).
    ========================================================================= */
 
-/* the heading keeps the page's measure; the strip runs to both edges, stepping out through the
-   gutter the section pads it in by */
+/* the About section runs to both edges; everything inside it keeps the page's measure */
 .ab--spon{max-width:none}
-.ab--spon > .ab__k{max-width:var(--maxw);margin-inline:auto}
+.ab--spon > .ab__k,
+.ab--spon > .spon__directory-title,
+.ab--spon > .spon__grid,
+.ab--spon > .spon__more{max-width:var(--maxw);margin-inline:auto}
 .ab--spon > .spon__marquee{margin-inline:calc(var(--gutter) * -1)}
 
 /* the edges fade into the paper, so logos arrive and leave rather than being cut off */
@@ -68,4 +70,64 @@
 }
 @media (prefers-reduced-motion:reduce){
   .spon__pause{display:none}
+}
+
+/* ---------- the logo card, on the homepage strip ----------
+   The markup wraps each logo in a .spon__card with a .spon__go arrow beside it. Neither
+   had a rule anywhere, and an inline <svg> with a viewBox and no width fills its block:
+   each arrow came out around 170px square inside a 100px row, so the strip rendered as a
+   line of giant black arrows with the logos pushed out of sight. The arrow is decorative
+   and aria-hidden, so it is taken out of flow entirely -- the strip's geometry is exactly
+   what it was -- and shown only as a small badge while a logo is pointed at. */
+.spon__logo .spon__card{position:relative;display:flex;align-items:center;justify-content:center;height:100%}
+.spon__logo .spon__go{position:absolute;top:50%;right:-26px;
+  display:grid;place-items:center;width:24px;height:24px;border-radius:50%;
+  background:var(--accent);color:var(--on-accent);
+  opacity:0;transform:translateY(-50%) scale(.7);pointer-events:none;
+  transition:opacity .3s var(--ease),transform .3s var(--ease)}
+.spon__go svg{display:block;width:13px;height:13px}
+@media (hover:hover){
+  .spon__logo .spon__card:hover .spon__go,
+  .spon__logo .spon__card:focus-visible .spon__go{opacity:1;transform:translateY(-50%) scale(1)}
+}
+
+/* the pair of calls to action in the section head */
+.spon__ctas{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(14px,2vw,26px);margin-bottom:4px}
+.spon__join{display:inline-flex;align-items:center;min-height:44px;
+  font:700 13px/1.4 var(--f-sans);color:var(--accent-ink);
+  text-decoration:underline;text-underline-offset:4px;white-space:nowrap}
+.spon__join:hover{color:var(--accent-ink-hover)}
+
+/* ---------- the directory, on the About page ----------
+   A row per sponsor, ruled top and bottom, in the same measure and the same idiom as the
+   roadmap list above it. Before this the list had no rules at all: the names ran into the
+   web addresses on one line and every arrow was the width of the page. */
+.spon__directory-title{margin-top:clamp(14px,2.4vh,26px);font-size:clamp(34px,5vw,78px);line-height:1.05;letter-spacing:-.035em}
+.spon__grid{list-style:none;margin-top:clamp(28px,4.6vh,52px);padding:0;border-top:1px solid var(--rule)}
+.spon__partner{border-bottom:1px solid var(--rule)}
+.spon__partner .spon__card{display:grid;grid-template-columns:minmax(110px,220px) minmax(0,1fr) auto;
+  align-items:center;gap:clamp(16px,3vw,44px);padding:clamp(18px,2.6vh,28px) 0;
+  text-decoration:none;color:inherit}
+.spon__mark{display:flex;align-items:center;min-height:var(--h,40px)}
+.spon__mark img{width:auto;max-width:100%;height:var(--h,40px);object-fit:contain}
+.spon__who{display:grid;gap:5px;min-width:0}
+.spon__name{font:800 clamp(16px,1.5vw,21px)/1.3 var(--f-sans);letter-spacing:-.012em;color:var(--ink)}
+.spon__site{font:600 clamp(12px,1vw,13.5px)/1.4 var(--f-sans);color:var(--ink-3);overflow-wrap:anywhere}
+.spon__partner .spon__go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;
+  box-shadow:inset 0 0 0 1.5px var(--rule);color:var(--accent-ink);
+  transition:background-color .35s var(--ease),box-shadow .35s var(--ease),color .35s var(--ease),transform .35s var(--ease)}
+@media (hover:hover){
+  a.spon__card:hover .spon__go{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent);
+    color:var(--on-accent);transform:translateX(3px)}
+  a.spon__card:hover .spon__name{color:var(--accent-ink)}
+}
+a.spon__card:focus-visible{outline-offset:-2px}
+.spon__more{margin-top:clamp(24px,3.6vh,38px);font:500 clamp(14px,1.2vw,16px)/1.6 var(--f-sans);color:var(--ink-2)}
+.spon__more .spon__join{min-height:0;margin-left:4px}
+
+@media (max-width:640px){
+  /* the logo gets its own line, so a wide mark and a long name stop competing for width */
+  .spon__partner .spon__card{grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:18px 0}
+  .spon__mark{grid-column:1 / -1;margin-bottom:6px}
+  .spon__partner .spon__go{width:36px;height:36px}
 }

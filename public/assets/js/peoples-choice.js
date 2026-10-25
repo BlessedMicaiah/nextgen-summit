@@ -2179,11 +2179,19 @@
      puts it back. Measured on staging at 1280x900: fourteen notches, scrollTop still 0.
      Every route that advances the feed -- the buttons, the arrow keys, a wheel gesture --
      comes through here and moves exactly one. */
+  var reelAim = -1, reelAimAt = 0;
   function reelStep(dir) {
     if (!reelTrack) return;
     var panels = $$('[data-reel-panel]', reelTrack);
     if (!panels.length) return;
     var at = reelActive ? panels.indexOf(reelActive) : -1;
+    /* Count from where the last step was heading, not from where the feed has got to.
+
+       reelActive only catches up when a smooth scroll lands, about half a second later.
+       Without this, clicking next three times quickly moves one founder -- which is the
+       complaint this control exists to answer. The aim is forgotten after a beat so a
+       visitor who scrolls by hand is never argued with. */
+    if (reelAim >= 0 && Date.now() - reelAimAt < 1400 && reelAim < panels.length) at = reelAim;
     if (at < 0) {
       /* Nothing is live: either the feed has just opened, or the visitor is on the closing
          card. Stepping back from the card belongs at the last founder, not the first. */
@@ -2195,11 +2203,13 @@
     if (to >= panels.length) {
       // past the last founder is the closing card, which is a destination, not a dead end
       if (reelLive && reel && typeof reel.scrollTo === 'function') {
+        reelAim = panels.length; reelAimAt = Date.now();
         reel.scrollTo({ top: reel.scrollHeight, behavior: 'smooth' });
         setTimeout(reelQueue, 700);
       }
       return;
     }
+    reelAim = to; reelAimAt = Date.now();
     reelGoTo(panels[to].getAttribute('data-reel-panel'));
   }
 

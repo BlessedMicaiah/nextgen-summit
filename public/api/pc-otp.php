@@ -120,6 +120,11 @@ function pc_me(): array
         'sms' => pc_twilio_live() ? 'live' : 'mock',
         'email_ready' => pc_smtp_configured(),
         'channel' => (string) ($_SESSION['channel'] ?? ''),
+        /* Which rule is in force. The interface must not infer this: under the original rule
+           a voter who has voted today can do nothing more, and under the flexible one they
+           may still have two votes to place anywhere. Those are opposite instructions for
+           the same button, so the server says which. */
+        'spread' => pc_spread_votes(),
     ];
     if ($verified && $key !== null) {
         $out['phone'] = isset($_SESSION['phone_mask']) ? (string) $_SESSION['phone_mask'] : '****';

@@ -270,6 +270,31 @@ if ($action === 'claim') {
     if (!pc_voting_open()) {
         pcb_out(409, ['ok' => false, 'reason' => 'closed']);
     }
+
+    /* ---- the flexible rule ----
+
+       Under the original rule a registration was worth two extra points and they went, both
+       at once, to whichever founder the voter had already backed that day. Under the rule
+       being trialled a registration is worth a larger DAILY ALLOWANCE -- three votes rather
+       than one -- which the voter then spends on whoever they like, one at a time.
+
+       So with the flag on, claiming awards nothing. The binding has already happened, and
+       the binding is the whole entitlement: pc_allowance() reads it and returns 3, and
+       pc-vote.php lets the next three requests name any founder they wish. All this has to
+       do is say so.
+
+       That also answers the awkward case by doing nothing special. Someone who voted once
+       and verified afterwards has used = 1 against an allowance of 3, so they have two left
+       rather than a fresh three -- because remaining has always been allowance minus used,
+       and nothing here resets anything.
+
+       The flag defaults OFF, so an unflagged database -- production's -- runs exactly the
+       code it ran before. It is set only in staging's pc_meta. */
+    if (pc_spread_votes()) {
+        $state = pcb_state($voter);
+        pcb_out(200, ['ok' => true, 'awarded' => 0, 'spread' => true, 'entrant' => null] + $state);
+    }
+
     $entrant = pcb_today_entrant($voter);
     if ($entrant === null) {
         pcb_out(409, ['ok' => false, 'reason' => 'vote_first']);

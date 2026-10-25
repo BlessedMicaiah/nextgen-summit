@@ -142,6 +142,32 @@ function pc_set_meta(string $k, string $v): void
     pc_file_write($d);
 }
 
+/* Is the flexible voting rule in force?
+
+   Under it a registration is worth a larger DAILY ALLOWANCE -- three votes instead of one --
+   which the voter spends on whoever they like, rather than two extra points pinned to the
+   founder they already backed.
+
+   It is being trialled on staging, so the default is derived from the environment rather
+   than from anything a request can influence: staging keeps its data in nextgen-data-staging
+   and production does not. A pc_meta row still overrides it either way, so it can be turned
+   on or off deliberately without a deploy.
+
+   Production therefore cannot end up running this by accident. The only way it could is for
+   somebody to write the meta row on production, which is a deliberate act in the dashboard. */
+function pc_spread_votes(): bool
+{
+    $stored = pc_meta('spread_votes', null);
+    if ($stored !== null) {
+        return (string) $stored === '1';
+    }
+    try {
+        return basename(ngs_data_dir()) === 'nextgen-data-staging';
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
 function pc_state(): string
 {
     $s = (string) pc_meta('state', 'coming-soon');

@@ -211,6 +211,7 @@ pc_out(200, [
     // what was actually recorded, not a constant: the row stores !verified, so should this
     'simulated' => !$identity['verified'],
     'mode' => pc_mode(),
+    'spread' => pc_spread_votes(),
     'allowance' => $allow,
     'remaining' => $res['remaining'] ?? max(0, $allow - $used - 1),
     'next_window' => pc_next_window(),

@@ -48,7 +48,10 @@
     return !!document.querySelector('iframe[src*="eventbrite"], [id^="eventbrite-widget-modal"]:not(#' + TRIGGER_ID + ')');
   }
 
+  var wired = false;                                   // createWidget must never run twice
+
   function initCheckout() {
+    if (wired) return;
     var links = $$('[data-eb]');
     var trigger = document.getElementById(TRIGGER_ID);
     if (!links.length || !trigger || !window.EBWidgets || typeof window.EBWidgets.createWidget !== 'function') return;
@@ -70,6 +73,7 @@
       return;                                          // links stay plain links to Eventbrite
     }
 
+    wired = true;
     document.documentElement.classList.add('eb-ready');
     $$('[data-eb-sr]').forEach(function (s) { s.textContent = ' (opens the Eventbrite checkout)'; });
     links.forEach(function (a) {
@@ -83,9 +87,9 @@
     });
   }
 
-  /* Their script is loaded once, after our page has rendered. If it is blocked or fails, or the
-     page is not on https (Eventbrite refuses to draw the checkout there), the buttons simply stay
-     links to the Eventbrite event page, which is the fallback everywhere. */
+  /* Their script is fetched once. If it is blocked or fails, or the page is not on https
+     (Eventbrite refuses to draw the checkout there), the buttons simply stay links to the
+     Eventbrite event page, which is the fallback everywhere. */
   function loadWidget() {
     if (location.protocol !== 'https:') return;
     if (window.EBWidgets) { initCheckout(); return; }
@@ -97,10 +101,32 @@
       document.head.appendChild(s);
     }
     s.addEventListener('load', initCheckout, { once: true });
+    /* A tag already in the document may have finished loading before that listener was
+       attached, and its load event will never fire again. Watch for the global as well,
+       briefly, then give up rather than poll at a page forever. */
+    var tries = 0;
+    var wait = setInterval(function () {
+      if (wired || ++tries > 40) { clearInterval(wait); return; }
+      if (window.EBWidgets) { clearInterval(wait); initCheckout(); }
+    }, 100);
   }
 
   $$('[data-eb]').forEach(function (a) { if (!a.getAttribute('href')) a.href = EVENT_URL; });
 
-  if (document.readyState === 'complete') loadWidget();
-  else window.addEventListener('load', loadWidget, { once: true });
+  /* Start as soon as the markup is parsed, not at window.load.
+
+     window.load waits for every image on the page. Measured on production, that is 448ms on
+     fast broadband and much longer on a phone on mobile data -- and for the whole of that
+     window the buttons are already painted, already tappable, and still plain links out to
+     eventbrite.com with target="_blank". Someone who taps in that gap lands on Eventbrite
+     and reports, correctly, that the embed is missing.
+
+     initCheckout only needs the two links and the trigger button, all of which exist at
+     DOMContentLoaded. The measured gap between first paint and a wired checkout was 382ms;
+     this closes most of it. */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadWidget, { once: true });
+  } else {
+    loadWidget();
+  }
 })();

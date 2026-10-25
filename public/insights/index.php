@@ -87,7 +87,7 @@ function hh($v): string
     return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 }
 
-$stamp = '20261025-s07';
+$stamp = '20261025-s08';
 ?>
 <!doctype html>
 <html lang="en">
@@ -249,13 +249,28 @@ $dashOn = ngd_flag('dashboard');
 
     <div class="grid grid--2">
       <div class="card">
+        <h2 class="card__h">Unique voters since launch</h2>
+        <p class="card__p">Distinct people, cumulatively. The lighter bars are people voting for
+           the first time that day; the line is everyone who has ever voted.</p>
+        <div class="chart" data-ngd-chart="voters"></div>
+      </div>
+      <div class="card">
         <h2 class="card__h">Cumulative points since launch</h2>
         <p class="card__p">Every point, in the order it was cast, by the Eastern hour.</p>
         <div class="chart" data-ngd-chart="cumulative"></div>
       </div>
       <div class="card">
-        <h2 class="card__h">Current standings</h2>
-        <p class="card__p">Equal totals share a rank, exactly as the admin dashboard ranks them.</p>
+        <div class="card__head">
+          <div>
+            <h2 class="card__h">Current standings</h2>
+            <p class="card__p">Ranking stays on points, which is the competition rule.
+               This chart can show either.</p>
+          </div>
+          <div class="bar__group" role="group" aria-label="Show founders by">
+            <button class="chip" type="button" data-ngd-metric="people" aria-pressed="true">Unique voters</button>
+            <button class="chip" type="button" data-ngd-metric="points" aria-pressed="false">Points</button>
+          </div>
+        </div>
         <div class="bars" data-ngd-bars="overview"></div>
       </div>
     </div>
@@ -388,6 +403,12 @@ $dashOn = ngd_flag('dashboard');
          number or identifier, and a click is never reported as a purchase.</p>
       <div class="exports" data-ngd-exports></div>
     </div>
+    <div class="card" data-ngd-email-card>
+      <h2 class="card__h">Voter email addresses</h2>
+      <div data-ngd-email-note></div>
+      <div class="exports" data-ngd-email-exports></div>
+    </div>
+
     <div class="card">
       <h2 class="card__h">A single founder</h2>
       <p class="card__p">Pick one for their own report.</p>

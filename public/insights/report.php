@@ -42,6 +42,11 @@ $payload = $snap;
 $payload['ok'] = true;
 $payload['viewer'] = ['name' => $me['name'], 'role' => $me['role']];
 
+/* PEOPLE. Counts only -- the addresses behind them never enter this payload; see
+   ngd_voters(), which is asked for them only by export.php after a permission check. */
+$payload['voters'] = ngd_voters_summary($source, $refresh);
+$payload['can_export_emails'] = ngd_can('emails', $me);
+
 /* The website-event store: a different file, read separately, and allowed to be empty. */
 $payload['events'] = ngd_event_report($from !== '' ? $from : null, $to !== '' ? $to : null);
 
@@ -81,6 +86,25 @@ $payload['health'] = [
 /* Definitions travel with the numbers. A leadership export that says "1,646 points"
    without saying what a point is invites the wrong decision. */
 $payload['definitions'] = [
+    'unique voter' => 'One distinct verified email address with at least one qualifying vote. '
+             . 'Voting five times makes one unique voter, not five. Supporting three founders '
+             . 'makes one unique voter in the competition total and one in each of those three '
+             . "founders' own figures — so the twenty founder columns MUST NOT be added up.",
+
+    'qualifying vote' => 'valid = 1, simulated = 0, and not a seeded test row. This is stricter '
+             . 'than the rule for POINTS, which counts unverified rows because a point is a '
+             . 'point. A person is not: a row with no proven identity behind it cannot '
+             . 'contribute a person.',
+
+    'daily unique voters' => 'Distinct people who voted on that day, returning voters included.',
+
+    'new unique voters' => 'People whose FIRST qualifying vote was that day. Always smaller than '
+             . 'or equal to the daily figure.',
+
+    'no address on record' => 'Identities that voted with a verified phone and never completed '
+             . 'the email step. They are real people and they are not in the email figure, so '
+             . 'they are reported separately rather than dropped or merged.',
+
     'point' => 'One row in the voting table. A registered attendee spending three points creates '
              . 'three rows, which is why points and voters are different numbers.',
 

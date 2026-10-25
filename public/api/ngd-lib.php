@@ -1892,7 +1892,25 @@ function ngd_take_snapshot(string $liveFile): array
    There is no SELECT * anywhere in this file either; every query names its columns.
    ------------------------------------------------------------------------ */
 
-const NGD_READABLE = ['pc_votes', 'pc_meta', 'pc_visits'];
+const NGD_READABLE = ['pc_votes', 'pc_meta', 'pc_visits', 'pc_voter', 'pc_identity'];
+
+/* pc_voter and pc_identity were added to this list deliberately on 2026-10-25, when the
+   brief changed from counting points to counting PEOPLE. pc_voter holds the verified email
+   address behind an identity and pc_identity holds the system's own record of which two
+   identities are the same human. Neither can be avoided if the question is "how many
+   distinct people", and inventing a second identity model to dodge the issue would be worse
+   than reading the one that exists.
+
+   What is still NOT on this list, and must not be: `submissions` (plaintext names, phones,
+   emails and schools for every form the site has ever taken), pc_email_otp and
+   pc_vote_email_otp (code_hash is a LIVE credential -- a six-digit code keyed under
+   NGS_SECRET is recoverable by trying a million candidates while the row is unexpired),
+   pc_otp_log, pc_attendee and pc_flag.
+
+   An address read from pc_voter leaves this process only through an export, and only for an
+   account the owner has specifically granted that permission. It never enters the dashboard
+   payload the browser receives: see ngd_voters(), which takes emails only when asked and is
+   asked only by export.php after a permission check. */
 
 function ngd_may_read(string $table): bool
 {
@@ -2041,5 +2059,448 @@ function ngd_range_cache_trim(int $keep = 40): void
     asort($byAge);
     foreach (array_slice(array_keys($byAge), 0, count($files) - $keep) as $old) {
         @unlink($old);
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   17. PEOPLE, NOT POINTS
+
+   Everything above counts votes. This counts the people who cast them, which is a
+   different question with a different answer, and the two are easy to confuse on a
+   screen.
+
+   HOW A VOTE BECOMES A PERSON
+
+     pc_votes.voter_key      the identity that cast the row. For a verified voter this is
+                             the canonical phone key taken from the session, never from the
+                             request body (pc-vote.php:111-120).
+     pc_identity.canonical   where two identities have been merged -- the same human
+                             proving both a phone and an email in one session. This is the
+                             system's OWN notion of "the same person", and it is the only
+                             merging done here. No email is ever guessed to belong to the
+                             same person as another email.
+     pc_voter.email          the address proved by an email OTP (pc-email-otp.php:285).
+                             Stored trimmed but NOT lowercased, so it is lowercased here.
+
+   WHAT COUNTS
+
+   A unique voter is one distinct normalised email address with at least one qualifying
+   vote. Qualifying means valid = 1, simulated = 0, and not a seeded test row. Note that
+   this is deliberately STRICTER than the points rule: pc_tally() counts simulated rows
+   and the admin dashboard shows them, because a point is a point. A person is not: an
+   unverified row has no proven identity behind it, so it cannot contribute a person.
+   Both figures are reported, side by side, with the difference stated.
+
+   WHAT CANNOT BE COUNTED
+
+   Identities that voted but have no email on record -- a phone-verified voter who never
+   did the email step. They are real people and they are not in the email figure, so they
+   are reported separately as "verified, no email on record" rather than quietly dropped
+   or quietly merged into the total.
+
+   THE ARITHMETIC TRAP
+
+   The competition total is NOT the sum of the twenty founder totals. Somebody who
+   supported three founders is one person in the competition and one person in each of
+   those three founders' figures. Adding the columns up triple-counts them. The totals
+   here are computed from separate sets for exactly that reason, and a test asserts the
+   sum of the columns EXCEEDS the competition figure whenever anybody split their votes.
+   ------------------------------------------------------------------------ */
+
+/** Normalise an address for comparison. Trim, lowercase; nothing cleverer. */
+function ngd_email_key(?string $raw): string
+{
+    $e = strtolower(trim((string) $raw));
+    /* Nothing that is not plausibly an address becomes a person. */
+    return (strpos($e, '@') > 0 && strlen($e) <= 254) ? $e : '';
+}
+
+/**
+ * Everyone who has cast a qualifying vote, and who they voted for.
+ *
+ * Reads the SNAPSHOT COPY, never the live file -- same rule as every other reader here.
+ *
+ * @return array{
+ *   ok:bool, error:?string,
+ *   people:array<string,array>, founders:array<string,array>,
+ *   totals:array, daily:array, no_email:array
+ * }
+ */
+function ngd_voters(string $source = 'live', bool $withEmails = false): array
+{
+    $out = [
+        'ok' => false, 'error' => null, 'people' => [], 'founders' => [],
+        'totals' => [], 'daily' => [], 'no_email' => ['identities' => 0, 'points' => 0],
+        'built_at' => ngd_now(),
+    ];
+
+    $path = ngd_db_path($source);
+    if ($path === null) {
+        $out['error'] = 'no voting database found for the ' . $source . ' source';
+        return $out;
+    }
+    $snap = ngd_take_snapshot($path);
+    $db = ngd_ro($snap['path']);
+    if ($db === null || !ngd_has_table($db, 'pc_votes')) {
+        $out['error'] = 'the voting database could not be read read-only';
+        return $out;
+    }
+
+    /* ---- the identity merge map, if the system has recorded any ---- */
+    $canon = [];
+    if (ngd_has_table($db, 'pc_identity')) {
+        try {
+            foreach ($db->query('SELECT ident, canonical FROM pc_identity')->fetchAll() as $r) {
+                $canon[(string) $r['ident']] = (string) $r['canonical'];
+            }
+        } catch (Throwable $e) {
+            // no merges available; every identity stands alone, which is the safe direction
+        }
+    }
+
+    /* ---- identity -> verified email ---- */
+    $emailOf = [];
+    if (ngd_has_table($db, 'pc_voter')) {
+        try {
+            $s = $db->query('SELECT ident, email FROM pc_voter WHERE email IS NOT NULL AND email != ""');
+            foreach ($s->fetchAll() as $r) {
+                $k = ngd_email_key($r['email'] ?? null);
+                if ($k !== '') {
+                    $emailOf[(string) $r['ident']] = $k;
+                }
+            }
+        } catch (Throwable $e) {
+            $out['error'] = 'the voter table could not be read';
+            return $out;
+        }
+    }
+
+    /* ---- the qualifying votes ---- */
+    try {
+        $s = $db->prepare('SELECT voter_key, entrant_id, vote_day, created_at
+                           FROM pc_votes
+                           WHERE competition = ? AND valid = 1 AND simulated = 0
+                           ORDER BY id ASC');
+        $s->execute([NGD_COMPETITION]);
+        $rows = $s->fetchAll();
+    } catch (Throwable $e) {
+        $out['error'] = 'the voting table could not be read';
+        return $out;
+    }
+    $db = null;
+
+    $founders = ngd_founders($source);
+    unset($founders['_from']);
+    $today = ngd_day(time());
+
+    $people = [];          // email => ['points'=>n,'first'=>day,'last'=>day,'founders'=>[id=>['points'=>n,'first'=>d,'last'=>d]]]
+    $byFounder = [];       // entrant => [email => true]
+    $byDay = [];           // day => [email => true]
+    $firstDayOf = [];      // email => the day of their first qualifying vote
+    $noEmailIdents = [];
+    $noEmailPoints = 0;
+    $skippedSeed = 0;
+
+    foreach ($rows as $r) {
+        $key = (string) $r['voter_key'];
+        if (str_starts_with($key, 'seed:')) {
+            $skippedSeed++;
+            continue;                       // a seeded row is not a person
+        }
+        $ident = $canon[$key] ?? $key;
+        $email = $emailOf[$ident] ?? ($emailOf[$key] ?? '');
+
+        $entrant = (string) $r['entrant_id'];
+        $day = (string) $r['vote_day'];
+        if ($day === 'all' || $day === '') {
+            $ts = ngd_ts((string) $r['created_at']);
+            $day = $ts !== null ? ngd_day($ts) : $today;
+        }
+
+        if ($email === '') {
+            /* A real person with a proven phone and no address on record. Counted, named
+               as uncountable, and never silently folded into the email figure. */
+            $noEmailIdents[$ident] = true;
+            $noEmailPoints++;
+            continue;
+        }
+
+        if (!isset($people[$email])) {
+            $people[$email] = ['points' => 0, 'first' => $day, 'last' => $day, 'founders' => []];
+            $firstDayOf[$email] = $day;
+        }
+        $p = &$people[$email];
+        $p['points']++;
+        if ($day < $p['first']) { $p['first'] = $day; $firstDayOf[$email] = $day; }
+        if ($day > $p['last'])  { $p['last']  = $day; }
+
+        if (!isset($p['founders'][$entrant])) {
+            $p['founders'][$entrant] = ['points' => 0, 'first' => $day, 'last' => $day];
+        }
+        $p['founders'][$entrant]['points']++;
+        if ($day < $p['founders'][$entrant]['first']) { $p['founders'][$entrant]['first'] = $day; }
+        if ($day > $p['founders'][$entrant]['last'])  { $p['founders'][$entrant]['last']  = $day; }
+        unset($p);
+
+        $byFounder[$entrant][$email] = true;
+        $byDay[$day][$email] = true;
+    }
+
+    /* ---- per founder ---- */
+    $fOut = [];
+    foreach ($founders as $id => $e) {
+        $set = $byFounder[$id] ?? [];
+        $todaySet = [];
+        $newToday = 0;
+        $points = 0;
+        foreach ($set as $email => $_) {
+            $f = $people[$email]['founders'][$id];
+            $points += $f['points'];
+            if ($f['last'] === $today || $f['first'] === $today) {
+                $todaySet[$email] = true;
+            }
+            if ($f['first'] === $today) {
+                $newToday++;                 // first time supporting THIS founder, today
+            }
+        }
+        $fOut[$id] = $e + [
+            'unique_voters'   => count($set),
+            'points'          => $points,
+            'actions'         => $points,    // one row is one voting action
+            'unique_today'    => count($todaySet),
+            'new_today'       => $newToday,
+            'points_per_voter' => count($set) > 0 ? round($points / count($set), 2) : 0.0,
+        ];
+    }
+    uasort($fOut, static fn($a, $b) => [$b['unique_voters'], $b['points']] <=> [$a['unique_voters'], $a['points']]);
+
+    /* ---- the daily series, and cumulative distinct people ---- */
+    ksort($byDay);
+    $seen = [];
+    $daily = [];
+    foreach ($byDay as $day => $set) {
+        $new = 0;
+        foreach ($set as $email => $_) {
+            if (!isset($seen[$email])) {
+                $seen[$email] = true;
+                $new++;
+            }
+        }
+        $daily[] = [
+            'day'        => $day,
+            'unique'     => count($set),     // distinct people active that day, returning included
+            'new'        => $new,            // first qualifying vote that day
+            'cumulative' => count($seen),    // distinct people since launch, to the end of that day
+            'is_today'   => $day === $today,
+        ];
+    }
+
+    $todayRow = null;
+    foreach ($daily as $d) {
+        if ($d['is_today']) { $todayRow = $d; }
+    }
+
+    $out['ok'] = true;
+    $out['founders'] = array_values($fOut);
+    $out['daily'] = $daily;
+    $out['no_email'] = ['identities' => count($noEmailIdents), 'points' => $noEmailPoints];
+    $out['totals'] = [
+        'unique_voters'      => count($people),
+        'unique_today'       => $todayRow ? $todayRow['unique'] : 0,
+        'new_today'          => $todayRow ? $todayRow['new'] : 0,
+        'founders_with_votes' => count(array_filter($fOut, static fn($f) => $f['unique_voters'] > 0)),
+        'qualifying_points'  => array_sum(array_column($people, 'points')),
+        'points_per_person'  => count($people) > 0
+            ? round(array_sum(array_column($people, 'points')) / count($people), 2) : 0.0,
+        'sum_of_founder_columns' => array_sum(array_column($fOut, 'unique_voters')),
+        'multi_founder_people'   => count(array_filter($people, static fn($p) => count($p['founders']) > 1)),
+        'seed_rows_skipped'  => $skippedSeed,
+        'rows_considered'    => count($rows),
+        'snapshot'           => $snap['how'],
+        'hold_ms'            => $snap['ms'],
+    ];
+
+    /* Addresses leave this function ONLY when the caller has been authorised to have them.
+       The dashboard never asks; the export does, after checking the account's permission. */
+    if ($withEmails) {
+        $out['people'] = $people;
+    }
+    return $out;
+}
+
+/** Counts only -- safe for the browser. Cached like the main snapshot. */
+function ngd_voters_summary(string $source = 'live', bool $force = false): array
+{
+    $file = ngd_var_dir() . '/ngd-voters-' . preg_replace('/[^a-z]/', '', $source) . '.json';
+    if (!$force && is_file($file) && (time() - (int) @filemtime($file)) < NGD_SNAP_TTL) {
+        $raw = @file_get_contents($file);
+        $try = is_string($raw) ? json_decode($raw, true) : null;
+        if (is_array($try)) {
+            $try['served'] = 'cache';
+            return $try;
+        }
+    }
+    $v = ngd_voters($source, false);
+    unset($v['people']);
+    $v['served'] = 'fresh';
+    if ($v['ok']) {
+        @file_put_contents($file, json_encode($v), LOCK_EX);
+        @chmod($file, 0640);
+    }
+    return $v;
+}
+
+/* ---------------------------------------------------------------------------
+   THE EMAIL EXPORTS
+
+   These are the only files this system produces that identify a person, so they are the
+   only ones behind a second permission. Everything else -- every count, every chart, every
+   founder column -- is available to anybody who can open the dashboard, because a count
+   identifies nobody. An address does.
+
+   Three shapes, because three different questions get asked:
+
+     voters          one row per distinct person, for the whole competition
+     founder-voters  one row per distinct person who backed ONE named founder
+     voter-pairs     one row per person-and-founder, so somebody who backed three
+                     founders appears three times -- on purpose, and the file says so
+
+   An address appears once per row of whichever shape was asked for. It is never repeated
+   because somebody voted twice: that is the entire point of counting people.
+
+   PDF is deliberately not offered for these. A PDF of two thousand addresses is a bad
+   spreadsheet and a worse privacy decision, and the brief says aggregate-only for PDF.
+   ------------------------------------------------------------------------ */
+
+function ngd_voter_export(string $report, string $source, string $only, string $from, string $to): array
+{
+    $v = ngd_voters($source, true);
+    if (!$v['ok']) {
+        return ['stem' => 'voter-export', 'sheets' => [[
+            'Could not read', ['Problem'], [[(string) ($v['error'] ?? 'unknown')]], [],
+        ]], 'rows' => 0];
+    }
+
+    $names = [];
+    foreach ($v['founders'] as $f) {
+        $names[$f['id']] = $f;
+    }
+    /* A window, when one was asked for. "Active in the period" and "first voted in the
+       period" are different questions and the file answers both rather than blurring them. */
+    $inWindow = static function (string $first, string $last) use ($from, $to): bool {
+        if ($from === '' || $to === '') {
+            return true;
+        }
+        return $last >= $from && $first <= $to;          // any activity overlapping the window
+    };
+
+    $defs = [
+        [''],
+        ['How to read this file'],
+        ['Unique voter', 'One distinct verified email address with at least one qualifying vote. '
+            . 'Qualifying means the vote is valid, was cast by a verified identity, and is not a '
+            . 'seeded test row.'],
+        ['One row per person', 'An address appears once however many times that person voted. '
+            . 'Voting five times does not make five rows.'],
+        ['Identity', 'Two identities the system has itself recorded as the same person (a phone '
+            . 'and an email proved in one session) are one person here. Two different addresses '
+            . 'are never guessed to be the same person.'],
+        ['Not a mailing list', 'Being able to export an address is not evidence that the person '
+            . 'agreed to be emailed. Consent, privacy and unsubscribe obligations are separate '
+            . 'and still apply.'],
+    ];
+
+    switch ($report) {
+        case 'founder-voters':
+            $f = $names[$only] ?? null;
+            if ($f === null) {
+                return ['stem' => 'founder-voters', 'rows' => 0, 'sheets' => [[
+                    'Pick a founder', ['Note'], [['No contestant was selected.']], []]]];
+            }
+            $rows = [];
+            foreach ($v['people'] as $email => $p) {
+                if (!isset($p['founders'][$only])) {
+                    continue;
+                }
+                $d = $p['founders'][$only];
+                if (!$inWindow($d['first'], $d['last'])) {
+                    continue;
+                }
+                $rows[] = [$email, $d['first'], $d['last'], $d['points'],
+                           count($p['founders']),
+                           ($from !== '' && $d['first'] >= $from) ? 'first vote in this period' : 'earlier'];
+            }
+            usort($rows, static fn($a, $b) => [$a[1], $a[0]] <=> [$b[1], $b[0]]);
+            return ['stem' => 'voters-' . $only, 'rows' => count($rows), 'sheets' => [[
+                'Voters for ' . $f['name'],
+                ['Email', 'First vote for them', 'Most recent vote for them',
+                 'Their voting actions for this founder', 'Founders this person supported',
+                 'New in this period?'],
+                $rows,
+                array_merge([[''], ['Founder', $f['name']], ['Business', $f['company']],
+                             ['Unique voters for this founder', (string) count($rows)]], $defs),
+            ]]];
+
+        case 'voter-pairs':
+            $rows = [];
+            foreach ($v['people'] as $email => $p) {
+                foreach ($p['founders'] as $id => $d) {
+                    if (!$inWindow($d['first'], $d['last'])) {
+                        continue;
+                    }
+                    $f = $names[$id] ?? null;
+                    $rows[] = [$f['name'] ?? $id, $f['company'] ?? '', $email,
+                               $d['first'], $d['last'], $d['points']];
+                }
+            }
+            usort($rows, static fn($a, $b) => [$a[0], $a[2]] <=> [$b[0], $b[2]]);
+            return ['stem' => 'founder-voter-relationships', 'rows' => count($rows), 'sheets' => [[
+                'Founder and voter',
+                ['Founder', 'Business', 'Voter email', 'First vote for this founder',
+                 'Most recent vote for this founder', 'Voting actions for this founder'],
+                $rows,
+                array_merge([
+                    [''],
+                    ['IMPORTANT', 'One row per person PER FOUNDER. Somebody who supported three '
+                        . 'founders appears three times, which is correct for this report and '
+                        . 'wrong for a headcount. The number of distinct people is on the '
+                        . 'all-voters export, not the row count of this one.'],
+                    ['Rows in this file', (string) count($rows)],
+                ], $defs),
+            ]]];
+
+        case 'voters':
+        default:
+            $rows = [];
+            foreach ($v['people'] as $email => $p) {
+                if (!$inWindow($p['first'], $p['last'])) {
+                    continue;
+                }
+                $supported = [];
+                foreach (array_keys($p['founders']) as $id) {
+                    $supported[] = $names[$id]['name'] ?? $id;
+                }
+                sort($supported);
+                $rows[] = [
+                    $email, $p['first'], $p['last'], count($p['founders']), $p['points'],
+                    implode('; ', $supported),
+                    ($from !== '' && $p['first'] >= $from) ? 'first-time in this period' : 'voted before this period',
+                ];
+            }
+            usort($rows, static fn($a, $b) => [$a[1], $a[0]] <=> [$b[1], $b[0]]);
+            return ['stem' => 'unique-voter-emails', 'rows' => count($rows), 'sheets' => [[
+                'Unique voters',
+                ['Email', 'First valid vote', 'Most recent valid vote', 'Founders supported',
+                 'Valid voting actions', 'Which founders', 'New in this period?'],
+                $rows,
+                array_merge([
+                    [''],
+                    ['Distinct people in this file', (string) count($rows)],
+                    ['Competition unique voters (all time)', (string) ($v['totals']['unique_voters'] ?? 0)],
+                    ['Verified voters with no address on record',
+                        (string) ($v['no_email']['identities'] ?? 0)
+                        . ' (they voted, and cannot appear in an email export)'],
+                ], $defs),
+            ]]];
     }
 }

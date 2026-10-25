@@ -28,7 +28,8 @@
     from: '',
     to: '',
     compare: [],
-    sort: { key: 'rank', dir: 1 },
+    sort: { key: 'unique_voters', dir: -1 },
+    metric: 'people',
     search: '',
     timer: null,
     loading: false
@@ -183,6 +184,28 @@
     return sum;
   }
 
+  /* The unique-voter figures arrive in their own block, computed from a different set of
+     rows (qualifying votes only), so they are merged onto the founder rows by id rather
+     than recomputed here. Keeping one source for each number is the whole discipline. */
+  function withVoters(list) {
+    var d = state.data;
+    var by = {};
+    if (d.voters && d.voters.ok) {
+      (d.voters.founders || []).forEach(function (f) { by[f.id] = f; });
+    }
+    return list.map(function (f) {
+      var v = by[f.id];
+      if (!v) return f;
+      var c = {};
+      for (var k in f) if (f.hasOwnProperty(k)) c[k] = f[k];
+      c.unique_voters = v.unique_voters;
+      c.unique_today = v.unique_today;
+      c.new_today = v.new_today;
+      c.actions = v.actions;
+      return c;
+    });
+  }
+
   function foundersForPeriod() {
     var d = state.data;
     if (state.period === 'custom' && d.range && d.range.ok) return d.range.founders.slice();
@@ -266,6 +289,7 @@
     kpis(d);
     splits(d);
     leaderBars(d);
+    chartVoters(d);
     chartCumulative(d);
     chartDaily($('[data-ngd-chart="daily"]'), d);
     chartDaily($('[data-ngd-chart="daily2"]'), d);
@@ -279,6 +303,7 @@
     conversions(d);
     insights(d);
     exportsPanel(d);
+    emailExports(d);
     foot(d);
   }
 
@@ -415,8 +440,39 @@
     var trend = (d.daily || []).map(function (r) { return n(r.points); });
     var rules = d.rules || {};
 
+    /* PEOPLE FIRST. The brief's words: "our first priority is PEOPLE, not points." The
+       unique-voter figure therefore takes the hero card and points move down, because
+       whichever number is biggest and first is the one that gets quoted. */
+    var V = (d.voters && d.voters.ok) ? d.voters : null;
+    var vt = V ? V.totals : null;
+
+    if (vt) {
+      kpi(box, {
+        hero: true, k: 'Total unique voters', v: num(vt.unique_voters),
+        delta: null,
+        n: 'Distinct verified email identities with at least one qualifying vote, since ' +
+           (t.launch_day ? shortDay(t.launch_day) : 'launch') + '. Voting repeatedly, on ' +
+           'several days, or for several founders still counts as one person.',
+        spark: (V.daily || []).map(function (r) { return n(r.cumulative); })
+      });
+      kpi(box, {
+        k: 'New unique voters today', v: num(vt.new_today),
+        n: 'People whose first qualifying vote was today. ' + num(vt.unique_today) +
+           ' distinct people voted today in total, returning voters included.'
+      });
+      kpi(box, {
+        k: 'Unique voters today', v: num(vt.unique_today),
+        n: 'Distinct people active today. Always at least the new figure above, because it ' +
+           'counts people coming back.'
+      });
+      kpi(box, {
+        k: 'Founders receiving votes', v: num(vt.founders_with_votes) + ' / 20',
+        n: (20 - n(vt.founders_with_votes)) + ' founder(s) have no verified voter yet.'
+      });
+    }
+
     kpi(box, {
-      hero: true, k: 'Valid voting points', v: num(w.points),
+      hero: !vt, k: 'Valid voting points', v: num(w.points),
       delta: w.cmp ? w.cmp.v : null, deltaLabel: w.cmp ? w.cmp.label : '',
       n: state.period === 'all'
         ? ('One point is one vote row. ' + num(t.voters) + ' voters, ' + t.points_per_voter + ' points each on average.')
@@ -436,8 +492,17 @@
       });
     }
 
+    if (vt && V.no_email && n(V.no_email.identities) > 0) {
+      kpi(box, {
+        k: 'Voted, no address on record', v: num(V.no_email.identities),
+        n: 'Verified by phone and never completed the email step. They are real people, they ' +
+           'cast ' + num(V.no_email.points) + ' point(s), and they cannot appear in any email ' +
+           'export — so they are shown here rather than folded into the figure above.'
+      });
+    }
+
     kpi(box, {
-      k: 'Verified voting identities',
+      k: 'Distinct voter keys',
       v: w.voters === null ? '—' : num(w.voters),
       n: w.voters === null
         ? 'Not available for a rolling window — identities cannot be added up across days.'
@@ -515,12 +580,17 @@
     var box = $('[data-ngd-bars="overview"]');
     if (!box) return;
     box.innerHTML = '';
-    var list = foundersForPeriod().slice().sort(function (a, b) {
+    var byPeople = state.metric === 'people';
+    var list = withVoters(foundersForPeriod()).slice().sort(function (a, b) {
+      if (byPeople) return n(b.unique_voters) - n(a.unique_voters);
       return (b._p !== undefined ? b._p : b.points) - (a._p !== undefined ? a._p : a.points);
     });
-    var max = Math.max(1, list.length ? (list[0]._p !== undefined ? list[0]._p : list[0].points) : 1);
+    var valueOf = function (f) {
+      return byPeople ? n(f.unique_voters) : (f._p !== undefined ? f._p : n(f.points));
+    };
+    var max = Math.max(1, list.length ? valueOf(list[0]) : 1);
     list.slice(0, 20).forEach(function (f) {
-      var v = f._p !== undefined ? f._p : n(f.points);
+      var v = valueOf(f);
       var row = el('div', 'brow');
       row.appendChild(el('div', 'brow__r', f._rank || f.rank || '—'));
       var b = el('div', 'brow__b');
@@ -533,11 +603,175 @@
       row.appendChild(b);
       var val = el('div', 'brow__v');
       val.appendChild(document.createTextNode(num(v)));
-      val.appendChild(el('i', null, num(f.voters) + ' voters'));
+      val.appendChild(el('i', null, byPeople ? num(f.points) + ' points'
+                                             : num(f.unique_voters) + ' people'));
       row.appendChild(val);
       box.appendChild(row);
     });
     if (!list.length) box.appendChild(el('div', 'ld', 'No points yet'));
+  }
+
+
+  /* ---------- the unique-voter growth chart ----------
+     Two series on one frame because they answer one question together: the bars are people
+     voting for the first time that day, the line is everyone who has ever voted. A rising
+     line with shrinking bars means the competition is running out of new people, which is
+     the thing a leadership team actually needs to see coming. */
+  function chartVoters(d) {
+    var box = $('[data-ngd-chart="voters"]');
+    if (!box) return;
+    box.innerHTML = '';
+    var V = (d.voters && d.voters.ok) ? d.voters : null;
+    var rows = V ? (V.daily || []).filter(function (r) { return inWindow(r.day); }) : [];
+    if (!rows.length) {
+      box.appendChild(el('div', 'ld', V ? 'Nothing in this period' : 'No voter data'));
+      return;
+    }
+
+    var w = 760, h = 260, pad = { t: 16, r: 14, b: 26, l: 44 };
+    var s = svg('svg', { viewBox: '0 0 ' + w + ' ' + h, role: 'img' });
+    s.setAttribute('aria-label', 'Unique voters since launch: new each day, and cumulative');
+    var maxCum = Math.max.apply(null, rows.map(function (r) { return n(r.cumulative); }).concat([1]));
+    var iw = w - pad.l - pad.r, ih = h - pad.t - pad.b;
+    var bw = iw / rows.length;
+
+    axes(s, w, h, pad, maxCum, rows.map(function (r) { return shortDay(r.day); }));
+
+    rows.forEach(function (r, i) {
+      var hh = ih * (n(r['new']) / maxCum);
+      if (hh > 0) {
+        s.appendChild(svg('rect', {
+          x: (pad.l + bw * i + bw * 0.22).toFixed(1),
+          y: (pad.t + ih - hh).toFixed(1),
+          width: (bw * 0.56).toFixed(1), height: Math.max(1, hh).toFixed(1),
+          fill: 'rgba(31,199,190,.38)', rx: 2
+        }));
+      }
+    });
+
+    var pts = rows.map(function (r, i) {
+      var x = pad.l + bw * (i + 0.5);
+      var y = pad.t + ih - ih * (n(r.cumulative) / maxCum);
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    });
+    s.appendChild(svg('path', { d: 'M' + pts.join(' L'), 'class': 'line' }));
+    var last = pts[pts.length - 1].split(',');
+    s.appendChild(svg('circle', { cx: last[0], cy: last[1], r: 3.6, 'class': 'dot' }));
+    var lab = svg('text', {
+      x: Number(last[0]) - 6, y: Number(last[1]) - 10, 'text-anchor': 'end', 'class': 'lbl'
+    });
+    lab.textContent = num(rows[rows.length - 1].cumulative) + ' people';
+    s.appendChild(lab);
+
+    box.appendChild(s);
+    var key = el('p', 'card__p');
+    key.innerHTML = '<span style="color:var(--accent)">■</span> new that day &nbsp; ' +
+                    '<span style="color:var(--accent)">─</span> everyone so far' +
+                    (rows.some(function (r) { return r.is_today; }) ? ' &nbsp;·&nbsp; today is still open' : '');
+    box.appendChild(key);
+  }
+
+  /* ---------- the email exports ----------
+     Shown to everybody, because hiding the existence of a capability from a leadership team
+     is its own kind of dishonesty. Offered only to an account that holds the permission;
+     everyone else sees what it is and who to ask. */
+  function emailExports(d) {
+    var note = $('[data-ngd-email-note]');
+    var box = $('[data-ngd-email-exports]');
+    if (!note || !box) return;
+    note.innerHTML = '';
+    box.innerHTML = '';
+
+    var V = (d.voters && d.voters.ok) ? d.voters : null;
+    var total = V ? n(V.totals.unique_voters) : 0;
+    var noEmail = V && V.no_email ? n(V.no_email.identities) : 0;
+
+    var p = el('p', 'card__p');
+    p.innerHTML = 'These files contain <b>real voter email addresses</b>. One row per person: ' +
+      'an address appears once however many times that person voted. ' +
+      num(total) + ' distinct people are available' +
+      (noEmail > 0 ? ', and ' + num(noEmail) + ' more voted with a verified phone and no ' +
+       'address on record, so they cannot appear in any of them' : '') + '.';
+    note.appendChild(p);
+
+    var p2 = el('p', 'card__p');
+    p2.innerHTML = '<b>Being able to export an address is not evidence that the person agreed ' +
+      'to be emailed.</b> Consent, privacy and unsubscribe obligations are separate and still ' +
+      'apply to anything sent to this list.';
+    note.appendChild(p2);
+
+    if (!d.can_export_emails) {
+      var warn = el('div', 'alert alert--warn');
+      warn.appendChild(el('b', null, 'Your account cannot download addresses'));
+      warn.appendChild(document.createTextNode(
+        'Downloading real voter addresses is a separate permission from reading the ' +
+        'dashboard. Every count and chart here stays available to you. Ask the owner to ' +
+        'grant it in Settings if you need the files themselves.'));
+      box.appendChild(warn);
+      return;
+    }
+
+    [
+      ['voters', 'All unique voters',
+       'One row per distinct person across the whole competition, with their first and most ' +
+       'recent vote, how many founders they supported and which.'],
+      ['voter-pairs', 'Every founder-and-voter pair',
+       'One row per person PER FOUNDER, so somebody who backed three founders appears three ' +
+       'times. Useful for per-founder outreach; wrong for a headcount, and the file says so.']
+    ].forEach(function (r) {
+      var row = el('div', 'exp');
+      var k = el('div', 'exp__k');
+      k.appendChild(el('span', null, r[1]));
+      k.appendChild(el('i', null, r[2]));
+      row.appendChild(k);
+      var b = el('div', 'exp__b');
+      [['csv', 'CSV'], ['xlsx', 'Excel']].forEach(function (f) {
+        var a = el('a', 'btn btn--ghost btn--sm', f[1]);
+        a.href = exportUrl(r[0], f[0]);
+        a.setAttribute('download', '');
+        b.appendChild(a);
+      });
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+
+    /* one founder's supporters */
+    var row = el('div', 'exp');
+    var k = el('div', 'exp__k');
+    k.appendChild(el('span', null, 'One founder’s voters'));
+    k.appendChild(el('i', null, 'Distinct people who cast at least one valid vote for the ' +
+                                'founder you pick. Each address once, however often they voted.'));
+    row.appendChild(k);
+    var b = el('div', 'exp__b');
+    var sel = document.createElement('select');
+    sel.setAttribute('data-ngd-email-founder', '');
+    sel.style.minHeight = '36px';
+    sel.style.background = 'var(--nv-2)';
+    sel.style.color = 'var(--fg)';
+    sel.style.border = '1px solid var(--line-2)';
+    sel.style.borderRadius = '9px';
+    sel.style.padding = '0 10px';
+    ((V && V.founders) || d.founders || []).forEach(function (f) {
+      var o = document.createElement('option');
+      o.value = f.id;
+      o.textContent = f.name + (f.unique_voters !== undefined ? '  (' + f.unique_voters + ')' : '');
+      sel.appendChild(o);
+    });
+    b.appendChild(sel);
+    [['csv', 'CSV'], ['xlsx', 'Excel']].forEach(function (f) {
+      var a = el('a', 'btn btn--ghost btn--sm', f[1]);
+      a.setAttribute('data-ngd-email-one', f[0]);
+      a.href = exportUrl('founder-voters', f[0], sel.value);
+      a.setAttribute('download', '');
+      b.appendChild(a);
+    });
+    sel.addEventListener('change', function () {
+      $$('[data-ngd-email-one]').forEach(function (a) {
+        a.href = exportUrl('founder-voters', a.getAttribute('data-ngd-email-one'), sel.value);
+      });
+    });
+    row.appendChild(b);
+    box.appendChild(row);
   }
 
   /* ---------- charts ---------- */
@@ -856,14 +1090,15 @@
     t.innerHTML = '';
     head(t, [
       { label: '' }, { label: 'Rank', cls: 'num', sort: 'rank' }, { label: 'Founder', sort: 'name' },
-      { label: 'Points', cls: 'num', sort: 'points' }, { label: 'Supporters', cls: 'num', sort: 'voters' },
+      { label: 'Unique voters', cls: 'num', sort: 'unique_voters' },
+      { label: 'Points', cls: 'num', sort: 'points' }, { label: 'Keys', cls: 'num', sort: 'voters' },
       { label: 'Standard', cls: 'num', sort: 'standard' }, { label: 'Bonus', cls: 'num', sort: 'bonus' },
       { label: 'Today', cls: 'num', sort: 'today' }, { label: 'Yesterday', cls: 'num', sort: 'yesterday' },
       { label: 'Day growth', cls: 'num', sort: 'growth_pct' }, { label: 'Move', cls: 'num', sort: 'rank_move' },
       { label: 'Share', cls: 'num', sort: 'share_pct' }, { label: 'Trend' }
     ]);
 
-    var list = foundersForPeriod();
+    var list = withVoters(foundersForPeriod());
     var q = state.search.toLowerCase();
     if (q) {
       list = list.filter(function (f) {
@@ -922,7 +1157,13 @@
       who.appendChild(box);
       tr.appendChild(who);
 
-      tr.appendChild(el('td', 'num big', num(f._p !== undefined ? f._p : f.points)));
+      /* Unique voters first, and in the strong style, because that is the question being
+         asked of this table now. Points stay, because the ranking is still points. */
+      var uv = el('td', 'num big');
+      uv.appendChild(document.createTextNode(f.unique_voters === undefined ? '—' : num(f.unique_voters)));
+      if (f.unique_today) { uv.appendChild(el('i', null, '+' + num(f.new_today || 0) + ' new today')); }
+      tr.appendChild(uv);
+      tr.appendChild(el('td', 'num', num(f._p !== undefined ? f._p : f.points)));
       tr.appendChild(el('td', 'num', num(f.voters)));
       tr.appendChild(el('td', 'num', num(f.standard)));
       tr.appendChild(el('td', 'num', num(f.bonus)));
@@ -1351,6 +1592,18 @@
     }
   }
 
+  function metricToggle() {
+    $$('[data-ngd-metric]').forEach(function (c) {
+      c.addEventListener('click', function () {
+        state.metric = c.getAttribute('data-ngd-metric');
+        $$('[data-ngd-metric]').forEach(function (x) {
+          x.setAttribute('aria-pressed', x === c ? 'true' : 'false');
+        });
+        if (state.data) { leaderBars(state.data); }
+      });
+    });
+  }
+
   function periods() {
     $$('[data-ngd-period]').forEach(function (c) {
       c.addEventListener('click', function () {
@@ -1455,6 +1708,7 @@
     loading($('[data-ngd-kpis]'));
     tabs();
     periods();
+    metricToggle();
     sorting();
     picking();
     searching();

@@ -461,10 +461,13 @@ $forRead = null;
    8. The table allow-list.
    ------------------------------------------------------------------------ */
 
-echo "\n=== only three tables are readable ===\n";
-same('the allow-list is exactly the three reporting tables',
-     ['pc_votes', 'pc_meta', 'pc_visits'], NGD_READABLE);
-foreach (['submissions', 'pc_email_otp', 'pc_vote_email_otp', 'pc_voter', 'pc_identity',
+same('the allow-list is exactly the five reporting tables',
+     ['pc_votes', 'pc_meta', 'pc_visits', 'pc_voter', 'pc_identity'], NGD_READABLE);
+ok('pc_voter is readable, because counting PEOPLE needs the verified address',
+   ngd_may_read('pc_voter'));
+ok("pc_identity is readable, because it is the system's own record of who is the same person",
+   ngd_may_read('pc_identity'));
+foreach (['submissions', 'pc_email_otp', 'pc_vote_email_otp',
           'pc_otp_log', 'pc_attendee', 'pc_flag'] as $forbidden) {
     ok('refuses to look at ' . $forbidden, ngd_may_read($forbidden) === false);
 }

@@ -58,6 +58,15 @@ const NGD_SESSION_IDLE  = 90 * 60;       // and a shorter one on leaving it unat
 const NGD_TRY_WINDOW    = 900;           // the throttle looks back fifteen minutes
 const NGD_TRY_MAX       = 8;             // and allows this many failures from one address
 
+/* The permissions an account can hold beyond simply reading the dashboard.
+
+   There is exactly one today and it is the one that matters: `emails` lets an account
+   download real voter addresses. Everyone can see the COUNTS -- how many distinct people
+   voted, and for whom -- because a count identifies nobody. Downloading the addresses is a
+   different act with different consequences, so it is a different permission, and it is off
+   unless the owner turns it on for a named person. */
+const NGD_PERMS = ['emails'];
+
 /* ---------------------------------------------------------------------------
    1. THE CREDENTIAL STORE
    ------------------------------------------------------------------------ */
@@ -194,7 +203,9 @@ function ngd_seed_accounts(bool $fresh = false): array
         if ($started || ($openAt !== false && $acctAt !== false && $acctAt > $openAt)) {
             continue;
         }
-        if (!preg_match("/^\s*NGD_ACCOUNT\s*=\s*'([^'|]+)\|([^'|]*)\|([^']+)'\s*;/", $line, $m)) {
+        /* user|display name|hash  or  user|display name|hash|flags
+           where flags is a comma-separated list; the only one today is "emails". */
+        if (!preg_match("/^\s*NGD_ACCOUNT\s*=\s*'([^'|]+)\|([^'|]*)\|([^'|]+)(?:\|([^']*))?'\s*;/", $line, $m)) {
             continue;
         }
         $u = strtolower(trim($m[1]));
@@ -205,7 +216,12 @@ function ngd_seed_accounts(bool $fresh = false): array
         if ($u === '' || strlen($hash) < 50 || $hash[0] !== '$') {
             continue;
         }
-        $cache[$u] = ['hash' => $hash, 'name' => trim($m[2]) !== '' ? trim($m[2]) : $u];
+        $flags = array_values(array_filter(array_map('trim', explode(',', strtolower($m[4] ?? '')))));
+        $cache[$u] = [
+            'hash'  => $hash,
+            'name'  => trim($m[2]) !== '' ? trim($m[2]) : $u,
+            'perms' => array_values(array_intersect($flags, NGD_PERMS)),
+        ];
     }
     unset($raw);
     return $cache;
@@ -224,7 +240,8 @@ function ngd_users(bool $fresh = false): array
        where nothing has ever been written outside the web root. */
     foreach (ngd_seed_accounts($fresh) as $u => $r) {
         $cache[$u] = ['hash' => $r['hash'], 'name' => $r['name'], 'added' => '',
-                      'active' => true, 'last' => null, 'seeded' => true];
+                      'active' => true, 'last' => null, 'seeded' => true,
+                      'perms' => $r['perms'] ?? []];
     }
 
     $f = ngd_users_file();
@@ -254,6 +271,13 @@ function ngd_users(bool $fresh = false): array
             if (isset($r['last']) && is_string($r['last'])) {
                 $cache[$u]['last'] = $r['last'];
             }
+            /* A permission granted from the dashboard is additive to the seed's. Revoking
+               one the seed grants means editing config.ngd.php, the same rule as the hash:
+               the deployment is the source of truth for anything it declares. */
+            if (isset($r['perms']) && is_array($r['perms'])) {
+                $cache[$u]['perms'] = array_values(array_unique(array_merge(
+                    $cache[$u]['perms'] ?? [], array_intersect($r['perms'], NGD_PERMS))));
+            }
             continue;
         }
         if (!is_array($r) || !isset($r['hash']) || !is_string($r['hash'])) {
@@ -266,6 +290,8 @@ function ngd_users(bool $fresh = false): array
             'active' => !isset($r['active']) || $r['active'] === true,
             'last'   => isset($r['last']) && is_string($r['last']) ? $r['last'] : null,
             'seeded' => false,
+            'perms'  => (isset($r['perms']) && is_array($r['perms']))
+                          ? array_values(array_intersect($r['perms'], NGD_PERMS)) : [],
         ];
     }
     return $cache;
@@ -346,7 +372,7 @@ function ngd_users_write(array $users): bool
     foreach ($users as $u => $r) {
         if (!empty($r['seeded'])) {
             $users[$u] = ['seeded' => true, 'active' => !empty($r['active']),
-                          'last' => $r['last'] ?? null];
+                          'last' => $r['last'] ?? null, 'perms' => $r['perms'] ?? []];
         }
     }
     $f = ngd_users_file();
@@ -692,4 +718,97 @@ function ngd_require_json(): array
        costs one header. */
     ngd_require_same_origin();
     return $u;
+}
+
+/* ---------------------------------------------------------------------------
+   6. WHO MAY DOWNLOAD AN ADDRESS
+
+   Seeing that 1,576 people voted identifies nobody. Downloading the 1,576 addresses is a
+   different act, with different consequences, and the brief asks for it to be a different
+   permission -- restricted to the owner and to specifically authorised leadership
+   accounts, rather than to anyone who can open the dashboard.
+
+   The owner always has it. A named account has it only when the owner granted it, either
+   by a flag on its line in config.ngd.php or from the Settings panel.
+   ------------------------------------------------------------------------ */
+
+function ngd_can(string $perm, ?array $user = null): bool
+{
+    $user ??= ngd_user();
+    if ($user === null) {
+        return false;
+    }
+    if (($user['role'] ?? '') === 'owner') {
+        return true;                        // the owner holds every permission by definition
+    }
+    $row = ngd_users()[strtolower((string) $user['user'])] ?? null;
+    return $row !== null && in_array($perm, (array) ($row['perms'] ?? []), true);
+}
+
+/** Grant or revoke a permission on a named account. Owner-only; enforced by the caller. */
+function ngd_user_set_perm(string $username, string $perm, bool $on): bool
+{
+    if (!in_array($perm, NGD_PERMS, true)) {
+        return false;
+    }
+    $u = strtolower(trim($username));
+    $users = ngd_users(true);
+    if (!isset($users[$u])) {
+        return false;
+    }
+    $have = (array) ($users[$u]['perms'] ?? []);
+    $users[$u]['perms'] = $on
+        ? array_values(array_unique(array_merge($have, [$perm])))
+        : array_values(array_diff($have, [$perm]));
+    return ngd_users_write($users);
+}
+
+/**
+ * Record that an export happened. The WHAT, never the WHO-was-in-it.
+ *
+ * The brief is specific: log export activity without logging the list. So this records the
+ * account, the report, the format and how many rows left -- enough to answer "who took the
+ * voter list, and when" during a review -- and not one address. The row count is the point:
+ * it is the difference between somebody checking a founder's supporters and somebody taking
+ * the whole competition.
+ */
+function ngd_log_export(string $report, string $format, int $rows, bool $hadEmails): void
+{
+    $u = ngd_user();
+    $db = ngd_throttle_db();
+    if ($db === null) {
+        return;
+    }
+    try {
+        $db->exec('CREATE TABLE IF NOT EXISTS ngd_export_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            who TEXT NOT NULL, report TEXT NOT NULL, format TEXT NOT NULL,
+            rows INTEGER NOT NULL, had_emails INTEGER NOT NULL,
+            ip_key TEXT, created_at TEXT NOT NULL, ts INTEGER NOT NULL
+        )');
+        $db->prepare('INSERT INTO ngd_export_log
+            (who, report, format, rows, had_emails, ip_key, created_at, ts)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+           ->execute([(string) ($u['user'] ?? 'unknown'), $report, $format, $rows,
+                      $hadEmails ? 1 : 0, ngd_ip_key(), ngd_now(), time()]);
+    } catch (Throwable $e) {
+        /* A log that cannot be written must not stop the export the owner asked for. */
+    }
+}
+
+/** The recent export history, for the Settings panel. Counts and names, never a list. */
+function ngd_export_log(int $limit = 40): array
+{
+    $db = ngd_throttle_db();
+    if ($db === null) {
+        return [];
+    }
+    try {
+        $s = $db->prepare('SELECT who, report, format, rows, had_emails, created_at
+                           FROM ngd_export_log ORDER BY id DESC LIMIT ?');
+        $s->execute([max(1, min(200, $limit))]);
+        return $s->fetchAll();
+    } catch (Throwable $e) {
+        return [];
+    }
 }

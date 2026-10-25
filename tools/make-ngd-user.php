@@ -2,7 +2,10 @@
 /* ============================================================================
    Create a NextGen Data leadership account.
 
-       php tools/make-ngd-user.php <username> ["Display Name"]
+       php tools/make-ngd-user.php <username> ["Display Name"] [--emails]
+
+   --emails grants permission to download real voter email addresses. It is a separate
+   permission from reading the dashboard, and it is off unless you ask for it.
 
    Prints a freshly generated passphrase ONCE, to this terminal, and writes only its
    bcrypt hash into public/api/config.ngd.php. The passphrase is never stored, never
@@ -41,8 +44,11 @@ if (PHP_SAPI !== 'cli') {
 $root = dirname(__DIR__);
 $file = $root . '/public/api/config.ngd.php';
 
-$user = strtolower(trim((string) ($argv[1] ?? '')));
-$name = trim((string) ($argv[2] ?? ''));
+$args = array_slice($argv, 1);
+$wantEmails = in_array('--emails', $args, true);
+$args = array_values(array_filter($args, static fn($a) => $a !== '--emails'));
+$user = strtolower(trim((string) ($args[0] ?? '')));
+$name = trim((string) ($args[1] ?? ''));
 
 if ($user === '' || !preg_match('/^[a-z0-9][a-z0-9._-]{1,30}$/', $user)) {
     fwrite(STDERR, "usage: php tools/make-ngd-user.php <username> [\"Display Name\"]\n"

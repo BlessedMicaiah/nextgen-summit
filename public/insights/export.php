@@ -404,7 +404,53 @@ $build = static function (string $report) use ($founders, $snap, $tot, $meta, $e
     }
 };
 
-[$stem, $sheets] = $build($report);
+/* The three reports that carry an address take a different road: a second permission
+   check, a different builder, and no PDF. Everything else is a count and goes to anyone
+   who can open the dashboard. */
+const NGD_EMAIL_REPORTS = ['voters', 'founder-voters', 'voter-pairs'];
+$rowsOut = 0;
+$carriesEmails = in_array($report, NGD_EMAIL_REPORTS, true);
+
+if ($carriesEmails) {
+    if (!ngd_can('emails', $me)) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "Refused.
+
+This export contains real voter email addresses, which is a separate
+"
+           . "permission from reading the dashboard. Ask the owner to grant it to your
+"
+           . "account in Settings. Every count and chart stays available to you either way.
+";
+        error_log('NextGen Data: ' . (string) ($me['user'] ?? '?')
+                . ' was refused the ' . $report . ' email export.');
+        exit;
+    }
+    if ($format === 'pdf') {
+        http_response_code(400);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "Not available as a PDF.
+
+A PDF of a few thousand addresses is a bad spreadsheet
+"
+           . "and a worse privacy decision. Use CSV or Excel.
+";
+        exit;
+    }
+    $built = ngd_voter_export($report, $source, $only, $from, $to);
+    $stem = $built['stem'];
+    $sheets = $built['sheets'];
+    $rowsOut = (int) $built['rows'];
+} else {
+    [$stem, $sheets] = $build($report);
+    foreach ($sheets as $sh) {
+        $rowsOut += count($sh[2] ?? []);
+    }
+}
+
+/* Who took what, and how much of it. Never which addresses. */
+ngd_log_export($report, $format, $rowsOut, $carriesEmails);
 $prov = ngd_provenance($meta, $tot, $period, $source, $events);
 $stamp = (new DateTime('now', ngd_tz()))->format('Y-m-d-Hi');
 $base  = 'nextgen-' . $stem . '-' . $stamp;

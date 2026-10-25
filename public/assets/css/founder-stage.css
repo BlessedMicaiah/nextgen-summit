@@ -619,8 +619,19 @@
 /* The logo panel: square, because every mark was re-seated on a square of its own, and
    with no inner padding because that padding is already baked into the artwork at a
    consistent 74%. One size, one alignment, one corner radius across all twenty cards. */
-.fcd__thumb.is-logo { aspect-ratio: 1 / 1; border-radius: 7px; box-shadow: 0 0 0 1.5px rgba(57,216,200,.55); }
-.fcd__thumb.is-logo img { object-fit: contain; padding: 0; }
+/* A company mark is artwork on paper, not a photograph.
+
+   .fcd__thumb paints #11161B behind its image, which is right for a portrait and wrong for
+   a wordmark drawn in black on white: the supplied artwork then reads as a pale strip
+   floating in a dark square, with the tile's own ground showing above and below it. The
+   tile takes the mark's own background instead, and the padding gives it the clear space a
+   logo is drawn to sit in. */
+.fcd__thumb.is-logo {
+  aspect-ratio: 1 / 1; border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px rgba(57,216,200,.55);
+}
+.fcd__thumb.is-logo img { object-fit: contain; padding: 12%; }
 .fcd__sec { margin-top: clamp(16px,3.6vw,22px); padding-top: clamp(14px,3vw,18px); border-top: 1px solid rgba(255,255,255,.12); }
 .fcd__k { margin: 0; font: 800 9.5px/1 var(--f-sans, system-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--accent, #39D8C8); }
 .fcd__t { margin: 10px 0 0; font: 500 13.5px/1.62 var(--f-sans, system-ui); color: rgba(255,255,255,.92); }

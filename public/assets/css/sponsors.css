@@ -8,7 +8,7 @@
   background:#fff;border:1px solid var(--rule);text-decoration:none;color:var(--ink);
   box-shadow:0 1px 0 rgba(11,11,15,.03),0 22px 44px -34px rgba(11,11,15,.32);
   transition:transform .5s var(--ease),border-color .35s var(--ease),box-shadow .5s var(--ease)}
-.spon__card img{display:block;width:auto;height:var(--h,40px);max-width:88%;object-fit:contain;
+.spon__card img{display:block;width:auto;height:var(--h,40px);max-width:78%;object-fit:contain;
   transition:transform .6s var(--ease)}
 /* the arrow in the corner says the card leaves for the sponsor's own site */
 .spon__go{position:absolute;top:12px;right:12px;display:grid;place-items:center;width:26px;height:26px;border-radius:999px;

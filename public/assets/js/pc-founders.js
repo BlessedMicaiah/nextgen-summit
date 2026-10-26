@@ -70,7 +70,7 @@ window.NGS_FOUNDERS = [
     "logo": "/assets/img/logos/sooz.webp?v=221b6206",
     "video": {
       "type": "file",
-      "src": "/assets/video/sooz.mp4?v=857ec4fb"
+      "src": "/assets/video/sooz.mp4?v=544b7c83"
     },
     "story": "/assets/img/founders/sooz-story.webp?v=e94f32b4",
     "story2x": "/assets/img/founders/sooz-story@2x.webp?v=db7a4db1",
@@ -82,7 +82,7 @@ window.NGS_FOUNDERS = [
     "shotH": 1000,
     "shotFrom": "branded portrait supplied by the NextGen team",
     "selfHosted": true,
-    "poster": "/assets/video/sooz-poster.jpg?v=26ee5ecf",
+    "poster": "/assets/video/sooz-poster.jpg?v=de93bdeb",
     "pitchNote": "direct video file"
   },
   {

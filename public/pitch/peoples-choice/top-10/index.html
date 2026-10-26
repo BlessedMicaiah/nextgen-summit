@@ -20,11 +20,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   gtag('config', 'G-3M5BCK61VB');
 </script>
 
-<title>Top 10 &middot; People&rsquo;s Choice &middot; NextGen Summit</title>
-<meta name="description" content="Ten founders, ten stories. An editorial look at the People&rsquo;s Choice founders, one magazine at a time.">
-<meta name="theme-color" content="#05080C">
+<title>The NextGen Edition &middot; People&rsquo;s Choice &middot; NextGen Summit</title>
+<meta name="description" content="A collection worth opening. Ten founder issues from the NextGen Summit People&rsquo;s Choice Award.">
+<meta name="theme-color" content="#14181B">
 
-<!-- Not indexed: the Top 10 is provisional while voting is open. See the preview banner. -->
+<!-- Not indexed: a prototype, and the ten are an internal design collection rather than a
+     result while voting is open. See the notice in the masthead block. -->
 <meta name="robots" content="noindex, nofollow">
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -34,18 +35,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
 
-<link rel="stylesheet" href="/assets/css/site.css?v=20261026-s01">
-<link rel="stylesheet" href="/assets/css/magazine.css?v=20261026-s01">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261026-s02">
+<link rel="stylesheet" href="/assets/css/magazine.css?v=20261026-s02">
 
-<script src="/assets/js/pc-founders.js?v=20261026-s01" defer></script>
-<script src="/assets/js/magazine.js?v=20261026-s01" defer></script>
+<script src="/assets/js/pc-founders.js?v=20261026-s02" defer></script>
+<script src="/assets/js/magazine.js?v=20261026-s02" defer></script>
 </head>
 
 <body class="mag-body">
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PRVSWFBN"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-<a class="skip" href="#covers">Skip to the founders</a>
+<a class="skip" href="#collection">Skip to the collection</a>
 
 <header class="nav on-photo">
   <a class="nav__mark" href="/" aria-label="NextGen Summit, home">
@@ -56,109 +57,110 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a class="nav__link" href="/">The Summit</a>
     <a class="nav__link" href="/pitch/">Pitch Competition</a>
     <a class="nav__link" href="/pitch/peoples-choice/">People&rsquo;s Choice</a>
-    <span class="nav__link is-here" aria-current="page">Top 10</span>
+    <span class="nav__link is-here" aria-current="page">The Collection</span>
     <a class="btn btn--sm" href="/tickets/">Get tickets</a>
   </nav>
 </header>
 
 <main class="mag">
 
-  <!-- ==================== hero ==================== -->
-  <section class="mag-hero" aria-labelledby="mag-title">
-    <div class="mag-hero__in">
-      <p class="mag-hero__kicker">The People&rsquo;s Choice &mdash; Top 10</p>
-      <h1 class="mag-hero__t wm" id="mag-title">10 Founders.<br><em>10 Stories.</em></h1>
-      <p class="mag-hero__lede">Meet the founders whose ideas captured the attention of our
-        community. Choose a cover, open the magazine, and read the issue.</p>
+  <!-- ==================== the masthead block ==================== -->
+  <section class="mag-head" aria-labelledby="mag-title">
+    <div class="mag-head__in">
+      <p class="mag-head__eyebrow">The NextGen Edition</p>
+      <h1 class="mag-head__t" id="mag-title">A collection<br>worth opening.</h1>
+      <p class="mag-head__sub">The People&rsquo;s Choice <i>/</i> Ten founder issues</p>
 
-      <!-- Replaced by the real standing once a Top 10 is confirmed; see TOP_10 in magazine.js -->
-      <p class="mag-hero__status" data-mag-status hidden></p>
+      <!-- Replaced by magazine.js; see ISSUES in that file. -->
+      <p class="mag-head__status" data-mag-status hidden></p>
     </div>
   </section>
 
-  <!-- ==================== the ten covers ==================== -->
-  <section class="mag-shelf" id="covers" aria-labelledby="shelf-title">
-    <div class="mag-shelf__head">
-      <h2 class="mag-shelf__t" id="shelf-title">The collection</h2>
-      <p class="mag-shelf__hint">Ten issues. Pick one.</p>
-    </div>
+  <!-- ==================== the rack ====================
+       Desktop: a horizontal shelf, covers standing side by side on a wooden ledge.
+       Mobile: the same shelf turned vertical, one issue per level.
+       Only Issue 01 opens; the other nine are labelled placeholders. -->
+  <section class="mag-rack" id="collection" aria-labelledby="rack-title">
+    <h2 class="sr" id="rack-title">The magazine rack</h2>
 
-    <div class="mag-shelf__wrap">
-      <button class="mag-shelf__arrow mag-shelf__arrow--prev" type="button"
-              data-shelf-prev aria-label="Scroll the covers left">
+    <div class="mag-rack__wrap">
+      <button class="mag-rack__arrow mag-rack__arrow--prev" type="button"
+              data-shelf-prev aria-label="Scroll the rack left">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4 7 12l8 8"/></svg>
       </button>
 
-      <ul class="mag-shelf__rail" data-mag-shelf role="list">
-        <li class="mag-shelf__loading">Loading the collection&hellip;</li>
-      </ul>
+      <div class="mag-rack__frame">
+        <ul class="mag-rack__shelf" data-mag-shelf role="list">
+          <li class="mag-rack__loading">Loading the collection&hellip;</li>
+        </ul>
+        <div class="mag-rack__ledge" aria-hidden="true"></div>
+      </div>
 
-      <button class="mag-shelf__arrow mag-shelf__arrow--next" type="button"
-              data-shelf-next aria-label="Scroll the covers right">
+      <button class="mag-rack__arrow mag-rack__arrow--next" type="button"
+              data-shelf-next aria-label="Scroll the rack right">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 4 8 8-8 8"/></svg>
       </button>
     </div>
-  </section>
 
-  <!-- ==================== the magazine ==================== -->
-  <section class="mag-stage" data-mag-stage aria-labelledby="stage-title" hidden>
-    <h2 class="sr" id="stage-title">The open magazine</h2>
-
-    <div class="mag-stage__bar">
-      <p class="mag-stage__issue"><span data-mag-index>01</span> <i>/</i> <span data-mag-total>10</span></p>
-      <div class="mag-stage__nav">
-        <button class="mag-ctl" type="button" data-mag-prev aria-label="Previous founder">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4 7 12l8 8"/></svg>
-          <span>Prev</span>
-        </button>
-        <button class="mag-ctl" type="button" data-mag-next aria-label="Next founder">
-          <span>Next</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 4 8 8-8 8"/></svg>
-        </button>
-        <button class="mag-ctl mag-ctl--close" type="button" data-mag-close aria-label="Close the magazine">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg>
-          <span>Close</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- The book. .is-open flips the cover back on its hinge and reveals the spread. -->
-    <div class="mag-book" data-mag-book>
-      <div class="mag-book__inner" data-mag-inner>
-
-        <!-- left page: THE PITCH -->
-        <article class="mag-page mag-page--left" data-mag-left></article>
-
-        <!-- the spine, drawn not imaged -->
-        <div class="mag-spine" aria-hidden="true"></div>
-
-        <!-- right page: THE FOUNDER -->
-        <article class="mag-page mag-page--right" data-mag-right></article>
-
-        <!-- The last leaf: the sign-off. Covers both pages, so it reads as the magazine
-             closing rather than as a third column. Written in NextGen's voice throughout;
-             nothing on it is attributed to a founder. -->
-        <section class="mag-off" data-mag-off aria-hidden="true"
-                 aria-label="A NextGen sign-off"></section>
-
-        <!-- The front cover, hinged on the spine; it swings away on open. A real button, so
-             Enter, Space, focus and the accessibility tree all come for free; magazine.js
-             disables it once the issue is open, which is when it stops being pressable. -->
-        <button class="mag-cover" type="button" data-mag-cover
-                aria-label="Open this issue"></button>
-      </div>
-    </div>
-
-    <p class="mag-stage__foot" data-mag-foot></p>
+    <p class="mag-rack__note" data-mag-note></p>
   </section>
 
 </main>
 
 <footer class="mag-foot">
   <p><a href="/pitch/peoples-choice/">&larr; Back to the People&rsquo;s Choice Award</a></p>
-  <p class="mag-foot__small">Pitch videos, portraits and descriptions are the founders&rsquo; own,
+  <p class="mag-foot__small">Pitch videos, portraits, logos and descriptions are the founders&rsquo; own,
      as supplied to NextGen Summit.</p>
 </footer>
+
+<!-- ==================== the reader ====================
+     An overlay, so an issue gets the whole stage and the rack stays where it was. The open
+     and close controls live in the bar ABOVE the artwork, never on the cover itself. -->
+<div class="mag-reader" data-mag-reader role="dialog" aria-modal="true"
+     aria-labelledby="reader-title" hidden>
+
+  <div class="mag-reader__bar">
+    <p class="mag-reader__id" id="reader-title">
+      <b>Issue <span data-mag-index>01</span></b>
+      <i>/</i> <span data-mag-total>10</span>
+      <em data-mag-who></em>
+    </p>
+    <div class="mag-reader__ctl">
+      <button class="mag-ctl mag-ctl--go" type="button" data-mag-openstory>
+        Open the story
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+      </button>
+      <button class="mag-ctl" type="button" data-mag-close aria-label="Close the magazine">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg>
+        <span>Close</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mag-reader__body" data-mag-scroll>
+    <div class="mag-book" data-mag-book>
+      <div class="mag-book__inner" data-mag-inner>
+
+        <!-- left page: THE PITCH -->
+        <article class="mag-page mag-page--pitch" data-mag-left></article>
+
+        <!-- the gutter, drawn not imaged; only in the open state -->
+        <div class="mag-spine" aria-hidden="true"></div>
+
+        <!-- right page: THE FOUNDER STORY -->
+        <article class="mag-page mag-page--story" data-mag-right></article>
+
+        <!-- the last page. NextGen's voice throughout; nothing attributed to a founder. -->
+        <section class="mag-end" data-mag-off aria-hidden="true"
+                 aria-label="See you at NextGen"></section>
+
+        <!-- the closed cover. A real <button>, so Enter, Space, focus and the accessibility
+             tree come for free; magazine.js disables it once the issue is open. -->
+        <button class="mag-cover" data-mag-cover type="button" aria-label="Open this issue"></button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

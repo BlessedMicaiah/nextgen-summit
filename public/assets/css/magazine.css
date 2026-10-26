@@ -1,709 +1,839 @@
 /* ============================================================================
-   TOP 10 — the People's Choice magazine.
+   THE NEXTGEN EDITION — the People's Choice magazine.
 
-   Ten covers on a rack, closed and overlapping. Pick one and it opens on the spine to a
-   two-page spread, then to a sign-off page.
+   Built from NextGen_Caleb_First_Magazine_Prototype_Kit. One issue is finished (Caleb Orji
+   / Haptol Labs); the other nine stand in the rack as labelled placeholders.
 
-   ART DIRECTION, AND WHAT CHANGED FROM THE CONCEPT BOARDS
+   THE BRIEF WAS "VOGUE, NOT UI", SO THE RULES ARE PRINT RULES
 
-   The boards are AI renders, and they look it: every cover sits inside a neon outline, on a
-   bokeh backdrop, under a plastic highlight, behind a 40px drop shadow. The brief asks for
-   the opposite -- "premium magazine design rather than futuristic AI artwork" -- so none of
-   that is reproduced here. What IS reproduced is the layout and the colour:
+   A fashion magazine has almost no interface in it. It has photography at full bleed,
+   type at two extremes of size with nothing in between, hairlines instead of borders,
+   paper instead of panels, and a lot of air. What it does not have is rounded cards,
+   pill buttons, drop shadows under everything, or a control sitting on top of the artwork.
 
-     GONE     the neon rim-glow, the light streaks, the background bokeh, the gloss
-              highlight, the oversized 3D shadow, the 60%-opacity colour washes.
-     KEPT     each founder's accent (--issue), the masthead, the side rail, the name /
-              company / rule / description stack, and the dark NextGen ground.
-     ADDED    print behaviour instead of screen behaviour: a paper grain, a real gutter
-              shadow at the spine, hairline rules, and shadows that read as a sheet of
-              paper lying on another sheet rather than a card floating in space.
+   So:
+     PAPER      the story page is cream (#EFEAE1) with near-black type, because that is
+                what the right-hand page of a magazine is. The pitch page opposite is the
+                issue's own colour at full bleed. The contrast between the two IS the
+                spread.
+     TYPE       Fraunces at 900 for display, pushed to its high-contrast end with
+                font-variation-settings, set in caps at sizes that would be absurd on a
+                web page and are ordinary on a cover. Montserrat only for the small
+                letterspaced furniture -- running heads, folios, credits.
+     RULES      1px hairlines. No borders, no outlines, no boxes around anything.
+     CHROME     every control lives in a bar above the artwork, never on it.
 
-   The only gradient on a cover is one low-opacity sweep of the founder's accent across the
-   bottom third, which is what a duotone cover does in print. Everything else is type.
+   ONE COVER, TWO SIZES
+
+   The cover on the shelf and the cover in the reader are the same component. It is sized
+   by container query -- every dimension inside is in `cqw`, so one design scales from a
+   150px thumbnail to a 560px cover with nothing to keep in sync. The px font-size on
+   .mag-cover is the fallback for browsers without container queries.
    ========================================================================= */
 
 .mag-body {
-  --mag-bg:      #05080C;
-  --mag-paper:   #0E151D;   /* the page: near-black, not black, so photographs have a ground */
-  --mag-paper-2: #121A24;
-  --mag-edge:    #1B2836;
-  --mag-ink:     #F2F7FA;
-  --mag-ink-2:   #9FB4C6;
-  --mag-ink-3:   #6A8197;
+  --bg:        #14181B;   /* the wall the rack hangs on */
+  --bg-2:      #1B2024;
+  --wood:      #8C6239;
+  --wood-lo:   #5E411F;
+  --wood-hi:   #C59A66;
+  --paper:     #EFEAE1;   /* the story page */
+  --paper-2:   #E4DED2;
+  --paper-ink: #15191C;
+  --ink:       #F4F1EA;
+  --ink-2:     #AFB7BA;
+  --ink-3:     #78838A;
+  --hair:      rgba(244,241,234,.22);
 
-  --mag-accent:  var(--accent, #1FC7BE);
-  --issue:       var(--mag-accent);        /* overwritten per issue, per cover */
+  --issue:     #20D6DA;   /* overwritten per issue */
+  --issue-dk:  #043F4A;
 
-  --mag-ease:    cubic-bezier(.16, 1, .3, 1);
-  --mag-turn:    560ms;                    /* inside the 400-650ms the brief asks for */
-  --mag-gut:     clamp(16px, 4vw, 64px);
+  --ease:      cubic-bezier(.16, 1, .3, 1);
+  --turn:      620ms;
+  --gut:       clamp(18px, 5vw, 80px);
 
   margin: 0;
-  background: var(--mag-bg);
-  color: var(--mag-ink);
+  background: var(--bg);
+  color: var(--ink);
   font: 500 16px/1.6 var(--f-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-
-/* One quiet wash, fixed, no bokeh. It gives the room a light source and stops there. */
-.mag-body::before {
-  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(900px 520px at 14% -10%, rgba(31,199,190,.065), transparent 70%),
-    radial-gradient(760px 460px at 92% 2%, rgba(0,163,230,.045), transparent 72%);
-}
-
 .mag-body *, .mag-body *::before, .mag-body *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 .mag { display: block; }
 
-/* The site nav is fixed and transparent. Over a pale page that is fine; over a scrolling
-   rack of photographic covers it is unreadable, so this page gives it something to sit on. */
-.mag-body .nav { background: rgba(5,8,12,.86); backdrop-filter: blur(14px); color: var(--mag-ink); }
+/* Fraunces at its most Didone: thin hairlines, sharp joints. This is the one typographic
+   move that separates an editorial headline from a bold web heading. */
+.mag-disp {
+  font-family: var(--f-display); font-weight: 900; font-style: normal;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  letter-spacing: -.028em; line-height: .9;
+}
+.mag-sc {
+  font: 700 clamp(9.5px, .72vw, 11px)/1.5 var(--f-sans);
+  letter-spacing: .26em; text-transform: uppercase;
+}
+
+/* the site nav, given a ground to sit on over photography */
+.mag-body .nav { background: rgba(20,24,27,.88); backdrop-filter: blur(16px); color: var(--ink); }
 .mag-body .nav::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 40px;
-  background: linear-gradient(180deg, rgba(5,8,12,.86), rgba(5,8,12,0));
-  pointer-events: none;
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 36px;
+  background: linear-gradient(180deg, rgba(20,24,27,.88), rgba(20,24,27,0)); pointer-events: none;
 }
-.mag-body .nav__link { color: var(--mag-ink-2); }
-.mag-body .nav__link:hover { color: var(--mag-ink); }
-.mag-body .nav__link.is-here { color: var(--mag-accent); }
+.mag-body .nav__link { color: var(--ink-2); }
+.mag-body .nav__link:hover { color: var(--ink); }
+.mag-body .nav__link.is-here { color: var(--wood-hi); }
 
-/* ---------- hero ---------- */
-.mag-hero { padding: clamp(92px, 13vh, 142px) var(--mag-gut) clamp(22px, 4vw, 44px); }
-.mag-hero__in { max-width: 1180px; margin: 0 auto; }
-.mag-hero__kicker {
-  margin: 0; font: 800 11px/1 var(--f-sans); letter-spacing: .26em;
-  text-transform: uppercase; color: var(--mag-accent);
+/* ============================================================================
+   THE MASTHEAD BLOCK
+   ========================================================================= */
+.mag-head { padding: clamp(94px, 14vh, 158px) var(--gut) clamp(22px, 4vw, 44px); }
+.mag-head__in { max-width: 1420px; margin: 0 auto; }
+.mag-head__eyebrow { margin: 0; font: 700 11px/1 var(--f-sans); letter-spacing: .3em;
+                     text-transform: uppercase; color: var(--wood-hi); }
+.mag-head__t {
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  margin: clamp(14px, 2vw, 22px) 0 0;
+  font-size: clamp(42px, 7.6vw, 104px); line-height: .94; letter-spacing: -.042em;
+  color: var(--ink);
 }
-.mag-hero__t {
-  margin: clamp(13px, 2vw, 20px) 0 0;
-  font-size: clamp(40px, 8vw, 98px); line-height: .92; letter-spacing: -.035em;
-  color: var(--mag-ink);
+.mag-head__sub {
+  margin: clamp(16px, 2.2vw, 24px) 0 0;
+  font: 700 clamp(11px, 1vw, 13px)/1.5 var(--f-sans);
+  letter-spacing: .24em; text-transform: uppercase; color: var(--ink-2);
 }
-.mag-hero__t em { font-style: normal; color: var(--mag-accent); }
-.mag-hero__lede {
-  margin: clamp(15px, 2.2vw, 24px) 0 0; max-width: 46ch;
-  font-size: clamp(15px, 1.5vw, 18px); color: var(--mag-ink-2);
-}
+.mag-head__sub i { font-style: normal; color: var(--ink-3); margin: 0 .5em; }
 
-/* The provisional-results notice. Loud on purpose: a list of ten names published while
-   voting is open is the one thing on this page that could be read as a result. */
-.mag-hero__status {
-  display: flex; align-items: flex-start; gap: 11px;
-  margin: clamp(17px, 2.4vw, 26px) 0 0; padding: 13px 16px; max-width: 70ch;
-  border: 1px solid rgba(255,178,36,.36); border-radius: 10px;
-  background: rgba(255,178,36,.075);
-  font: 600 13px/1.6 var(--f-sans); color: #FFE0AE;
+/* The provisional notice. It stays loud: ten names published while voting is open is the
+   one thing on this page that could be mistaken for a result. */
+.mag-head__status {
+  display: block; margin: clamp(18px, 2.4vw, 28px) 0 0; padding: 0 0 0 16px; max-width: 76ch;
+  border-left: 2px solid var(--wood-hi);
+  font: 500 13px/1.65 var(--f-sans); color: #D9CBB4;
 }
-.mag-hero__status b {
-  display: block; font: 800 10px/1.5 var(--f-sans); letter-spacing: .16em;
-  text-transform: uppercase; color: #FFB224;
+.mag-head__status b {
+  display: block; margin-bottom: 5px;
+  font: 700 10px/1.5 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--wood-hi);
 }
 
 /* ============================================================================
    THE RACK
 
-   The brief: "one curated set, rather than ten unrelated cards."
-
-   So the covers overlap. Each one sits 22px over the right edge of the one before it, the
-   way a stack of magazines fans out on a rack, and carries a shadow down its left edge so
-   the overlap reads as thickness rather than as a mistake. The text block is bottom-LEFT on
-   every cover, which is the part that never gets covered -- the overlap only ever eats a
-   cover's right edge, so no name and no company is ever clipped.
-
-   The active issue lifts clear of the stack and widens slightly. Nothing glows.
+   A slim wall rack: a back panel in shadow, a wooden ledge the issues stand on, and a thin
+   lip in front of them so they read as objects resting on a shelf rather than images in a
+   row. Restrained on purpose -- the brief asks for a tasteful frame, not a furniture
+   showroom, so the wood is three gradients and a hairline, nothing more.
    ========================================================================= */
-.mag-shelf { padding: clamp(8px, 1.6vw, 14px) 0 clamp(26px, 4vw, 48px); }
-.mag-shelf__head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
-  max-width: 1180px; margin: 0 auto clamp(12px, 1.8vw, 18px); padding: 0 var(--mag-gut);
-}
-.mag-shelf__t {
-  margin: 0; font: 800 11px/1 var(--f-sans); letter-spacing: .22em;
-  text-transform: uppercase; color: var(--mag-ink-3);
-}
-.mag-shelf__hint { margin: 0; font-size: 13px; color: var(--mag-ink-3); }
+.mag-rack { padding: clamp(10px, 2vw, 22px) 0 clamp(40px, 6vw, 76px); }
+.mag-rack__wrap { position: relative; }
 
-.mag-shelf__wrap { position: relative; }
+.mag-rack__frame {
+  position: relative; margin: 0 auto; max-width: 1560px;
+  padding: clamp(22px, 3vw, 40px) 0 0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.34), rgba(0,0,0,0) 22%),
+    linear-gradient(180deg, #23282B 0%, #1A1F22 100%);
+  border-top: 1px solid rgba(197,154,102,.16);
+}
 
-.mag-shelf__rail {
-  display: flex; gap: 0;                     /* the overlap IS the gap */
-  margin: 0; padding: 10px var(--mag-gut) 26px;
+.mag-rack__shelf {
+  position: relative; z-index: 2;
+  display: flex; align-items: flex-end; gap: clamp(3px, .5vw, 8px);
+  margin: 0; padding: 0 clamp(18px, 5vw, 80px) 0;
   list-style: none; overflow-x: auto; overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;         /* momentum swipe on iOS */
+  -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity; scrollbar-width: none;
 }
-.mag-shelf__rail::-webkit-scrollbar { display: none; }
-.mag-shelf__loading { color: var(--mag-ink-3); font-size: 14px; padding: 20px 0; }
+.mag-rack__shelf::-webkit-scrollbar { display: none; }
+.mag-rack__loading { color: var(--ink-3); font-size: 14px; padding: 40px 0 60px; }
 
-.mag-shelf__slot {
-  flex: none; scroll-snap-align: center;
-  width: clamp(132px, 13.5vw, 170px);
-  margin-right: -22px;                       /* the fan */
-}
-.mag-shelf__slot:last-child { margin-right: 0; }
-
-.mag-mini {
-  position: relative; display: block; width: 100%; aspect-ratio: 2 / 3;
-  padding: 0; border: 0; border-radius: 4px; overflow: hidden; cursor: pointer;
-  background: var(--mag-paper-2); text-align: left; color: inherit;
-  /* a sheet on a sheet: one tight contact shadow, one soft one. No 40px halo. */
-  box-shadow: -6px 0 14px -6px rgba(0,0,0,.72), 0 6px 16px -10px rgba(0,0,0,.9),
-              inset 0 0 0 1px rgba(255,255,255,.055);
-  transition: transform .42s var(--mag-ease), box-shadow .42s var(--mag-ease);
-  transform-origin: bottom center;
-}
-.mag-mini__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-
-/* The one coloured gradient on a mini cover: the founder's accent, low, across the base. */
-.mag-mini__tone {
-  position: absolute; inset: 0;
+/* the ledge: a plank, a lip, and the shadow the issues cast onto it */
+.mag-rack__ledge {
+  position: relative; z-index: 3; height: clamp(26px, 2.6vw, 38px); margin-top: -2px;
   background:
-    linear-gradient(180deg, rgba(5,8,12,.74) 0%, rgba(5,8,12,.06) 30%, rgba(5,8,12,.92) 100%),
-    linear-gradient(0deg, color-mix(in srgb, var(--issue) 26%, transparent) 0%, transparent 46%);
+    linear-gradient(180deg, rgba(0,0,0,.5) 0 2px, transparent 2px),
+    linear-gradient(180deg, var(--wood-hi) 0%, var(--wood) 36%, var(--wood-lo) 100%);
+  box-shadow: 0 10px 20px -10px rgba(0,0,0,.7), inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.mag-rack__ledge::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -9px; height: 9px;
+  background: linear-gradient(180deg, var(--wood-lo), #2A1C0E);
 }
 
-.mag-mini__top {
-  position: absolute; left: 10px; top: 9px; right: 10px;
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 6px;
+.mag-rack__note {
+  max-width: 1420px; margin: clamp(22px, 3vw, 34px) auto 0; padding: 0 var(--gut);
+  font: 500 13px/1.7 var(--f-sans); color: var(--ink-3);
 }
-.mag-mini__mark {
-  font-family: var(--f-display); font-weight: 900; font-size: 12.5px; line-height: .9;
-  letter-spacing: -.035em; color: #fff;
-}
-.mag-mini__mark i { font-style: normal; }
-.mag-mini__mark b { color: var(--issue); }
-.mag-mini__no {
-  font: 800 10px/1 var(--f-sans); letter-spacing: .06em;
-  color: rgba(255,255,255,.82); font-variant-numeric: tabular-nums;
-}
+.mag-rack__note b { color: var(--ink-2); font-weight: 700; }
 
-.mag-mini__foot { position: absolute; left: 10px; right: 14px; bottom: 10px; }
-.mag-mini__rule { display: block; height: 2px; width: 20px; margin-bottom: 7px; background: var(--issue); }
-.mag-mini__name {
-  display: block; margin: 0; font: 800 11.5px/1.16 var(--f-sans); letter-spacing: -.012em;
-  color: #fff;
-}
-.mag-mini__co {
-  display: block; margin: 3px 0 0; font: 700 8.5px/1.35 var(--f-sans); letter-spacing: .1em;
-  color: var(--issue); text-transform: uppercase;
-}
-
-.mag-mini:hover, .mag-mini:focus-visible { transform: translateY(-9px); outline: none; }
-.mag-mini:focus-visible { box-shadow: 0 0 0 2px var(--mag-bg), 0 0 0 4px var(--issue); }
-.mag-mini[aria-current="true"] {
-  transform: translateY(-12px) scale(1.045);
-  box-shadow: -10px 0 22px -8px rgba(0,0,0,.8), 0 14px 26px -14px rgba(0,0,0,.95),
-              inset 0 0 0 1px color-mix(in srgb, var(--issue) 62%, transparent);
-}
-/* lift the open issue out of the fan so its right edge is not under its neighbour */
-.mag-shelf__slot:has(.mag-mini[aria-current="true"]) { z-index: 3; margin-right: -6px; }
-.mag-shelf__slot { position: relative; z-index: 1; transition: margin-right .42s var(--mag-ease); }
-.mag-shelf__slot:hover { z-index: 2; }
-
-.mag-shelf__arrow {
-  position: absolute; top: 50%; translate: 0 -62%; z-index: 4;
-  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
-  display: grid; place-items: center;
-  background: rgba(10,16,23,.9); border: 1px solid var(--mag-edge);
+.mag-rack__arrow {
+  position: absolute; top: 44%; translate: 0 -50%; z-index: 5;
+  width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: grid; place-items: center;
+  background: rgba(20,24,27,.92); border: 1px solid rgba(244,241,234,.22);
   backdrop-filter: blur(6px);
 }
-.mag-shelf__arrow svg { width: 16px; height: 16px; fill: none; stroke: var(--mag-ink); stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
-.mag-shelf__arrow:hover { border-color: var(--mag-accent); }
-.mag-shelf__arrow--prev { left: calc(var(--mag-gut) - 20px); }
-.mag-shelf__arrow--next { right: calc(var(--mag-gut) - 20px); }
-.mag-shelf__arrow[disabled] { opacity: 0; pointer-events: none; }
-@media (max-width: 760px) { .mag-shelf__arrow { display: none; } }
+.mag-rack__arrow svg { width: 16px; height: 16px; fill: none; stroke: var(--ink);
+                       stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mag-rack__arrow:hover { border-color: var(--wood-hi); }
+.mag-rack__arrow--prev { left: clamp(4px, 1.5vw, 26px); }
+.mag-rack__arrow--next { right: clamp(4px, 1.5vw, 26px); }
+.mag-rack__arrow[disabled] { opacity: 0; pointer-events: none; }
+@media (max-width: 900px) { .mag-rack__arrow { display: none; } }
 
-/* ---------- the stage ---------- */
-.mag-stage {
-  padding: clamp(6px, 1.6vw, 16px) var(--mag-gut) clamp(46px, 7vw, 88px);
-  max-width: 1480px; margin: 0 auto;
+/* a slot on the shelf */
+.mag-slot {
+  flex: none; position: relative; z-index: 1;
+  width: clamp(138px, 13vw, 176px);
+  scroll-snap-align: center;
+  transition: transform .5s var(--ease), z-index 0s;
 }
-.mag-stage__bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  margin-bottom: clamp(10px, 1.6vw, 18px);
+.mag-slot__btn {
+  display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer;
+  /* the issue stands on the ledge, so its shadow falls down and slightly right */
+  filter: drop-shadow(3px 10px 10px rgba(0,0,0,.6));
+  transition: transform .5s var(--ease), filter .5s var(--ease);
 }
-.mag-stage__issue {
-  margin: 0; font: 800 13px/1 var(--f-sans); letter-spacing: .14em;
-  color: var(--mag-ink-2); font-variant-numeric: tabular-nums;
+.mag-slot__btn:focus-visible { outline: 2px solid var(--wood-hi); outline-offset: 6px; }
+.mag-slot--ready .mag-slot__btn:hover,
+.mag-slot--ready .mag-slot__btn:focus-visible { transform: translateY(-16px) rotate(-.6deg); }
+.mag-slot--open { z-index: 4; }
+.mag-slot--open .mag-slot__btn { transform: translateY(-22px) scale(1.04); }
+
+.mag-slot__cap, .mag-slot__shelf {
+  display: none;              /* desktop: one continuous ledge, and the cover's own folio */
 }
-.mag-stage__issue i { font-style: normal; color: var(--mag-ink-3); margin: 0 3px; }
-.mag-stage__nav { display: flex; gap: 8px; }
+.mag-slot__cap { margin-top: 10px; color: var(--ink-3); }
 
-.mag-ctl {
-  display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px;
-  border-radius: 3px; cursor: pointer; background: transparent;
-  border: 1px solid var(--mag-edge); color: var(--mag-ink);
-  font: 800 10.5px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
-  transition: border-color .25s var(--mag-ease), color .25s var(--mag-ease);
+/* The nine that are not built yet. Desaturated, dimmed, not pressable, and labelled in
+   words rather than by being greyed into ambiguity. Reversible: magazine.js decides which
+   issues are ready, and this class is all that changes. */
+.mag-slot--soon .mag-slot__btn { cursor: default; filter: drop-shadow(2px 7px 8px rgba(0,0,0,.55)); }
+.mag-slot--soon .mag-cover { filter: saturate(.32) brightness(.62) contrast(.95); }
+.mag-slot--soon .mag-cover::after {
+  content: ""; position: absolute; inset: 0; background: rgba(20,24,27,.34);
 }
-.mag-ctl svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.mag-ctl:hover { border-color: var(--issue); color: var(--issue); }
-.mag-ctl[disabled] { opacity: .3; pointer-events: none; }
-@media (max-width: 560px) { .mag-ctl span { display: none; } .mag-ctl { padding: 0 12px; } }
-
-/* ============================================================================
-   THE BOOK
-
-   Sized from its HEIGHT, animating its WIDTH. A closed magazine is one cover wide; an open
-   one is two pages. Sizing by width would mean "closed" was a cover laid over a spread that
-   was already there, with the founder's page showing beside its own cover.
-   ========================================================================= */
-.mag-book { perspective: 2400px; perspective-origin: 50% 42%; }
-
-.mag-book__inner {
-  /* A page is 0.86 of its own height -- a little wider than a newsstand 4:5, because the
-     pitch videos are vertical: the film takes a tall plate and the column beside it only
-     becomes readable once the page is this wide. Measured: at 4:5 it came out at 183px. */
-  --spread-h: min(clamp(460px, 76vh, 740px), calc((100vw - 2 * var(--mag-gut)) / 1.74));
-  --page-w: calc(var(--spread-h) * .86);
-
-  position: relative; display: grid; grid-template-columns: 1fr 1fr;
-  height: var(--spread-h);
-  width: var(--page-w);
-  margin-inline: auto;
-  transform-style: preserve-3d;
-  border-radius: 3px;
-  /* the block of pages beneath the two on view: three hairlines, no image needed */
-  box-shadow:
-    0 2px 0 -1px var(--mag-edge), 0 4px 0 -2px var(--mag-edge), 0 6px 0 -3px var(--mag-edge),
-    0 26px 48px -32px rgba(0,0,0,.92);
-  transition: width var(--mag-turn) var(--mag-ease);
-}
-.mag-stage.is-open .mag-book__inner { width: calc(var(--page-w) * 2); }
-
-.mag-page {
-  position: relative; overflow: hidden; background: var(--mag-paper);
-  padding: clamp(16px, 1.9vw, 32px);
-  display: flex; flex-direction: column;
-  opacity: 0;   /* behind the cover while shut, and half-width mid-animation */
-}
-.mag-stage.is-open .mag-page { opacity: 1; transition: opacity .34s var(--mag-ease) .2s; }
-.mag-page--right { background: var(--mag-paper-2); }
-
-/* Paper grain. 2% of white at 3px — invisible as texture, visible as "not a flat div". */
-.mag-page::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
-  background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px);
-  background-size: 3px 3px;
-}
-/* The gutter. A real spread darkens towards the spine; this is that, not a decoration. */
-.mag-page::after {
-  content: ""; position: absolute; top: 0; bottom: 0; width: 13%; pointer-events: none;
-}
-.mag-page--left::after { right: 0; background: linear-gradient(90deg, transparent, rgba(0,0,0,.46)); }
-.mag-page--right::after { left: 0; background: linear-gradient(270deg, transparent, rgba(0,0,0,.46)); }
-
-.mag-spine {
-  position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; translate: -50% 0; z-index: 4;
-  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.9) 16%, rgba(0,0,0,.9) 84%, rgba(0,0,0,.25));
-  box-shadow: 0 0 10px 3px rgba(0,0,0,.5);
-  pointer-events: none;
+.mag-slot__soon {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  padding: 9px 8px; text-align: center;
+  background: rgba(12,15,17,.9);
+  font: 700 8px/1.4 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+  color: #CBB392;
 }
 
 /* ============================================================================
    THE COVER
+
+   One component, two sizes, scaled by container query. Everything inside is in cqw, so the
+   whole design is one set of proportions -- the shelf thumbnail and the reader's cover are
+   literally the same cover at different widths.
    ========================================================================= */
 .mag-cover {
-  /* One PAGE wide, always -- not "half the book". That keeps its right edge on the spine
-     while the book widens underneath it, so the hinge never moves. */
-  position: absolute; left: 0; top: 0; bottom: 0; width: var(--page-w); z-index: 6;
-  transform-origin: right center; transform-style: preserve-3d;
-  border-radius: 3px 0 0 3px; overflow: hidden; cursor: pointer;
-  background: var(--mag-paper-2);
-  box-shadow: 8px 0 22px -14px rgba(0,0,0,.8);
-  transition: transform var(--mag-turn) var(--mag-ease), box-shadow var(--mag-turn) var(--mag-ease);
-  backface-visibility: hidden;
-  padding: 0; border: 0; margin: 0; font: inherit; color: inherit; text-align: left;
+  container-type: inline-size;
+  position: relative; display: block; width: 100%; aspect-ratio: 2 / 3;
+  overflow: hidden; background: var(--issue-dk); color: #fff;
+  padding: 0; border: 0; margin: 0; text-align: left; cursor: pointer;
   -webkit-appearance: none; appearance: none;
+  font-size: 5px;            /* fallback where cqw is unsupported */
 }
-.mag-cover:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--mag-bg), 0 0 0 4px var(--issue); }
-.mag-cover[disabled] { cursor: default; }
-.mag-stage.is-open .mag-cover {
-  transform: rotateY(-168deg);
-  box-shadow: -16px 0 32px -18px rgba(0,0,0,.85);
-  pointer-events: none;
-}
-
 .mag-cover__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
-/* The duotone sweep: the founder's accent, bottom third, 30%. One gradient, no rim light. */
+/* The only colour grading on the cover: the issue's own hue multiplied into the shadows,
+   and a fall to near-black at the foot so the title block has a ground. No rim light, no
+   bloom, no bokeh. */
 .mag-cover__tone {
   position: absolute; inset: 0;
   background:
-    linear-gradient(180deg, rgba(5,8,12,.80) 0%, rgba(5,8,12,.04) 30%, rgba(5,8,12,.94) 78%, rgba(5,8,12,.97) 100%),
-    linear-gradient(0deg, color-mix(in srgb, var(--issue) 30%, transparent) 0%, transparent 42%);
+    linear-gradient(180deg, rgba(4,12,14,.72) 0%, rgba(4,12,14,.06) 26%, rgba(4,12,14,.1) 44%,
+                            rgba(4,12,14,.88) 76%, rgba(4,12,14,.97) 100%),
+    linear-gradient(195deg, color-mix(in srgb, var(--issue) 22%, transparent) 0%, transparent 52%);
+}
+/* a whisper of print grain, so the cover is a printed sheet and not a screenshot */
+.mag-cover__tone::after {
+  content: ""; position: absolute; inset: 0; opacity: .5;
+  background-image: radial-gradient(rgba(255,255,255,.05) .5px, transparent .5px);
+  background-size: 2.5px 2.5px;
 }
 
 .mag-cover__in {
-  position: absolute; inset: 0; padding: clamp(16px, 2.1vw, 34px);
+  position: absolute; inset: 0; padding: 6.4cqw 6cqw 5.6cqw;
   display: flex; flex-direction: column; justify-content: space-between;
 }
-.mag-cover__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 
-/* the masthead, drawn in type -- nextgen. over PEOPLE'S CHOICE, as on the boards */
-.mag-cover__mast, .mag-lab__mast, .mag-mini__mark {
-  font-family: var(--f-display); font-weight: 900; letter-spacing: -.04em; color: #fff;
+/* masthead */
+.mag-cover__mast {
+  display: block;
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: 15.4cqw; line-height: .82; letter-spacing: -.055em; color: #fff;
 }
-.mag-cover__mast { font-size: clamp(19px, 2.1vw, 30px); line-height: .88; }
-.mag-cover__mast i, .mag-lab__mast i { font-style: normal; }
-.mag-cover__mast b, .mag-lab__mast b { color: var(--issue); }
-.mag-cover__mast span, .mag-lab__mast span {
-  display: block; margin-top: 4px; font-family: var(--f-sans); font-weight: 800;
-  font-size: 7.5px; letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.74);
-}
-
-.mag-cover__meta { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.mag-cover__no {
-  font: 800 9.5px/1.4 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
-  color: rgba(255,255,255,.7);
-}
-
-/* The logo chip. Every logo in the library is an opaque WebP with its own background baked
-   in, so a white tile is what lets the artwork appear exactly as supplied and still read
-   against a dark cover. object-fit: contain, so nothing is ever stretched. */
-.mag-cover__logo, .mag-head__logo, .mag-off__logo {
-  display: grid; place-items: center; background: #fff; border-radius: 3px;
-  box-shadow: 0 2px 10px -4px rgba(0,0,0,.6);
-}
-/* Three of the seven logos are drawn on their own dark ground. On a white tile they read as
-   a dark square inside a white square, so those drop the tile and take a hairline instead.
-   fitChips() in magazine.js decides, by sampling each file's corners. */
-.mag-cover__logo.is-dark, .mag-head__logo.is-dark, .mag-off__logo.is-dark {
-  background: transparent; box-shadow: none;
-  border: 1px solid rgba(255,255,255,.18); padding: 0;
-}
-.mag-cover__logo { width: clamp(42px, 4.4vw, 60px); aspect-ratio: 1; padding: 6px; }
-.mag-cover__logo img, .mag-head__logo img, .mag-off__logo img {
-  width: 100%; height: 100%; object-fit: contain;
-}
-
-/* the vertical editorial rail from the boards -- NextGen's line, not a founder's */
-.mag-cover__rail {
-  display: flex; flex-direction: column; gap: 2px; align-self: flex-start;
-  margin-top: clamp(14px, 2vw, 26px);
-  font: 800 8.5px/1.5 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
-  color: rgba(255,255,255,.72);
-}
-.mag-cover__rail i { font-style: normal; display: block; }
-.mag-cover__rail::after {
-  content: ""; display: block; width: 16px; height: 2px; margin-top: 7px; background: var(--issue);
-}
-
-.mag-cover__foot { display: block; }
-.mag-cover__name {
-  display: block; font-family: var(--f-display); font-weight: 900;
-  font-size: clamp(28px, 4vw, 60px); line-height: .9; letter-spacing: -.035em; color: #fff;
-}
-.mag-cover__co {
-  display: block; margin: 9px 0 0; font: 800 clamp(10px, 1.1vw, 14px)/1.25 var(--f-sans);
-  letter-spacing: .2em; text-transform: uppercase; color: var(--issue);
-}
-.mag-cover__hr { display: block; height: 1px; margin: clamp(11px, 1.3vw, 16px) 0; background: rgba(255,255,255,.26); }
-.mag-cover__blurb {
-  display: block; font: 500 clamp(11.5px, 1vw, 13.5px)/1.62 var(--f-sans);
+.mag-cover__mast i { font-style: normal; }
+.mag-cover__mast b { color: var(--issue); font-weight: inherit; }
+.mag-cover__edition {
+  display: block; margin-top: 2.6cqw;
+  font: 700 2.5cqw/1 var(--f-sans); letter-spacing: .34em; text-transform: uppercase;
   color: rgba(255,255,255,.86);
 }
-.mag-cover__cta {
-  display: flex; align-items: center; gap: 14px;
-  margin-top: clamp(13px, 1.6vw, 20px); padding-top: clamp(11px, 1.3vw, 15px);
-  border-top: 1px solid rgba(255,255,255,.2);
-  font: 800 9.5px/1 var(--f-sans); letter-spacing: .18em; text-transform: uppercase;
+.mag-cover__hr { display: block; height: 1px; background: rgba(255,255,255,.4); margin: 3.4cqw 0; }
+.mag-cover__folio {
+  display: flex; justify-content: space-between; gap: 2cqw;
+  font: 700 2.4cqw/1 var(--f-sans); letter-spacing: .24em; text-transform: uppercase;
+  color: rgba(255,255,255,.8);
 }
-.mag-cover__cta i { font-style: normal; color: rgba(255,255,255,.62); }
-.mag-cover__cta em {
-  font-style: normal; color: #fff; display: inline-flex; align-items: center; gap: 8px;
-  margin-left: auto;
+
+/* title block */
+.mag-cover__rule { display: block; width: 8cqw; height: .7cqw; background: var(--issue); }
+.mag-cover__kicker {
+  display: block; margin: 3cqw 0 2.4cqw;
+  font: 700 2.5cqw/1.3 var(--f-sans); letter-spacing: .26em; text-transform: uppercase;
+  color: rgba(255,255,255,.92);
 }
-.mag-cover__cta svg {
-  width: 22px; height: 22px; padding: 4px; border-radius: 50%;
-  border: 1px solid var(--issue); fill: none; stroke: var(--issue);
+.mag-cover__name {
+  display: block;
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: 13.4cqw; line-height: .88; letter-spacing: -.035em; text-transform: uppercase;
+  color: #fff;
+}
+.mag-cover__co {
+  display: block; margin-top: 2.4cqw;
+  font: 700 3.4cqw/1.2 var(--f-sans); letter-spacing: .18em; text-transform: uppercase;
+  color: var(--issue);
+}
+.mag-cover__blurb {
+  display: block; margin-top: 3.2cqw;
+  font: 500 2.9cqw/1.58 var(--f-sans); color: rgba(255,255,255,.88);
+}
+
+/* colophon: the company mark on the left, the invitation on the right */
+.mag-cover__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 3cqw;
+  margin-top: 4cqw; padding-top: 3.2cqw; border-top: 1px solid rgba(255,255,255,.3);
+}
+.mag-cover__brand { display: flex; align-items: center; gap: 2.4cqw; min-width: 0; }
+.mag-cover__logo {
+  flex: none; display: grid; place-items: center;
+  width: 9.6cqw; aspect-ratio: 1; padding: 1.2cqw; background: #fff;
+}
+.mag-cover__logo img { width: 100%; height: 100%; object-fit: contain; }
+.mag-cover__logo.is-dark { background: transparent; padding: 0; outline: 1px solid rgba(255,255,255,.3); }
+.mag-cover__collection {
+  font: 700 2.3cqw/1.35 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(255,255,255,.72);
+}
+.mag-cover__open {
+  flex: none; display: inline-flex; align-items: center; gap: 1.8cqw;
+  font: 700 2.5cqw/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase; color: #fff;
+}
+.mag-cover__open svg {
+  width: 3.4cqw; height: 3.4cqw; fill: none; stroke: var(--issue);
   stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
-  transition: background .3s var(--mag-ease), stroke .3s var(--mag-ease);
 }
-.mag-cover:hover .mag-cover__cta svg { background: var(--issue); stroke: #06131A; }
+.mag-slot--ready .mag-slot__btn:hover .mag-cover__open svg { stroke: #fff; }
 
-/* ---------- running heads ---------- */
-.mag-lab {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-  padding-bottom: clamp(9px, 1.1vw, 13px); margin-bottom: clamp(12px, 1.5vw, 18px);
-  border-bottom: 1px solid var(--mag-edge);
+/* ============================================================================
+   THE READER
+   ========================================================================= */
+.mag-reader {
+  position: fixed; inset: 0; z-index: 90;
+  background: #0B0E10;
+  display: flex; flex-direction: column;
 }
-.mag-lab:focus { outline: none; }
-.mag-lab__mast { font-size: clamp(15px, 1.55vw, 22px); line-height: .88; }
-.mag-lab > i {
-  font-style: normal; font: 800 9.5px/1.6 var(--f-sans); letter-spacing: .22em;
-  text-transform: uppercase; color: var(--issue); white-space: nowrap;
+.mag-reader::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(1100px 700px at 50% 0%, rgba(255,255,255,.05), transparent 70%);
 }
-.mag-lab--end { justify-content: flex-end; }
 
-/* ---------- left page: the pitch ---------- */
-/* Centred rather than stretched: a 9:16 plate tall enough to fill the page squeezes the
-   column beside it under 190px, which is too tight to read. Sizing the plate by WIDTH keeps
-   a proper measure and leaves space above and below, read as a margin. */
-.mag-pitch { display: flex; gap: clamp(12px, 1.4vw, 20px); align-items: center;
-             flex: 1 1 auto; min-height: 0; }
-.mag-pitch__copy { flex: 1 1 auto; min-width: 0; }
-.mag-pitch.is-wide { flex-direction: column; align-items: stretch; justify-content: center; }
+.mag-reader__bar {
+  position: relative; z-index: 3; flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: clamp(12px, 1.6vw, 20px) clamp(16px, 3vw, 40px);
+  border-bottom: 1px solid rgba(244,241,234,.12);
+}
+.mag-reader__id {
+  margin: 0; display: flex; align-items: baseline; gap: .6em; min-width: 0;
+  font: 700 11px/1.4 var(--f-sans); letter-spacing: .22em; text-transform: uppercase;
+  color: var(--ink-3); font-variant-numeric: tabular-nums;
+}
+.mag-reader__id b { color: var(--ink); font-weight: 700; }
+.mag-reader__id i { font-style: normal; }
+.mag-reader__id em {
+  font-style: normal; color: var(--issue); letter-spacing: .18em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mag-reader__ctl { display: flex; gap: 8px; flex: none; }
 
+.mag-ctl {
+  display: inline-flex; align-items: center; gap: 9px; min-height: 42px; padding: 0 16px;
+  border: 1px solid rgba(244,241,234,.26); background: transparent; color: var(--ink);
+  cursor: pointer;
+  font: 700 10px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+  transition: border-color .3s var(--ease), color .3s var(--ease), background .3s var(--ease);
+}
+.mag-ctl svg { width: 14px; height: 14px; fill: none; stroke: currentColor;
+               stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mag-ctl:hover { border-color: var(--ink); }
+.mag-ctl--go { border-color: var(--issue); color: var(--issue); }
+.mag-ctl--go:hover { background: var(--issue); color: #06161A; border-color: var(--issue); }
+.mag-ctl[hidden] { display: none; }
+@media (max-width: 560px) { .mag-ctl span { display: none; } }
+
+.mag-reader__body {
+  position: relative; z-index: 2; flex: 1 1 auto; min-height: 0;
+  display: grid; place-items: center;
+  padding: clamp(14px, 2.4vw, 34px) clamp(14px, 3vw, 44px) clamp(20px, 3vw, 44px);
+  overflow: auto; overscroll-behavior: contain;
+}
+
+/* ---------- the book ----------
+   Sized from its HEIGHT, animating its WIDTH: a closed magazine is one cover wide and an
+   open one is two pages. Sizing by width would mean "closed" was a cover laid over a spread
+   that was already there, with the story page showing beside its own cover. */
+.mag-book { perspective: 2600px; perspective-origin: 50% 44%; }
+.mag-book__inner {
+  /* Two shapes, because a magazine has two shapes.
+
+     SHUT it is a cover: 2:3, the proportion in the kit, tall and held in one hand.
+     OPEN it is a spread: close to 1.9:1, which is the proportion the kit's spread study
+     uses and the only one a landscape pitch video sits in without stranding half the page.
+
+     Both are driven from a HEIGHT, with the width derived -- sizing by width would mean
+     "shut" was a cover laid over a spread that was already there. Opening animates both,
+     which is also what laying a magazine down and looking at it actually does. */
+  --pad: clamp(14px, 3vw, 44px);
+  --shut-h: min(clamp(440px, 82vh, 880px), calc((100vw - 2 * var(--pad)) / 1.34));
+  --open-h: min(clamp(380px, 72vh, 720px), calc((100vw - 2 * var(--pad)) / 1.9));
+  --page-w: calc(var(--shut-h) * .667);
+
+  position: relative; display: grid; grid-template-columns: 1fr 1fr;
+  height: var(--shut-h); width: var(--page-w); margin-inline: auto;
+  transform-style: preserve-3d;
+  box-shadow: 0 30px 60px -36px rgba(0,0,0,.95);
+  transition: width var(--turn) var(--ease), height var(--turn) var(--ease);
+}
+.mag-reader.is-open .mag-book__inner {
+  --page-w: calc(var(--open-h) * .95);
+  height: var(--open-h); width: calc(var(--open-h) * 1.9);
+  /* the block of pages beneath the two on view */
+  box-shadow: 0 2px 0 -1px rgba(255,255,255,.12), 0 4px 0 -2px rgba(255,255,255,.08),
+              0 36px 64px -34px rgba(0,0,0,.95);
+}
+
+.mag-page {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+  opacity: 0;        /* behind the cover while shut, and half-width mid-animation */
+}
+.mag-reader.is-open .mag-page { opacity: 1; transition: opacity .36s var(--ease) .24s; }
+
+/* the gutter: only in the open state, as the handoff asks */
+.mag-page::after { content: ""; position: absolute; top: 0; bottom: 0; width: 11%;
+                   pointer-events: none; opacity: 0; transition: opacity .3s var(--ease) .3s; }
+.mag-reader.is-open .mag-page::after { opacity: 1; }
+.mag-page--pitch::after { right: 0; background: linear-gradient(90deg, transparent, rgba(0,0,0,.5)); }
+.mag-page--story::after { left: 0; background: linear-gradient(270deg, transparent, rgba(0,0,0,.2)); }
+
+.mag-spine {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; translate: -50% 0; z-index: 4;
+  background: linear-gradient(180deg, rgba(0,0,0,.2), rgba(0,0,0,.85) 14%, rgba(0,0,0,.85) 86%, rgba(0,0,0,.2));
+  opacity: 0; transition: opacity .3s var(--ease) .3s; pointer-events: none;
+}
+.mag-reader.is-open .mag-spine { opacity: 1; }
+
+/* ---------- the cover in the reader ---------- */
+.mag-reader .mag-cover {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--page-w); height: auto;
+  aspect-ratio: auto; z-index: 6;
+  transform-origin: right center; transform-style: preserve-3d; backface-visibility: hidden;
+  box-shadow: 10px 0 28px -16px rgba(0,0,0,.9);
+  transition: transform var(--turn) var(--ease), box-shadow var(--turn) var(--ease);
+}
+.mag-reader .mag-cover:focus-visible { outline: 2px solid var(--issue); outline-offset: -4px; }
+.mag-reader.is-open .mag-cover {
+  transform: rotateY(-172deg); box-shadow: -18px 0 36px -20px rgba(0,0,0,.9);
+  pointer-events: none;
+}
+
+/* ============================================================================
+   LEFT PAGE — THE PITCH
+   The issue's colour at full bleed, the film as large as the page allows, its own aspect
+   ratio preserved. Running head above, credit line below. Nothing else.
+   ========================================================================= */
+.mag-page--pitch {
+  padding: clamp(18px, 2.2vw, 36px);
+  background:
+    radial-gradient(120% 90% at 18% 6%, color-mix(in srgb, var(--issue) 30%, transparent), transparent 62%),
+    linear-gradient(158deg, var(--issue-dk) 0%, #07171B 58%, #041013 100%);
+  color: #fff;
+}
+.mag-run {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+  padding-bottom: clamp(9px, 1.1vw, 14px); margin-bottom: clamp(13px, 1.7vw, 22px);
+  border-bottom: 1px solid rgba(255,255,255,.26);
+}
+.mag-run:focus { outline: none; }
+.mag-run__t {
+  font: 700 clamp(9.5px, .74vw, 11px)/1.4 var(--f-sans);
+  letter-spacing: .26em; text-transform: uppercase; color: rgba(255,255,255,.92);
+}
+.mag-run__n {
+  font: 700 clamp(9px, .7vw, 10.5px)/1.4 var(--f-sans);
+  letter-spacing: .24em; text-transform: uppercase; color: rgba(255,255,255,.56);
+}
+.mag-page--story .mag-run { border-color: rgba(21,25,28,.2); }
+.mag-page--story .mag-run__t { color: var(--issue-dk); }
+.mag-page--story .mag-run__n { color: rgba(21,25,28,.5); }
+
+/* The film gets whatever the headline and the credit leave, and keeps its own ratio inside
+   it: a landscape pitch runs the full measure of the page, a vertical one becomes a tall
+   plate. markFilm() reads the poster's dimensions and sets the class -- the brief asks for
+   the native aspect ratio, and this is what preserves it. */
+/* The kit's spread study opens the pitch page with THE PITCH. set large. It is the page's
+   headline, it is NextGen's own words, and it is what stops a landscape video stranding the
+   top third of the sheet. */
+.mag-pitch__t {
+  margin: 0 0 clamp(13px, 1.7vw, 22px);
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: clamp(30px, 3.6vw, 62px); line-height: .88; letter-spacing: -.04em;
+  text-transform: uppercase; color: #fff;
+}
+.mag-pitch__t b { color: var(--issue); font-weight: inherit; }
+
+.mag-film-wrap { flex: 1 1 auto; min-height: 0; display: grid; place-items: center; }
 .mag-film {
-  position: relative; border-radius: 3px; overflow: hidden;
-  background: #000; cursor: pointer; border: 0; padding: 0; display: block;
-  box-shadow: 0 10px 24px -18px #000, inset 0 0 0 1px var(--mag-edge);
-  /* align-self stops flex stretching it, which squashed the 9:16 poster into a strip */
-  flex: 0 0 54%; aspect-ratio: 9 / 16; align-self: center; max-height: 100%;
+  position: relative; display: block;
+  padding: 0; border: 0; background: #000; cursor: pointer; overflow: hidden;
+  aspect-ratio: 9 / 16; height: 100%; width: auto; max-width: 100%;
+  box-shadow: 0 18px 40px -26px #000;
 }
-.mag-pitch.is-wide .mag-film {
-  flex: none; width: 100%; aspect-ratio: 16 / 9; align-self: stretch;
-}
+.mag-film.is-wide { aspect-ratio: 16 / 9; width: 100%; height: auto; max-height: 100%; }
 .mag-film__poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .mag-film__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
 .mag-film__scrim {
-  position: absolute; inset: 0; transition: opacity .3s var(--mag-ease);
-  background: linear-gradient(180deg, rgba(0,0,0,.12) 0%, transparent 38%, rgba(0,0,0,.72) 100%);
+  position: absolute; inset: 0; transition: opacity .3s var(--ease);
+  background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, transparent 34%, rgba(0,0,0,.6) 100%);
 }
 .mag-film__play {
   position: absolute; left: 50%; top: 50%; translate: -50% -50%;
-  width: clamp(48px, 4.6vw, 64px); aspect-ratio: 1; border-radius: 50%;
-  display: grid; place-items: center;
-  background: rgba(8,13,19,.42); border: 1.5px solid rgba(255,255,255,.9);
-  transition: transform .34s var(--mag-ease), background .34s var(--mag-ease), border-color .34s var(--mag-ease);
+  width: clamp(54px, 5.4vw, 78px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(6,12,14,.3); border: 1px solid rgba(255,255,255,.92);
+  transition: transform .36s var(--ease), background .36s var(--ease), border-color .36s var(--ease);
 }
-.mag-film__play svg { width: 36%; height: 36%; fill: #fff; translate: 9% 0; transition: fill .34s var(--mag-ease); }
-.mag-film:hover .mag-film__play { transform: scale(1.07); background: var(--issue); border-color: var(--issue); }
-.mag-film:hover .mag-film__play svg { fill: #06131A; }
+.mag-film__play svg { width: 32%; height: 32%; fill: #fff; translate: 10% 0; transition: fill .36s var(--ease); }
+.mag-film:hover .mag-film__play { transform: scale(1.06); background: var(--issue); border-color: var(--issue); }
+.mag-film:hover .mag-film__play svg { fill: #06161A; }
 .mag-film__cap {
-  position: absolute; left: 13px; right: 13px; bottom: 11px;
+  position: absolute; left: 14px; right: 14px; bottom: 12px;
   display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
 }
-.mag-film__cap b {
-  font: 800 9.5px/1.4 var(--f-sans); letter-spacing: .18em; text-transform: uppercase; color: #fff;
-}
-.mag-film__cap i {
-  font-style: normal; font: 700 10px/1.4 var(--f-sans); color: rgba(255,255,255,.78);
-  font-variant-numeric: tabular-nums;
-}
+.mag-film__cap b { font: 700 10px/1.4 var(--f-sans); letter-spacing: .22em; text-transform: uppercase; color: #fff; }
+.mag-film__cap i { font-style: normal; font: 600 10.5px/1.4 var(--f-sans); color: rgba(255,255,255,.8);
+                   font-variant-numeric: tabular-nums; }
 .mag-film.is-playing .mag-film__scrim,
 .mag-film.is-playing .mag-film__play,
 .mag-film.is-playing .mag-film__cap { opacity: 0; pointer-events: none; }
 
-/* A caption, not a headline. Set in display serif it read as the page's title and fought
-   the film for attention, on a measure too narrow to carry it. */
-.mag-pitch__lede {
-  margin: 0; padding-top: clamp(9px, 1.1vw, 13px); border-top: 2px solid var(--issue);
-  font: 600 clamp(12px, .98vw, 14px)/1.65 var(--f-sans); color: var(--mag-ink-2);
+.mag-credit {
+  flex: none; margin: clamp(13px, 1.6vw, 20px) 0 0; padding-top: clamp(10px, 1.2vw, 15px);
+  border-top: 1px solid rgba(255,255,255,.2);
+  font: 500 clamp(11px, .88vw, 13px)/1.6 var(--f-sans); color: rgba(255,255,255,.72);
 }
-.mag-pitch__sub {
-  margin: clamp(8px, .9vw, 11px) 0 0; font: 500 clamp(11px, .88vw, 12.5px)/1.6 var(--f-sans);
-  color: var(--mag-ink-3);
-}
-.mag-pitch.is-wide .mag-pitch__copy { margin-top: clamp(14px, 1.8vw, 22px); }
-
-/* ---------- right page: the founder ---------- */
-.mag-head { display: flex; align-items: center; gap: clamp(11px, 1.3vw, 16px); }
-.mag-head__logo { width: clamp(46px, 4.6vw, 64px); aspect-ratio: 1; padding: 7px; flex: none; }
-.mag-head__t { min-width: 0; }
-.mag-name {
-  margin: 0; font-family: var(--f-display); font-weight: 900;
-  font-size: clamp(23px, 2.6vw, 40px); line-height: .96; letter-spacing: -.035em; color: var(--mag-ink);
-}
-.mag-co {
-  margin: 7px 0 0; font: 800 clamp(10px, 1.02vw, 13px)/1.3 var(--f-sans);
-  letter-spacing: .2em; text-transform: uppercase; color: var(--issue);
-}
-.mag-rule { height: 1px; margin: clamp(13px, 1.6vw, 20px) 0; background: var(--mag-edge); }
-.mag-dek {
-  margin: 0; font-size: clamp(13px, 1.02vw, 15.5px); line-height: 1.72; color: var(--mag-ink-2);
-}
-/* A drop cap. One initial turns a short description into a page of a magazine, and it
-   invents nothing -- it is the founder's own first letter. */
-.mag-dek::first-letter {
-  float: left; margin: 5px 9px 0 0;
-  font-family: var(--f-display); font-weight: 900; font-size: 3.1em; line-height: .76;
-  color: var(--issue);
-}
-
-.mag-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: clamp(13px, 1.6vw, 20px) 0 0; padding: 0; list-style: none; }
-.mag-facts li {
-  padding: 6px 11px; border: 1px solid var(--mag-edge);
-  font: 700 9.5px/1.3 var(--f-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--mag-ink-2);
-}
-
-/* Where the data genuinely has nothing, the page says so rather than inventing it. */
-.mag-gap {
-  margin: clamp(12px, 1.5vw, 18px) 0 0; padding: 10px 13px;
-  border-left: 2px solid var(--mag-edge); background: rgba(255,255,255,.012);
-  font: 500 11.5px/1.6 var(--f-sans); color: var(--mag-ink-3);
-}
-
-.mag-ends { margin-top: auto; padding-top: clamp(13px, 1.5vw, 19px); display: flex; flex-wrap: wrap; gap: 8px; }
-.mag-link {
-  display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 0 16px;
-  border: 1px solid var(--issue); border-radius: 3px; cursor: pointer; background: transparent;
-  font: 800 9.5px/1 var(--f-sans); letter-spacing: .17em; text-transform: uppercase;
-  color: var(--issue); text-decoration: none;
-  transition: background .28s var(--mag-ease), color .28s var(--mag-ease);
-}
-.mag-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.mag-link:hover { background: var(--issue); color: #06131A; }
-.mag-link--ghost { border-color: var(--mag-edge); color: var(--mag-ink-2); }
-.mag-link--ghost:hover { background: transparent; border-color: var(--mag-ink-2); color: var(--mag-ink); }
+.mag-credit b { color: #fff; font-weight: 700; }
 
 /* ============================================================================
-   THE SIGN-OFF PAGE
+   RIGHT PAGE — THE FOUNDER STORY
 
-   The last leaf of an issue. It covers both pages of the spread, so it reads as the moment
-   the magazine closes rather than as a third column.
-
-   Everything on it is NextGen's own voice. Nothing is attributed to the founder, because no
-   founder supplied a sign-off -- see SIGN_OFF in magazine.js.
+   Cream paper, near-black type, one enormous name and a lot of air. The asymmetry is
+   deliberate: the title block sits high-left, the standfirst runs at a narrow measure, and
+   the colophon falls to the foot, leaving the right of the page open.
    ========================================================================= */
-.mag-off {
-  position: absolute; inset: 0; z-index: 5; display: grid; grid-template-columns: 1fr 1fr;
-  background: var(--mag-paper); border-radius: 3px; overflow: hidden;
-  opacity: 0; visibility: hidden; pointer-events: none;
-  transition: opacity .34s var(--mag-ease), visibility 0s linear .34s;
+.mag-page--story {
+  padding: clamp(18px, 2.2vw, 36px) clamp(20px, 2.6vw, 44px);
+  background: var(--paper); color: var(--paper-ink);
 }
-.mag-stage.is-open.is-signoff .mag-off {
-  opacity: 1; visibility: visible; pointer-events: auto;
-  transition: opacity .34s var(--mag-ease) .06s, visibility 0s;
+/* laid paper: two hairline gradients, almost invisible, enough to kill the flat-div look */
+.mag-page--story::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(21,25,28,.022) 0 1px, transparent 1px 3px),
+    radial-gradient(rgba(21,25,28,.035) .5px, transparent .5px);
+  background-size: auto, 3px 3px;
 }
-.mag-off__plate { position: relative; overflow: hidden; background: var(--mag-paper-2); }
-.mag-off__plate img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.mag-off__plate::after {
-  content: ""; position: absolute; inset: 0;
-  background:
-    linear-gradient(90deg, transparent 56%, rgba(0,0,0,.42) 100%),
-    linear-gradient(0deg, color-mix(in srgb, var(--issue) 24%, transparent) 0%, transparent 52%);
+.mag-story { position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+
+.mag-story__kicker {
+  margin: 0; font: 700 clamp(9.5px, .74vw, 11px)/1.4 var(--f-sans);
+  letter-spacing: .26em; text-transform: uppercase; color: var(--issue-dk);
 }
-.mag-off__copy {
-  padding: clamp(18px, 2.3vw, 40px); display: flex; flex-direction: column;
-  justify-content: center; background: var(--mag-paper-2);
+.mag-story__name {
+  margin: clamp(10px, 1.3vw, 16px) 0 0;
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: clamp(34px, 4.4vw, 76px); line-height: .86; letter-spacing: -.04em;
+  text-transform: uppercase; color: var(--paper-ink);
 }
-.mag-off__kicker {
-  margin: 0; font: 800 9.5px/1 var(--f-sans); letter-spacing: .24em;
-  text-transform: uppercase; color: var(--issue);
+.mag-story__co {
+  margin: clamp(11px, 1.4vw, 17px) 0 0;
+  font: 700 clamp(11px, 1.08vw, 15px)/1.3 var(--f-sans);
+  letter-spacing: .2em; text-transform: uppercase; color: var(--issue-dk);
 }
-.mag-off__kicker:focus { outline: none; }
-.mag-off__t {
-  margin: clamp(13px, 1.6vw, 20px) 0 0; font-family: var(--f-display); font-weight: 900;
-  font-size: clamp(27px, 3.3vw, 52px); line-height: .94; letter-spacing: -.035em; color: var(--mag-ink);
+.mag-story__hr { height: 1px; margin: clamp(15px, 1.9vw, 24px) 0; background: rgba(21,25,28,.22); }
+
+/* The standfirst: the founder's own description, set at reading size on a narrow measure.
+   A drop cap because this is the opening paragraph of a feature, and the first letter is
+   the founder's own. */
+.mag-story__dek {
+  margin: 0; max-width: 30ch;
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 30, "WONK" 0, "opsz" 144;
+  font-size: clamp(16px, 1.42vw, 23px); line-height: 1.38; letter-spacing: -.012em;
+  color: #22282C;
 }
-.mag-off__p {
-  margin: clamp(11px, 1.3vw, 17px) 0 0; font-size: clamp(13px, 1.05vw, 16px); line-height: 1.68;
-  color: var(--mag-ink-2); max-width: 34ch;
-}
-.mag-off__p b { color: var(--mag-ink); font-weight: 700; }
-.mag-off__sig {
-  display: flex; align-items: center; gap: 12px;
-  margin: clamp(15px, 1.9vw, 24px) 0 0; padding-top: clamp(13px, 1.6vw, 20px);
-  border-top: 1px solid var(--mag-edge);
-}
-.mag-off__logo { width: 44px; aspect-ratio: 1; padding: 6px; flex: none; }
-.mag-off__sig span { display: block; min-width: 0; }
-.mag-off__sig b { display: block; font: 800 12.5px/1.25 var(--f-sans); color: var(--mag-ink); }
-.mag-off__sig i {
-  display: block; margin-top: 3px; font-style: normal;
-  font: 700 9.5px/1.3 var(--f-sans); letter-spacing: .16em; text-transform: uppercase; color: var(--issue);
-}
-.mag-off .mag-ends { margin-top: clamp(16px, 2vw, 26px); padding-top: 0; }
-.mag-off__next {
-  margin: clamp(12px, 1.4vw, 18px) 0 0; font: 700 10px/1.4 var(--f-sans);
-  letter-spacing: .16em; text-transform: uppercase; color: var(--mag-ink-3);
+.mag-story__dek::first-letter {
+  float: left; margin: .08em .1em 0 0;
+  font-size: 3.1em; line-height: .76; color: var(--issue-dk);
 }
 
-/* ---------- page change ----------
-   No delay on the way out -- the delay on .is-open .mag-page exists to let the COVER clear,
-   and there is no cover in a page turn. */
-.mag-stage.is-open.is-turning .mag-page {
-  opacity: 0; transform: translateY(6px);
-  transition: opacity .18s var(--mag-ease), transform .18s var(--mag-ease);
+.mag-story__meta {
+  display: flex; flex-wrap: wrap; gap: 0 clamp(16px, 2vw, 30px);
+  margin: clamp(16px, 2vw, 26px) 0 0; padding: 0; list-style: none;
 }
-.mag-page { transition: opacity .3s var(--mag-ease), transform .3s var(--mag-ease); }
+.mag-story__meta li {
+  font: 700 clamp(9px, .72vw, 10.5px)/1.9 var(--f-sans);
+  letter-spacing: .2em; text-transform: uppercase; color: rgba(21,25,28,.56);
+}
+.mag-story__meta b { display: block; font-weight: 700; color: var(--paper-ink); letter-spacing: .14em; }
 
-.mag-stage__foot { margin: clamp(13px, 1.8vw, 20px) 0 0; font-size: 12.5px; color: var(--mag-ink-3); text-align: center; }
+.mag-story__brand {
+  display: flex; align-items: center; gap: clamp(12px, 1.5vw, 18px);
+  margin: auto 0 0; padding-top: clamp(15px, 1.9vw, 24px);
+  border-top: 1px solid rgba(21,25,28,.22);
+}
+.mag-story__logo {
+  flex: none; display: grid; place-items: center;
+  width: clamp(52px, 5vw, 76px); aspect-ratio: 1; padding: clamp(6px, .6vw, 9px);
+  background: #fff; box-shadow: 0 1px 0 rgba(21,25,28,.14);
+}
+.mag-story__logo img { width: 100%; height: 100%; object-fit: contain; }
+/* a logo drawn on its own dark ground keeps it; a white tile behind it would read as a
+   dark square inside a white one. See fitChips() in magazine.js. */
+.mag-story__logo.is-dark { background: var(--issue-dk); padding: clamp(5px, .5vw, 8px); box-shadow: none; }
+.mag-story__brandtext { min-width: 0; }
+.mag-story__brandtext b {
+  display: block; font: 700 clamp(10px, .82vw, 12px)/1.4 var(--f-sans);
+  letter-spacing: .2em; text-transform: uppercase; color: var(--paper-ink);
+}
+.mag-story__brandtext i {
+  display: block; margin-top: 4px; font-style: normal;
+  font: 500 clamp(10.5px, .84vw, 12.5px)/1.5 var(--f-sans); color: rgba(21,25,28,.6);
+}
+
+.mag-story__go {
+  display: inline-flex; align-items: center; gap: 10px; align-self: flex-start;
+  margin-top: clamp(14px, 1.7vw, 20px); padding-bottom: 3px;
+  border-bottom: 1px solid var(--issue-dk); text-decoration: none; background: none;
+  border-left: 0; border-right: 0; border-top: 0; cursor: pointer;
+  font: 700 clamp(9.5px, .76vw, 11px)/1.6 var(--f-sans);
+  letter-spacing: .22em; text-transform: uppercase; color: var(--issue-dk);
+}
+.mag-story__go svg { width: 13px; height: 13px; fill: none; stroke: currentColor;
+                     stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mag-story__go:hover { color: #000; border-color: #000; }
 
 /* ============================================================================
-   TABLET AND PHONE
+   THE LAST PAGE
 
-   The brief: keep the two-page effect on iPad wherever it stays readable, and give the
-   phone a clean single-page reading sequence that still feels like opening a magazine.
+   Covers both pages of the spread, so it reads as the magazine closing rather than as a
+   third column. NextGen's voice throughout: nothing here is attributed to a founder.
+   ========================================================================= */
+.mag-end {
+  position: absolute; inset: 0; z-index: 5; display: grid; grid-template-columns: 1.02fr 1fr;
+  background: var(--paper); overflow: hidden;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .4s var(--ease), visibility 0s linear .4s;
+}
+.mag-reader.is-open.is-end .mag-end {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transition: opacity .4s var(--ease) .05s, visibility 0s;
+}
+.mag-end__plate { position: relative; overflow: hidden; background: var(--issue-dk); }
+.mag-end__plate img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mag-end__plate::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 58%, rgba(0,0,0,.3) 100%);
+}
+.mag-end__copy {
+  padding: clamp(20px, 2.6vw, 48px); display: flex; flex-direction: column; justify-content: center;
+}
+.mag-end__kicker {
+  margin: 0; font: 700 clamp(9.5px, .74vw, 11px)/1.4 var(--f-sans);
+  letter-spacing: .26em; text-transform: uppercase; color: var(--issue-dk);
+}
+.mag-end__kicker:focus { outline: none; }
+.mag-end__t {
+  margin: clamp(14px, 1.8vw, 24px) 0 0;
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: clamp(32px, 4vw, 66px); line-height: .9; letter-spacing: -.04em; color: var(--paper-ink);
+}
+.mag-end__p {
+  margin: clamp(13px, 1.6vw, 20px) 0 0; max-width: 30ch;
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 40, "WONK" 0, "opsz" 144;
+  font-size: clamp(17px, 1.7vw, 26px); line-height: 1.4; color: rgba(21,25,28,.74);
+}
+.mag-end__sig {
+  display: flex; align-items: center; gap: 14px;
+  margin: clamp(18px, 2.2vw, 30px) 0 0; padding-top: clamp(14px, 1.8vw, 22px);
+  border-top: 1px solid rgba(21,25,28,.22);
+}
+.mag-end__logo {
+  flex: none; display: grid; place-items: center; width: 50px; aspect-ratio: 1; padding: 7px;
+  background: #fff; box-shadow: 0 1px 0 rgba(21,25,28,.14);
+}
+.mag-end__logo img { width: 100%; height: 100%; object-fit: contain; }
+.mag-end__logo.is-dark { background: var(--issue-dk); padding: 6px; box-shadow: none; }
+.mag-end__sig span { display: block; min-width: 0; }
+.mag-end__sig b { display: block; font: 700 11px/1.4 var(--f-sans); letter-spacing: .2em;
+                  text-transform: uppercase; color: var(--paper-ink); }
+.mag-end__sig i { display: block; margin-top: 4px; font-style: normal;
+                  font: 500 12px/1.4 var(--f-sans); color: rgba(21,25,28,.6); }
+.mag-end__back {
+  align-self: flex-start; margin-top: clamp(18px, 2.2vw, 30px);
+  display: inline-flex; align-items: center; gap: 11px; min-height: 46px; padding: 0 22px;
+  background: var(--issue-dk); color: var(--paper); border: 0; cursor: pointer;
+  font: 700 10px/1 var(--f-sans); letter-spacing: .22em; text-transform: uppercase;
+  transition: background .3s var(--ease);
+}
+.mag-end__back svg { width: 14px; height: 14px; fill: none; stroke: currentColor;
+                     stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mag-end__back:hover { background: #000; }
 
-   Below 900px the spread would give two unreadable columns and a spine down the middle of
-   somebody's thumb. So it becomes what a magazine becomes on a phone: a cover you open, and
-   pages you scroll. The cover still swings -- that is the gesture the page is about -- it
-   just hinges along the top, like lifting a flap.
+/* ---------- page change ---------- */
+.mag-reader.is-open.is-turning .mag-page {
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .18s var(--ease), transform .18s var(--ease);
+}
+.mag-page { transition: opacity .3s var(--ease), transform .3s var(--ease); }
+
+/* ============================================================================
+   MOBILE — A VERTICAL RACK, AND A READING SEQUENCE
+
+   Not a narrower desktop. The rack turns vertical, one issue per shelf level. The reader
+   becomes a full-screen cover you scroll past into the pages: pitch, then story, then the
+   closing page, in one natural column. No spread is squeezed into 390px.
    ========================================================================= */
 @media (max-width: 900px) {
-  .mag-book { perspective: 1400px; }
-  .mag-book__inner,
-  .mag-stage.is-open .mag-book__inner {
-    grid-template-columns: 1fr; width: 100%; height: auto;
+  .mag-rack__frame { padding: clamp(14px, 4vw, 24px) 0 0; }
+  .mag-rack__shelf {
+    flex-direction: column; align-items: center; gap: 0;
+    overflow-x: visible; padding: 0 clamp(16px, 5vw, 32px);
   }
-  .mag-spine { display: none; }
+  .mag-rack__ledge { display: none; }
 
-  .mag-page { border-radius: 0; }
-  .mag-page::after { display: none; }
-
-  .mag-cover {
-    position: relative; inset: auto; width: 100%; height: auto;
-    border-radius: 3px; transform-origin: center top; aspect-ratio: 3 / 4;
+  .mag-slot {
+    width: min(100%, 300px); scroll-snap-align: none;
+    padding-bottom: clamp(26px, 7vw, 40px);
   }
-  .mag-stage:not(.is-open) .mag-page { display: none; }
-  .mag-stage.is-open .mag-cover {
-    position: absolute; transform: rotateX(-96deg); opacity: 0;
-    transition: transform var(--mag-turn) var(--mag-ease), opacity .3s var(--mag-ease) .12s;
+  /* each issue gets its own shelf level, directly under the magazine standing on it */
+  .mag-slot__shelf {
+    display: block; position: relative; z-index: 2;
+    margin: 0 -18px; height: clamp(13px, 3.2vw, 18px);
+    background: linear-gradient(180deg, var(--wood-hi) 0%, var(--wood) 40%, var(--wood-lo) 100%);
+    box-shadow: 0 7px 13px -6px rgba(0,0,0,.75);
   }
+  .mag-slot__btn { filter: drop-shadow(2px 8px 10px rgba(0,0,0,.6)); }
+  .mag-slot--ready .mag-slot__btn:hover,
+  .mag-slot--ready .mag-slot__btn:focus-visible { transform: translateY(-8px) rotate(0); }
+  .mag-slot--open .mag-slot__btn { transform: translateY(-10px) scale(1.02); }
 
-  /* no room for a column beside the plate: the film goes over the copy */
-  .mag-pitch { flex-direction: column; align-items: stretch; }
-  .mag-film { flex: none; width: 100%; max-width: 320px; margin: 0 auto; align-self: center; }
-  .mag-pitch.is-wide .mag-film { max-width: none; }
-  .mag-pitch__copy { margin-top: clamp(14px, 3vw, 20px); }
-
-  /* the sign-off becomes a page in the sequence rather than an overlay */
-  .mag-off {
-    position: static; grid-template-columns: 1fr; border-radius: 0;
-    opacity: 1; visibility: visible; pointer-events: auto; transition: none;
-    display: none;
+  .mag-slot__cap {
+    display: flex; align-items: baseline; gap: .7em; position: relative; z-index: 3;
+    margin-top: clamp(13px, 3.4vw, 18px);
+    font: 700 10px/1.4 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
   }
-  .mag-stage.is-open.is-signoff .mag-off { display: grid; }
-  .mag-stage.is-signoff .mag-page { display: none; }
-  .mag-off__plate { aspect-ratio: 4 / 3; }
+  .mag-slot__cap b { color: var(--ink-2); font-weight: 700; }
+  .mag-slot--ready .mag-slot__cap em { font-style: normal; color: var(--issue); }
+  .mag-slot--soon .mag-slot__cap em { font-style: normal; color: var(--ink-3); }
 
-  .mag-stage__bar {
-    position: sticky; top: 0; z-index: 8; padding: 8px 0;
-    background: linear-gradient(180deg, var(--mag-bg) 72%, transparent);
+  /* the reader: a scrolling column */
+  .mag-reader__body { display: block; padding: 0; }
+  .mag-book { perspective: none; }
+  .mag-book__inner {
+    grid-template-columns: 1fr; width: 100%; height: auto; box-shadow: none;
   }
-  .mag-shelf__slot { width: clamp(124px, 34vw, 150px); margin-right: -18px; }
+  /* height:auto has to be repeated here: the desktop open rule sets an explicit height and
+     matches at the same specificity, and without it the last page gets a 0px grid row. */
+  .mag-reader.is-open .mag-book__inner { width: 100%; height: auto; box-shadow: none; }
+  .mag-spine, .mag-page::after { display: none; }
+
+  /* the cover fills the viewport, as a cover in the hand does */
+  .mag-reader .mag-cover {
+    position: relative; left: auto; top: auto; bottom: auto; width: 100%;
+    aspect-ratio: 2 / 3; height: auto;
+    min-height: calc(100svh - 68px);
+    transform: none; box-shadow: none;
+    transition: opacity .34s var(--ease);
+  }
+  .mag-reader.is-open .mag-cover { display: none; }
+  .mag-reader:not(.is-open) .mag-page,
+  .mag-reader:not(.is-open) .mag-end { display: none; }
+
+  /* Pages stack and scroll: pitch, story, closing.
+
+     They become ordinary documents here, not flex columns. On the desktop spread each page
+     is a fixed-height box and flex is what distributes the air inside it; in a scrolling
+     column that same flex collapsed every page to the height of its text and clipped the
+     film. Normal flow is the right model for a page you scroll. */
+  .mag-page, .mag-story { display: block; }
+  .mag-page { opacity: 1; overflow: visible; }
+  .mag-page--pitch { padding: clamp(18px, 5vw, 26px) clamp(18px, 5vw, 26px) clamp(26px, 7vw, 34px); }
+  .mag-film-wrap { display: block; padding: clamp(10px, 3vw, 16px) 0; }
+  .mag-film { height: auto; width: 100%; max-width: none; margin: 0 auto; }
+  .mag-film:not(.is-wide) { width: min(100%, 300px); }
+  .mag-credit { margin-top: clamp(16px, 4vw, 22px); }
+  .mag-story__brand { margin-top: clamp(20px, 5vw, 28px); }
+  .mag-story__go { display: flex; justify-content: space-between; width: 100%; }
+  .mag-page--story { padding: clamp(24px, 7vw, 34px) clamp(20px, 6vw, 28px) clamp(30px, 8vw, 40px); }
+  .mag-story__dek { max-width: none; }
+
+  .mag-end {
+    position: static; grid-template-columns: 1fr; opacity: 1; visibility: visible;
+    pointer-events: auto; transition: none; display: none;
+  }
+  .mag-reader.is-open .mag-end { display: block; }
+  .mag-end__plate { aspect-ratio: 4 / 3; }
+  .mag-end__copy { padding: clamp(26px, 7vw, 36px) clamp(20px, 6vw, 28px) clamp(34px, 9vw, 46px); }
+  .mag-end__back { align-self: stretch; justify-content: center; }
 }
 
-@media (max-width: 560px) {
-  .mag-hero { padding-top: clamp(82px, 12vh, 108px); }
-  .mag-ends { flex-direction: column; align-items: stretch; }
-  .mag-link { justify-content: center; }
+@media (max-width: 430px) {
+  .mag-head { padding-top: clamp(86px, 13vh, 112px); }
+  .mag-reader__bar { padding: 10px 14px; }
+  .mag-reader__id em { display: none; }
 }
 
 /* ---------- reduced motion ----------
-   The cover still opens, because the opening IS the content -- it cuts rather than swings,
+   The cover still opens, because the opening IS the content. It cuts rather than swings,
    and nothing rotates in three dimensions. */
 @media (prefers-reduced-motion: reduce) {
   .mag-body * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
-  .mag-cover, .mag-stage.is-open .mag-cover { transition: opacity .001ms linear; transform: none; }
-  .mag-stage.is-open .mag-cover { opacity: 0; visibility: hidden; }
+  .mag-reader .mag-cover,
+  .mag-reader.is-open .mag-cover { transform: none; transition: opacity .001ms linear; }
+  .mag-reader.is-open .mag-cover { opacity: 0; visibility: hidden; }
   .mag-book { perspective: none; }
-  .mag-mini:hover, .mag-mini[aria-current="true"] { transform: none; }
+  .mag-slot__btn, .mag-slot--open .mag-slot__btn { transform: none !important; }
 }
 
 /* ---------- footer ---------- */
 .mag-foot {
-  padding: clamp(24px, 4vw, 42px) var(--mag-gut) clamp(38px, 6vw, 62px);
-  border-top: 1px solid var(--mag-edge); text-align: center; color: var(--mag-ink-3);
+  padding: clamp(26px, 4vw, 46px) var(--gut) clamp(40px, 6vw, 66px);
+  border-top: 1px solid rgba(244,241,234,.12); text-align: center; color: var(--ink-3);
 }
-.mag-foot a { color: var(--mag-accent); text-decoration: none; font: 800 11px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase; }
+.mag-foot a { color: var(--wood-hi); text-decoration: none;
+              font: 700 11px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase; }
 .mag-foot a:hover { text-decoration: underline; text-underline-offset: 5px; }
-.mag-foot__small { margin: 12px 0 0; font-size: 12px; }
+.mag-foot__small { margin: 13px 0 0; font-size: 12px; }

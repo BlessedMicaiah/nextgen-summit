@@ -50,7 +50,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" href="/assets/css/founder-feed.css?v=20261025-113">
 <link rel="stylesheet" href="/assets/css/founder-reels.css?v=20261025-113">
 <link rel="stylesheet" href="/assets/css/founder-stage.css?v=20261025-113">
-<link rel="stylesheet" href="/assets/css/pc-brand.css?v=20261025-113">
+<link rel="stylesheet" href="/assets/css/film.css?v=20261025-199">
+<link rel="stylesheet" href="/assets/css/pc-brand.css?v=20261025-199">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
@@ -59,6 +60,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="/assets/js/depart.js?v=20261025-113" defer></script>
 <script src="/assets/js/forms.js?v=20261025-113" defer></script>
 <script src="/assets/js/pc-founders.js?v=20261025-113" defer></script>
+<script src="/assets/js/film.js?v=20261025-199" defer></script>
 <script src="/assets/js/peoples-choice.js?v=20261025-113" defer></script>
 </head>
 <body>
@@ -163,28 +165,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="pcw__in">
       <p class="label label--light rv">How voting works</p>
       <h2 class="pcw__title wm rv" id="pcw-title" style="--d:.1s">six steps.</h2>
-      <div class="pcw__cols">
-        <ol class="pcw__steps">
-          <li class="rv" style="--d:.14s"><span>Explore the <span data-pc-count>20</span> pitch contestants.</span></li>
-          <li class="rv" style="--d:.18s"><span>Watch their pitch videos.</span></li>
-          <li class="rv" style="--d:.22s"><span>Select the founder you want to support.</span></li>
-          <li class="rv" style="--d:.26s"><span>Verify your identity.</span></li>
-          <li class="rv" style="--d:.30s"><span>Confirm your vote.</span></li>
-          <li class="rv" style="--d:.34s"><span>Share the contestant&rsquo;s page with your friends.</span></li>
-        </ol>
-        <!-- A panel reading "Tutorial video to come" is a promise the site does not keep,
-             and on launch day it reads as unfinished rather than as forthcoming. The six
-             steps beside it already explain voting. If leadership records a walkthrough,
-             the slot goes back here: .pcw__film, .pcw__frame, and the column rule in
-             peoples-choice.css are all still in place. -->
-        <div class="pcw__film rv" style="--d:.2s">
-          <p class="pcw__filmk">What your vote is worth</p>
-          <ul class="pcw__worth">
-            <li><b>+1</b><span>Your daily vote, once your email is verified.</span></li>
-            <li><b>+2</b><span>For registered NextGen attendees, on the same founder.</span></li>
-            <li><b>Daily</b><span>Your allowance returns each day until voting closes on October&nbsp;28.</span></li>
-          </ul>
+      <div class="pcw__cols pcw__cols--film">
+        <div class="pcw__text">
+          <ol class="pcw__steps">
+            <li class="rv" style="--d:.14s"><span>Explore the <span data-pc-count>20</span> pitch contestants.</span></li>
+            <li class="rv" style="--d:.18s"><span>Watch their pitch videos.</span></li>
+            <li class="rv" style="--d:.22s"><span>Select the founder you want to support.</span></li>
+            <li class="rv" style="--d:.26s"><span>Verify your identity.</span></li>
+            <li class="rv" style="--d:.30s"><span>Confirm your vote.</span></li>
+            <li class="rv" style="--d:.34s"><span>Share the contestant&rsquo;s page with your friends.</span></li>
+          </ol>
+          <div class="pcw__film rv" style="--d:.2s">
+            <p class="pcw__filmk">What your vote is worth</p>
+            <ul class="pcw__worth">
+              <li><b>+1</b><span>Your daily vote, once your email is verified.</span></li>
+              <li><b>+2</b><span>For registered NextGen attendees, on the same founder.</span></li>
+              <li><b>Daily</b><span>Your allowance returns each day until voting closes on October&nbsp;28.</span></li>
+            </ul>
+          </div>
         </div>
+        <!-- The walkthrough: the inline player from the About page (js/film.js), upright. -->
+        <figure class="pcw__watch">
+          <p class="pcw__filmk">Watch how to vote</p>
+          <div data-film-inline data-film-shape="tall"
+               data-film-src="/assets/video/how-to-vote.mp4?v=20261025-199"
+               data-film-poster="/assets/img/how-to-vote-poster.jpg?v=20261025-199"
+               data-film-label="How to vote in the NextGen People&rsquo;s Choice Business Awards"
+               data-film-play="Play the video on how to vote"
+               data-film-cue="Watch how" data-film-len="1:17" data-film-rest="75.3"></div>
+        </figure>
       </div>
     </div>
   </section>

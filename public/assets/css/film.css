@@ -247,12 +247,25 @@
 .film--inline .film__progress:hover{height:9px}
 .film--inline .film__end{padding-bottom:max(22px,12%)}
 
+/* upright (9:16, the People's Choice walkthrough). Its picture carries rounded corners in black,
+   so the frame is cut on the same curve, in percentages so it holds at every size; the box
+   follows it rather than the 16px of the wide player. */
+.film--tall .film__frame{aspect-ratio:9/16;border-radius:8.4% / 4.75%;overflow:hidden}
+.film--tall .film__box{border-radius:8.4% / 4.6%}
+.film--tall.is-seen .film__box{clip-path:inset(0 round 8.4% / 4.6%)}
+.film--tall .film__box:fullscreen .film__frame{width:auto;height:100%;max-width:100%;border-radius:0}
+.film--tall .film__play{--pb:clamp(64px,22%,92px)}
+.film--tall.is-idle .film__play{width:var(--pb);height:var(--pb);margin:calc(var(--pb) / -2) 0 0 calc(var(--pb) / -2)}
+.film--tall .film__cue{top:calc(50% + clamp(44px,15%,64px))}
+
 /* full screen: no frame, no entrance */
 .film--inline .film__box:fullscreen{border-radius:0;box-shadow:none;clip-path:none;opacity:1;scale:1}
 
 @media (max-width:600px){
   .film--inline .film__box{border-radius:12px}
   .film--inline.is-seen .film__box{clip-path:inset(0 round 12px)}
+  .film--tall .film__box{border-radius:8.4% / 4.6%}
+  .film--tall.is-seen .film__box{clip-path:inset(0 round 8.4% / 4.6%)}
   .film__cue{font-size:10px;gap:8px}
 }
 

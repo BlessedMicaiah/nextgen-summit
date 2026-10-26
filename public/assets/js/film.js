@@ -16,7 +16,10 @@
    About page: the film is a section of the page instead. Any element with data-film-inline gets a
    player in place (poster and a play button; the film itself loads on the first play), with the
    same sound, full-screen and end-card controls, a progress line to click along, and no gate.
-   A page with an inline player gets no call button. */
+   A page with an inline player gets no call button.
+   Another film can use the same inline player: data-film-src, -poster, -label, -play, -cue,
+   -len and -rest on the element name it, and data-film-shape="tall" makes the player upright
+   (9:16, the People's Choice walkthrough). Only the Convener's film counts as watched. */
 (function () {
   'use strict';
 
@@ -403,12 +406,15 @@
 
   /* ---------- in a page section (About) ---------- */
   function inline(host) {
+    var o = host.dataset || {};
+    var src = o.filmSrc || SRC, rest = parseFloat(o.filmRest) || REST, tall = o.filmShape === 'tall';
+    var own = src === SRC;   // the homepage's "watched" belongs to the Convener's film alone
     host.innerHTML =
-      '<div class="film film--inline is-idle">' +
+      '<div class="film film--inline' + (tall ? ' film--tall' : '') + ' is-idle">' +
         '<div class="film__box">' +
           '<div class="film__bar" aria-hidden="true"></div>' +
           '<div class="film__frame">' +
-            '<video class="film__video" playsinline webkit-playsinline preload="none" disableremoteplayback poster="' + POSTER + '" aria-label="A message from the Convener of NextGen Summit"></video>' +
+            '<video class="film__video" playsinline webkit-playsinline preload="none" disableremoteplayback poster="' + POSTER + '"></video>' +
             '<div class="film__ui">' +
               '<div class="film__tr">' + WIDE + '</div>' +
               CONTROLS +
@@ -422,7 +428,12 @@
     var box = $('.film__box'), v = $('.film__video'), sound = $('.film__sound'), wide = $('.film__wide'),
         bar = $('.film__progress span'), line = $('.film__progress'), raf = 0;
     wide.setAttribute('aria-label', 'Full screen');
-    $('.film__play').setAttribute('aria-label', 'Play the message from our Convener');
+    // the words are set as text, never as markup
+    if (o.filmPoster) v.setAttribute('poster', o.filmPoster);
+    v.setAttribute('aria-label', o.filmLabel || 'A message from the Convener of NextGen Summit');
+    $('.film__play').setAttribute('aria-label', o.filmPlay || 'Play the message from our Convener');
+    if (o.filmCue) $('.film__cue span').textContent = o.filmCue;
+    if (o.filmLen) $('.film__len').textContent = o.filmLen;
 
     function setSound(on) {
       f.classList.toggle('is-sound', on);
@@ -436,7 +447,7 @@
     }
     // with sound (a click allows it); if the browser still refuses, muted
     function play() {
-      if (!v.getAttribute('src')) { v.preload = 'auto'; v.src = SRC; }
+      if (!v.getAttribute('src')) { v.preload = 'auto'; v.src = src; }
       f.classList.remove('is-idle', 'is-paused', 'is-over');
       if (f.classList.contains('is-over-seen')) { f.classList.remove('is-over-seen'); v.currentTime = 0; }
       var p = v.play();
@@ -452,9 +463,9 @@
     v.addEventListener('ended', function () {
       f.classList.remove('is-paused');
       f.classList.add('is-over', 'is-over-seen');
-      if (v.duration > REST) v.currentTime = REST;   // the last second is black: rest on the mark
+      if (v.duration > rest) v.currentTime = rest;   // the last second is black: rest on the last frame worth resting on
       bar.style.transform = 'scaleX(1)';
-      remember();
+      if (own) remember();
     });
 
     $('.film__play').addEventListener('click', play);
@@ -492,7 +503,7 @@
       if (box.requestFullscreen) {
         var p = box.requestFullscreen();
         if (p && p.then) p.then(function () {
-          if (innerHeight > innerWidth) try { var o = screen.orientation.lock('landscape'); if (o && o.catch) o.catch(function () {}); } catch (e) {}
+          if (!tall && innerHeight > innerWidth) try { var o = screen.orientation.lock('landscape'); if (o && o.catch) o.catch(function () {}); } catch (e) {}
         }, function () {});
       } else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();   // iPhone: the video alone
     });

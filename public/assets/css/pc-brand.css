@@ -54,3 +54,19 @@
   .deck__fan { width: min(100%, 230px, 26vh); }
   .deck__foot { margin-top: clamp(16px, 3.2vh, 40px); }
 }
+
+/* ---- how voting works: the walkthrough beside the six steps ----
+   The column the tutorial was always meant for. The steps and what a vote is worth share the
+   left; the film stands upright on the right, no taller than the screen leaves room for. On a
+   phone it comes first, straight under the title: watching is quicker than reading. */
+.pcw__cols--film { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+.pcw__text { padding-top: 26px; }
+.pcw__text .pcw__film { margin-top: clamp(30px, 4.4vh, 44px); }
+.pcw__watch { margin: 0; justify-self: center; width: min(100%, 400px, calc((100vh - 170px) * 9 / 16)); }
+@supports (height: 100svh) { .pcw__watch { width: min(100%, 400px, calc((100svh - 170px) * 9 / 16)); } }
+.pcw__watch .pcw__filmk { text-align: center; }
+@media (max-width: 900px) {
+  .pcw__cols--film { grid-template-columns: minmax(0, 1fr); }
+  .pcw__watch { order: -1; width: min(100%, 360px); }
+  .pcw__text { padding-top: 0; }
+}

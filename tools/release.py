@@ -46,6 +46,48 @@ def stop(msg):
     sys.exit(1)
 
 
+def drift_gate(target):
+    """Refuse to build while the live site holds work the released branch does not.
+
+    THE RULE, ENFORCED RATHER THAN WRITTEN DOWN
+
+    A deploy sends this repository's idea of the site to the server. People edit the live
+    site directly on this project, so the repository is routinely behind -- and a release
+    then silently reverts their work. It is invisible when it happens, and only noticed
+    later as a feature that "disappeared".
+
+    On 25 October 2026 a release was one command from reverting a whole walkthrough-video
+    feature: a page, twelve stylesheets, a pile of images and a 9.5 MB video, none of it in
+    the repository. Nothing in this tool would have objected, because the rule was a
+    sentence in a document. It is a check now.
+
+    It can be overridden, because an emergency release against a knowingly stale repository
+    is a real situation. The flag is deliberately long to type, and it says what it skipped:
+
+        python -I tools/release.py production --i-have-reconciled-drift
+    """
+    if '--i-have-reconciled-drift' in sys.argv:
+        print('WARNING: the drift check was skipped by hand.')
+        print('         If the live site holds anything this branch lacks, this release reverts it.')
+        return
+
+    check = os.path.join(ROOT, 'tools', 'check-drift.py')
+    if not os.path.isfile(check):
+        stop('tools/check-drift.py is missing, and it is required before a release.')
+
+    print('checking the live site for work this branch does not have...')
+    r = subprocess.run([sys.executable, '-I', check, target], cwd=ROOT)
+    if r.returncode == 1:
+        stop('the live site holds content this branch lacks (listed above).' + '\n'
+             + '  Pull it down and decide, rather than releasing over it:' + '\n'
+             + '    python -I tools/pull-live.py ' + target + '\n'
+             + '  Or, having already reconciled it by hand:' + '\n'
+             + '    python -I tools/release.py ' + target + ' --i-have-reconciled-drift')
+    if r.returncode not in (0, 1):
+        stop('the drift check could not run (exit %s). Fix it rather than skipping it.' % r.returncode)
+
+
+
 def stale_stamp():
     """Refuse to build if the assets changed but the cache stamp did not.
 
@@ -128,6 +170,8 @@ def main():
     stale = stale_stamp()
     if stale:
         stop(stale)
+
+    drift_gate(target)
 
     os.makedirs(os.path.join(ROOT, 'release'), exist_ok=True)
     name = ('nextgensummit.us' if target == 'production' else 'staging') + f'-{head[:7]}.zip'

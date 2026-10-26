@@ -1,67 +1,120 @@
 /* ============================================================================
    TOP 10 — the People's Choice magazine.
 
-   Ten covers. Open one and it becomes a two-page spread: the pitch on the left, the founder
-   on the right. Prev/next move through the collection without closing the book.
+   Ten covers on a rack. Pick one, the cover opens on the spine, and the issue inside runs
+   the pitch on the left and the founder on the right, then closes on a sign-off page.
 
-   WHERE THE CONTENT COMES FROM, AND WHERE IT DOES NOT
+   Built against the ten concept boards in NextGen_Top10_Magazine_Design_Handoff.
+   Those boards are art direction, not source material, and the difference matters:
 
-   Everything on these pages is read out of window.NGS_FOUNDERS, which tools/build-founders.py
-   generates from the Top 20 manifest. Nothing is written here. That matters because the
-   obvious way to make an editorial page feel finished is to write the editorial -- a
-   biography, a problem statement, a pull quote, a funding figure -- and every one of those
-   would be invented. The manifest has `name`, `company`, `blurb`, a portrait, a pitch video
-   and a logo. It has `bio: null` for all twenty founders.
+     TAKEN FROM THEM   the structure (masthead, side rail, name over company over rule over
+                       description, "THE PITCH | OPEN THE STORY"), the two-page spread, the
+                       editorial voice, and each founder's accent colour -- sampled from the
+                       company-name line of their own board, then brought to one consistent
+                       editorial saturation so ten issues read as one publication.
 
-   So the layout is built around what exists. Where a field is genuinely absent the page says
-   so in plain words rather than filling the hole, and the only prose on the page is each
-   founder's own `blurb`, shown once.
+     NOT TAKEN         every word the boards put in a founder's mouth. Each board carries a
+                       pull quote attributed to its founder, a running time, and a set of
+                       three-word value props. All three were generated. None appear here.
+                       The only prose on these pages is each founder's own `blurb` from the
+                       manifest, and the running time is read off the video file itself.
 
-   THE RANKING
+   WHERE THE CONTENT COMES FROM
 
-   Voting is still open, so there is no confirmed Top 10. TOP_10 below is null, and while it
-   is null this page is explicitly a preview: the order comes from the live standings, the
-   banner says what it is, and the page is noindex. When leadership confirms the ten, set
-   TOP_10 to their entrant ids -- the banner disappears, the server is no longer consulted
-   for ordering, and nothing else changes.
+   window.NGS_FOUNDERS, which tools/build-founders.py generates from the Top 20 manifest.
+   Nothing is written here. The manifest has `bio: null` for all twenty founders, so where
+   there is no profile the page says there is none rather than filling the hole.
+
+   THE SIGN-OFF
+
+   The brief suggested "See you at NextGen. I can't wait to share my pitch!" -- first person,
+   as though the founder said it. No founder supplied it, and the design handoff's own note
+   says not to impersonate founders. So the headline is kept verbatim as NextGen addressing
+   the reader, and the second line is rewritten into NextGen's voice. Nothing on the page is
+   attributed to a founder. If the founders approve the original wording, swap SIGN_OFF.
    ========================================================================= */
 (function () {
   'use strict';
 
   /* ------------------------------------------------------------------------
-     THE ONE THING TO EDIT WHEN THE TOP 10 IS CONFIRMED.
+     THE COLLECTION
 
-     Put the ten entrant ids here, in the order they should appear:
+     `ids` is the ten, in order. `confirmed` says whether this is the official Top 10.
 
-        var TOP_10 = ['entrant-07', 'entrant-02', ... ];
+     While it is false the page is an internal design collection and says so in the banner,
+     because voting is open and publishing ten names as a result would be a result. When
+     leadership confirms the Top 10, set the ids if they changed and flip `confirmed` to
+     true: the banner goes, and nothing else needs touching.
 
-     Ids, not names -- names change spelling, ids do not, and the ids are what the manifest
-     and the ballot both key on. Leave it null until the result is official.
+     Set `ids` to null to fall back to the live standings instead (also labelled).
      --------------------------------------------------------------------- */
-  var TOP_10 = null;
+  var ISSUES = {
+    ids: [
+      'entrant-01',   /* Caleb Orji            — Haptol Labs             */
+      'entrant-02',   /* Annrita Karu          — Credible blossom        */
+      'entrant-20',   /* Vishwa Shukla         — Find Your Mission Corp. */
+      'entrant-03',   /* Muyiwa Ogunsola       — Sooz                    */
+      'entrant-04',   /* Ariel Laura Métayer   — The Luminous Lab        */
+      'entrant-05',   /* Ethan Edouard         — Lookbook                */
+      'entrant-06',   /* Velma Funebe          — iBraid                  */
+      'entrant-07',   /* Divine Ayomide Fiolu  — BeforeKeys LLC          */
+      'entrant-08',   /* Jolie Wyatt           — If The Shoe Fits (ITSF) */
+      'entrant-09'    /* Austin Kendrick Lee   — Rest                    */
+    ],
+    confirmed: false
+  };
 
   var HOW_MANY = 10;
 
-  /* Per-issue accents, drawn from the brand's own palette so ten issues vary without any of
-     them leaving the publication. Assigned by position, so the collection looks deliberate
-     rather than random -- and looks the same on every load. */
-  var INKS = [
-    '#1FC7BE', '#FFB224', '#FF5A6E', '#5B8CFF', '#39D98A',
-    '#C98BFF', '#FF8A3D', '#2ED3E0', '#FF6FA5', '#9BE15D'
-  ];
+  /* Each founder's accent, keyed by entrant id so it belongs to the PERSON and not to a
+     position in a list -- reorder the ten and everybody keeps their colour.
+
+     Sampled from the company-name line of each concept board, then held to one saturation
+     and lightness band. The boards run at full neon (#08F8F8, #F8F808); printed on a dark
+     page at that strength they glow rather than sit, which is the "AI look" the brief asks
+     to lose. Same hue, editorial weight.
+
+     Three boards came back cyan and two came back lime. Rather than give three issues the
+     same colour, each keeps its hue and moves in depth -- Caleb deep teal, Vishwa bright
+     cyan, Muyiwa aqua -- so the rack reads as ten issues of one magazine. */
+  var ACCENT = {
+    'entrant-01': '#2BB8C6',   /* Haptol Labs             — cyan, deepened    */
+    'entrant-02': '#E3C64A',   /* Credible blossom        — yellow            */
+    'entrant-20': '#4FDCE0',   /* Find Your Mission Corp. — cyan, bright      */
+    'entrant-03': '#67DFC6',   /* Sooz                    — aqua              */
+    'entrant-04': '#B985F2',   /* The Luminous Lab        — lilac             */
+    'entrant-05': '#AEDB4C',   /* Lookbook                — lime, green side  */
+    'entrant-06': '#F0417E',   /* iBraid                  — crimson pink      */
+    'entrant-07': '#9B7BF0',   /* BeforeKeys LLC          — violet            */
+    'entrant-08': '#F57FB0',   /* If The Shoe Fits (ITSF) — rose              */
+    'entrant-09': '#E2DC4A'    /* Rest                    — lime, yellow side */
+  };
+  var ACCENT_FALLBACK = '#1FC7BE';   /* the brand turquoise, for anyone outside the ten */
+
+  /* NextGen's own line, lifted from the boards' cover rail. The publication speaking. */
+  var RAIL = ['Real', 'people', 'building', 'a brighter', 'tomorrow'];
+
+  var SIGN_OFF = {
+    kicker: 'A NextGen sign-off',
+    head: 'See you at NextGen.',
+    /* %NAME% and %CO% are filled in below. Deliberately in NextGen's voice: no founder
+       supplied a sign-off, and the design handoff says not to impersonate them. */
+    body: 'We can’t wait to share %NAME%’s pitch for %CO% with the NextGen community.'
+  };
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
 
-  var stage    = $('[data-mag-stage]');
-  var shelf    = $('[data-mag-shelf]');
+  var stage = $('[data-mag-stage]');
+  var shelf = $('[data-mag-shelf]');
   var statusEl = $('[data-mag-status]');
   if (!stage || !shelf) return;
 
-  var left   = $('[data-mag-left]', stage);
-  var right  = $('[data-mag-right]', stage);
-  var cover  = $('[data-mag-cover]', stage);
-  var idxEl  = $('[data-mag-index]', stage);
-  var totEl  = $('[data-mag-total]', stage);
+  var left = $('[data-mag-left]', stage);
+  var right = $('[data-mag-right]', stage);
+  var off = $('[data-mag-off]', stage);
+  var cover = $('[data-mag-cover]', stage);
+  var idxEl = $('[data-mag-index]', stage);
+  var totEl = $('[data-mag-total]', stage);
   var footEl = $('[data-mag-foot]', stage);
   var btnPrev = $('[data-mag-prev]', stage);
   var btnNext = $('[data-mag-next]', stage);
@@ -69,10 +122,12 @@
   var railPrev = $('[data-shelf-prev]');
   var railNext = $('[data-shelf-next]');
 
-  var issues = [];       /* the ten, in order */
-  var at = -1;           /* which issue is on the stage; -1 = nothing yet */
-  var open = false;      /* is the cover swung back */
-  var video = null;      /* the one <video> allowed to exist at a time */
+  var issues = [];
+  var at = -1;
+  var open = false;
+  var leaf = 'spread';        /* 'spread' or 'signoff' */
+  var video = null;
+  var probe = null;
 
   var reduced = window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -84,9 +139,11 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  /* GTM is already on this page; these ride the same ngs_pc_ convention the rest of the
-     site uses, so one existing trigger catches them. No name, no email, no voter -- an
-     entrant id is a pitch, not a person. */
+  function accentOf(f) { return ACCENT[f.entrant] || ACCENT_FALLBACK; }
+
+  /* GTM is already on this page; these follow the ngs_pc_ convention the rest of the site
+     uses, so the existing trigger catches them. An entrant id is a pitch, not a person: no
+     name, no email, no voter in any payload. */
   function track(name, data) {
     try {
       window.dataLayer = window.dataLayer || [];
@@ -120,20 +177,25 @@
     var all = founders();
     var map = byId(all);
 
-    if (TOP_10 && TOP_10.length) {
-      var chosen = TOP_10.map(function (id) { return map[id]; }).filter(Boolean);
+    if (ISSUES.ids && ISSUES.ids.length) {
+      var chosen = ISSUES.ids.map(function (id) { return map[id]; }).filter(Boolean);
       if (chosen.length) {
-        if (statusEl) statusEl.hidden = true;
+        if (ISSUES.confirmed) {
+          if (statusEl) statusEl.hidden = true;
+        } else {
+          say('Internal design collection — not a result',
+            ' Voting is open until 11:59pm ET on 28 October. These ten founders are the '
+            + 'design collection for this page, in the order it was art-directed. They are '
+            + 'not the Top 10, and the order is not a standing.');
+        }
         return Promise.resolve(chosen.slice(0, HOW_MANY));
       }
       /* The ids were set but match nothing -- a typo, or the manifest was regenerated.
-         Falling through to the live order silently would publish a different ten than the
-         one somebody meant to publish, so this is said out loud. */
-      say('Check the list', ' The ten entrant ids set for this page do not match the current '
+         Falling through silently would publish a different ten than somebody meant to. */
+      say('Check the list', ' The entrant ids set for this page do not match the current '
         + 'founder manifest, so the live standings are shown instead. ');
     }
 
-    /* No confirmed ten, so ask the live standings and label the result honestly. */
     return fetch('/api/pc-rank.php', { credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
@@ -145,9 +207,8 @@
           return d.order.map(function (id) { return map[id]; })
             .filter(Boolean).slice(0, HOW_MANY);
         }
-        /* `ranked` false means the server will not publish an order -- everyone level, or
-           ranking off. Inventing a top ten out of that would be a fabrication, so the page
-           shows contestant order and says that is what it is. */
+        /* `ranked` false means the server will not publish an order. Inventing a top ten out
+           of that would be a fabrication. */
         say('Internal preview — no ranking yet',
           ' The standings are not being published yet, so these are the first ten founders '
           + 'in contestant order. Not a ranking.');
@@ -162,32 +223,106 @@
   }
 
   /* ---------------------------------------------------------------------
-     The shelf.
+     Shared pieces.
      ------------------------------------------------------------------ */
   function slotNo(f) {
     var m = /(\d+)\s*$/.exec(f.entrant || '');
     return m ? m[1] : '';
   }
 
-  /* A founder's own pitch page lives at /pitch/peoples-choice/<slug>/, and the slug is built
-     from their NAME -- see pc_slug() in api/pc-rules.php, which entrant.php resolves against.
-     Not f.slug, which is the company. Using the wrong one 404s. */
+  /* A founder's own pitch page is /pitch/peoples-choice/<slug>/, and the slug is built from
+     their NAME -- see pc_slug() in api/pc-rules.php, which entrant.php resolves against.
+     Not f.slug, which is the company. The wrong one 404s. */
   function nameSlug(f) {
     return String(f.name || '').toLowerCase()
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 
+  /* story/story2x is a 320px square crop for the story rail; shot/shot2x is the real
+     portrait at 780px and up. Only the latter holds up at magazine size. */
+  function portraitSrc(f) { return f.shot || f.story || ''; }
+  function portraitSet(f) {
+    if (f.shot && f.shot2x) return ' srcset="' + esc(f.shot) + ' 1x, ' + esc(f.shot2x) + ' 2x"';
+    if (!f.shot && f.story && f.story2x) return ' srcset="' + esc(f.story) + ' 1x, ' + esc(f.story2x) + ' 2x"';
+    return '';
+  }
+
+  /* Every logo in the library is an opaque WebP -- none carries an alpha channel, checked
+     file by file -- so each one brings its own background with it. Dropped straight onto a
+     dark cover it would read as a rectangle of whatever colour that file happens to be. A
+     white chip keeps the artwork exactly as supplied, at its own proportions, and gives it
+     the contrast the brief asks for. Nothing is recoloured, stretched or redrawn.
+
+     Three of the ten have no logo in the library at all: The Luminous Lab, iBraid and Rest.
+     They get no mark rather than an invented one, and the gap is reported, not papered over. */
+  function logoChip(f, cls) {
+    if (!f.logo) return '';
+    return '<span class="' + cls + '" data-chip><img src="' + esc(f.logo) + '" alt="'
+      + esc(f.company) + ' logo" loading="lazy" decoding="async"></span>';
+  }
+
+  /* Which way a chip should go, decided by the logo itself rather than by eye.
+     Of the seven logos the ten use, four were drawn on white (Haptol Labs, Lookbook,
+     BeforeKeys, If The Shoe Fits) and three on their own dark ground (Credible blossom's
+     teal, Sooz's and Find Your Mission's near-black). A white tile behind a dark-ground
+     logo shows as a dark square inside a white square, which is worse than no tile at all.
+     So the four corners are sampled once per file: light ground keeps the white tile, dark
+     ground drops it and sits on the page with a hairline instead. Nothing is recoloured.
+
+     Reading pixels back needs same-origin, which /assets/ is. If it ever throws -- a
+     cross-origin CDN, a canvas-blocked browser -- the white tile is the safe default. */
+  var chipCache = {};
+  function fitChips() {
+    var chips = stage.querySelectorAll('[data-chip]');
+    for (var i = 0; i < chips.length; i++) (function (chip) {
+      var img = chip.querySelector('img');
+      if (!img) return;
+      var key = img.getAttribute('src');
+      if (chipCache[key] !== undefined) { chip.classList.toggle('is-dark', chipCache[key]); return; }
+      var decide = function () {
+        var dark = false;
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) return;
+          var c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          var g = c.getContext('2d');
+          g.drawImage(img, 0, 0);
+          var sum = 0, pts = [[1, 1], [w - 2, 1], [1, h - 2], [w - 2, h - 2]];
+          for (var k = 0; k < 4; k++) {
+            var d = g.getImageData(pts[k][0], pts[k][1], 1, 1).data;
+            sum += (d[0] * 0.299 + d[1] * 0.587 + d[2] * 0.114) / 4;
+          }
+          dark = sum < 150;
+        } catch (e) { dark = false; }
+        chipCache[key] = dark;
+        chip.classList.toggle('is-dark', dark);
+      };
+      if (img.complete && img.naturalWidth) decide();
+      else img.addEventListener('load', decide, { once: true });
+    }(chips[i]));
+  }
+
+  function masthead(cls) {
+    return '<span class="' + cls + '">next<i>gen</i><b>.</b>'
+      + '<span>People&rsquo;s Choice</span></span>';
+  }
+
+  /* ---------------------------------------------------------------------
+     The rack.
+     ------------------------------------------------------------------ */
   function miniHTML(f, i) {
-    var img = f.shot || f.story || '';
+    var img = portraitSrc(f);
     return ''
-      + '<button class="mag-mini" type="button" data-go="' + i + '" style="--issue:' + INKS[i % INKS.length] + '"'
+      + '<button class="mag-mini" type="button" data-go="' + i + '"'
+      +         ' style="--issue:' + accentOf(f) + '"'
       +         ' aria-label="Open issue ' + (i + 1) + ', ' + esc(f.name) + ' of ' + esc(f.company) + '">'
-      +   (img ? '<img class="mag-mini__img" src="' + esc(img) + '" alt="" loading="lazy" decoding="async"'
+      +   (img ? '<img class="mag-mini__img" src="' + esc(img) + '"' + portraitSet(f) + ' alt=""'
+      +          ' loading="lazy" decoding="async"'
       +          (f.focal ? ' style="object-position:' + esc(f.focal) + '"' : '') + '>' : '')
-      +   '<span class="mag-mini__wash" aria-hidden="true"></span>'
-      +   '<span class="mag-mini__mast" aria-hidden="true">'
-      +     '<span class="mag-mini__logo">next<i>gen</i>'
-      +       '<span class="mag-mini__sub">People&rsquo;s Choice</span></span>'
+      +   '<span class="mag-mini__tone" aria-hidden="true"></span>'
+      +   '<span class="mag-mini__top" aria-hidden="true">'
+      +     '<span class="mag-mini__mark">next<i>gen</i><b>.</b></span>'
       +     '<span class="mag-mini__no">' + String(i + 1).padStart(2, '0') + '</span>'
       +   '</span>'
       +   '<span class="mag-mini__foot" aria-hidden="true">'
@@ -200,7 +335,7 @@
 
   function drawShelf() {
     shelf.innerHTML = issues.map(function (f, i) {
-      return '<li>' + miniHTML(f, i) + '</li>';
+      return '<li class="mag-shelf__slot">' + miniHTML(f, i) + '</li>';
     }).join('');
     if (totEl) totEl.textContent = String(issues.length).padStart(2, '0');
     railState();
@@ -214,8 +349,8 @@
   }
 
   function nudgeRail(dir) {
-    var card = shelf.querySelector('.mag-mini');
-    var step = card ? (card.offsetWidth + 14) * 2 : 300;
+    var slot = shelf.querySelector('.mag-shelf__slot');
+    var step = slot ? slot.offsetWidth * 3 : 320;
     shelf.scrollBy({ left: dir * step, behavior: reduced ? 'auto' : 'smooth' });
   }
 
@@ -225,11 +360,11 @@
       all[i].setAttribute('aria-current', i === at ? 'true' : 'false');
     }
     /* The rail is scrolled by hand rather than with scrollIntoView, which also scrolls every
-       ancestor: turning a page threw the whole document up the screen and left the spread
-       half off the top. This moves one axis of one element. */
+       ancestor: turning a page threw the whole document up the screen. One axis, one node. */
     var now = all[at];
     if (!now) return;
-    var want = now.offsetLeft - (shelf.clientWidth - now.offsetWidth) / 2;
+    var slot = now.parentNode;
+    var want = slot.offsetLeft - (shelf.clientWidth - slot.offsetWidth) / 2;
     want = Math.max(0, Math.min(want, shelf.scrollWidth - shelf.clientWidth));
     if (Math.abs(want - shelf.scrollLeft) > 2) {
       shelf.scrollTo({ left: want, behavior: reduced ? 'auto' : 'smooth' });
@@ -237,131 +372,150 @@
   }
 
   /* ---------------------------------------------------------------------
-     A page of the magazine.
-
-     Portraits come in two shapes -- some founders supplied a tall headshot, some a wide
-     one -- and shotW/shotH say which. Forcing one aspect ratio on both would crop somebody
-     badly, so the frame follows the photograph.
+     The cover.
      ------------------------------------------------------------------ */
-  function tall(f) {
-    return !!(f.shotW && f.shotH && f.shotH > f.shotW);
+  function coverHTML(f, i) {
+    var img = portraitSrc(f);
+    return ''
+      + (img ? '<img class="mag-cover__img" src="' + esc(img) + '"' + portraitSet(f) + ' alt=""'
+        + (f.focal ? ' style="object-position:' + esc(f.focal) + '"' : '') + ' decoding="async">' : '')
+      + '<span class="mag-cover__tone" aria-hidden="true"></span>'
+      + '<span class="mag-cover__in">'
+      +   '<span class="mag-cover__top">'
+      +     masthead('mag-cover__mast')
+      +     '<span class="mag-cover__meta">'
+      +       '<span class="mag-cover__no">Issue ' + String(i + 1).padStart(2, '0') + '</span>'
+      +       logoChip(f, 'mag-cover__logo')
+      +     '</span>'
+      +   '</span>'
+      +   '<span class="mag-cover__rail">'
+      +     RAIL.map(function (w) { return '<i>' + esc(w) + '</i>'; }).join('')
+      +   '</span>'
+      +   '<span class="mag-cover__foot">'
+      +     '<span class="mag-cover__name">' + esc(f.name) + '</span>'
+      +     '<span class="mag-cover__co">' + esc(f.company) + '</span>'
+      +     '<span class="mag-cover__hr"></span>'
+      +     '<span class="mag-cover__blurb">' + esc(f.blurb || '') + '</span>'
+      +     '<span class="mag-cover__cta">'
+      +       '<i>The pitch</i>'
+      +       '<em>Open the story'
+      +         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>'
+      +       '</em>'
+      +     '</span>'
+      +   '</span>'
+      + '</span>';
   }
 
-  /* story/story2x are a 320px square crop for the story rail; shot/shot2x is the real
-     portrait, 800px and up. At magazine size only the latter holds up. */
-  function portraitSrc(f) { return f.shot || f.story || ''; }
-  function portraitSet(f) {
-    if (f.shot && f.shot2x) return ' srcset="' + esc(f.shot) + ' 1x, ' + esc(f.shot2x) + ' 2x"';
-    if (!f.shot && f.story && f.story2x) return ' srcset="' + esc(f.story) + ' 1x, ' + esc(f.story2x) + ' 2x"';
-    return '';
-  }
-
+  /* ---------------------------------------------------------------------
+     Left page: the pitch.
+     ------------------------------------------------------------------ */
   function leftHTML(f) {
     var src = f.video && f.video.type === 'file' ? f.video.src : '';
     var poster = f.poster || portraitSrc(f);
-    var film = src
-      ? '<button class="mag-film" type="button" data-play'
-        + ' data-src="' + esc(src) + '"'
-        + ' aria-label="Play ' + esc(f.name) + '&rsquo;s pitch video">'
-        + (poster ? '<img class="mag-film__poster" src="' + esc(poster) + '" alt="" decoding="async">' : '')
-        + '<span class="mag-film__scrim" aria-hidden="true"></span>'
-        + '<span class="mag-film__play" aria-hidden="true">'
-        +   '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>'
-        + '<span class="mag-film__len" aria-hidden="true">Watch the pitch</span>'
-      + '</button>'
-      : '<p class="mag-gap">No pitch video has been supplied for this founder.</p>';
-
-    /* The pitch videos are phone-shot verticals. A 9:16 film laid across a landscape page
-       either letterboxes into a strip or eats the page, so the film takes a tall column and
-       the copy runs beside it -- a plate-and-column layout, which is what a magazine would
-       have done with a portrait photograph anyway. markFilm() swaps to a stacked layout if a
-       founder's video turns out to be landscape. */
-    return ''
-      + '<p class="mag-kicker">The pitch</p>'
+    var head = '<span class="mag-lab">' + masthead('mag-lab__mast') + '<i>The pitch</i></span>';
+    if (!src) {
+      return head + '<p class="mag-gap">No pitch video has been supplied for this founder.</p>';
+    }
+    /* The boards print a running time under "WATCH THE PITCH". Theirs was generated; this
+       one is read off the file in stampDuration(), and stays blank until it is known. */
+    return head
       + '<div class="mag-pitch" data-pitch>'
-      +   film
+      +   '<button class="mag-film" type="button" data-play data-src="' + esc(src) + '"'
+      +           ' aria-label="Play ' + esc(f.name) + '&rsquo;s pitch video">'
+      +     (poster ? '<img class="mag-film__poster" src="' + esc(poster) + '" alt="" decoding="async">' : '')
+      +     '<span class="mag-film__scrim" aria-hidden="true"></span>'
+      +     '<span class="mag-film__play" aria-hidden="true">'
+      +       '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>'
+      +     '<span class="mag-film__cap" aria-hidden="true">'
+      +       '<b>Watch the pitch</b><i data-dur></i></span>'
+      +   '</button>'
       +   '<div class="mag-pitch__copy">'
-      +     '<h3 class="mag-idea__t wm">In their words</h3>'
-      +     '<p class="mag-idea__p">' + esc(f.blurb || '') + '</p>'
+      +     '<p class="mag-pitch__lede">' + esc(f.name)
+      +       ' recorded this pitch for the NextGen Summit People&rsquo;s Choice Award.</p>'
+      +     '<p class="mag-pitch__sub">Their own description of the business follows.</p>'
       +   '</div>'
       + '</div>';
-    /* No name or logo down here: this is one half of a spread, and both are on the facing
-       page. Repeating them stole height the film could use. */
   }
 
-  function rightHTML(f, i) {
-    var shot = portraitSrc(f);
+  /* ---------------------------------------------------------------------
+     Right page: the founder.
+     ------------------------------------------------------------------ */
+  function rightHTML(f) {
     var facts = [];
     if (slotNo(f)) facts.push('Contestant ' + slotNo(f));
     facts.push('People&rsquo;s Choice 2026');
     if (f.video && f.video.type === 'file') facts.push('Pitch on film');
 
     return ''
-      + '<p class="mag-kicker">The founder</p>'
-      + (shot
-          ? '<div class="mag-port' + (tall(f) ? ' mag-port--tall' : '') + '">'
-            + '<img src="' + esc(shot) + '"' + portraitSet(f) + ' alt="' + esc(f.name) + '"'
-            + (f.focal ? ' style="object-position:' + esc(f.focal) + '"' : '')
-            + ' loading="lazy" decoding="async">'
-            + '<span class="mag-port__tag">' + String(i + 1).padStart(2, '0') + ' &middot; '
-            + esc(f.company) + '</span>'
-            + '</div>'
-          : '')
+      + '<span class="mag-lab mag-lab--end"><i>Founder story</i></span>'
       + '<div class="mag-head">'
-      +   (f.logo ? '<img class="mag-head__logo" src="' + esc(f.logo) + '" alt="' + esc(f.company) + ' logo" loading="lazy">' : '')
+      +   logoChip(f, 'mag-head__logo')
       +   '<div class="mag-head__t">'
       +     '<h3 class="mag-name wm">' + esc(f.name) + '</h3>'
       +     '<p class="mag-co">' + esc(f.company) + '</p>'
       +   '</div>'
       + '</div>'
       + '<div class="mag-rule" aria-hidden="true"></div>'
+      + '<p class="mag-dek">' + esc(f.blurb || '') + '</p>'
       + '<ul class="mag-facts">' + facts.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>'
-      /* No founder in the manifest has a biography. Rather than write one, the page says
-         what it has and what it does not. */
+      /* No founder in the manifest has a biography, so the page says that rather than
+         borrowing the boards' invented one. */
       + '<p class="mag-gap">A longer profile has not been supplied for this founder yet. '
       +   'Everything above is their own description and their own pitch.</p>'
-      + '<a class="mag-link" href="/pitch/peoples-choice/' + esc(nameSlug(f)) + '/">'
-      +   'See the full pitch page'
-      +   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>'
-      + '</a>';
+      + '<div class="mag-ends">'
+      +   '<a class="mag-link" href="/pitch/peoples-choice/' + esc(nameSlug(f)) + '/">'
+      +     'Explore full story'
+      +     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>'
+      +   '</a>'
+      +   '<button class="mag-link mag-link--ghost" type="button" data-mag-signoff>'
+      +     'Read the sign-off'
+      +     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>'
+      +   '</button>'
+      + '</div>';
   }
 
-  function coverHTML(f, i) {
+  /* ---------------------------------------------------------------------
+     The last page: the sign-off. NextGen's voice throughout; see SIGN_OFF.
+     ------------------------------------------------------------------ */
+  function offHTML(f) {
     var img = portraitSrc(f);
-    var bars = '';
-    /* A barcode is what tells the eye "this is a magazine". The widths are fixed per issue
-       so it does not flicker on every render. */
-    for (var b = 0; b < 26; b++) {
-      bars += '<i style="height:' + (54 + ((i * 7 + b * 11) % 46)) + '%"></i>';
-    }
+    var nxt = issues[(at + 1) % issues.length];
+    var body = esc(SIGN_OFF.body)
+      .replace('%NAME%', '<b>' + esc(f.name) + '</b>')
+      .replace('%CO%', '<b>' + esc(f.company) + '</b>');
     return ''
-      + (img ? '<img class="mag-cover__img" src="' + esc(img) + '"' + portraitSet(f) + ' alt=""'
-        + (f.focal ? ' style="object-position:' + esc(f.focal) + '"' : '') + ' decoding="async">' : '')
-      + '<span class="mag-cover__wash" aria-hidden="true"></span>'
-      + '<span class="mag-cover__in">'
-      +   '<span class="mag-cover__mast">'
-      +     '<span class="mag-cover__logo">next<i>gen</i>'
-      +       '<span>People&rsquo;s Choice 2026</span></span>'
-      +     '<span class="mag-cover__vol">Issue ' + String(i + 1).padStart(2, '0')
-      +       '<br>of ' + String(issues.length).padStart(2, '0') + '</span>'
-      +   '</span>'
-      +   '<span class="mag-cover__foot">'
-      +     '<span class="mag-cover__kicker">The founder</span>'
-      /* Spans, not a heading and a paragraph: the cover is a <button>, whose content model is
-         phrasing only, and the same two lines are real headings on the open spread. */
-      +     '<span class="mag-cover__name">' + esc(f.name) + '</span>'
-      +     '<span class="mag-cover__co">' + esc(f.company) + '</span>'
-      +     '<span class="mag-cover__open">Open the issue'
+      + '<div class="mag-off__plate">'
+      +   (img ? '<img src="' + esc(img) + '"' + portraitSet(f) + ' alt="' + esc(f.name) + '"'
+      +     (f.focal ? ' style="object-position:' + esc(f.focal) + '"' : '') + ' loading="lazy">' : '')
+      + '</div>'
+      + '<div class="mag-off__copy">'
+      +   '<p class="mag-off__kicker">' + esc(SIGN_OFF.kicker) + '</p>'
+      +   '<p class="mag-off__t wm">' + esc(SIGN_OFF.head) + '</p>'
+      +   '<p class="mag-off__p">' + body + '</p>'
+      +   '<div class="mag-off__sig">'
+      +     logoChip(f, 'mag-off__logo')
+      +     '<span><b>' + esc(f.name) + '</b><i>' + esc(f.company) + '</i></span>'
+      +   '</div>'
+      +   '<div class="mag-ends">'
+      +     '<button class="mag-link" type="button" data-mag-nextissue>'
+      +       'Explore the next founder'
       +       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>'
-      +     '</span>'
-      +   '</span>'
-      + '</span>'
-      + '<span class="mag-cover__barcode" aria-hidden="true">' + bars + '</span>';
+      +     '</button>'
+      +     '<button class="mag-link mag-link--ghost" type="button" data-mag-back>'
+      +       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6M12 5l-7 7 7 7"/></svg>'
+      +       'Back to the story'
+      +     '</button>'
+      +   '</div>'
+      +   '<p class="mag-off__next">Next: ' + esc(nxt ? nxt.name : '') + '</p>'
+      + '</div>';
   }
 
-  /* Every pitch in the current manifest is vertical, but nothing guarantees the next one is,
-     so the layout is decided by the poster's own dimensions rather than by an assumption.
-     Landscape gets the stacked layout; portrait keeps the column. */
+  /* ---------------------------------------------------------------------
+     Film: orientation, running time, playback.
+     ------------------------------------------------------------------ */
+
+  /* Most pitches in the manifest are phone verticals, a few are landscape, so the layout is
+     decided by the poster's own dimensions rather than by an assumption. */
   function markFilm() {
     var wrap = stage.querySelector('[data-pitch]');
     if (!wrap) return;
@@ -375,14 +529,32 @@
     else img.addEventListener('load', decide, { once: true });
   }
 
-  /* ---------------------------------------------------------------------
-     Video. One at a time, and it stops the moment the page it lives on leaves.
-     ------------------------------------------------------------------ */
+  /* Reads the real running time. preload="metadata" fetches the header, not the film. */
+  function stampDuration(src) {
+    if (probe) { try { probe.src = ''; } catch (e) {} probe = null; }
+    var slot = stage.querySelector('[data-dur]');
+    if (!slot || !src) return;
+    var want = at;
+    var v = document.createElement('video');
+    probe = v;
+    v.preload = 'metadata';
+    v.muted = true;
+    v.addEventListener('loadedmetadata', function () {
+      if (at === want && isFinite(v.duration) && v.duration > 0) {
+        var s = Math.round(v.duration);
+        slot.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      }
+      try { v.src = ''; } catch (e) {}
+      if (probe === v) probe = null;
+    }, { once: true });
+    v.src = src;
+  }
+
   function dropVideo() {
     if (!video) return;
-    try { video.pause(); } catch (e) { /* already gone */ }
+    try { video.pause(); } catch (e) {}
     video.removeAttribute('src');
-    try { video.load(); } catch (e) { /* ditto */ }
+    try { video.load(); } catch (e) {}
     if (video.parentNode) video.parentNode.removeChild(video);
     video = null;
     var playing = stage.querySelector('.mag-film.is-playing');
@@ -420,20 +592,24 @@
 
     at = i;
     stage.hidden = false;
-    stage.style.setProperty('--issue', INKS[i % INKS.length]);
-    cover.setAttribute('data-art', String((i % 4) + 1));
+    stage.style.setProperty('--issue', accentOf(f));
     cover.setAttribute('aria-label', 'Open issue ' + (i + 1) + ', ' + f.name + ' of ' + f.company);
+    leaf = 'spread';
 
     var paint = function () {
       left.innerHTML = leftHTML(f);
-      right.innerHTML = rightHTML(f, i);
+      right.innerHTML = rightHTML(f);
+      off.innerHTML = offHTML(f);
       cover.innerHTML = coverHTML(f, i);
       markFilm();
+      fitChips();
+      stampDuration(f.video && f.video.type === 'file' ? f.video.src : '');
+      setLeaf('spread');
       if (idxEl) idxEl.textContent = String(i + 1).padStart(2, '0');
       if (footEl) {
-        footEl.textContent = TOP_10 && TOP_10.length
+        footEl.textContent = ISSUES.confirmed
           ? 'Issue ' + (i + 1) + ' of ' + issues.length
-          : 'Issue ' + (i + 1) + ' of ' + issues.length + ' — internal preview order';
+          : 'Issue ' + (i + 1) + ' of ' + issues.length + ' — internal design collection';
       }
       markCurrent();
       stage.classList.remove('is-turning');
@@ -457,6 +633,16 @@
     }
   }
 
+  function setLeaf(which) {
+    leaf = which;
+    var on = which === 'signoff';
+    stage.classList.toggle('is-signoff', on);
+    off.setAttribute('aria-hidden', (open && on) ? 'false' : 'true');
+    left.setAttribute('aria-hidden', (open && !on) ? 'false' : 'true');
+    right.setAttribute('aria-hidden', (open && !on) ? 'false' : 'true');
+    if (on) dropVideo();
+  }
+
   function setOpen(v) {
     open = !!v;
     stage.classList.toggle('is-open', open);
@@ -464,16 +650,13 @@
        list of things you can press -- which is exactly true once the issue is open. */
     cover.disabled = open;
     cover.setAttribute('aria-hidden', open ? 'true' : 'false');
-    if (btnClose) btnClose.disabled = !open;    /* nothing to close while it is shut */
-    /* The spread is only in the accessibility tree once it is actually showing, so a screen
-       reader is not reading two pages that are hidden behind a cover. */
-    left.setAttribute('aria-hidden', open ? 'false' : 'true');
-    right.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (btnClose) btnClose.disabled = !open;
     if (!open) dropVideo();
+    setLeaf(open ? leaf : 'spread');
     var f = issues[at];
     track(open ? 'top10_open' : 'top10_close', { entrant_id: f ? f.entrant : '', slot: at + 1 });
     if (open) {
-      var h = left.querySelector('.mag-kicker');
+      var h = stage.querySelector(leaf === 'signoff' ? '.mag-off__kicker' : '.mag-lab');
       if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
     }
   }
@@ -501,8 +684,22 @@
   cover.addEventListener('click', function () { if (!open) setOpen(true); });
 
   stage.addEventListener('click', function (e) {
-    var p = e.target.closest ? e.target.closest('[data-play]') : null;
-    if (p && !p.classList.contains('is-playing')) { play(p); }
+    var t = e.target;
+    if (!t || !t.closest) return;
+    var p = t.closest('[data-play]');
+    if (p && !p.classList.contains('is-playing')) { play(p); return; }
+    if (t.closest('[data-mag-signoff]')) {
+      setLeaf('signoff');
+      var k = off.querySelector('.mag-off__kicker');
+      if (k) { k.setAttribute('tabindex', '-1'); k.focus({ preventScroll: true }); }
+      var f = issues[at];
+      track('top10_signoff', { entrant_id: f ? f.entrant : '', slot: at + 1 });
+      return;
+    }
+    if (t.closest('[data-mag-back]')) { setLeaf('spread'); return; }
+    if (t.closest('[data-mag-nextissue]')) {
+      show(at + 1, { open: true, keepScroll: true });
+    }
   });
 
   if (btnPrev) btnPrev.addEventListener('click', function () { show(at - 1, { open: open, keepScroll: true }); });
@@ -514,9 +711,14 @@
     var t = e.target;
     /* arrow keys belong to a focused video's scrub bar, not to us */
     if (t && (t.tagName === 'VIDEO' || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
-    if (e.key === 'Escape' && open) { e.preventDefault(); close(); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); show(at - 1, { open: open, keepScroll: true }); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); show(at + 1, { open: open, keepScroll: true }); }
+    if (e.key === 'Escape' && open) {
+      e.preventDefault();
+      if (leaf === 'signoff') setLeaf('spread'); else close();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault(); show(at - 1, { open: open, keepScroll: true });
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault(); show(at + 1, { open: open, keepScroll: true });
+    }
     /* Enter and Space on the cover need no handler: it is a real <button>. */
   });
 
@@ -562,7 +764,7 @@
       drawShelf();
       show(0, { instant: true, keepScroll: true });   /* cover shut, waiting to be opened */
       setOpen(false);
-      track('top10_view', { entrants: issues.length, provisional: TOP_10 ? 0 : 1 });
+      track('top10_view', { entrants: issues.length, provisional: ISSUES.confirmed ? 0 : 1 });
     });
   }
 

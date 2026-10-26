@@ -87,7 +87,7 @@ function hh($v): string
     return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 }
 
-$stamp = '20261025-s10';
+$stamp = '20261026-s01';
 ?>
 <!doctype html>
 <html lang="en">

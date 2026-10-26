@@ -711,10 +711,51 @@
       return;
     }
 
+    /* The five segments, each with its own count beside it, because a button that says
+       "Registered voters" without a number is a button nobody can plan around. */
+    var seg = (V && V.segments) || {};
+    var ix = (V && V.index) || {};
+    var segRows = [
+      ['voters', 'ALL VOTER EMAILS', n(V ? V.totals.unique_voters : 0),
+       'Every distinct person with a qualifying vote.'],
+      ['voters-registered', 'REGISTERED VOTER EMAILS', n(seg.registered) + n(seg.on_list),
+       'A registration is bound to them, or their address is on the Eventbrite attendee list.'],
+      ['voters-unregistered', 'NO CONFIRMED REGISTRATION', n(seg.none),
+       'Checked against the attendee index and not found. This is the outreach list.'],
+      ['voters-threepoint', 'THREE-POINT ELIGIBLE', n(seg.three_point),
+       'A registration is bound to their voting identity, which is what raises the daily allowance.'],
+      ['voters-unknown', 'UNKNOWN REGISTRATION STATUS', n(seg.unknown),
+       'Nobody has checked them yet, or the index was too old to judge. Not the same as unregistered.']
+    ];
+
+    var ixNote = el('p', 'card__p');
+    ixNote.innerHTML = '<b>How registration is being judged:</b> ' +
+      (ix.why ? String(ix.why) : 'no attendee index available') +
+      (ix.fresh ? '' : ' <b>Nobody is being listed as unregistered while that is true.</b>');
+    note.appendChild(ixNote);
+
+    segRows.forEach(function (r) {
+      var row = el('div', 'exp');
+      var k = el('div', 'exp__k');
+      var head = el('span', null, r[1] + '  ');
+      var cnt = el('b', null, num(r[2]));
+      cnt.style.color = 'var(--accent)';
+      head.appendChild(cnt);
+      k.appendChild(head);
+      k.appendChild(el('i', null, r[3]));
+      row.appendChild(k);
+      var b = el('div', 'exp__b');
+      [['csv', 'CSV'], ['xlsx', 'Excel']].forEach(function (f) {
+        var a = el('a', 'btn ' + (f[0] === 'csv' ? 'btn--go' : 'btn--ghost') + ' btn--sm', f[1]);
+        a.href = exportUrl(r[0], f[0]);
+        a.setAttribute('download', '');
+        b.appendChild(a);
+      });
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+
     [
-      ['voters', 'All unique voters',
-       'One row per distinct person across the whole competition, with their first and most ' +
-       'recent vote, how many founders they supported and which.'],
       ['voter-pairs', 'Every founder-and-voter pair',
        'One row per person PER FOUNDER, so somebody who backed three founders appears three ' +
        'times. Useful for per-founder outreach; wrong for a headcount, and the file says so.']

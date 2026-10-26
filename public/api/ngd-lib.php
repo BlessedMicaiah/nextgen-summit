@@ -1892,7 +1892,7 @@ function ngd_take_snapshot(string $liveFile): array
    There is no SELECT * anywhere in this file either; every query names its columns.
    ------------------------------------------------------------------------ */
 
-const NGD_READABLE = ['pc_votes', 'pc_meta', 'pc_visits', 'pc_voter', 'pc_identity'];
+const NGD_READABLE = ['pc_votes', 'pc_meta', 'pc_visits', 'pc_voter', 'pc_identity', 'pc_attendee'];
 
 /* pc_voter and pc_identity were added to this list deliberately on 2026-10-25, when the
    brief changed from counting points to counting PEOPLE. pc_voter holds the verified email
@@ -1900,6 +1900,12 @@ const NGD_READABLE = ['pc_votes', 'pc_meta', 'pc_visits', 'pc_voter', 'pc_identi
    identities are the same human. Neither can be avoided if the question is "how many
    distinct people", and inventing a second identity model to dodge the issue would be worse
    than reading the one that exists.
+
+   pc_attendee was added on the same day, for the registration segments. It was on the
+   excluded list before, out of blanket caution, and that was the wrong call for the wrong
+   reason: it holds attendee_key, voter_key and email_key, which are hashes, and no
+   plaintext at all. It is also the only honest source for three-point eligibility, because
+   a binding in that table is literally what raises the daily allowance.
 
    What is still NOT on this list, and must not be: `submissions` (plaintext names, phones,
    emails and schools for every form the site has ever taken), pc_email_otp and
@@ -2158,15 +2164,40 @@ function ngd_voters(string $source = 'live', bool $withEmails = false): array
         }
     }
 
-    /* ---- identity -> verified email ---- */
+    /* ---- which identities have a registration BOUND to them ----
+       The binding is what unlocks three points a day, so it is what "three-point eligible"
+       means. Not the presence of slot-2 and slot-3 rows, which only show that somebody once
+       had the allowance, and not bonus points, which do not prove current registration. */
+    $boundIdent = [];
+    if (ngd_has_table($db, 'pc_attendee')) {
+        try {
+            foreach ($db->query('SELECT voter_key FROM pc_attendee')->fetchAll() as $r) {
+                $boundIdent[(string) $r['voter_key']] = true;
+            }
+        } catch (Throwable $e) {
+            // no bindings readable; everyone falls back to eb_status and the index
+        }
+    }
+
+    /* ---- identity -> verified email, and the registration status already recorded ---- */
     $emailOf = [];
+    $statusOf = [];
     if (ngd_has_table($db, 'pc_voter')) {
         try {
-            $s = $db->query('SELECT ident, email FROM pc_voter WHERE email IS NOT NULL AND email != ""');
+            $s = $db->query('SELECT ident, email, eb_status FROM pc_voter
+                             WHERE email IS NOT NULL AND email != ""');
             foreach ($s->fetchAll() as $r) {
                 $k = ngd_email_key($r['email'] ?? null);
                 if ($k !== '') {
                     $emailOf[(string) $r['ident']] = $k;
+                    $st = trim((string) ($r['eb_status'] ?? ''));
+                    if ($st !== '') {
+                        /* One address can reach the system through two identities. The
+                           stronger statement wins: a binding beats being on the list. */
+                        if ($st === 'registered' || !isset($statusOf[$k])) {
+                            $statusOf[$k] = $st;
+                        }
+                    }
                 }
             }
         } catch (Throwable $e) {
@@ -2226,8 +2257,13 @@ function ngd_voters(string $source = 'live', bool $withEmails = false): array
         }
 
         if (!isset($people[$email])) {
-            $people[$email] = ['points' => 0, 'first' => $day, 'last' => $day, 'founders' => []];
+            $people[$email] = ['points' => 0, 'first' => $day, 'last' => $day,
+                               'founders' => [], 'days' => [], 'bound' => false];
             $firstDayOf[$email] = $day;
+        }
+        $people[$email]['days'][$day] = true;
+        if (!empty($boundIdent[$ident]) || !empty($boundIdent[$key])) {
+            $people[$email]['bound'] = true;
         }
         $p = &$people[$email];
         $p['points']++;
@@ -2300,7 +2336,25 @@ function ngd_voters(string $source = 'live', bool $withEmails = false): array
         if ($d['is_today']) { $todayRow = $d; }
     }
 
+    /* ---- the registration segment for each person ---- */
+    $index = ngd_registration_index($source);
+    $seg = ['registered' => 0, 'on_list' => 0, 'none' => 0, 'unknown' => 0];
+    $threePoint = 0;
+    foreach ($people as $email => $p) {
+        $where = ngd_registration_of($email, $statusOf[$email] ?? null, (bool) $p['bound'], $index);
+        $people[$email]['segment'] = $where;
+        $people[$email]['three_point'] = (bool) $p['bound'];
+        $people[$email]['day_count'] = count($p['days']);
+        $seg[$where]++;
+        if ($p['bound']) {
+            $threePoint++;
+        }
+    }
+
     $out['ok'] = true;
+    $out['segments'] = $seg + ['three_point' => $threePoint];
+    $out['index'] = ['ok' => $index['ok'], 'fresh' => $index['fresh'], 'count' => $index['count'],
+                     'age_s' => $index['age_s'], 'why' => $index['why']];
     $out['founders'] = array_values($fOut);
     $out['daily'] = $daily;
     $out['no_email'] = ['identities' => count($noEmailIdents), 'points' => $noEmailPoints];
@@ -2323,6 +2377,9 @@ function ngd_voters(string $source = 'live', bool $withEmails = false): array
     /* Addresses leave this function ONLY when the caller has been authorised to have them.
        The dashboard never asks; the export does, after checking the account's permission. */
     if ($withEmails) {
+        foreach ($people as $e => $p) {
+            unset($people[$e]['days']);      // the count is kept; the set is noise
+        }
         $out['people'] = $people;
     }
     return $out;
@@ -2469,6 +2526,62 @@ function ngd_voter_export(string $report, string $source, string $only, string $
                 ], $defs),
             ]]];
 
+        case 'voters-registered':
+        case 'voters-unregistered':
+        case 'voters-unknown':
+        case 'voters-threepoint':
+            $want = [
+                'voters-registered'   => ['registered', 'on_list'],
+                'voters-unregistered' => ['none'],
+                'voters-unknown'      => ['unknown'],
+                'voters-threepoint'   => null,          // judged on the binding, not the segment
+            ][$report];
+            $label = [
+                'voters-registered'   => 'Registered voters',
+                'voters-unregistered' => 'No registration found',
+                'voters-unknown'      => 'Registration unknown',
+                'voters-threepoint'   => 'Three-point eligible voters',
+            ][$report];
+            $rows = [];
+            foreach ($v['people'] as $email => $p) {
+                if (!$inWindow($p['first'], $p['last'])) {
+                    continue;
+                }
+                if ($report === 'voters-threepoint') {
+                    if (empty($p['three_point'])) {
+                        continue;
+                    }
+                } elseif (!in_array($p['segment'] ?? 'unknown', (array) $want, true)) {
+                    continue;
+                }
+                $rows[] = [
+                    $email,
+                    ngd_segment_label($p['segment'] ?? 'unknown'),
+                    !empty($p['three_point']) ? 'yes' : 'no',
+                    $p['first'], $p['last'], (int) ($p['day_count'] ?? 0), $p['points'],
+                ];
+            }
+            usort($rows, static fn($a, $b) => [$a[3], $a[0]] <=> [$b[3], $b[0]]);
+            $ix = $v['index'] ?? [];
+            return ['stem' => $report, 'rows' => count($rows), 'sheets' => [[
+                $label,
+                ['Email', 'Registration status', 'Three-point eligible', 'First valid vote',
+                 'Last valid vote', 'Distinct days participated', 'Valid voting actions'],
+                $rows,
+                array_merge([
+                    [''],
+                    ['Segment', $label],
+                    ['Distinct people in this file', (string) count($rows)],
+                    ['How registration was judged', (string) ($ix['why'] ?? 'unknown')],
+                    ['Three-point eligible means', 'A registration is BOUND to this voter in '
+                        . 'pc_attendee, which is what actually raises the daily allowance. It is '
+                        . 'not inferred from having scored a second or third point, and bonus '
+                        . 'points alone are not treated as proof of current registration.'],
+                    ['Not in this file', 'Voters with a verified phone and no email address on '
+                        . 'record. They voted and cannot appear in any email export.'],
+                ], $defs),
+            ]]];
+
         case 'voters':
         default:
             $rows = [];
@@ -2482,15 +2595,19 @@ function ngd_voter_export(string $report, string $source, string $only, string $
                 }
                 sort($supported);
                 $rows[] = [
-                    $email, $p['first'], $p['last'], count($p['founders']), $p['points'],
-                    implode('; ', $supported),
+                    $email,
+                    ngd_segment_label($p['segment'] ?? 'unknown'),
+                    !empty($p['three_point']) ? 'yes' : 'no',
+                    $p['first'], $p['last'], (int) ($p['day_count'] ?? 0),
+                    count($p['founders']), $p['points'], implode('; ', $supported),
                     ($from !== '' && $p['first'] >= $from) ? 'first-time in this period' : 'voted before this period',
                 ];
             }
             usort($rows, static fn($a, $b) => [$a[1], $a[0]] <=> [$b[1], $b[0]]);
             return ['stem' => 'unique-voter-emails', 'rows' => count($rows), 'sheets' => [[
                 'Unique voters',
-                ['Email', 'First valid vote', 'Most recent valid vote', 'Founders supported',
+                ['Email', 'Registration status', 'Three-point eligible', 'First valid vote',
+                 'Most recent valid vote', 'Distinct days participated', 'Founders supported',
                  'Valid voting actions', 'Which founders', 'New in this period?'],
                 $rows,
                 array_merge([
@@ -2503,4 +2620,130 @@ function ngd_voter_export(string $report, string $source, string $only, string $
                 ], $defs),
             ]]];
     }
+}
+
+/* ---------------------------------------------------------------------------
+   18. REGISTERED, NOT REGISTERED, AND HONESTLY UNKNOWN
+
+   Leadership wants the voters who have NOT bought a ticket, which is the most useful
+   list in this whole system and the easiest one to get subtly wrong. There are three
+   answers available, not two, and conflating the third with the second is how a
+   "non-registrant" campaign ends up emailed to people who already paid.
+
+   WHAT THE PRODUCTION SYSTEM ALREADY KNOWS -- no new matching logic is introduced here
+
+     pc_attendee            one row per registration BOUND to a voting identity by the
+                            bonus flow. That binding is the verification, and it is also
+                            exactly what unlocks three points a day (pc-rules.php:46), so
+                            it is the honest source for three-point eligibility. The table
+                            holds hashes only: attendee_key, voter_key, email_key.
+     pc_voter.eb_status     'registered' when a binding exists, 'on_list' when the proven
+                            address was found in the Eventbrite attendee list without a
+                            binding, and EMPTY when nobody has looked
+                            (pc-voter-resolve.php:129, :204).
+     eventbrite-emails.json the cached attendee index: pc_email_key(address) -> attendee
+                            id, rebuilt at most every 15 minutes (pc-attendee.php:111-145).
+                            Read here, never written.
+
+   WHY EMPTY IS NOT "NOT REGISTERED"
+
+   eb_status is written by pc-voter-resolve.php, which is an admin-triggered reconciliation
+   job. If it has not been run since a voter arrived, their status is empty -- and so is the
+   status of somebody genuinely not registered. The column alone cannot tell those apart, so
+   on its own it would classify every unreconciled voter as a non-registrant. That is the
+   error the brief warns about, and it would be invisible: the list would look plausible and
+   full.
+
+   The attendee index settles it. An address absent from a FRESH index is positively not a
+   registrant. If the index is missing or stale, nobody is classified as unregistered at all
+   -- everyone unresolved stays UNKNOWN, and the dashboard says why. A smaller honest list
+   beats a larger wrong one.
+
+   The hash is computed with pc_email_key(), the project's own function, so this asks the
+   same question the voting system asks, in the same words.
+   ------------------------------------------------------------------------ */
+
+/** How registration is being judged right now, and whether it can be judged at all. */
+function ngd_registration_index(string $source = 'live'): array
+{
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+    $dir = ngd_sources()[$source]['dir'] ?? '';
+    $file = $dir . '/eventbrite-emails.json';
+    $out = ['ok' => false, 'map' => [], 'count' => 0, 'age_s' => null, 'fresh' => false,
+            'why' => 'The Eventbrite attendee index has never been built on this source, so '
+                   . 'nobody can be shown as unregistered. Everyone unresolved is unknown.'];
+
+    if (!is_file($file) || !is_readable($file)) {
+        return $cache = $out;
+    }
+    $raw = json_decode((string) @file_get_contents($file), true);
+    if (!is_array($raw) || !isset($raw['map']) || !is_array($raw['map'])) {
+        $out['why'] = 'The attendee index is present but unreadable, so nobody is shown as '
+                    . 'unregistered.';
+        return $cache = $out;
+    }
+    $age = time() - (int) ($raw['ts'] ?? 0);
+    $out['map'] = $raw['map'];
+    $out['count'] = count($raw['map']);
+    $out['age_s'] = $age;
+    $out['ok'] = true;
+
+    /* Fresh enough to call somebody a non-registrant. The index rebuilds every 15 minutes
+       in normal use; six hours is generous, and past it the answer becomes "we do not
+       know" rather than a stale negative about whether a person bought a ticket. */
+    $out['fresh'] = $age >= 0 && $age <= 6 * 3600;
+    $out['why'] = $out['fresh']
+        ? 'Judged against the Eventbrite attendee index, ' . $out['count'] . ' registrations, '
+          . 'rebuilt ' . (int) round($age / 60) . ' minutes ago.'
+        : 'The attendee index is ' . (int) round($age / 3600) . ' hours old, which is too old '
+          . 'to tell somebody they have not registered. Everyone unresolved is unknown until '
+          . 'it refreshes.';
+    return $cache = $out;
+}
+
+/**
+ * Which registration segment a voter falls in.
+ *
+ * @return string one of: registered | on_list | none | unknown
+ */
+function ngd_registration_of(string $email, ?string $ebStatus, bool $bound, array $index): string
+{
+    if ($bound || $ebStatus === 'registered') {
+        return 'registered';                 // a binding is proof, and it is dated
+    }
+    if ($ebStatus === 'on_list') {
+        return 'on_list';                    // in the attendee list, bonus never claimed
+    }
+    if (!$index['fresh']) {
+        return 'unknown';                    // no usable index: refuse to guess
+    }
+    return isset($index['map'][pc_ngd_email_key($email)]) ? 'on_list' : 'none';
+}
+
+/**
+ * The project's own hashed-email key.
+ *
+ * Restated rather than imported because importing pc-attendee.php would pull in
+ * pc-rules.php and pc-lib.php, and pc_db() writes on every call (CREATE TABLE / CREATE
+ * INDEX) -- the one thing this whole layer exists to avoid. Mirrors
+ * pc_email_key(), pc-attendee.php:69. If that construction ever changes, this must too,
+ * and tools/test-ngd-segments.php compares the two against each other to make sure.
+ */
+function pc_ngd_email_key(string $email): string
+{
+    return 'eml:' . substr(hash_hmac('sha256', strtolower(trim($email)), NGS_SECRET), 0, 32);
+}
+
+/** The word a person sees, for a segment the code calls by a short name. */
+function ngd_segment_label(string $seg): string
+{
+    return [
+        'registered' => 'Registered (binding verified)',
+        'on_list'    => 'On the Eventbrite attendee list',
+        'none'       => 'No registration found',
+        'unknown'    => 'Unknown - not yet checked',
+    ][$seg] ?? 'Unknown';
 }

@@ -407,7 +407,9 @@ $build = static function (string $report) use ($founders, $snap, $tot, $meta, $e
 /* The three reports that carry an address take a different road: a second permission
    check, a different builder, and no PDF. Everything else is a count and goes to anyone
    who can open the dashboard. */
-const NGD_EMAIL_REPORTS = ['voters', 'founder-voters', 'voter-pairs'];
+const NGD_EMAIL_REPORTS = ['voters', 'founder-voters', 'voter-pairs',
+                           'voters-registered', 'voters-unregistered',
+                           'voters-unknown', 'voters-threepoint'];
 $rowsOut = 0;
 $carriesEmails = in_array($report, NGD_EMAIL_REPORTS, true);
 

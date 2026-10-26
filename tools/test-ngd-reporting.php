@@ -461,14 +461,19 @@ $forRead = null;
    8. The table allow-list.
    ------------------------------------------------------------------------ */
 
-same('the allow-list is exactly the five reporting tables',
-     ['pc_votes', 'pc_meta', 'pc_visits', 'pc_voter', 'pc_identity'], NGD_READABLE);
+same('the allow-list is exactly the six reporting tables',
+     ['pc_votes', 'pc_meta', 'pc_visits', 'pc_voter', 'pc_identity', 'pc_attendee'],
+     NGD_READABLE);
+ok('pc_attendee is readable: it holds hashes only, and a binding in it is literally what',
+   ngd_may_read('pc_attendee'));
+ok('   raises the daily allowance, so it is the honest source for three-point eligibility',
+   ngd_may_read('pc_attendee'));
 ok('pc_voter is readable, because counting PEOPLE needs the verified address',
    ngd_may_read('pc_voter'));
 ok("pc_identity is readable, because it is the system's own record of who is the same person",
    ngd_may_read('pc_identity'));
 foreach (['submissions', 'pc_email_otp', 'pc_vote_email_otp',
-          'pc_otp_log', 'pc_attendee', 'pc_flag'] as $forbidden) {
+          'pc_otp_log', 'pc_flag'] as $forbidden) {
     ok('refuses to look at ' . $forbidden, ngd_may_read($forbidden) === false);
 }
 /* and prove the refusal is real, not just a boolean: create the table and check the

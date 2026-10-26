@@ -40,6 +40,24 @@ HOSTS = {
 BRANCH = {'production': 'main', 'staging': 'monday-launch'}
 STAMP = re.compile(rb'\?v=[0-9A-Za-z.-]+')
 
+# Media whose BYTES cannot be judged over HTTP, so only their EXISTENCE is.
+#
+# tools/check-drift.py has carried this rule since it was written; this tool did not, and
+# the omission is worse here, because check-drift only prints a wrong answer whereas this
+# one WRITES it into the working tree.
+#
+# Measured on 26 October 2026 pulling production: 21 images came back "changed". Nineteen
+# were pixel-identical to the repository and differed only in encoding, and one --
+# gordon-hero-1800.jpg -- came back DOWNSCALED, 1600x1067 against the repository's
+# 1800x1200. Keeping that would have replaced a source asset with an edge-optimised
+# derivative and left the filename lying about the file.
+#
+# So for media the question narrows to the one that can still be answered honestly: does
+# the live site have a file the repository does not, which a release would delete? That is
+# how the 9.5 MB how-to-vote.mp4 was found, and it still works.
+BINARY_ASSET = ('.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                '.avif', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.otf', '.pdf')
+
 
 def unstamp(b):
     """Compare text the way a browser would, not the way git stores it.
@@ -147,6 +165,8 @@ def main():
             if not same_local:
                 write(a, body)
                 pulled.append('%s   (%d bytes, NEW -- not in %s at all)' % (a, len(body), ref))
+        elif a.endswith(BINARY_ASSET):
+            continue          # existence only -- see BINARY_ASSET for why
         elif unstamp(theirs) != unstamp(body):
             write(a, body)
             pulled.append('%s   (%d bytes)' % (a, len(body)))

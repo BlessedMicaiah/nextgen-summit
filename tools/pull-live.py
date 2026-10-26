@@ -105,12 +105,27 @@ def main():
     host, ref = HOSTS[target], BRANCH[target]
     print('pulling what %s has and %s does not\n' % (host, ref))
 
-    pulled, assets = [], set()
+    pulled, assets, routed = [], set(), []
+
+    # See the same block in tools/check-drift.py. /pitch/peoples-choice/<anything>/ is a
+    # catch-all, so a brand-new local page under it fetches with a 200 and gets the People's
+    # Choice page back. Without this guard the next two lines would write that page straight
+    # over the new one -- a tool whose whole job is "do not lose work" destroying unreleased
+    # work, silently, in the working tree.
+    known_pages = {}
+    for rel, _url in pages():
+        b = at_branch(ref, rel)
+        if b is not None:
+            known_pages.setdefault(unstamp(b), rel)
 
     for rel, url in pages():
         status, body = get(host + url)
         if status != 200:
             print('  skipped %s (HTTP %s)' % (url, status))
+            continue
+        served_by = known_pages.get(unstamp(body))
+        if served_by and served_by != rel:
+            routed.append('%s is a route serving %s -- left alone' % (url, served_by))
             continue
         for m in re.finditer(rb'(?:src|href|data-film-src|data-film-poster)="([^"]*/assets/[^"?]*)', body):
             a = m.group(1).decode('utf-8', 'replace').lstrip('/')
@@ -135,6 +150,11 @@ def main():
         elif unstamp(theirs) != unstamp(body):
             write(a, body)
             pulled.append('%s   (%d bytes)' % (a, len(body)))
+
+    for r in routed:
+        print('  ' + r)
+    if routed:
+        print()
 
     if not pulled:
         print('nothing to pull: %s has nothing %s lacks.' % (host, ref))

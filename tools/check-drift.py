@@ -162,8 +162,29 @@ def main():
     print('checking %s against %s, the branch it is released from' % (host, ref))
     print('(a CDN will lie about this, so every request is cache-busted)\n')
 
-    missing, differs, unreachable = [], [], []
+    missing, differs, unreachable, aliases = [], [], [], []
     seen_assets = set()
+
+    # Every page body the branch already has, keyed by its bytes.
+    #
+    # A 200 does not mean the server has that file. /pitch/peoples-choice/<anything>/ is a
+    # catch-all -- entrant.php answers it -- so the moment a NEW page is added under that
+    # folder locally, this tool fetches its URL, gets the People's Choice page back with a
+    # 200, finds nothing of that name on the branch, and reports a page that exists only on
+    # the server. Measured on 25 October 2026 for /pitch/peoples-choice/top-10/: 61,891 bytes
+    # live, byte-identical to the branch's peoples-choice/index.html.
+    #
+    # That is the dangerous direction for a gate to fail in. It blocks a release that is
+    # perfectly safe, and a gate that blocks safe releases is one people learn to override.
+    #
+    # So: if a "new" live page is byte-identical to a page the branch already holds, it is a
+    # route answering, not a file. Nothing can be lost by releasing over it, because the only
+    # content there is content the branch already has.
+    known_pages = {}
+    for rel, _url in pages():
+        b = at_branch(ref, rel)
+        if b is not None:
+            known_pages.setdefault(unstamp(b), rel)
 
     for rel, url in pages():
         status, body, _ = get(host + url)
@@ -172,7 +193,11 @@ def main():
             continue
         theirs = at_branch(ref, rel)
         if theirs is None:
-            missing.append('%s   (page is live and not on %s)' % (url, ref))
+            served_by = known_pages.get(unstamp(body))
+            if served_by:
+                aliases.append('%s   (a route, serving %s -- no file of its own)' % (url, served_by))
+            else:
+                missing.append('%s   (page is live and not on %s)' % (url, ref))
         elif unstamp(theirs) != unstamp(body):
             differs.append('%s   live %db / %s %db' % (url, len(body), ref, len(theirs)))
 
@@ -221,6 +246,13 @@ def main():
         print('could not be checked:')
         for u in unreachable:
             print('   ' + u)
+        print()
+    if aliases:
+        # Printed, not hidden: a page you expected to find on the server and that turns out to
+        # be a route is worth knowing about, even though it cannot be overwritten.
+        print('answered by a route, not a file (safe -- nothing to lose):')
+        for a in aliases:
+            print('   ' + a)
         print()
 
     if missing or differs:

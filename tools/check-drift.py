@@ -192,12 +192,15 @@ def main():
             unreachable.append('%s (HTTP %s)' % (url, status))
             continue
         theirs = at_branch(ref, rel)
-        if theirs is None:
-            served_by = known_pages.get(unstamp(body))
-            if served_by:
-                aliases.append('%s   (a route, serving %s -- no file of its own)' % (url, served_by))
-            else:
-                missing.append('%s   (page is live and not on %s)' % (url, ref))
+        # The alias test comes BEFORE the comparison, not inside one half of it. A new page
+        # under a catch-all reads as "live but not on the branch" before it is committed and
+        # as "live and different" the moment it is -- same route, same 200, same body, two
+        # different complaints. Both are the route; neither is a file that can be lost.
+        served_by = known_pages.get(unstamp(body))
+        if served_by and served_by != rel:
+            aliases.append('%s   (a route, serving %s -- no file of its own)' % (url, served_by))
+        elif theirs is None:
+            missing.append('%s   (page is live and not on %s)' % (url, ref))
         elif unstamp(theirs) != unstamp(body):
             differs.append('%s   live %db / %s %db' % (url, len(body), ref, len(theirs)))
 

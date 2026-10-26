@@ -42,7 +42,19 @@ STAMP = re.compile(rb'\?v=[0-9A-Za-z.-]+')
 
 
 def unstamp(b):
-    return STAMP.sub(b'?v=', b)
+    """Compare text the way a browser would, not the way git stores it.
+
+    Two things make identical files look different and would have made this tool cry wolf
+    until everybody ignored it:
+
+      the cache stamp   every page asks for its assets with ?v=<stamp>, and the stamp moves
+                        on every release, so comparing it reports every file as changed the
+                        moment anybody bumps it.
+      line endings      core.autocrlf is on, so `git show` hands back LF while the file on
+                        the server has CRLF. On one 51-line stylesheet that is a 51-byte
+                        difference and zero actual difference. Measured, not guessed.
+    """
+    return STAMP.sub(b'?v=', b).replace(b'\r\n', b'\n')
 
 
 def get(url):

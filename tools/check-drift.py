@@ -65,7 +65,23 @@ HOSTS = {
 # against that file would report a difference that is not drift.
 SERVED_BY_PHP = ('pitch/peoples-choice/entrant.php',)
 
-SKIP_ASSET = ('.mp4', '.webm', '.mov')   # fetched by HEAD only; see below
+# Assets whose BYTES cannot be judged over HTTP, so only their EXISTENCE is checked.
+#
+# The Hostinger CDN (Server: hcdn) caches static media for 30 days and re-encodes images:
+# measured on 25 October 2026, assets/img/closing-1200.jpg comes back as Exif/TIFF where the
+# repository holds JFIF, same dimensions, 136,816 bytes against 133,313. The edge also
+# ignores the cache-busting query for these, so there is no way to ask it for the original.
+#
+# Comparing those bytes would report a dozen images as "drift" on every single run, on a
+# site where nothing had changed -- and a check that cries wolf every time is a check people
+# route around. So for media the question narrows to the one that still matters and can
+# still be answered honestly: does the live site have a file the repository does not, which
+# a release would delete? That is exactly how the 9.5 MB how-to-vote.mp4 was found.
+#
+# Text is unaffected: HTML, CSS and JS come back byte-accurate, confirmed by a staging run
+# against the very branch staging was deployed from.
+BINARY_ASSET = ('.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                '.avif', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.otf', '.pdf')
 
 # The branch each site is released from. The comparison is against THIS, not against the
 # working tree: a working tree that is ahead is simply unreleased work, which is normal and
@@ -79,7 +95,19 @@ STAMP = re.compile(rb'\?v=[0-9A-Za-z.-]+')
 
 
 def unstamp(b):
-    return STAMP.sub(b'?v=', b)
+    """Compare text the way a browser would, not the way git stores it.
+
+    Two things make identical files look different and would have made this tool cry wolf
+    until everybody ignored it:
+
+      the cache stamp   every page asks for its assets with ?v=<stamp>, and the stamp moves
+                        on every release, so comparing it reports every file as changed the
+                        moment anybody bumps it.
+      line endings      core.autocrlf is on, so `git show` hands back LF while the file on
+                        the server has CRLF. On one 51-line stylesheet that is a 51-byte
+                        difference and zero actual difference. Measured, not guessed.
+    """
+    return STAMP.sub(b'?v=', b).replace(b'\r\n', b'\n')
 
 
 def at_branch(ref, path):
@@ -161,15 +189,11 @@ def main():
             status, _, _ = get(host + '/' + a, head=True)
             missing.append('%s   (live: HTTP %s)' % (a, status))
             continue
-        if a.endswith(SKIP_ASSET):
-            # a byte compare means downloading tens of megabytes; size is enough to notice
-            status, _, hdr = get(host + '/' + a, head=True)
-            theirs = at_branch(ref, a)
-            live_len = int(hdr.get('Content-Length') or 0)
-            if theirs is None:
-                missing.append('%s   (live, and not on %s)' % (a, ref))
-            elif live_len and live_len != len(theirs):
-                differs.append('%s   live %db / %s %db' % (a, live_len, ref, len(theirs)))
+        if a.endswith(BINARY_ASSET):
+            # existence only -- see BINARY_ASSET for why the bytes cannot be trusted here
+            if at_branch(ref, a) is None and not os.path.isfile(local):
+                status, _, _ = get(host + '/' + a, head=True)
+                missing.append('%s   (live: HTTP %s, and in no commit)' % (a, status))
             continue
         status, body, _ = get(host + '/' + a)
         if status != 200:

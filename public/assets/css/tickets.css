@@ -114,22 +114,22 @@
    that is otherwise paper -- and what keeps it editorial is that everything
    inside it is type and hairlines. The price does the shouting.
 
-   .paused is the opposite register on purpose: quiet, factual, no button. It is
+   .notice is the opposite register on purpose: quiet, factual, no button. It is
    information, not an offer, and it has to read as a pause rather than a door
    closing, so the panel keeps the scholarship detail instead of removing it.
    ========================================================================= */
 
-.paused{margin-top:clamp(28px,4.4vh,44px);padding:clamp(20px,3vw,30px) clamp(20px,3vw,32px);border:1px solid var(--rule);border-left:3px solid var(--accent-ink);background:var(--paper-2);border-radius:10px}
-.paused--light{border-color:rgba(255,255,255,.22);border-left-color:var(--accent);background:rgba(255,255,255,.06)}
-.paused__k{font:700 11px/1.35 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
-.paused--light .paused__k{color:var(--accent)}
-.paused__t{margin-top:10px;font:800 clamp(19px,2.1vw,27px)/1.18 var(--f-sans);letter-spacing:.005em;color:var(--ink)}
-.paused--light .paused__t{color:#fff}
-.paused__p{margin-top:12px;max-width:52ch;font:500 clamp(15px,1.15vw,17px)/1.6 var(--f-sans);color:var(--ink-2)}
-.paused--light .paused__p{color:rgba(255,255,255,.84)}
-.paused__p + .paused__p{margin-top:9px}
-.paused__p b{font-weight:700;color:var(--ink)}
-.paused--light .paused__p b{color:#fff}
+.notice{margin-top:clamp(28px,4.4vh,44px);padding:clamp(20px,3vw,30px) clamp(20px,3vw,32px);border:1px solid var(--rule);border-left:3px solid var(--accent-ink);background:var(--paper-2);border-radius:10px}
+.notice--light{border-color:rgba(255,255,255,.22);border-left-color:var(--accent);background:rgba(255,255,255,.06)}
+.notice__k{font:700 11px/1.35 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
+.notice--light .notice__k{color:var(--accent)}
+.notice__t{margin-top:10px;font:800 clamp(19px,2.1vw,27px)/1.18 var(--f-sans);letter-spacing:.005em;color:var(--ink)}
+.notice--light .notice__t{color:#fff}
+.notice__p{margin-top:12px;max-width:52ch;font:500 clamp(15px,1.15vw,17px)/1.6 var(--f-sans);color:var(--ink-2)}
+.notice--light .notice__p{color:rgba(255,255,255,.84)}
+.notice__p + .notice__p{margin-top:9px}
+.notice__p b{font-weight:700;color:var(--ink)}
+.notice--light .notice__p b{color:#fff}
 
 /* the flash sale */
 .flash{background:var(--ink);color:#fff}
@@ -162,3 +162,8 @@
    long black band. A hairline inside the gutter separates them the way a rule separates two
    spreads, without introducing a third background colour. */
 .flash + .aid .aid__in{border-top:1px solid rgba(255,255,255,.14)}
+
+/* "scholarship applications are closed for the remainder of the summit." is three times the
+   length of the heading this page used to carry, and at the full display size it ran to five
+   lines and pushed everything else off the first screen. Same voice, smaller setting. */
+.sch__title--long{font-size:clamp(32px,4.8vw,68px);line-height:1.08}

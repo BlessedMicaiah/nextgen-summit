@@ -19,8 +19,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   gtag('js', new Date());
   gtag('config', 'G-3M5BCK61VB');
 </script>
-<title>Scholarship application · NextGen Summit</title>
-<meta name="description" content="Apply for one of 40 NextGen Summit scholarship tickets.">
+<title>Scholarships &middot; NextGen Summit</title>
+<meta name="description" content="Scholarship applications are closed for the remainder of the summit. Tickets are $5 with promo code NEXTSTAR.">
 <meta name="theme-color" content="#FAFAF8">
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://nextgensummit.us/scholarship/">
@@ -31,16 +31,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261026-201">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261026-201">
-<link rel="stylesheet" href="/assets/css/tickets.css?v=20261026-201">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261027-202">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261027-202">
+<link rel="stylesheet" href="/assets/css/tickets.css?v=20261027-202">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261026-201" defer></script>
-<script src="/assets/js/announce.js?v=20261026-201" defer></script>
-<script src="/assets/js/depart.js?v=20261026-201" defer></script>
-<script src="/assets/js/scholarship.js?v=20261026-201" defer></script>
+<script src="/assets/js/site.js?v=20261027-202" defer></script>
+<script src="/assets/js/announce.js?v=20261027-202" defer></script>
+<script src="/assets/js/depart.js?v=20261027-202" defer></script>
+<script src="/assets/js/scholarship.js?v=20261027-202" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -78,87 +78,50 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <main>
   <section class="sch" aria-labelledby="sch-title">
-    <p class="label rv">Scholarship application</p>
-    <h1 class="sch__title wm rv" style="--d:.1s" id="sch-title">apply for a<br> scholarship.</h1>
-    <p class="sch__lede rv" style="--d:.18s">We&rsquo;ve set aside 40 scholarship tickets for young people who want to attend but may not be able to cover the cost.</p>
+    <p class="label rv">Scholarships</p>
+    <h1 class="sch__title sch__title--long wm rv" style="--d:.1s" id="sch-title">scholarship applications<br> are closed for the<br> remainder of the summit.</h1>
+    <p class="sch__lede rv" style="--d:.18s">We set aside 40 scholarship tickets for young people who wanted to attend but may not have been able to cover the cost. Applications have now closed for the remainder of the summit.</p>
 
-    <!-- posts to the same endpoint as every other form on the site, as form-name "scholarship".
-         Approval happens with the team, never on this page: nothing here unlocks a ticket. -->
-    <form class="sch__form" name="scholarship" method="POST" action="/api/register.php" novalidate>
-      <input type="hidden" name="form-name" value="scholarship">
-      <p class="hp" aria-hidden="true"><label>Leave this field empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <!-- CLOSED FOR THE REMAINDER OF THE SUMMIT.
+         The application form has been taken off this page, and only off this page: the
+         endpoint in api/register.php and the review screens in admin/ are untouched, so
+         applications already submitted are unaffected and still reviewable. Restoring the
+         form is reverting this commit. The scholarship information stays, deliberately --
+         people arriving here should still learn what the programme was. -->
+    <div class="notice rv" style="--d:.24s">
+      <p class="notice__k">Applications closed</p>
+      <p class="notice__t">What this means</p>
+      <p class="notice__p">Scholarship applications are closed for the remainder of the summit. We are no longer accepting or reviewing new applications.</p>
+      <p class="notice__p"><b>Already applied?</b> Your application is still with the team. Nothing you submitted has been lost, and you don&rsquo;t need to do anything.</p>
+    </div>
 
-      <div class="field">
-        <label for="s-name">Full Name</label>
-        <input id="s-name" name="name" autocomplete="name" maxlength="120" required aria-describedby="s-name-err">
-        <p class="field__err" id="s-name-err" hidden></p>
-      </div>
-
-      <fieldset class="sch__pair">
-        <legend>Email + Phone Number</legend>
-        <div class="sch__pair-in">
-          <div class="field">
-            <label class="sr" for="s-email">Email</label>
-            <input id="s-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="Email" required aria-describedby="s-email-err">
-            <p class="field__err" id="s-email-err" hidden></p>
-          </div>
-          <div class="field">
-            <label class="sr" for="s-phone">Phone Number</label>
-            <input id="s-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" placeholder="Phone Number" required aria-describedby="s-phone-err">
-            <p class="field__err" id="s-phone-err" hidden></p>
-          </div>
+    <!-- ==================== the $5 flash sale ====================
+         This replaces the apply button. The link carries ?discount=NEXTSTAR, so the code
+         is already applied when Eventbrite opens and nobody has to retype it; the code is
+         still printed because people share it. Verified against the live event on
+         27 October 2026: General Admission $20 -> $5.00, "NEXTSTAR applied".
+         Deliberately NOT marked data-eb -- that attribute hands the click to the embedded
+         Eventbrite modal on the tickets page, which is configured without a promo code. -->
+    <aside class="flash flash--inset rv" style="--d:.3s" aria-labelledby="flash-title">
+      <div class="flash__in">
+        <p class="flash__k">Flash sale</p>
+        <h2 class="flash__t" id="flash-title">Your next opportunity starts at <em>$5</em>.</h2>
+        <p class="flash__p">Join us October 30 at NextGen Summit. Get your ticket for just $5 with promo code NEXTSTAR.</p>
+        <div class="flash__row">
+          <a class="btn btn--lg" href="https://www.eventbrite.com/e/nextgen-summit-tickets-1999190304016?discount=NEXTSTAR" target="_blank" rel="noopener noreferrer">Get your $5 ticket<span class="sr"> (opens Eventbrite in a new tab)</span></a>
+          <span class="flash__code"><span class="flash__code-l">Promo code</span><span class="flash__code-v">NEXTSTAR</span></span>
         </div>
-      </fieldset>
-
-      <div class="field">
-        <label for="s-org">School / College / Organization</label>
-        <input id="s-org" name="organization" autocomplete="organization" maxlength="150" required aria-describedby="s-org-err">
-        <p class="field__err" id="s-org-err" hidden></p>
+        <p class="flash__fine">The code is applied for you at checkout. It covers General Admission; group tickets stay at $10 per person. Checkout is handled securely by Eventbrite.</p>
       </div>
+    </aside>
 
-      <div class="field">
-        <label for="s-why">Why do you want to attend NextGen Summit?</label>
-        <textarea id="s-why" name="why" rows="5" maxlength="1000" required aria-describedby="s-why-count s-why-err"></textarea>
-        <p class="sch__count" id="s-why-count" data-words>Max 75 words.</p>
-        <p class="field__err" id="s-why-err" hidden></p>
-      </div>
-
-      <fieldset class="sch__q" id="s-reason" aria-describedby="s-reason-err">
-        <legend>Why are you requesting a scholarship ticket?</legend>
-        <div class="sch__opts">
-          <label class="sch__opt"><input type="radio" name="reason" value="afford" required><span>I&rsquo;m unable to afford a ticket right now</span></label>
-          <label class="sch__opt"><input type="radio" name="reason" value="easier"><span>Financial assistance would make it easier for me to attend</span></label>
-          <label class="sch__opt"><input type="radio" name="reason" value="other" aria-controls="s-other-wrap"><span>Other:</span></label>
-        </div>
-        <div class="field sch__other" id="s-other-wrap" data-other>
-          <label class="sr" for="s-other">Other reason</label>
-          <input id="s-other" name="reason_other" maxlength="200" placeholder="Tell us briefly" aria-describedby="s-other-err">
-          <p class="field__err" id="s-other-err" hidden></p>
-        </div>
-        <p class="field__err" id="s-reason-err" hidden></p>
-      </fieldset>
-
-      <fieldset class="sch__q" id="s-commit" aria-describedby="s-commit-err">
-        <legend>If selected, can you commit to attending NextGen Summit on October 30?</legend>
-        <div class="sch__opts sch__opts--row">
-          <label class="sch__opt"><input type="radio" name="commit" value="Yes" required><span>Yes</span></label>
-          <label class="sch__opt"><input type="radio" name="commit" value="No"><span>No</span></label>
-        </div>
-        <p class="field__err" id="s-commit-err" hidden></p>
-      </fieldset>
-
-      <p class="sch__ack">Scholarship tickets are limited to 40 recipients. If selected, you&rsquo;ll have 48 hours to claim your ticket before it is offered to another applicant.</p>
-
-      <p class="form__error" role="alert" tabindex="-1" hidden></p>
-      <div class="sch__actions">
-        <button class="btn btn--lg" type="submit"><span class="btn__t">Submit application</span></button>
-      </div>
-    </form>
-
-    <div class="sch__done" data-sch-done role="status" tabindex="-1" hidden>
-      <p class="sch__done-t">Application received</p>
-      <p class="sch__done-x">Thank you. The NextGen team will review your application and follow up by email.</p>
-      <p class="sch__done-cta"><a class="btn btn--lg" href="/tickets/">Back to tickets</a></p>
+    <!-- The application form and its confirmation panel were removed from this page when
+         applications closed. Not hidden: a hidden form is still in the DOM, still
+         wired up by scholarship.js, and still submittable by script, which is not what
+         "closed" should mean. api/register.php and the admin review screens are
+         untouched, so applications already submitted are unaffected. Restoring the form
+         is reverting this commit; the markup is in git history.
+         scholarship.js begins "if (!form) return;", so it no-ops here. -->
     </div>
   </section>
 </main>

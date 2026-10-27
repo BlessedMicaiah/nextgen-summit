@@ -1,0 +1,118 @@
+/* ============================================================================
+   MUSIC — the release page.
+
+   A record sleeve, hung on a wall, with a player under it. That is the whole idea, and
+   almost all of the work is in not adding anything else.
+
+   WHY THIS PAGE IS BLACK WHEN THE REST OF THE SITE IS PAPER
+
+   The SHOW ME artwork is set on pure black. On the site's paper ground it would sit in a
+   visible square, and the thing the brief asks to be the focal point would instead read as
+   a picture OF a cover rather than the cover itself. On black the sleeve has no edges: the
+   artwork's own background and the page's are the same colour, so the lettering appears to
+   float on the page and the crop stops existing. That is also why there is no border, no
+   rounded corner and no drop shadow on it -- each of those would redraw the edge the black
+   just removed.
+
+   The nav, the typography, the grain and the footer are the site's own. Only the ground
+   changes, and the nav already has an .on-photo mode for exactly this.
+   ========================================================================= */
+
+.mu-body{background:#000;color:#F4F1EA}
+.mu-body .grain{opacity:.5}
+
+/* The nav sits over black here, so it uses the site's existing light-on-dark mode and only
+   needs its hairline back. */
+.mu-body .nav{background:linear-gradient(180deg,rgba(0,0,0,.92),rgba(0,0,0,0))}
+
+.mu{
+  --mu-gut:clamp(20px,5vw,64px);
+  min-height:100svh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(var(--nav-h) + clamp(20px,4vh,44px)) var(--mu-gut) clamp(32px,6vh,64px);
+  text-align:center;
+}
+
+/* ---------- the sleeve ----------
+   Square, capped by height as well as width so the player is never pushed below the fold on
+   a laptop: on a short viewport the artwork gives up size before the page gives up the
+   control underneath it. */
+.mu__art{
+  width:min(100%,clamp(280px,44vh,560px));
+  aspect-ratio:1/1;
+  margin:0 auto;
+}
+.mu__art img{display:block;width:100%;height:100%;object-fit:contain}
+
+/* ---------- the credit ----------
+   Set the way a sleeve spine is: the title in the display face, the artist in small caps
+   beneath it. The artwork already carries the title in diamonds, so this is the accessible,
+   selectable, indexable version of what the picture says -- not a second billboard. */
+/* A caption, not a second billboard.
+
+   The artwork already says SHOW ME, in diamonds, three hundred pixels tall. Setting the
+   title again underneath at display size gave the page two things shouting the same word
+   and pushed the player off the bottom of a laptop screen. So this is a sleeve credit:
+   small, letterspaced, and there mostly so the title is real text -- selectable, readable
+   by a screen reader, and indexable -- rather than only pixels. */
+.mu__meta{margin-top:clamp(16px,2.6vh,26px)}
+.mu__k{
+  margin:0;font:700 10px/1.4 var(--f-sans);letter-spacing:.3em;text-transform:uppercase;
+  color:rgba(244,241,234,.46);
+}
+.mu__t{
+  margin:clamp(8px,1.2vh,12px) 0 0;
+  font-family:var(--f-display);font-weight:900;
+  font-variation-settings:"SOFT" 0,"WONK" 1,"opsz" 144;
+  font-size:clamp(23px,2.4vw,32px);line-height:1;letter-spacing:-.02em;color:#fff;
+}
+.mu__by{
+  margin:clamp(7px,1vh,10px) 0 0;
+  font:700 clamp(10px,1vw,12px)/1.4 var(--f-sans);letter-spacing:.26em;
+  text-transform:uppercase;color:var(--accent);
+}
+
+/* ---------- the player ----------
+   SoundCloud's own iframe, unmodified and not autoplaying. It is given a plain black frame
+   and a hairline above it so it reads as part of the page rather than as a widget dropped
+   on top of one -- the one thing the brief asks this page not to feel like. */
+.mu__player{
+  width:min(100%,680px);margin:clamp(18px,2.8vh,30px) auto 0;
+  padding-top:clamp(16px,2.4vh,24px);border-top:1px solid rgba(244,241,234,.16);
+}
+.mu__player iframe{display:block;width:100%;height:166px;border:0;background:#000}
+.mu__note{
+  margin:clamp(11px,1.6vh,15px) 0 0;
+  font:500 12.5px/1.6 var(--f-sans);color:rgba(244,241,234,.46);
+}
+.mu__note a{color:rgba(244,241,234,.72);text-decoration:underline;text-underline-offset:3px}
+.mu__note a:hover{color:#fff}
+
+/* ---------- back out ---------- */
+.mu__back{
+  display:inline-flex;align-items:center;gap:10px;margin-top:clamp(20px,3vh,32px);
+  font:700 11px/1 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(244,241,234,.6);text-decoration:none;
+}
+.mu__back svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mu__back:hover{color:#fff}
+
+/* ---------- phones ----------
+   The sleeve takes the full measure and the player sits directly under it. 166px is
+   SoundCloud's own compact height and it stays legible at 320px, so nothing is overridden
+   here except the room around it. */
+@media (max-width:560px){
+  .mu{justify-content:flex-start;padding-top:calc(var(--nav-h) + 20px)}
+  .mu__art{width:100%}
+  .mu__player iframe{height:166px}
+}
+
+/* Short, wide windows -- a laptop in a browser with bookmarks and a dock -- are the case
+   where a square image and a player compete hardest. The artwork yields first. */
+@media (max-height:720px) and (min-width:561px){
+  .mu__art{width:min(100%,clamp(260px,44vh,520px))}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .mu-body *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}

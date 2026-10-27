@@ -101,3 +101,64 @@
 .sch__done-x{margin-top:14px;max-width:46ch;font:500 clamp(16px,1.25vw,19px)/1.55 var(--f-sans);color:var(--ink-2)}
 .sch__done-x small{display:block;margin-top:8px;font:600 13px/1.45 var(--f-sans)}
 .sch__done-cta{margin-top:clamp(24px,3.6vh,36px)}
+
+/* ============================================================================
+   SCHOLARSHIPS PAUSED, AND THE $5 FLASH SALE THAT REPLACES THE APPLY BUTTON
+
+   Two components, used on /tickets/ and /scholarship/.
+
+   The brief asked for the offer to be prominent without the site feeling
+   promotional, which rules out the usual vocabulary: no starburst, no countdown
+   ribbon, no colour it does not already own. What makes it prominent here is
+   scale and contrast -- an ink panel with one very large display line, on a page
+   that is otherwise paper -- and what keeps it editorial is that everything
+   inside it is type and hairlines. The price does the shouting.
+
+   .paused is the opposite register on purpose: quiet, factual, no button. It is
+   information, not an offer, and it has to read as a pause rather than a door
+   closing, so the panel keeps the scholarship detail instead of removing it.
+   ========================================================================= */
+
+.paused{margin-top:clamp(28px,4.4vh,44px);padding:clamp(20px,3vw,30px) clamp(20px,3vw,32px);border:1px solid var(--rule);border-left:3px solid var(--accent-ink);background:var(--paper-2);border-radius:10px}
+.paused--light{border-color:rgba(255,255,255,.22);border-left-color:var(--accent);background:rgba(255,255,255,.06)}
+.paused__k{font:700 11px/1.35 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
+.paused--light .paused__k{color:var(--accent)}
+.paused__t{margin-top:10px;font:800 clamp(19px,2.1vw,27px)/1.18 var(--f-sans);letter-spacing:.005em;color:var(--ink)}
+.paused--light .paused__t{color:#fff}
+.paused__p{margin-top:12px;max-width:52ch;font:500 clamp(15px,1.15vw,17px)/1.6 var(--f-sans);color:var(--ink-2)}
+.paused--light .paused__p{color:rgba(255,255,255,.84)}
+.paused__p + .paused__p{margin-top:9px}
+.paused__p b{font-weight:700;color:var(--ink)}
+.paused--light .paused__p b{color:#fff}
+
+/* the flash sale */
+.flash{background:var(--ink);color:#fff}
+.flash--inset{margin-top:clamp(34px,5.5vh,60px);border-radius:14px;overflow:hidden}
+.flash__in{max-width:var(--maxw);margin:0 auto;padding:clamp(44px,8vh,96px) var(--gutter)}
+.flash--inset .flash__in{padding:clamp(30px,5vw,54px) clamp(24px,4vw,48px)}
+.flash__k{display:flex;align-items:center;gap:.9em;font:700 11px/1.35 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+.flash__k::after{content:"";flex:1 1 auto;height:1px;max-width:180px;background:rgba(255,255,255,.26)}
+.flash__t{margin-top:clamp(14px,2.2vh,22px);font-family:var(--f-display);font-weight:900;font-size:clamp(34px,5.6vw,80px);line-height:.98;letter-spacing:-.035em;max-width:16ch}
+.flash__t em{font-style:normal;color:var(--accent)}
+.flash__p{margin-top:clamp(16px,2.4vh,24px);max-width:48ch;font:500 clamp(16px,1.25vw,19px)/1.6 var(--f-sans);color:rgba(255,255,255,.86)}
+
+/* The code is set as a ticket stub rather than a badge: a hairline box, wide
+   letterspacing, tabular figures. It is there to be recognised and repeated,
+   and the button already carries it so nobody has to retype it. */
+.flash__row{display:flex;flex-wrap:wrap;align-items:center;gap:clamp(14px,2vw,24px);margin-top:clamp(22px,3.4vh,34px)}
+.flash__code{display:inline-flex;align-items:center;gap:14px;padding:12px 18px;border:1px dashed rgba(255,255,255,.4);border-radius:8px}
+.flash__code-l{font:700 10px/1.3 var(--f-sans);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.flash__code-v{font:800 clamp(16px,1.6vw,21px)/1 var(--f-sans);letter-spacing:.22em;color:var(--accent)}
+.flash__fine{margin-top:clamp(16px,2.4vh,22px);max-width:56ch;font:500 13px/1.6 var(--f-sans);color:rgba(255,255,255,.6)}
+
+@media (max-width:760px){
+  .flash__t{max-width:none}
+  .flash__row{gap:14px}
+  .flash__row .btn{width:100%}
+  .flash__code{width:100%;justify-content:space-between}
+}
+
+/* The flash panel and the aid section are both ink, so back to back they read as one very
+   long black band. A hairline inside the gutter separates them the way a rule separates two
+   spreads, without introducing a third background colour. */
+.flash + .aid .aid__in{border-top:1px solid rgba(255,255,255,.14)}

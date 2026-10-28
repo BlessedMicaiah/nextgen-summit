@@ -1,4 +1,5 @@
-/* NextGen Summit — the "I'm attending" flyer generator.
+/* NextGen Summit — the "I'm attending" avatar generator.
+   (Called an avatar in the copy; the file and its hooks keep the original name.)
 
    A visitor types their name, picks a photograph, nudges it into place and downloads a
    1080x1350 PNG. Everything happens in the browser: the photograph is read with FileReader
@@ -7,7 +8,7 @@
 
    THE ARTWORK IS A CONFIG, NOT CODE
 
-   The final flyer design is still being drawn. Everything about the layout lives in TEMPLATE
+   The final avatar design is still being drawn. Everything about the layout lives in TEMPLATE
    below: the canvas size, where the photograph sits, where the name sits, and the fixed
    lines. Swapping in the finished artwork is one edit --
 
@@ -198,7 +199,7 @@
   }
 
   /* The name shrinks to fit, and only wraps once shrinking has run out. A long name
-     therefore stays on one line for as long as it can read, which is what a flyer wants. */
+     therefore stays on one line for as long as it can read, which is what the artwork wants. */
   function drawName() {
     var n = TEMPLATE.name;
     var text = (nameIn.value || '').trim().toUpperCase() || 'YOUR NAME';
@@ -347,17 +348,17 @@
       if (revoke) setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
       try {
         window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ event: 'ngs_flyer_download', named: !!(nameIn.value || '').trim(), photo: !!photo });
+        window.dataLayer.push({ event: 'ngs_avatar_download', named: !!(nameIn.value || '').trim(), photo: !!photo });
       } catch (e) {}
     };
     try {
       if (canvas.toBlob) canvas.toBlob(function (b) {
-        if (!b) { say('The flyer could not be saved. Try again, or use a different browser.'); return; }
+        if (!b) { say('The avatar could not be saved. Try again, or use a different browser.'); return; }
         done(URL.createObjectURL(b), true);
       }, 'image/png');
       else done(canvas.toDataURL('image/png'), false);
     } catch (e) {
-      say('The flyer could not be saved. Try again, or use a different browser.');
+      say('The avatar could not be saved. Try again, or use a different browser.');
     }
   });
 

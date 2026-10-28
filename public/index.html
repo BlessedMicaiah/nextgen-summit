@@ -151,6 +151,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" href="assets/css/announce.css?v=20261027-s03">
 <link rel="stylesheet" href="assets/css/names.css?v=20261027-s03">
 <link rel="stylesheet" href="assets/css/sponsors.css?v=20261027-s03">
+<link rel="stylesheet" href="assets/css/exhibitors.css?v=20261028-204">
 <link rel="stylesheet" href="assets/css/film.css?v=20261027-s03">
 <link rel="stylesheet" href="assets/css/volunteer.css?v=20261027-s03">
 <link rel="stylesheet" href="assets/css/pc-stage.css?v=20261027-s03">
@@ -164,6 +165,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="assets/js/forms.js?v=20261027-s03" defer></script>
 <script src="assets/js/names.js?v=20261027-s03" defer></script>
 <script src="assets/js/sponsors.js?v=20261027-s03" defer></script>
+<script src="assets/js/exhibitors.js?v=20261028-204" defer></script>
 <script src="assets/js/counter.js?v=20261027-s03" defer></script>
 <script src="assets/js/speakers.js?v=20261027-s03" defer></script>
 <script src="assets/js/film.js?v=20261027-s03" defer></script>
@@ -699,6 +701,80 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="spon__foot">
       <p>Together, making NextGen possible.</p>
     </div>
+  </section>
+  <!-- Official exhibitors: three hanging credentials after the sponsors (exhibitors.css, exhibitors.js).
+       The row is revealed once, as a whole, and its images load with the page, so a card swiped
+       into view on a phone is already there rather than fading in and fetching its logo then.
+       The same section sits on the homepage and About; keep the two in step. -->
+  <section class="xb" id="exhibitors" data-nav="paper" aria-labelledby="xb-title">
+    <div class="xb__head rv">
+      <div>
+        <p class="xb__k">Official exhibitors</p>
+        <h2 class="xb__title wm" id="xb-title">Meet them at NextGen.</h2>
+      </div>
+    </div>
+    <ul class="xb__row rv" role="list">
+      <li class="xb__item">
+        <div class="xb__hang">
+          <span class="xb__strap" aria-hidden="true"></span>
+          <div class="xb__card">
+            <div class="xb__face">
+              <span class="xb__slot" aria-hidden="true"></span>
+              <p class="xb__mark" aria-hidden="true"><span class="wm">nextgen</span><span>Summit</span></p>
+              <div class="xb__logo"><img src="/assets/img/exhibitors/amazon.png" width="619" height="189" alt="Amazon" style="--w:77cqw" decoding="async"></div>
+              <p class="xb__role">Official exhibitor</p>
+              <div class="xb__foot">
+                <div class="xb__who" aria-hidden="true"><p class="xb__name">NextGen Summit</p><p class="xb__when">Oct 30 | Baltimore, MD</p></div>
+                <span class="xb__bar" aria-hidden="true"></span>
+                <div class="xb__get"><span class="xb__get-k" aria-hidden="true">Get your tickets at</span><a class="xb__pill" href="/tickets/" aria-label="Get tickets at nextgensummit.us"><span>nextgensummit.us</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10.2 9.4l9.3 4.1-4 1.3 3 3.6-1.7 1.4-3-3.6-2.2 3.6z" fill="currentColor"/><path d="M8.6 2.6l.4 3M3.2 7.9l3 .5M4.4 3.6l2.1 2.2M12.7 4.1l-1.6 2.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></a></div>
+              </div>
+            </div>
+          </div>
+          <img class="xb__clip" src="/assets/img/exhibitors/clip.png" width="219" height="292" alt="" decoding="async">
+          <span class="xb__shadow" aria-hidden="true"></span>
+        </div>
+      </li>
+      <li class="xb__item">
+        <div class="xb__hang">
+          <span class="xb__strap" aria-hidden="true"></span>
+          <div class="xb__card">
+            <div class="xb__face">
+              <span class="xb__slot" aria-hidden="true"></span>
+              <p class="xb__mark" aria-hidden="true"><span class="wm">nextgen</span><span>Summit</span></p>
+              <div class="xb__logo"><img src="/assets/img/exhibitors/notion.png" width="622" height="227" alt="Notion" style="--w:77cqw" decoding="async"></div>
+              <p class="xb__role">Official exhibitor</p>
+              <div class="xb__foot">
+                <div class="xb__who" aria-hidden="true"><p class="xb__name">NextGen Summit</p><p class="xb__when">Oct 30 | Baltimore, MD</p></div>
+                <span class="xb__bar" aria-hidden="true"></span>
+                <div class="xb__get"><span class="xb__get-k" aria-hidden="true">Get your tickets at</span><a class="xb__pill" href="/tickets/" aria-label="Get tickets at nextgensummit.us"><span>nextgensummit.us</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10.2 9.4l9.3 4.1-4 1.3 3 3.6-1.7 1.4-3-3.6-2.2 3.6z" fill="currentColor"/><path d="M8.6 2.6l.4 3M3.2 7.9l3 .5M4.4 3.6l2.1 2.2M12.7 4.1l-1.6 2.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></a></div>
+              </div>
+            </div>
+          </div>
+          <img class="xb__clip" src="/assets/img/exhibitors/clip.png" width="219" height="292" alt="" decoding="async">
+          <span class="xb__shadow" aria-hidden="true"></span>
+        </div>
+      </li>
+      <li class="xb__item">
+        <div class="xb__hang">
+          <span class="xb__strap" aria-hidden="true"></span>
+          <div class="xb__card">
+            <div class="xb__face">
+              <span class="xb__slot" aria-hidden="true"></span>
+              <p class="xb__mark" aria-hidden="true"><span class="wm">nextgen</span><span>Summit</span></p>
+              <div class="xb__logo"><img src="/assets/img/exhibitors/alabaster.png" width="628" height="278" alt="Alabaster" style="--w:78cqw" decoding="async"></div>
+              <p class="xb__role">Official exhibitor</p>
+              <div class="xb__foot">
+                <div class="xb__who" aria-hidden="true"><p class="xb__name">NextGen Summit</p><p class="xb__when">Oct 30 | Baltimore, MD</p></div>
+                <span class="xb__bar" aria-hidden="true"></span>
+                <div class="xb__get"><span class="xb__get-k" aria-hidden="true">Get your tickets at</span><a class="xb__pill" href="/tickets/" aria-label="Get tickets at nextgensummit.us"><span>nextgensummit.us</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10.2 9.4l9.3 4.1-4 1.3 3 3.6-1.7 1.4-3-3.6-2.2 3.6z" fill="currentColor"/><path d="M8.6 2.6l.4 3M3.2 7.9l3 .5M4.4 3.6l2.1 2.2M12.7 4.1l-1.6 2.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></a></div>
+              </div>
+            </div>
+          </div>
+          <img class="xb__clip" src="/assets/img/exhibitors/clip.png" width="219" height="292" alt="" decoding="async">
+          <span class="xb__shadow" aria-hidden="true"></span>
+        </div>
+      </li>
+    </ul>
   </section>
 
   <!-- 05 the invitation -->

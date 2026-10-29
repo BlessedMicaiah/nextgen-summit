@@ -9,9 +9,19 @@
 
 .spq__top{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .spq__faces{display:flex;margin:0;padding:0;list-style:none}
-.spq__faces li{width:40px;height:40px;margin-left:-10px;border-radius:50%;border:2px solid var(--ink);overflow:hidden;background:#24242B;flex:none}
+.spq__faces li{position:relative;width:40px;height:40px;margin-left:-10px;border-radius:50%;border:2px solid var(--ink);overflow:hidden;background:#24242B;flex:none}
 .spq__faces li:first-child{margin-left:0}
-.spq__faces img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 18%}
+.spq__faces img{display:block}
+/* each avatar is framed on the face: the photos are 620x868 portraits with the head in the top
+   half, at different sizes, so a plain cover crop cut the tops of heads off and left two of the
+   faces small. --fz zooms the photo (1 = as wide as the circle); --fx and --fy move it, as a
+   share of the circle. Measured per photo; a new photo without values shows from its top. */
+.spq__faces img,.sqd__face img{position:absolute;left:var(--fx,0%);top:var(--fy,0%);width:calc(var(--fz,1) * 100%);max-width:none;height:auto}
+[src*="speakers/tisha-edwards-"]{--fz:1.12;--fx:-6.1%}
+[src*="speakers/tunde-onakoya-"]{--fz:1.12;--fx:-6.1%}
+[src*="speakers/michael-ley-"]{--fz:1.18;--fx:-5.4%}
+[src*="speakers/jack-scalise-"]{--fz:1.63;--fx:-34.5%;--fy:-14.6%}
+[src*="speakers/jamar-simms-"]{--fz:1.75;--fx:-32.1%;--fy:-21.7%}
 .spq__more{display:grid;place-items:center;font:800 12px/1 var(--f-sans);color:var(--ink);background:var(--accent)!important}
 .spq__k{display:flex;align-items:center;gap:8px;font:700 11px/1.3 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.72)}
 .spq__dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(31,199,190,.6);animation:spq-ping 2.4s var(--ease) infinite}
@@ -71,7 +81,7 @@
 .sqd__who input{position:absolute;opacity:0;width:1px;height:1px}
 .sqd__face{position:relative;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;overflow:hidden;background:#24242B;color:#fff;font:800 13px/1 var(--f-sans);letter-spacing:.08em;text-transform:uppercase;box-shadow:0 0 0 2px var(--paper),0 0 0 2px var(--rule);transition:box-shadow .35s var(--ease),transform .5s var(--ease)}
 .sqd__who--any .sqd__face{background:var(--ink)}
-.sqd__face img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;filter:grayscale(.35);transition:filter .4s var(--ease)}
+.sqd__face img{filter:grayscale(.35);transition:filter .4s var(--ease)}
 .sqd__name{font:700 12px/1.25 var(--f-sans);color:var(--ink-2)}
 .sqd__name b{display:block;font-weight:800;color:var(--ink)}
 .sqd__who--any .sqd__name{font-weight:800;color:var(--ink)}

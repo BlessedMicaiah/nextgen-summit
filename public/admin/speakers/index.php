@@ -219,8 +219,14 @@ function spq_url(array $change): string
   .who{display:inline-flex;align-items:center;gap:10px;min-height:46px;padding:5px 14px 5px 5px;border:1.5px solid var(--rule);border-radius:999px;background:#fff;text-decoration:none;color:var(--ink);font:700 13px/1.2 var(--f-sans);transition:border-color .3s var(--ease)}
   .who:hover{border-color:var(--ink)}
   .who[aria-current="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
-  .who__face{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--ink);color:#fff;font:800 10px/1 var(--f-sans);letter-spacing:.06em;text-transform:uppercase;flex:none}
-  .who__face img{width:100%;height:100%;object-fit:cover;object-position:50% 18%}
+  .who__face{position:relative;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--ink);color:#fff;font:800 10px/1 var(--f-sans);letter-spacing:.06em;text-transform:uppercase;flex:none}
+  /* framed on each face, with the same measurements as the FAQ's avatars (speakq.css) */
+  .who__face img{position:absolute;left:var(--fx,0%);top:var(--fy,0%);width:calc(var(--fz,1) * 100%);max-width:none;height:auto}
+  [src*="speakers/tisha-edwards-"]{--fz:1.12;--fx:-6.1%}
+  [src*="speakers/tunde-onakoya-"]{--fz:1.12;--fx:-6.1%}
+  [src*="speakers/michael-ley-"]{--fz:1.18;--fx:-5.4%}
+  [src*="speakers/jack-scalise-"]{--fz:1.63;--fx:-34.5%;--fy:-14.6%}
+  [src*="speakers/jamar-simms-"]{--fz:1.75;--fx:-32.1%;--fy:-21.7%}
   .who__n{min-width:22px;padding:3px 7px;border-radius:999px;background:var(--paper-2);font:800 11px/1 var(--f-sans);text-align:center}
   .who--zero{opacity:.55}
   .bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;margin-bottom:16px}

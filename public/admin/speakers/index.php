@@ -4,11 +4,18 @@
    database, and listed here on their own: by speaker, searchable, marked new or reviewed,
    exported as CSV, and printable for whoever reads them out on stage.
 
-   Same sign-in as /admin/ (the session cookie covers /admin/): signing in here posts to
-   /admin/, which sends you back to this page. */
+   Two ways in. The program team's private link, /admin/speakers/?key=..., needs no password:
+   the key is NGS_SPEAKERS_KEY in api/config.speakers.php (gitignored, and refused over the
+   web by api/.htaccess like config.php), it lets that browser in for eight hours, and the
+   address loses the key straight away. Change the key and every old link stops working; with
+   no key file the link does nothing and only the password works. Or the admin's own sign-in
+   (the session cookie covers /admin/): signing in here posts to /admin/, which sends you back. */
 declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/api/_lib.php';
+if (is_file(dirname(__DIR__, 2) . '/api/config.speakers.php')) {
+    require dirname(__DIR__, 2) . '/api/config.speakers.php';
+}
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -25,7 +32,25 @@ if (empty($_SESSION['csrf'])) {
     $_SESSION['csrf'] = bin2hex(random_bytes(16));
 }
 $csrf = $_SESSION['csrf'];
-$authed = !empty($_SESSION['ok']) && (int) ($_SESSION['at'] ?? 0) > time() - 8 * 3600;
+$admin = !empty($_SESSION['ok']) && (int) ($_SESSION['at'] ?? 0) > time() - 8 * 3600;
+
+// the private link: a matching key lets this browser in, then the key leaves the address
+$key = is_string($_GET['key'] ?? null) ? $_GET['key'] : '';
+if ($key !== '') {
+    if (defined('NGS_SPEAKERS_KEY') && strlen((string) NGS_SPEAKERS_KEY) >= 32 && hash_equals((string) NGS_SPEAKERS_KEY, $key)) {
+        session_regenerate_id(true);
+        $_SESSION['spk'] = hash('sha256', (string) NGS_SPEAKERS_KEY);
+        $_SESSION['spk_at'] = time();
+        header('Location: /admin/speakers/', true, 303);
+        exit;
+    }
+    sleep(1);
+}
+// a link-only visit lasts eight hours, and ends at once if the key is changed
+$viaLink = defined('NGS_SPEAKERS_KEY') && is_string($_SESSION['spk'] ?? null)
+    && hash_equals(hash('sha256', (string) NGS_SPEAKERS_KEY), $_SESSION['spk'])
+    && (int) ($_SESSION['spk_at'] ?? 0) > time() - 8 * 3600;
+$authed = $admin || $viaLink;
 
 // the lineup, as the drawer offers it, with the photo each one has on the site
 const SPQ_SPEAKERS = [
@@ -251,7 +276,8 @@ function spq_url(array $change): string
     <div class="login">
       <a class="adm__mark" href="/"><span class="wm">nextgen</span><span class="nav__summit">Admin</span></a>
       <h1 class="wm">sign in.</h1>
-      <p class="adm__sub">Questions for the NextGen Summit speakers.</p>
+      <p class="adm__sub">Questions for the NextGen Summit speakers. Open the private link you were sent, or sign in with the admin password.</p>
+      <?php if ($key !== ''): ?><p class="note" role="alert">That link is not valid any more. Ask the NextGen team for the current one.</p><?php endif; ?>
       <form method="post" action="/admin/">
         <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
         <input type="hidden" name="action" value="login">
@@ -265,7 +291,7 @@ function spq_url(array $change): string
   <main class="adm">
     <div class="adm__top">
       <a class="adm__mark" href="/" target="_blank" rel="noopener"><span class="wm">nextgen</span><span class="nav__summit">Speaker Q&amp;A</span></a>
-      <a class="textlink" href="/admin/">&larr; Admin</a>
+      <?php if ($admin): ?><a class="textlink" href="/admin/">&larr; Admin</a><?php endif; ?>
       <form method="post" action="/admin/">
         <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
         <input type="hidden" name="action" value="logout">

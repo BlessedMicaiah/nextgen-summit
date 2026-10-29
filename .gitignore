@@ -31,3 +31,6 @@ tools/.asset-stamp
 # Python bytecode from running the tools
 __pycache__/
 *.pyc
+
+# generated health-check reports
+tools/health/*.json

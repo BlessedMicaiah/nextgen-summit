@@ -1,0 +1,52 @@
+/* NextGen Summit — questions for the speakers, at the top of the FAQ drawer.
+   A card of its own above the accordion: the lineup's faces, a speech bubble cycling through
+   the kind of thing people ask, and one line of linked text to the program team's form. */
+
+.spq{position:relative;margin:0 0 clamp(36px,6vh,56px);padding:clamp(20px,3.4vw,26px);border-radius:20px;background:var(--ink);color:#fff;overflow:hidden;isolation:isolate}
+/* a slow turquoise glow in the corner, the site's accent on the dark card */
+.spq::before{content:"";position:absolute;z-index:-1;right:-30%;top:-60%;width:80%;aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(31,199,190,.42),rgba(31,199,190,0) 70%);animation:spq-glow 9s var(--ease-io) infinite alternate}
+@keyframes spq-glow{to{transform:translate3d(-18%,22%,0) scale(1.15)}}
+
+.spq__top{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.spq__faces{display:flex;margin:0;padding:0;list-style:none}
+.spq__faces li{width:40px;height:40px;margin-left:-10px;border-radius:50%;border:2px solid var(--ink);overflow:hidden;background:#24242B;flex:none}
+.spq__faces li:first-child{margin-left:0}
+.spq__faces img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 18%}
+.spq__more{display:grid;place-items:center;font:800 12px/1 var(--f-sans);color:var(--ink);background:var(--accent)!important}
+.spq__k{display:flex;align-items:center;gap:8px;font:700 11px/1.3 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.spq__dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(31,199,190,.6);animation:spq-ping 2.4s var(--ease) infinite}
+@keyframes spq-ping{70%,100%{box-shadow:0 0 0 9px rgba(31,199,190,0)}}
+
+/* the bubble: three questions stacked in one cell, each in turn */
+.spq__bubble{position:relative;display:grid;margin:clamp(18px,3vh,24px) 0 0;padding:14px 18px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);font:600 15px/1.45 var(--f-sans);color:rgba(255,255,255,.9)}
+.spq__q{grid-area:1/1;opacity:0;transform:translate3d(0,8px,0);animation:spq-q 12s var(--ease) infinite}
+.spq__q:nth-child(2){animation-delay:-8s}
+.spq__q:nth-child(3){animation-delay:-4s}
+@keyframes spq-q{0%{opacity:0;transform:translate3d(0,8px,0)}5%,28%{opacity:1;transform:none}33%,100%{opacity:0;transform:translate3d(0,-8px,0)}}
+
+.spq__t{margin-top:clamp(18px,3vh,24px);font:800 clamp(22px,2.4vw,26px)/1.12 var(--f-sans);letter-spacing:.01em;text-transform:uppercase}
+.spq__p{margin-top:8px;font:500 15px/1.55 var(--f-sans);color:rgba(255,255,255,.72);max-width:38ch}
+
+/* linked text, not a button: an underline that fills in and an arrow that travels */
+.spq__go{display:inline-flex;align-items:center;gap:10px;margin-top:clamp(16px,2.6vh,20px);padding:4px 0;font:800 16px/1.3 var(--f-sans);color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/30% 2px no-repeat;transition:background-size .5s var(--ease),color .3s}
+.spq__go:hover,.spq__go:focus-visible{background-size:100% 2px;color:#fff}
+.spq__go:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:2px}
+.spq__arr{display:inline-block;transition:transform .5s var(--ease)}
+.spq__go:hover .spq__arr,.spq__go:focus-visible .spq__arr{transform:translateX(6px)}
+
+.spq__k{white-space:nowrap}
+.spq__go{white-space:nowrap}
+
+@media (max-width:440px){
+  .spq{padding:18px}
+  .spq__faces li{width:32px;height:32px;margin-left:-9px}
+  .spq__k{gap:7px;letter-spacing:.14em}
+  .spq__bubble{padding:12px 14px;font-size:14px}
+  .spq__go{font-size:15px;gap:8px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .spq::before,.spq__dot{animation:none}
+  .spq__q{animation:none}
+  .spq__q:first-child{opacity:1;transform:none}
+}

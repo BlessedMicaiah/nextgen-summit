@@ -1,0 +1,142 @@
+/* ============================================================================
+   THE "I'M ATTENDING" AVATAR GENERATOR
+
+   Two pieces that share one stylesheet because they share one component:
+
+     .av        the promotional band -- headline, copy, one button. It appears twice: at
+                the bottom of the Summit page, where the button is a link here, and at the
+                top of this section on Get tickets, where the button opens the studio.
+     .av__studio  the studio itself, which exists only on Get tickets.
+
+   It is a dark band because the artwork it makes is a bright holographic ticket, and a
+   bright ticket needs a dark ground to read as an object rather than as more page. On the
+   Summit page the section before it is a full-bleed photograph, so ink also reads as an
+   ending; on Get tickets it separates the generator from the pale ticket panels above.
+
+   THE STUDIO IS HIDDEN UNTIL ASKED FOR
+
+   The brief wants an invitation, not a form sitting at the bottom of a page. So the band
+   is a headline and one button, and the whole editor appears only when that button is
+   pressed. Nobody scrolling past has to look at a file input, and nobody pays for the
+   ticket artwork -- 115KB and 156KB -- until they have asked for it.
+   ========================================================================= */
+
+.av{background:var(--ink);color:#fff;position:relative}
+.av__in{max-width:var(--maxw);margin:0 auto;padding:clamp(64px,11vh,132px) var(--gutter)}
+
+/* ---------- the invitation ---------- */
+/* The measure belongs on the title, not the block: ch resolves against the element's own
+   font-size, so a measure set on the container would be computed from 16px. */
+.av__k{margin:0;font:700 11px/1.35 var(--f-sans);letter-spacing:.26em;text-transform:uppercase;color:var(--accent)}
+.av__title{
+  max-width:13ch;margin:clamp(14px,2.2vh,22px) 0 0;
+  font-size:clamp(38px,6.4vw,92px);line-height:.96;letter-spacing:-.035em;text-transform:uppercase;
+}
+.av__title em{font-style:normal;color:var(--accent)}
+.av__copy{
+  margin:clamp(16px,2.4vh,24px) 0 0;max-width:44ch;
+  font:500 clamp(16px,1.25vw,19px)/1.6 var(--f-sans);color:rgba(255,255,255,.82);
+}
+.av__cta{margin-top:clamp(22px,3.4vh,34px)}
+.av__cta[hidden]{display:none}
+
+/* ---------- the studio ---------- */
+.av__studio[hidden]{display:none}
+.av__studio{
+  display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);
+  gap:clamp(26px,4vw,64px);align-items:start;
+  margin-top:clamp(30px,5vh,56px);padding-top:clamp(28px,4.4vh,48px);
+  border-top:1px solid rgba(255,255,255,.18);
+}
+
+/* the preview: the output canvas itself, shown at whatever size fits, so what is on
+   screen and what is downloaded cannot drift apart */
+.av__stage{position:relative}
+.av__canvas{
+  display:block;width:100%;height:auto;aspect-ratio:1080/1350;
+  background:#15151b;border-radius:4px;box-shadow:0 30px 60px -34px #000;
+  touch-action:none;                       /* so a drag moves the photo, not the page */
+}
+.av[data-shape="story"] .av__canvas{aspect-ratio:1080/1920}
+/* the story is tall; on a short window it gives up width rather than running off the page */
+.av[data-shape="story"] .av__stage{max-width:min(100%,calc(78vh * 1080 / 1920));margin-inline:auto}
+.av__canvas.is-dragging{cursor:grabbing}
+.av.is-loaded .av__canvas{cursor:grab}
+.av__hint{
+  margin:12px 0 0;font:500 12.5px/1.5 var(--f-sans);color:rgba(255,255,255,.5);text-align:center;
+}
+.av__hint[hidden]{display:none}
+
+/* ---------- format switch ---------- */
+.av__sizes{display:flex;gap:8px;margin:0 0 14px;padding:0;list-style:none}
+.av__size{
+  flex:1 1 0;min-height:48px;padding:7px 10px;border-radius:9px;cursor:pointer;text-align:center;
+  border:1.5px solid rgba(255,255,255,.22);background:rgba(255,255,255,.04);color:rgba(255,255,255,.72);
+  font:700 11px/1.3 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;
+  transition:border-color .25s var(--ease),color .25s var(--ease),background-color .25s var(--ease);
+}
+.av__size small{display:block;margin-top:3px;font:600 10px/1.2 var(--f-sans);letter-spacing:.06em;opacity:.6}
+.av__size:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.av__size.is-on{border-color:var(--accent);background:rgba(31,199,190,.12);color:#fff}
+.av__size:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- controls ---------- */
+.av__fields{display:grid;gap:clamp(18px,2.6vh,26px)}
+.av__label{display:block;font:700 11px/1.3 var(--f-sans);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66);margin-bottom:9px}
+.av__step{display:inline-block;width:22px;color:var(--accent)}
+
+.av__input{
+  width:100%;height:56px;padding:0 16px;border-radius:8px;
+  border:1.5px solid rgba(255,255,255,.26);background:rgba(255,255,255,.05);color:#fff;
+  font:600 16px/1 var(--f-sans);
+}
+.av__input::placeholder{color:rgba(255,255,255,.38)}
+.av__input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-color:transparent}
+
+/* the drop zone doubles as the file button, so there is one target, not two */
+.av__drop{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  min-height:124px;padding:18px;border-radius:10px;cursor:pointer;text-align:center;
+  border:1.5px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.03);
+  transition:border-color .3s var(--ease),background-color .3s var(--ease);
+}
+.av__drop:hover,.av__drop.is-over{border-color:var(--accent);background:rgba(31,199,190,.08)}
+.av__drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.av__drop input:focus-visible + .av__dropt{outline:2px solid var(--accent);outline-offset:6px;border-radius:4px}
+.av__dropt{font:700 13px/1.4 var(--f-sans);letter-spacing:.06em}
+.av__dropx{font:500 12px/1.4 var(--f-sans);color:rgba(255,255,255,.52)}
+
+.av__zoomrow{display:flex;align-items:center;gap:14px}
+.av__range{flex:1 1 auto;accent-color:var(--accent);height:34px}
+.av__mini{
+  flex:none;min-height:38px;padding:0 13px;border-radius:7px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.26);background:transparent;color:rgba(255,255,255,.8);
+  font:700 10px/1 var(--f-sans);letter-spacing:.14em;text-transform:uppercase;
+}
+.av__mini:hover{border-color:#fff;color:#fff}
+
+.av__actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+/* site.css gives a disabled button cursor:progress, which is right for a form that is
+   submitting and wrong for a button waiting on artwork that has not been asked for yet */
+.av__actions .btn[disabled]{opacity:.45;pointer-events:none;cursor:default}
+.av__err{
+  margin:0;padding:11px 14px;border-radius:8px;border-left:3px solid #FF2450;
+  background:rgba(255,36,80,.1);font:600 13px/1.5 var(--f-sans);color:#FFC9D3;
+}
+.av__err[hidden]{display:none}
+.av__note{margin:0;font:500 12.5px/1.6 var(--f-sans);color:rgba(255,255,255,.46);max-width:46ch}
+
+/* ---------- phones ----------
+   One column, and the preview goes first: the thing being made should be the thing you
+   see, with the controls under your thumb beneath it. */
+@media (max-width:860px){
+  .av__studio{grid-template-columns:1fr;gap:clamp(22px,5vw,30px)}
+  .av__stage{max-width:360px;margin:0 auto;width:100%}
+  .av[data-shape="story"] .av__stage{max-width:300px}
+  .av__cta .btn,.av__actions .btn{width:100%;justify-content:center}
+  .av__actions{flex-direction:column;align-items:stretch}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .av__drop,.av__size{transition:none}
+}

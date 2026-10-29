@@ -122,18 +122,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://www.eventbrite.com">
 <link rel="preload" as="image" href="/assets/img/closing-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261028-s06">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261028-s06">
-<link rel="stylesheet" href="/assets/css/tickets.css?v=20261028-s06">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261028-s09">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261028-s09">
+<link rel="stylesheet" href="/assets/css/tickets.css?v=20261028-s09">
+<link rel="stylesheet" href="/assets/css/avatar.css?v=20261028-s09">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261028-s06" defer></script>
-<script src="/assets/js/announce.js?v=20261028-s06" defer></script>
-<script src="/assets/js/depart.js?v=20261028-s06" defer></script>
+<script src="/assets/js/site.js?v=20261028-s09" defer></script>
+<script src="/assets/js/announce.js?v=20261028-s09" defer></script>
+<script src="/assets/js/depart.js?v=20261028-s09" defer></script>
 <!-- tickets.js loads Eventbrite's widget script itself, once, after the page has rendered -->
-<script src="/assets/js/ngd-track.js?v=20261028-s06" defer></script>
-<script src="/assets/js/tickets.js?v=20261028-s06" defer></script>
+<script src="/assets/js/ngd-track.js?v=20261028-s09" defer></script>
+<script src="/assets/js/tickets.js?v=20261028-s09" defer></script>
+<script src="/assets/js/avatar.js?v=20261028-s09" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -245,6 +247,86 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="flash__code"><span class="flash__code-l">Promo code</span><span class="flash__code-v">NEXTSTAR</span></span>
       </div>
       <p class="flash__fine rv" style="--d:.26s">The code is applied for you at checkout. It covers General Admission; group tickets stay at $10 per person.</p>
+    </div>
+  </section>
+
+
+  <!-- ==================== make it official: the NextGen Air avatar ====================
+       The approved Canva boarding pass, with the attendee's own photograph in the frame and
+       their name under PASSENGER. Two sizes, Instagram Post and Story, both exported from
+       the design at full resolution with the example photograph and name deleted from the
+       source -- so nothing is painted over anybody's face.
+
+       Everything happens in the browser: FileReader to canvas to toBlob. No upload, no
+       endpoint, no account, nothing stored. The ticket artwork is not fetched until the
+       button below is pressed.
+
+       This is the only implementation. The Summit page carries the same invitation and
+       links here. -->
+  <section class="av" id="avatar" data-nav="photo" aria-labelledby="av-title" data-avatar data-shape="post">
+    <div class="av__in">
+      <div class="av__head">
+        <p class="av__k rv">Make it official</p>
+        <h2 class="av__title wm rv" style="--d:.08s" id="av-title">I&rsquo;m going to NextGen.<br><em>Are you?</em></h2>
+        <p class="av__copy rv" style="--d:.14s">Make it official. Create your personalized NextGen Summit avatar and share it with your friends.</p>
+      </div>
+
+      <p class="av__cta rv" style="--d:.2s">
+        <button class="btn btn--lg" type="button" data-avatar-open>Create your avatar</button>
+      </p>
+
+      <div class="av__studio" data-avatar-studio hidden>
+        <div class="av__stage">
+          <canvas class="av__canvas" data-avatar-canvas width="1080" height="1350"
+                  role="img" aria-label="A preview of your NextGen Air avatar"></canvas>
+          <p class="av__hint" data-avatar-hint hidden>Drag the photo to reposition it.</p>
+        </div>
+
+        <div class="av__fields">
+          <div>
+            <span class="av__label"><span class="av__step">01</span> Your photo</span>
+            <label class="av__drop" data-avatar-drop>
+              <input type="file" accept="image/*" data-avatar-file
+                     aria-label="Choose a photo for your avatar">
+              <span class="av__dropt" aria-hidden="true">Choose a photo</span>
+              <span class="av__dropx" aria-hidden="true">or drag one here &middot; JPG, PNG, HEIC or WebP, up to 12&nbsp;MB</span>
+            </label>
+          </div>
+
+          <div>
+            <label class="av__label" for="av-name"><span class="av__step">02</span> Your name</label>
+            <input class="av__input" id="av-name" type="text" maxlength="40" autocomplete="name"
+                   placeholder="Type your name" data-avatar-name>
+          </div>
+
+          <div>
+            <label class="av__label" for="av-zoom"><span class="av__step">03</span> Zoom &amp; position</label>
+            <div class="av__zoomrow">
+              <input class="av__range" id="av-zoom" type="range" min="1" max="3" step="0.01" value="1" data-avatar-zoom>
+              <button class="av__mini" type="button" data-avatar-reset>Reset</button>
+            </div>
+          </div>
+
+          <div>
+            <span class="av__label"><span class="av__step">04</span> Preview &amp; download</span>
+            <div class="av__sizes" role="tablist" aria-label="Avatar size">
+              <button class="av__size is-on" type="button" role="tab" aria-selected="true"
+                      data-avatar-format="post">Post<small>1080 &times; 1350</small></button>
+              <button class="av__size" type="button" role="tab" aria-selected="false"
+                      data-avatar-format="story">Story<small>1080 &times; 1920</small></button>
+            </div>
+            <div class="av__actions">
+              <button class="btn btn--lg" type="button" data-avatar-download="post" disabled>Download post</button>
+              <button class="btn btn--lg btn--ghost" type="button" data-avatar-download="story" disabled>Download story</button>
+              <button class="btn btn--lg btn--ghost" type="button" data-avatar-share disabled hidden>Share</button>
+            </div>
+          </div>
+
+          <p class="av__err" role="alert" data-avatar-error hidden></p>
+          <p class="av__note">Your photo never leaves your device &mdash; the avatar is made here in
+            your browser and nothing is uploaded to us. Both sizes download as high-quality PNG.</p>
+        </div>
+      </div>
     </div>
   </section>
 

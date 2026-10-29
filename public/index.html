@@ -1288,8 +1288,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <h2 class="drawer__title wm" id="faq-title">good questions.</h2>
 
     <!-- questions for the speakers, sent ahead of the summit, kept apart from the answers below.
-         The link opens the speaker Q&A drawer (#ask-speakers), whose questions are stored like the
-         ones below it and copied to the team inbox. The faces are the lineup's own photos at the speaker section's
+         The link opens the speaker Q&A drawer (#ask-speakers), whose questions are stored in the
+         site database and listed at /admin/speakers/. The faces are the lineup's own photos at the speaker section's
          addresses, so they come from the cache; the sample questions are decoration. -->
     <aside class="spq" aria-labelledby="spq-t">
       <div class="spq__top">
@@ -1387,8 +1387,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </dialog>
 
 <!-- the speaker Q&A, opened from the card at the top of the FAQ. It is the FAQ's question form
-     (form-name "question") marked for the speakers, so it is stored with those questions on the
-     site (admin, Questions tab, CSV export) and copied to the team inbox by register.php. The form
+     (form-name "question") marked for the speakers, so register.php stores it in the site
+     database, and /admin/speakers/ lists, filters, prints and exports it as CSV. The form
      has a name of its own so site.js's "Still have a question?" handler never picks it up;
      speakq.js sends it. -->
 <dialog class="drawer drawer--form" id="ask-speakers" aria-labelledby="ask-speakers-t">

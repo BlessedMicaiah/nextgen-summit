@@ -51,7 +51,7 @@
     'open':        { pill: 'Voting open', vote: 'Vote for this pitch',
       note: 'Your vote could change their future. Vote once a day through October 28!' },
     'closed':      { pill: 'Voting closed', vote: 'Voting closed',
-      note: 'Voting has closed. The result is with the NextGen team.' },
+      note: 'Voting has closed. Thank you to everyone who voted \u2014 more about the Top 10 will be announced soon.' },
     'results':     { pill: 'Results published', vote: 'Voting closed',
       note: 'Voting has closed and the result has been published.' }
   };

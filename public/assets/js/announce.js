@@ -26,6 +26,11 @@
      Add ?cdpopup=1 to any URL to preview it, and ?cdpopup=1&cdtoday=2026-10-29 to preview a
      particular day. (The People's Choice pop-up was retired here when voting closed.) */
   var CD_EVENT = '2026-10-30';                 // Friday, October 30
+  /* People's Choice voting shuts at midnight tonight, and the pop-up goes with it: from
+     that instant nobody is interrupted on their way to reading that voting has closed.
+     Time-based on purpose -- it needs no deploy at midnight, and ?cdpopup=1 still
+     previews it, so putting it back is this one line. */
+  var CD_RETIRE = '2026-10-29T00:00:00-04:00';
   var CD_KEY = 'ngs-countdown-popup-seen';
   var CD_DELAY = 3000;
 
@@ -99,6 +104,7 @@
     var forced = (location.search.match(/[?&]cdtoday=(\d{4}-\d{2}-\d{2})/) || [])[1];
     var days = daysBetween(forced || todayEastern(), CD_EVENT);
     if (days < 0 || days > 7) return;                                // only the week of, and never after
+    if (!preview && Date.now() >= new Date(CD_RETIRE).getTime()) return;    // retired with the vote
     if (!preview && cdSeen()) return;
     if (typeof HTMLDialogElement !== 'function') return;
     function attempt() {

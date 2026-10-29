@@ -1,6 +1,6 @@
 /* NextGen Summit: the extended pitch deadline (see css/announce.css).
    Draws the strike through October 17 on every .dl as it scrolls into view.
-   Also opens the People's Choice voting pop-up while voting is open (see below).
+   Also opens the countdown pop-up in the days before the summit (see below).
    (The deadline pop-up was removed once the October 20 deadline passed.) */
 (function () {
   'use strict';
@@ -19,67 +19,63 @@
   }
 
 
-  /* ---------- the People's Choice pop-up ----------
-     Four seconds into a visit, once per browser session, an invitation to go and vote, with a
-     direct link to the People's Choice page. It only appears while the server says voting is
-     open (GET /api/pc-vote.php), never on the People's Choice page itself, and never on top of
-     a menu or form someone already has open. Founder faces are picked at random every time so
-     the pop-up never favours anyone. Add ?pcpopup=1 to any URL to preview it regardless. */
-  var PC_URL = '/pitch/peoples-choice/';
-  var PC_KEY = 'ngs-pc-vote-popup-seen';
-  var PC_DELAY = 4000;                                        // the brief asks for 3 to 5 seconds
-  var PC_HARD_END = new Date('2026-10-29T00:00:00-04:00');    // a backstop if the server is quiet
-  var PC_FACES = ['haptol-labs', 'credible-blossom', 'sooz', 'the-luminous-lab', 'lookbook', 'ibraid',
-    'beforekeys-llc', 'if-the-shoe-fits-itsf', 'rest', 'pathbridge', 'applytrack', 'jay-s-watermelonade',
-    'offguardz', 'k8culture-productions', 'melavyr', 'light', 'beauty-boot-camp', 'nextofferup',
-    'exam-me', 'find-your-mission-corp'];
+  /* ---------- the countdown pop-up ----------
+     Three seconds into a visit, once per browser session: "nextgen is in 2 days. See you on
+     Friday." The number of days is worked out on Eastern time every visit, so it changes by
+     itself (2 days, then tomorrow, then today) and the pop-up stops after the summit.
+     Add ?cdpopup=1 to any URL to preview it, and ?cdpopup=1&cdtoday=2026-10-29 to preview a
+     particular day. (The People's Choice pop-up was retired here when voting closed.) */
+  var CD_EVENT = '2026-10-30';                 // Friday, October 30
+  var CD_KEY = 'ngs-countdown-popup-seen';
+  var CD_DELAY = 3000;
 
-  function pcSeen() { try { return sessionStorage.getItem(PC_KEY) === '1'; } catch (e) { return false; } }
-  function pcRemember() { try { sessionStorage.setItem(PC_KEY, '1'); } catch (e) {} }
+  function cdSeen() { try { return sessionStorage.getItem(CD_KEY) === '1'; } catch (e) { return false; } }
+  function cdRemember() { try { sessionStorage.setItem(CD_KEY, '1'); } catch (e) {} }
 
-  function pick(list, n) {
-    var a = list.slice();
-    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
-    return a.slice(0, n);
+  // today's date in New York, as YYYY-MM-DD, whatever time zone the visitor's device is in
+  function todayEastern() {
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+      var get = function (t) { for (var i = 0; i < parts.length; i++) if (parts[i].type === t) return parts[i].value; return ''; };
+      return get('year') + '-' + get('month') + '-' + get('day');
+    } catch (e) {
+      var d = new Date(Date.now() - 4 * 3600 * 1000);   // old browsers: EDT is close enough this week
+      return d.toISOString().slice(0, 10);
+    }
+  }
+  function daysBetween(a, b) {               // whole calendar days from a to b
+    return Math.round((Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10)) -
+                       Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10))) / 864e5);
   }
 
-  function pcBuild(closes) {
-    var faces = pick(PC_FACES, 5).map(function (slug, i) {
-      /* The square story crop, not the tall card portrait. These are cut for a circle and
-         already framed on the face, and they are a fraction of the weight: five card
-         portraits came to roughly 350 KB for five 60px circles. */
-      return '<li class="pcp__face" style="--i:' + i + '"><img src="/assets/img/founders/' + slug + '-story.webp" alt="" width="112" height="112" loading="lazy" decoding="async"></li>';
-    }).join('');
-    var bits = '';
-    for (var k = 0; k < 14; k++) bits += '<span class="pcp__bit" style="--k:' + k + '"></span>';
+  function cdShow(days) {
+    var title, bye;
+    if (days >= 2) { title = 'nextgen is in<br> <span class="cdp__n">' + days + '</span> days.'; bye = 'See you on Friday.'; }
+    else if (days === 1) { title = 'nextgen is<br> tomorrow.'; bye = 'See you tomorrow.'; }
+    else { title = 'nextgen is<br> today.'; bye = 'See you today.'; }
+    var plain = days >= 2 ? 'NextGen is in ' + days + ' days.' : days === 1 ? 'NextGen is tomorrow.' : 'NextGen is today.';
+
     var d = document.createElement('dialog');
-    d.className = 'ann pcp';
-    d.id = 'pc-vote-news';
-    d.setAttribute('aria-labelledby', 'pcp-title');
-    d.setAttribute('aria-describedby', 'pcp-copy');
+    d.className = 'ann cdp';
+    d.id = 'countdown-news';
+    d.setAttribute('aria-labelledby', 'cdp-title');
+    d.setAttribute('aria-describedby', 'cdp-copy');
     d.innerHTML =
       '<div class="ann__bar" aria-hidden="true"></div>' +
       '<div class="ann__in" tabindex="-1" autofocus>' +
-        '<button class="ann__close" type="button" data-pcp-close aria-label="Close">' +
+        '<button class="ann__close" type="button" data-cdp-close aria-label="Close">' +
           '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>' +
         '</button>' +
-        '<p class="ann__kicker pcp__kicker"><span class="pcp__live" aria-hidden="true"></span>' +
-          '<span class="pcp__kt">People&rsquo;s Choice <span class="pcp__sep" aria-hidden="true">&middot;</span> <span class="pcp__now">Voting is open</span></span></p>' +
-        '<div class="pcp__stage" aria-hidden="true"><div class="pcp__burst">' + bits + '</div><ul class="pcp__faces">' + faces + '</ul></div>' +
-        '<h2 class="ann__title wm pcp__title" id="pcp-title">who gets<br> your vote?</h2>' +
-        '<p class="ann__copy pcp__copy" id="pcp-copy">Twenty young founders are in the running for the People&rsquo;s Choice Award. Watch their pitches and vote for your favorite, once a day' +
-          (closes ? ', until <strong>' + closes + '</strong>' : '') + '.</p>' +
+        '<p class="ann__kicker cdp__kicker"><span>Friday, October 30 <span aria-hidden="true">&middot;</span> Gordon Center</span></p>' +
+        '<h2 class="ann__title wm cdp__title" id="cdp-title"><span aria-hidden="true">' + title + '</span><span class="sr">' + plain + '</span></h2>' +
+        '<p class="cdp__bye" id="cdp-copy">' + bye + '</p>' +
         '<p class="ann__cta">' +
-          '<a class="btn btn--lg" href="' + PC_URL + '" data-pcp-go>Vote now <span class="arr" aria-hidden="true">&rarr;</span></a>' +
-          '<button class="ann__later" type="button" data-pcp-close>Maybe later</button>' +
+          '<a class="btn btn--lg" href="/tickets/" data-cdp-go>Get tickets</a>' +
+          '<button class="ann__later" type="button" data-cdp-close>Close</button>' +
         '</p>' +
       '</div>';
     document.body.appendChild(d);
-    return d;
-  }
 
-  function pcShow(closes) {
-    var d = pcBuild(closes);
     var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     function close() {
       if (!d.open || d.classList.contains('is-leaving')) return;
@@ -88,43 +84,33 @@
       setTimeout(function () { d.classList.remove('is-leaving'); d.close(); }, 300);
     }
     d.addEventListener('click', function (e) {
-      if (e.target.closest('[data-pcp-close]')) { close(); return; }
+      if (e.target.closest('[data-cdp-close]')) { close(); return; }
       if (e.target === d) close();                                   // a click on the backdrop
     });
     d.addEventListener('cancel', function (e) { e.preventDefault(); close(); });   // Esc
     d.addEventListener('close', function () { d.remove(); });
-    pcRemember();   // shown once is enough for this session, however it is closed
+    cdRemember();   // once a session, however it is closed
     d.showModal();
-    if (typeof window.gtag === 'function') { try { window.gtag('event', 'pc_popup_shown'); } catch (e) {} }
-    d.querySelector('[data-pcp-go]').addEventListener('click', function () {
-      if (typeof window.gtag === 'function') { try { window.gtag('event', 'pc_popup_vote_click'); } catch (e) {} }
-    });
+    if (typeof window.gtag === 'function') { try { window.gtag('event', 'countdown_popup_shown', { days: days }); } catch (e) {} }
   }
 
-  function pcInvite() {
-    var preview = /[?&]pcpopup=1\b/.test(location.search);
-    if (!preview) {
-      if (location.pathname.indexOf(PC_URL) === 0) return;          // they are already there
-      if (pcSeen() || new Date() >= PC_HARD_END) return;
-    }
+  function cdInvite() {
+    var preview = /[?&]cdpopup=1\b/.test(location.search);
+    var forced = (location.search.match(/[?&]cdtoday=(\d{4}-\d{2}-\d{2})/) || [])[1];
+    var days = daysBetween(forced || todayEastern(), CD_EVENT);
+    if (days < 0 || days > 7) return;                                // only the week of, and never after
+    if (!preview && cdSeen()) return;
     if (typeof HTMLDialogElement !== 'function') return;
-    var t0 = Date.now();
-    function later(closes) {
-      function attempt() {
-        if (!preview && pcSeen()) return;
-        if (document.querySelector('dialog[open]') || document.hidden) { setTimeout(attempt, 1500); return; }
-        pcShow(closes);
-      }
-      setTimeout(attempt, Math.max(0, PC_DELAY - (Date.now() - t0)));
+    function attempt() {
+      if (!preview && cdSeen()) return;
+      // never on top of a menu or a form someone already has open: wait until it closes
+      if (document.querySelector('dialog[open]') || document.hidden) { setTimeout(attempt, 1500); return; }
+      cdShow(days);
     }
-    if (preview) { later('October 28, 11:59 PM ET'); return; }
-    fetch('/api/pc-vote.php', { credentials: 'same-origin', cache: 'no-store' })
-      .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.ok && d.open === true) later(d.closes_label || ''); })
-      .catch(function () {});                                       // no answer, no pop-up
+    setTimeout(attempt, CD_DELAY);
   }
 
-  function start() { strike(); pcInvite(); }
+  function start() { strike(); cdInvite(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();

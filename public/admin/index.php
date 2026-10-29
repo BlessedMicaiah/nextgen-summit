@@ -130,10 +130,11 @@ if ($authed && isset($_GET['export']) && $error === '') {
             fputcsv($out, array_map($safe, [et($r['created_at']), q_status($d) === 'reviewed' ? 'Reviewed' : 'New', $d['name'] ?? '', $d['email'] ?? '', $d['phone'] ?? '', $d['organization'] ?? '', $d['why'] ?? '', $d['reason'] ?? '', $d['reason_other'] ?? '', $d['commit'] ?? '']));
         }
     } elseif ($which === 'questions') {
-        fputcsv($out, ['Received (ET)', 'Status', 'Full name', 'Email', 'Question']);
+        fputcsv($out, ['Received (ET)', 'Status', 'For', 'Full name', 'Email', 'Question']);
         foreach ($questions as $r) {
             $d = $r['data'];
-            fputcsv($out, array_map($safe, [et($r['created_at']), q_status($d) === 'reviewed' ? 'Reviewed' : 'New', $d['name'] ?? '', $d['email'] ?? '', $d['question'] ?? '']));
+            $for = ($d['for'] ?? '') === 'speakers' ? 'Speakers: ' . ($d['speaker'] ?? 'Any speaker') : 'NextGen team';
+            fputcsv($out, array_map($safe, [et($r['created_at']), q_status($d) === 'reviewed' ? 'Reviewed' : 'New', $for, $d['name'] ?? '', $d['email'] ?? '', $d['question'] ?? '']));
         }
     } else {
         fputcsv($out, ['Sent (ET)', 'Type', 'Name', 'Email', 'Campus', 'Organization']);
@@ -254,6 +255,7 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
   .badge{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:4px;font:800 10px/1 var(--f-sans);letter-spacing:.14em;text-transform:uppercase}
   .badge--new{background:var(--accent);color:var(--on-accent)}
   .badge--reviewed{border:1.5px solid var(--rule-strong);color:var(--ink-2)}
+  .badge--speakers{background:var(--ink);color:#fff}
   .q__who{margin-top:8px;font:700 15px/1.45 var(--f-sans);overflow-wrap:anywhere}
   .q__who a{font-weight:600;color:var(--accent-ink)}
   .q__text{margin-top:8px;max-width:72ch;font:500 15.5px/1.6 var(--f-sans);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
@@ -415,7 +417,7 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
 
     <section class="panel" role="tabpanel" id="panel-questions" aria-labelledby="tab-questions" tabindex="0"<?= $tab === 'questions' ? '' : ' hidden' ?>>
       <h2 class="wm">questions.</h2>
-      <p class="adm__sub">Sent from the FAQ · Reply by email · Times shown in Eastern Time.</p>
+      <p class="adm__sub">Sent from the FAQ, including the questions for the speakers · Reply by email · Times shown in Eastern Time.</p>
       <?php if (isset($_GET['deleted']) && $tab === 'questions'): ?><p class="note note--ok" role="status" style="margin-top:18px">Question deleted.</p><?php endif; ?>
 
       <div class="stats">
@@ -443,7 +445,7 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
         <?php foreach ($shownQuestions as $r): $d = $r['data']; $st = q_status($d); ?>
           <li class="q q--<?= $st ?>" id="q-<?= h($r['id']) ?>">
             <div>
-              <p class="q__meta"><span class="badge badge--<?= $st ?>"><?= $st === 'reviewed' ? 'Reviewed' : 'New' ?></span><time datetime="<?= h($r['created_at']) ?>"><?= h(et($r['created_at'])) ?></time></p>
+              <p class="q__meta"><span class="badge badge--<?= $st ?>"><?= $st === 'reviewed' ? 'Reviewed' : 'New' ?></span><?php if (($d['for'] ?? '') === 'speakers'): ?><span class="badge badge--speakers">For <?= h($d['speaker'] ?? 'Any speaker') ?></span><?php endif; ?><time datetime="<?= h($r['created_at']) ?>"><?= h(et($r['created_at'])) ?></time></p>
               <p class="q__who"><?= h($d['name'] ?? '') ?> <span aria-hidden="true">·</span> <a href="mailto:<?= h($d['email'] ?? '') ?>?subject=<?= rawurlencode('Your question to NextGen Summit') ?>"><?= h($d['email'] ?? '') ?></a></p>
               <p class="q__text"><?= h($d['question'] ?? '') ?></p>
             </div>

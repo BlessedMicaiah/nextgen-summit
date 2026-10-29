@@ -50,3 +50,54 @@
   .spq__q{animation:none}
   .spq__q:first-child{opacity:1;transform:none}
 }
+
+/* ============================================================================
+   The speaker Q&A drawer (#ask-speakers): who it is for as a row of faces, then the question.
+   Fields, errors and buttons are the site's own (.field, .form__error, .btn).
+   ========================================================================= */
+.sqd,.sqd-done{margin-top:clamp(26px,6vh,56px)}
+.sqd[hidden],.sqd-done[hidden]{display:none}
+.sqd-done{outline:none}
+.sqd__title{font-size:clamp(46px,6vw,78px);line-height:.95}
+.sqd-done .sqd__title{margin-top:14px}
+.sqd__lede{margin-top:14px;font:500 16px/1.55 var(--f-sans);color:var(--ink-2);max-width:44ch}
+.sqd__lede b{color:var(--ink)}
+
+.sqd__pick{margin:clamp(28px,4.4vh,40px) 0 0;padding:0;border:0;min-width:0}
+.sqd__k{padding:0;margin-bottom:12px;font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.sqd__whos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px}
+.sqd__who{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 2px 10px;border-radius:12px;cursor:pointer;text-align:center;transition:background-color .3s var(--ease)}
+.sqd__who:hover{background:rgba(var(--shade),.04)}
+.sqd__who input{position:absolute;opacity:0;width:1px;height:1px}
+.sqd__face{position:relative;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;overflow:hidden;background:#24242B;color:#fff;font:800 13px/1 var(--f-sans);letter-spacing:.08em;text-transform:uppercase;box-shadow:0 0 0 2px var(--paper),0 0 0 2px var(--rule);transition:box-shadow .35s var(--ease),transform .5s var(--ease)}
+.sqd__who--any .sqd__face{background:var(--ink)}
+.sqd__face img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;filter:grayscale(.35);transition:filter .4s var(--ease)}
+.sqd__name{font:700 12px/1.25 var(--f-sans);color:var(--ink-2)}
+.sqd__name b{display:block;font-weight:800;color:var(--ink)}
+.sqd__who--any .sqd__name{font-weight:800;color:var(--ink)}
+/* chosen: a turquoise ring, the face in full colour and a small lift */
+.sqd__who input:checked + .sqd__face{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--accent);transform:translateY(-2px)}
+.sqd__who input:checked + .sqd__face img{filter:none}
+.sqd__who input:checked ~ .sqd__name{color:var(--accent-ink)}
+.sqd__who input:checked ~ .sqd__name b{color:var(--accent-ink)}
+.sqd__who input:focus-visible + .sqd__face{outline:2px solid var(--accent-ink);outline-offset:6px}
+
+.sqd .field{margin-top:clamp(22px,3.4vh,30px)}
+.sqd__count{margin-top:6px;text-align:right;font:600 12px/1.3 var(--f-sans);color:var(--ink-2)}
+.sqd__pair{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.sqd .form__error{margin-top:22px}
+.sqd__actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:clamp(24px,3.6vh,32px)}
+
+@media (max-width:560px){
+  .sqd__pair{grid-template-columns:1fr}
+  .sqd__actions .btn{width:100%}
+}
+@media (max-width:400px){
+  .sqd__whos{gap:12px 4px}
+  .sqd__face{width:54px;height:54px}
+  .sqd__name{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){
+  .sqd__face,.sqd__face img{transition:none}
+  .sqd__who input:checked + .sqd__face{transform:none}
+}

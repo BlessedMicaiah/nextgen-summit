@@ -3,15 +3,21 @@
 
    Built from NextGen_Caleb_First_Magazine_Prototype_Kit.
 
-   SCOPE: ONE ISSUE
+   SCOPE: ALL TEN ISSUES
 
-   Issue 01 -- Caleb Orji / Haptol Labs -- is finished and opens. The other nine stand in
-   the rack as labelled placeholders and cannot be opened.
+   The ten founders confirmed by leadership to pitch live on 30 October, each with their own
+   issue. The rack holds no placeholders any more.
 
-   That is a one-line change, not a deletion. READY below is the whole gate: every render
-   function, the spread, the closing page, the video handling and the keyboard model are
-   shared and already work for all ten. Adding an entrant id to READY turns that issue on.
-   Nothing about the other nine has been removed, rewritten or stubbed.
+   This was always a one-line change: READY below is the whole gate, and every render
+   function, the spread, the closing page, the video handling and the keyboard model were
+   already shared across all ten. Opening the other nine added no drawing code and changed
+   none, which is why the design is exactly as it was art-directed for Caleb.
+
+   THE ORDER IS NOT A RANKING
+
+   ISSUES.ids is the running order leadership supplied for the show. It is not the People's
+   Choice standing, and the masthead note says so in as many words. Voting closed at
+   23:59:59 ET on 28 October; nothing on this page reads from the ballot.
 
    WHERE THE CONTENT COMES FROM
 
@@ -38,27 +44,35 @@
      THE GATE.
 
      Entrant ids whose issue is finished and may be opened. Everyone else appears in the
-     rack as a placeholder. Add an id here to switch that issue on; nothing else changes.
+     rack as a placeholder. Remove an id to put that issue back behind a placeholder;
+     nothing else changes.
      --------------------------------------------------------------------- */
-  var READY = ['entrant-01'];
+  var READY = ['entrant-01', 'entrant-03', 'entrant-06', 'entrant-07', 'entrant-05',
+               'entrant-02', 'entrant-14', 'entrant-12', 'entrant-04', 'entrant-13'];
 
-  /* The collection, in rack order, exactly as the kit's founder_manifest.json lists it.
-     `confirmed` stays false while voting is open: ten names in a row are a design
-     collection, not a standing, and the notice says so. */
+  /* The live line-up, in the running order leadership supplied on 29 October.
+     Names and companies below are the project's own records, not the brief's shorthand:
+     "Jay's Watermelo" is Jay's Watermelonade, and Offguardz is Ugochinyere Blessing Okogeri's.
+
+     Jolie Wyatt / If The Shoe Fits (entrant-08) is not in the live line-up -- she is not in
+     Maryland on the day. Her record, portrait, logo and film are untouched and she still
+     appears everywhere else on the site; she is simply not listed here. The same goes for
+     Vishwa Shukla (entrant-20) and Austin Kendrick Lee (entrant-09), who were in the
+     design collection and are not in the live ten. */
   var ISSUES = {
     ids: [
-      'entrant-01',   /* 01  Caleb Orji            — Haptol Labs             */
-      'entrant-02',   /* 02  Annrita Karu          — Credible blossom        */
-      'entrant-20',   /* 03  Vishwa Shukla         — Find Your Mission Corp. */
-      'entrant-03',   /* 04  Muyiwa Ogunsola       — Sooz                    */
-      'entrant-04',   /* 05  Ariel Laura Métayer   — The Luminous Lab        */
-      'entrant-05',   /* 06  Ethan Edouard         — Lookbook                */
-      'entrant-06',   /* 07  Velma Funebe          — iBraid                  */
-      'entrant-07',   /* 08  Divine Ayomide Fiolu  — BeforeKeys LLC          */
-      'entrant-08',   /* 09  Jolie Wyatt           — If The Shoe Fits (ITSF) */
-      'entrant-09'    /* 10  Austin Kendrick Lee   — Rest                    */
+      'entrant-01',   /* 01  Caleb Orji                   — Haptol Labs           */
+      'entrant-03',   /* 02  Muyiwa Ogunsola              — Sooz                  */
+      'entrant-06',   /* 03  Velma Funebe                 — iBraid                */
+      'entrant-07',   /* 04  Divine Ayomide Fiolu         — BeforeKeys LLC        */
+      'entrant-05',   /* 05  Ethan Edouard                — Lookbook              */
+      'entrant-02',   /* 06  Annrita Karu                 — Credible blossom      */
+      'entrant-14',   /* 07  Kate Mina Lin                — K8Culture Productions */
+      'entrant-12',   /* 08  Joyson BaLisamore            — Jay's Watermelonade   */
+      'entrant-04',   /* 09  Ariel Laura Métayer          — The Luminous Lab      */
+      'entrant-13'    /* 10  Ugochinyere Blessing Okogeri — Offguardz             */
     ],
-    confirmed: false
+    confirmed: true
   };
 
   var HOW_MANY = 10;
@@ -75,7 +89,20 @@
     'entrant-06': ['#F06C9F', '#642039'],
     'entrant-07': ['#AC8ED1', '#42405A'],
     'entrant-08': ['#E890A1', '#582C36'],
-    'entrant-09': ['#B6C956', '#374323']
+    'entrant-09': ['#B6C956', '#374323'],
+
+    /* The three founders joining the collection have no entry in the kit's manifest, so
+       they have no art-directed accent. Rather than invent three colours, they take the
+       three the departing issues leave behind: the shelf carries exactly the ten colours it
+       was art-directed with, in the same range, with nothing new introduced.
+
+       Reading an accent off each logo was tried first and thrown away -- run against the
+       founders that DO have a manifest accent it reproduced none of them, so it would have
+       been a guess wearing a method's clothes. These three are placeholders for the
+       designer's choice and are one line each to change. */
+    'entrant-12': ['#E890A1', '#582C36'],   /* Jay's Watermelonade, from entrant-08 */
+    'entrant-13': ['#B6C956', '#374323'],   /* Offguardz,           from entrant-09 */
+    'entrant-14': ['#25BFC1', '#124149']    /* K8Culture,           from entrant-20 */
   };
   var ACCENT_FALLBACK = ['#1FC7BE', '#06403D'];
 
@@ -168,7 +195,10 @@
       var chosen = ISSUES.ids.map(function (id) { return map[id]; }).filter(Boolean);
       if (chosen.length) {
         if (ISSUES.confirmed) {
-          if (statusEl) statusEl.hidden = true;
+          say('The live line-up',
+            'These ten founders pitch live at NextGen Summit on 30 October. They are shown '
+            + 'in the running order supplied for the show \u2014 that order is not a '
+            + 'ranking, and not the People\u2019s Choice result.');
         } else {
           say('A design collection, not a result',
             'Voting is open until 11:59pm ET on 28 October. These ten issues are the '

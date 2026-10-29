@@ -170,7 +170,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="assets/js/counter.js?v=20261028-s10" defer></script>
 <script src="assets/js/speakers.js?v=20261028-s10" defer></script>
 <script src="assets/js/film.js?v=20261028-s10" defer></script>
-<script src="assets/js/volunteer.js?v=20261028-s10" defer></script>
+<script src="assets/js/volunteer.js?v=20261029-s01" defer></script>
 <script src="/assets/js/ngd-track.js?v=20261028-s10" defer></script>
 <script src="assets/js/pc-stage.js?v=20261028-s10" defer></script>
 </head>
@@ -1010,7 +1010,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
          Google Form (volunteer.js posts them to its formResponse address), so they land in the
          same responses and sheet as before. The field names are that form's entry ids and the
          option values are its options, character for character: change the Google Form and
-         this form has to change with it, or those answers are dropped. -->
+         this form has to change with it, or those answers are dropped. The email goes as
+         emailAddress, the name Google gives the form's "Collect email addresses" question:
+         that question is required, so without it Google refuses the whole sign-up. -->
     <form class="vf" name="volunteer-signup" method="POST" novalidate data-vf
       action="https://docs.google.com/forms/d/e/1FAIpQLSccALYSEv3dRT2qAzKLVLlVIxGQlWSG-2Btk6_XM2OgRlkCDQ/formResponse">
 
@@ -1050,6 +1052,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <label for="vf-phone">Phone number</label>
           <input id="vf-phone" name="entry.327205865" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required aria-describedby="vf-phone-err">
           <p class="field__err" id="vf-phone-err" hidden></p>
+        </div>
+        <div class="field">
+          <label for="vf-email">Email</label>
+          <input id="vf-email" name="emailAddress" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="vf-email-err">
+          <p class="field__err" id="vf-email-err" hidden></p>
         </div>
         <fieldset class="vf__q" id="vf-adult" aria-describedby="vf-adult-err">
           <legend>Are you over 18?</legend>

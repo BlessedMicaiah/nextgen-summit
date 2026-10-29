@@ -113,10 +113,12 @@
   function check(step) {
     var first = null;
     function bad(el) { if (!first) first = el; }
-    $$('input[type=text],input:not([type]),input[type=tel],textarea', step).forEach(function (i) {
+    $$('input[type=text],input:not([type]),input[type=tel],input[type=email],textarea', step).forEach(function (i) {
       if (!seen(i) || !i.required) return;
       var v = i.value.trim(), msg = '';
       if (!v) msg = i.id === 'vf-time' ? 'Please tell us a pickup time that works.' : 'Please fill this in.';
+      // Google checks the address too, and a refusal from it would be silent
+      else if (i.type === 'email' && !/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(v)) msg = 'Please check your email address.';
       else if (i.type === 'tel') {
         var digits = v.replace(/\D+/g, '');
         if (digits.length < 7 || digits.length > 15) msg = 'Please check your phone number.';

@@ -156,6 +156,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" href="assets/css/film.css?v=20261029-s11">
 <link rel="stylesheet" href="assets/css/volunteer.css?v=20261029-s11">
 <link rel="stylesheet" href="assets/css/pc-stage.css?v=20261029-s11">
+<link rel="stylesheet" href="assets/css/speakq.css?v=20261029-s11">
 <script src="assets/js/liquid.js?v=20261029-s11" defer></script>
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="assets/vendor/lenis-1.3.26.min.js" defer></script>
@@ -171,6 +172,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="assets/js/speakers.js?v=20261029-s11" defer></script>
 <script src="assets/js/film.js?v=20261029-s11" defer></script>
 <script src="assets/js/volunteer.js?v=20261029-s11" defer></script>
+<script src="assets/js/speakq.js?v=20261029-s11" defer></script>
 <script src="/assets/js/ngd-track.js?v=20261029-s11" defer></script>
 <script src="assets/js/pc-stage.js?v=20261029-s11" defer></script>
 </head>
@@ -1010,7 +1012,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
          Google Form (volunteer.js posts them to its formResponse address), so they land in the
          same responses and sheet as before. The field names are that form's entry ids and the
          option values are its options, character for character: change the Google Form and
-         this form has to change with it, or those answers are dropped. -->
+         this form has to change with it, or those answers are dropped. The email goes as
+         emailAddress, the name Google gives the form's "Collect email addresses" question:
+         that question is required, so without it Google refuses the whole sign-up. -->
     <form class="vf" name="volunteer-signup" method="POST" novalidate data-vf
       action="https://docs.google.com/forms/d/e/1FAIpQLSccALYSEv3dRT2qAzKLVLlVIxGQlWSG-2Btk6_XM2OgRlkCDQ/formResponse">
 
@@ -1050,6 +1054,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <label for="vf-phone">Phone number</label>
           <input id="vf-phone" name="entry.327205865" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required aria-describedby="vf-phone-err">
           <p class="field__err" id="vf-phone-err" hidden></p>
+        </div>
+        <div class="field">
+          <label for="vf-email">Email</label>
+          <input id="vf-email" name="emailAddress" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="vf-email-err">
+          <p class="field__err" id="vf-email-err" hidden></p>
         </div>
         <fieldset class="vf__q" id="vf-adult" aria-describedby="vf-adult-err">
           <legend>Are you over 18?</legend>
@@ -1277,6 +1286,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </button>
     </div>
     <h2 class="drawer__title wm" id="faq-title">good questions.</h2>
+
+    <!-- questions for the speakers, sent ahead of the summit, kept apart from the answers below.
+         The link opens the speaker Q&A drawer (#ask-speakers), whose questions are stored in the
+         site database and listed at /admin/speakers/. The faces are the lineup's own photos at the speaker section's
+         addresses, so they come from the cache; the sample questions are decoration. -->
+    <aside class="spq" aria-labelledby="spq-t">
+      <div class="spq__top">
+        <ul class="spq__faces" aria-hidden="true">
+          <li><img src="assets/img/speakers/tisha-edwards-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></li>
+          <li><img src="assets/img/speakers/tunde-onakoya-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></li>
+          <li><img src="assets/img/speakers/kennedy-ekezie-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></li>
+          <li><img src="assets/img/speakers/gianna-romero-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></li>
+          <li class="spq__more">+3</li>
+        </ul>
+        <p class="spq__k"><span class="spq__dot" aria-hidden="true"></span>Speaker Q&amp;A</p>
+      </div>
+      <div class="spq__bubble" aria-hidden="true">
+        <span class="spq__q">&ldquo;How did you land your first big break?&rdquo;</span>
+        <span class="spq__q">&ldquo;What would you tell your 19-year-old self?&rdquo;</span>
+        <span class="spq__q">&ldquo;How do I start with no money?&rdquo;</span>
+      </div>
+      <p class="spq__t" id="spq-t">Got a question for the speakers?</p>
+      <p class="spq__p">Send it in now, so they have time to prepare before Friday.</p>
+      <a class="spq__go" href="#ask-speakers" data-open="ask-speakers">Ask your speakers anything<span class="spq__arr" aria-hidden="true">&rarr;</span></a>
+    </aside>
+
     <div class="faq">
       <details name="faq">
         <summary>When and where is Next Gen?<span class="faq__plus" aria-hidden="true"></span></summary>
@@ -1348,6 +1383,80 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p class="ask__done-x">Thank you. The NextGen team will follow up by email.</p>
       </div>
     </section>
+  </div>
+</dialog>
+
+<!-- the speaker Q&A, opened from the card at the top of the FAQ. It is the FAQ's question form
+     (form-name "question") marked for the speakers, so register.php stores it in the site
+     database, and /admin/speakers/ lists, filters, prints and exports it as CSV. The form
+     has a name of its own so site.js's "Still have a question?" handler never picks it up;
+     speakq.js sends it. -->
+<dialog class="drawer drawer--form" id="ask-speakers" aria-labelledby="ask-speakers-t">
+  <div class="drawer__in drawer__in--form">
+    <div class="drawer__top">
+      <div class="drawer__lead">
+        <button class="drawer__back" type="button" data-open="faq"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>FAQ<span class="sr"> (back to the questions)</span></button>
+        <p class="label" id="ask-speakers-t">Speaker Q&amp;A</p>
+      </div>
+      <button class="drawer__close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </button>
+    </div>
+
+    <form class="sqd" name="speaker-question" method="POST" action="/api/register.php" novalidate data-sqd>
+      <h2 class="sqd__title wm">ask the<br> speakers.</h2>
+      <p class="sqd__lede">Send it in before Friday, so the speakers have time to prepare. The NextGen team reads every question.</p>
+      <input type="hidden" name="form-name" value="question">
+      <input type="hidden" name="for" value="speakers">
+      <p class="hp" aria-hidden="true"><label>Leave this field empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+
+      <fieldset class="sqd__pick">
+        <legend class="sqd__k">Who is it for?</legend>
+        <div class="sqd__whos">
+          <label class="sqd__who sqd__who--any"><input type="radio" name="speaker" value="Any speaker" checked><span class="sqd__face" aria-hidden="true">all</span><span class="sqd__name">Any speaker</span></label>
+          <label class="sqd__who"><input type="radio" name="speaker" value="Tisha Edwards"><span class="sqd__face" aria-hidden="true"><img src="assets/img/speakers/tisha-edwards-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></span><span class="sqd__name">Tisha<b>Edwards</b></span></label>
+          <label class="sqd__who"><input type="radio" name="speaker" value="Tunde Onakoya"><span class="sqd__face" aria-hidden="true"><img src="assets/img/speakers/tunde-onakoya-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></span><span class="sqd__name">Tunde<b>Onakoya</b></span></label>
+          <label class="sqd__who"><input type="radio" name="speaker" value="Kennedy Ekezie"><span class="sqd__face" aria-hidden="true"><img src="assets/img/speakers/kennedy-ekezie-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></span><span class="sqd__name">Kennedy<b>Ekezie</b></span></label>
+          <label class="sqd__who"><input type="radio" name="speaker" value="Gianna Romero"><span class="sqd__face" aria-hidden="true"><img src="assets/img/speakers/gianna-romero-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></span><span class="sqd__name">Gianna<b>Romero</b></span></label>
+          <label class="sqd__who"><input type="radio" name="speaker" value="Michael Ley"><span class="sqd__face" aria-hidden="true"><img src="assets/img/speakers/michael-ley-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></span><span class="sqd__name">Michael<b>Ley</b></span></label>
+          <label class="sqd__who"><input type="radio" name="speaker" value="Jack Scalise"><span class="sqd__face" aria-hidden="true"><img src="assets/img/speakers/jack-scalise-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></span><span class="sqd__name">Jack<b>Scalise</b></span></label>
+          <label class="sqd__who"><input type="radio" name="speaker" value="Jamar Simms"><span class="sqd__face" aria-hidden="true"><img src="assets/img/speakers/jamar-simms-620.jpg?v=20261029-s11" alt="" width="620" height="868" loading="lazy" decoding="async"></span><span class="sqd__name">Jamar<b>Simms</b></span></label>
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="sq-question">Your question</label>
+        <textarea id="sq-question" name="question" rows="5" maxlength="1000" placeholder="What would you like to ask?" required aria-describedby="sq-question-err sq-count"></textarea>
+        <p class="sqd__count" id="sq-count" aria-live="polite"><span data-sqd-count>0</span> / 1000</p>
+        <p class="field__err" id="sq-question-err" hidden></p>
+      </div>
+      <div class="sqd__pair">
+        <div class="field">
+          <label for="sq-name">Full name</label>
+          <input id="sq-name" name="name" autocomplete="name" maxlength="120" required aria-describedby="sq-name-err">
+          <p class="field__err" id="sq-name-err" hidden></p>
+        </div>
+        <div class="field">
+          <label for="sq-email">Email</label>
+          <input id="sq-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="sq-email-err">
+          <p class="field__err" id="sq-email-err" hidden></p>
+        </div>
+      </div>
+      <p class="form__error" role="alert" tabindex="-1" hidden></p>
+      <div class="sqd__actions">
+        <button class="btn btn--lg" type="submit"><span class="btn__t">Send my question</span> <span class="arr" aria-hidden="true">&rarr;</span></button>
+      </div>
+    </form>
+
+    <div class="sqd-done" data-sqd-done role="status" tabindex="-1" hidden>
+      <p class="label">Question received</p>
+      <h2 class="sqd__title wm">thank you,<br> <span data-sqd-name>friend</span>.</h2>
+      <p class="sqd__lede">Your question for <b data-sqd-for>the speakers</b> is with the NextGen team. See you on Friday, October 30.</p>
+      <div class="sqd__actions">
+        <button class="btn btn--lg" type="button" data-sqd-again>Ask another</button>
+        <button class="btn btn--lg btn--ghost" type="button" data-open="faq">Back to the FAQ</button>
+      </div>
+    </div>
   </div>
 </dialog>
 

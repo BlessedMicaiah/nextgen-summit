@@ -122,20 +122,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://www.eventbrite.com">
 <link rel="preload" as="image" href="/assets/img/closing-m-864.jpg" media="(max-aspect-ratio: 3/4)" fetchpriority="high">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261028-s09">
-<link rel="stylesheet" href="/assets/css/announce.css?v=20261028-s09">
-<link rel="stylesheet" href="/assets/css/tickets.css?v=20261028-s09">
-<link rel="stylesheet" href="/assets/css/avatar.css?v=20261028-s09">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261028-s10">
+<link rel="stylesheet" href="/assets/css/announce.css?v=20261028-s10">
+<link rel="stylesheet" href="/assets/css/tickets.css?v=20261028-s10">
+<link rel="stylesheet" href="/assets/css/avatar.css?v=20261028-s10">
 <!-- Lenis (smooth scrolling) and Motion (animation), vendored: see assets/vendor -->
 <script src="/assets/vendor/lenis-1.3.26.min.js" defer></script>
 <script src="/assets/vendor/motion-13.5.0.min.js" defer></script>
-<script src="/assets/js/site.js?v=20261028-s09" defer></script>
-<script src="/assets/js/announce.js?v=20261028-s09" defer></script>
-<script src="/assets/js/depart.js?v=20261028-s09" defer></script>
+<script src="/assets/js/site.js?v=20261028-s10" defer></script>
+<script src="/assets/js/announce.js?v=20261028-s10" defer></script>
+<script src="/assets/js/depart.js?v=20261028-s10" defer></script>
 <!-- tickets.js loads Eventbrite's widget script itself, once, after the page has rendered -->
-<script src="/assets/js/ngd-track.js?v=20261028-s09" defer></script>
-<script src="/assets/js/tickets.js?v=20261028-s09" defer></script>
-<script src="/assets/js/avatar.js?v=20261028-s09" defer></script>
+<script src="/assets/js/ngd-track.js?v=20261028-s10" defer></script>
+<script src="/assets/js/tickets.js?v=20261028-s10" defer></script>
+<script src="/assets/js/avatar.js?v=20261028-s10" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -193,65 +193,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- ==================== the two ways in ==================== -->
-  <section class="tk" id="options" aria-label="Ticket options">
-    <!-- NextGen explains the offer; Eventbrite holds the real prices, inventory, quantity and
-         group rules, and payment. Every button is a real link to the Eventbrite event first;
-         tickets.js turns the click into Eventbrite's checkout modal once their widget is ready. -->
-    <div class="tk__opts" data-tickets>
-      <article class="opt rv" aria-labelledby="opt-ga">
-        <h2 class="opt__h" id="opt-ga"><span class="opt__name">General Admission <span class="opt__dash">&mdash;</span></span> <span class="opt__price"><span class="opt__cur">$</span>20</span></h2>
-        <p class="opt__copy">One seat for the full NextGen experience.</p>
-        <p class="opt__cta"><a class="btn btn--lg" data-eb href="https://www.eventbrite.com/e/nextgen-summit-tickets-1999190304016" target="_blank" rel="noopener noreferrer">Get tickets<span class="sr" data-eb-sr> (opens Eventbrite in a new tab)</span></a></p>
-      </article>
-      <article class="opt opt--group rv" style="--d:.1s" aria-labelledby="opt-group">
-        <h2 class="opt__h" id="opt-group"><span class="opt__name">Group Admission <span class="opt__dash">&mdash;</span></span> <span class="opt__price"><span class="opt__cur">$</span>10<span class="opt__per">/person</span></span></h2>
-        <p class="opt__copy">Coming with your crew? Groups of 3+ save 50%.</p>
-        <p class="opt__cta"><a class="btn btn--lg" data-eb href="https://www.eventbrite.com/e/nextgen-summit-tickets-1999190304016" target="_blank" rel="noopener noreferrer">Get group tickets<span class="sr" data-eb-sr> (opens Eventbrite in a new tab)</span></a></p>
-      </article>
-    </div>
-    <p class="tk__fine rv" data-tickets-fine>Checkout is handled securely by Eventbrite, who email your tickets and receipt.</p>
-
-    <!-- shown after Eventbrite reports the order complete. Their confirmation, emails and ticket
-         delivery are untouched; this is only NextGen saying it back. -->
-    <div class="tkdone" data-done tabindex="-1" role="status" hidden>
-      <p class="tkdone__title wm">you&rsquo;re in.</p>
-      <p class="tkdone__copy">We&rsquo;ll see you at NextGen.</p>
-      <p class="tkdone__small">Eventbrite has emailed your tickets and receipt.</p>
-      <p class="tkdone__cta"><a class="btn btn--lg" href="/">Back to the site</a></p>
-    </div>
-
-    <!-- Eventbrite binds its modal to this element by id. It is the trigger, never a button people
-         see: the links above click it once the widget is ready. -->
-    <button id="eventbrite-widget-modal-trigger-1999190304016" class="eb-trigger" type="button" tabindex="-1" aria-hidden="true">Open the Eventbrite checkout</button>
-  </section>
-
-  <!-- ==================== the $5 flash sale ====================
-       This is what replaced the "Apply for a scholarship" button when applications
-       closed. The link carries ?discount=NEXTSTAR, so the code is already applied when
-       Eventbrite opens; the code is still printed because people share it. Verified against
-       the live event on 27 October 2026: General Admission $20 -> $5.00, "NEXTSTAR applied",
-       Group Admission unchanged at $10.
-
-       Deliberately NOT marked data-eb. That attribute hands the click to the embedded
-       Eventbrite modal, which tickets.js creates without a promo code -- the modal would
-       open at full price and the promise on this panel would be false. A plain link to the
-       event page is the path that was actually tested. -->
-  <section class="flash" data-nav="photo" aria-labelledby="flash-title">
-    <div class="flash__in">
-      <p class="flash__k rv">Flash sale</p>
-      <h2 class="flash__t rv" style="--d:.08s" id="flash-title">Your next opportunity starts at <em>$5</em>.</h2>
-      <p class="flash__p rv" style="--d:.14s">Join us October 30 at NextGen Summit. Get your ticket for just $5 with promo code NEXTSTAR.</p>
-      <div class="flash__row rv" style="--d:.2s">
-        <a class="btn btn--lg" href="https://www.eventbrite.com/e/nextgen-summit-tickets-1999190304016?discount=NEXTSTAR" target="_blank" rel="noopener noreferrer">Get your $5 ticket<span class="sr"> (opens Eventbrite in a new tab)</span></a>
-        <span class="flash__code"><span class="flash__code-l">Promo code</span><span class="flash__code-v">NEXTSTAR</span></span>
-      </div>
-      <p class="flash__fine rv" style="--d:.26s">The code is applied for you at checkout. It covers General Admission; group tickets stay at $10 per person.</p>
-    </div>
-  </section>
-
-
   <!-- ==================== make it official: the NextGen Air avatar ====================
+       First thing after the masthead and ahead of the ticket panels: leadership first asked
+       for it below them, and the convener then asked for it above, which is the order
+       here.
+
        The approved Canva boarding pass, with the attendee's own photograph in the frame and
        their name under PASSENGER. Two sizes, Instagram Post and Story, both exported from
        the design at full resolution with the example photograph and name deleted from the
@@ -329,6 +275,64 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
     </div>
   </section>
+
+  <!-- ==================== the two ways in ==================== -->
+  <section class="tk" id="options" aria-label="Ticket options">
+    <!-- NextGen explains the offer; Eventbrite holds the real prices, inventory, quantity and
+         group rules, and payment. Every button is a real link to the Eventbrite event first;
+         tickets.js turns the click into Eventbrite's checkout modal once their widget is ready. -->
+    <div class="tk__opts" data-tickets>
+      <article class="opt rv" aria-labelledby="opt-ga">
+        <h2 class="opt__h" id="opt-ga"><span class="opt__name">General Admission <span class="opt__dash">&mdash;</span></span> <span class="opt__price"><span class="opt__cur">$</span>20</span></h2>
+        <p class="opt__copy">One seat for the full NextGen experience.</p>
+        <p class="opt__cta"><a class="btn btn--lg" data-eb href="https://www.eventbrite.com/e/nextgen-summit-tickets-1999190304016" target="_blank" rel="noopener noreferrer">Get tickets<span class="sr" data-eb-sr> (opens Eventbrite in a new tab)</span></a></p>
+      </article>
+      <article class="opt opt--group rv" style="--d:.1s" aria-labelledby="opt-group">
+        <h2 class="opt__h" id="opt-group"><span class="opt__name">Group Admission <span class="opt__dash">&mdash;</span></span> <span class="opt__price"><span class="opt__cur">$</span>10<span class="opt__per">/person</span></span></h2>
+        <p class="opt__copy">Coming with your crew? Groups of 3+ save 50%.</p>
+        <p class="opt__cta"><a class="btn btn--lg" data-eb href="https://www.eventbrite.com/e/nextgen-summit-tickets-1999190304016" target="_blank" rel="noopener noreferrer">Get group tickets<span class="sr" data-eb-sr> (opens Eventbrite in a new tab)</span></a></p>
+      </article>
+    </div>
+    <p class="tk__fine rv" data-tickets-fine>Checkout is handled securely by Eventbrite, who email your tickets and receipt.</p>
+
+    <!-- shown after Eventbrite reports the order complete. Their confirmation, emails and ticket
+         delivery are untouched; this is only NextGen saying it back. -->
+    <div class="tkdone" data-done tabindex="-1" role="status" hidden>
+      <p class="tkdone__title wm">you&rsquo;re in.</p>
+      <p class="tkdone__copy">We&rsquo;ll see you at NextGen.</p>
+      <p class="tkdone__small">Eventbrite has emailed your tickets and receipt.</p>
+      <p class="tkdone__cta"><a class="btn btn--lg" href="/">Back to the site</a></p>
+    </div>
+
+    <!-- Eventbrite binds its modal to this element by id. It is the trigger, never a button people
+         see: the links above click it once the widget is ready. -->
+    <button id="eventbrite-widget-modal-trigger-1999190304016" class="eb-trigger" type="button" tabindex="-1" aria-hidden="true">Open the Eventbrite checkout</button>
+  </section>
+
+  <!-- ==================== the $5 flash sale ====================
+       This is what replaced the "Apply for a scholarship" button when applications
+       closed. The link carries ?discount=NEXTSTAR, so the code is already applied when
+       Eventbrite opens; the code is still printed because people share it. Verified against
+       the live event on 27 October 2026: General Admission $20 -> $5.00, "NEXTSTAR applied",
+       Group Admission unchanged at $10.
+
+       Deliberately NOT marked data-eb. That attribute hands the click to the embedded
+       Eventbrite modal, which tickets.js creates without a promo code -- the modal would
+       open at full price and the promise on this panel would be false. A plain link to the
+       event page is the path that was actually tested. -->
+  <section class="flash" data-nav="photo" aria-labelledby="flash-title">
+    <div class="flash__in">
+      <p class="flash__k rv">Flash sale</p>
+      <h2 class="flash__t rv" style="--d:.08s" id="flash-title">Your next opportunity starts at <em>$5</em>.</h2>
+      <p class="flash__p rv" style="--d:.14s">Join us October 30 at NextGen Summit. Get your ticket for just $5 with promo code NEXTSTAR.</p>
+      <div class="flash__row rv" style="--d:.2s">
+        <a class="btn btn--lg" href="https://www.eventbrite.com/e/nextgen-summit-tickets-1999190304016?discount=NEXTSTAR" target="_blank" rel="noopener noreferrer">Get your $5 ticket<span class="sr"> (opens Eventbrite in a new tab)</span></a>
+        <span class="flash__code"><span class="flash__code-l">Promo code</span><span class="flash__code-v">NEXTSTAR</span></span>
+      </div>
+      <p class="flash__fine rv" style="--d:.26s">The code is applied for you at checkout. It covers General Admission; group tickets stay at $10 per person.</p>
+    </div>
+  </section>
+
 
   <!-- ==================== financial assistance ====================
        Kept, not deleted: someone who came here looking for help should still find out that

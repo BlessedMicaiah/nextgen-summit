@@ -1,7 +1,8 @@
 <?php
 /* Next Gen Summit admin: see, search, export and tidy up everyone who registered,
    the questions sent from the FAQ, and scholarship applications.
-   Tabs: Registrations, Questions, Scholarships. */
+   Tabs: Registrations, Questions, Scholarships. The questions for the speakers have a page of
+   their own, /admin/speakers/, behind this same sign-in. */
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/api/_lib.php';
@@ -54,7 +55,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             session_regenerate_id(true);
             $_SESSION['ok'] = true;
             $_SESSION['at'] = time();
-            header('Location: /admin/', true, 303);
+            // the speaker questions page signs in here and is sent back to itself
+            header('Location: ' . (($_POST['next'] ?? '') === 'speakers' ? '/admin/speakers/' : '/admin/'), true, 303);
             exit;
         }
         sleep(2);
@@ -87,6 +89,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $error = '';
 $registrations = $notes = $questions = $scholarships = [];
+$speakerCount = 0;
 if ($authed) {
     try {
         // waitlist sign-ups and any earlier registrations share one list, newest first
@@ -98,7 +101,10 @@ if ($authed) {
         usort($notes, function ($a, $b) {
             return strcmp($b['created_at'], $a['created_at']);
         });
-        $questions = ngs_all('question');
+        // the FAQ's own questions; the ones for the speakers are listed on /admin/speakers/
+        $all = ngs_all('question');
+        $questions = array_values(array_filter($all, function ($r) { return ($r['data']['for'] ?? '') !== 'speakers'; }));
+        $speakerCount = count($all) - count($questions);
         $scholarships = ngs_all('scholarship');
     } catch (Throwable $e) {
         error_log('Next Gen Summit admin error: ' . $e->getMessage());
@@ -130,11 +136,10 @@ if ($authed && isset($_GET['export']) && $error === '') {
             fputcsv($out, array_map($safe, [et($r['created_at']), q_status($d) === 'reviewed' ? 'Reviewed' : 'New', $d['name'] ?? '', $d['email'] ?? '', $d['phone'] ?? '', $d['organization'] ?? '', $d['why'] ?? '', $d['reason'] ?? '', $d['reason_other'] ?? '', $d['commit'] ?? '']));
         }
     } elseif ($which === 'questions') {
-        fputcsv($out, ['Received (ET)', 'Status', 'For', 'Full name', 'Email', 'Question']);
+        fputcsv($out, ['Received (ET)', 'Status', 'Full name', 'Email', 'Question']);
         foreach ($questions as $r) {
             $d = $r['data'];
-            $for = ($d['for'] ?? '') === 'speakers' ? 'Speakers: ' . ($d['speaker'] ?? 'Any speaker') : 'NextGen team';
-            fputcsv($out, array_map($safe, [et($r['created_at']), q_status($d) === 'reviewed' ? 'Reviewed' : 'New', $for, $d['name'] ?? '', $d['email'] ?? '', $d['question'] ?? '']));
+            fputcsv($out, array_map($safe, [et($r['created_at']), q_status($d) === 'reviewed' ? 'Reviewed' : 'New', $d['name'] ?? '', $d['email'] ?? '', $d['question'] ?? '']));
         }
     } else {
         fputcsv($out, ['Sent (ET)', 'Type', 'Name', 'Email', 'Campus', 'Organization']);
@@ -255,7 +260,6 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
   .badge{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:4px;font:800 10px/1 var(--f-sans);letter-spacing:.14em;text-transform:uppercase}
   .badge--new{background:var(--accent);color:var(--on-accent)}
   .badge--reviewed{border:1.5px solid var(--rule-strong);color:var(--ink-2)}
-  .badge--speakers{background:var(--ink);color:#fff}
   .q__who{margin-top:8px;font:700 15px/1.45 var(--f-sans);overflow-wrap:anywhere}
   .q__who a{font-weight:600;color:var(--accent-ink)}
   .q__text{margin-top:8px;max-width:72ch;font:500 15.5px/1.6 var(--f-sans);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
@@ -297,6 +301,7 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
   <main class="adm">
     <div class="adm__top">
       <a class="adm__mark" href="/" target="_blank" rel="noopener"><span class="wm">nextgen</span><span class="nav__summit">Admin</span></a>
+      <a class="textlink" href="/admin/speakers/" style="margin-left:auto">Speaker questions (<?= $speakerCount ?>) &rarr;</a>
       <form method="post" action="/admin/">
         <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
         <input type="hidden" name="action" value="logout">
@@ -417,7 +422,7 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
 
     <section class="panel" role="tabpanel" id="panel-questions" aria-labelledby="tab-questions" tabindex="0"<?= $tab === 'questions' ? '' : ' hidden' ?>>
       <h2 class="wm">questions.</h2>
-      <p class="adm__sub">Sent from the FAQ, including the questions for the speakers · Reply by email · Times shown in Eastern Time.</p>
+      <p class="adm__sub">Sent from the FAQ · Reply by email · Times shown in Eastern Time.</p>
       <?php if (isset($_GET['deleted']) && $tab === 'questions'): ?><p class="note note--ok" role="status" style="margin-top:18px">Question deleted.</p><?php endif; ?>
 
       <div class="stats">
@@ -445,7 +450,7 @@ $newScholarships = count(array_filter($scholarships, function ($r) { return q_st
         <?php foreach ($shownQuestions as $r): $d = $r['data']; $st = q_status($d); ?>
           <li class="q q--<?= $st ?>" id="q-<?= h($r['id']) ?>">
             <div>
-              <p class="q__meta"><span class="badge badge--<?= $st ?>"><?= $st === 'reviewed' ? 'Reviewed' : 'New' ?></span><?php if (($d['for'] ?? '') === 'speakers'): ?><span class="badge badge--speakers">For <?= h($d['speaker'] ?? 'Any speaker') ?></span><?php endif; ?><time datetime="<?= h($r['created_at']) ?>"><?= h(et($r['created_at'])) ?></time></p>
+              <p class="q__meta"><span class="badge badge--<?= $st ?>"><?= $st === 'reviewed' ? 'Reviewed' : 'New' ?></span><time datetime="<?= h($r['created_at']) ?>"><?= h(et($r['created_at'])) ?></time></p>
               <p class="q__who"><?= h($d['name'] ?? '') ?> <span aria-hidden="true">·</span> <a href="mailto:<?= h($d['email'] ?? '') ?>?subject=<?= rawurlencode('Your question to NextGen Summit') ?>"><?= h($d['email'] ?? '') ?></a></p>
               <p class="q__text"><?= h($d['question'] ?? '') ?></p>
             </div>

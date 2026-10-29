@@ -222,9 +222,6 @@ try {
 if ($kind === 'scholarship') {
     ngs_email_scholarship($data);
 }
-if ($kind === 'question' && ($data['for'] ?? '') === 'speakers') {
-    ngs_email_speaker_question($data);
-}
 
 ngs_reply(true, $kind, '', 200, $wantsJson);
 
@@ -271,45 +268,5 @@ function ngs_email_scholarship(array $d): void
         }
     } catch (Throwable $e) {
         error_log('Next Gen Summit: scholarship email failed: ' . $e->getMessage());
-    }
-}
-
-/** Sends a question for the speakers to the team inbox, with Reply-To set to the asker. The
-    stored copy is the record (admin, Questions tab); this is so the program team sees it. */
-function ngs_email_speaker_question(array $d): void
-{
-    $to = 'hello@nextgensummit.us';
-    $from = 'hello@nextgensummit.us';
-    $host = preg_replace('/[^a-z0-9.\-]/i', '', (string) ($_SERVER['HTTP_HOST'] ?? 'nextgensummit.us'));
-    $oneLine = function ($s) { return trim(preg_replace('/[\r\n]+/', ' ', (string) $s)); };
-    $name = $oneLine($d['name'] ?? '');
-    $speaker = $oneLine($d['speaker'] ?? 'Any speaker');
-    $subject = (stripos($host, 'staging.') === 0 ? '[STAGING TEST] ' : '') . 'Speaker question for ' . $speaker . ': ' . $name;
-    $body = "A new question for the NextGen Summit speakers was sent from the FAQ.\n\n"
-        . 'For: ' . $speaker . "\n"
-        . 'From: ' . $name . "\n"
-        . 'Email: ' . $oneLine($d['email'] ?? '') . "\n\n"
-        . "Question:\n" . trim((string) ($d['question'] ?? '')) . "\n\n"
-        . 'Submitted: ' . (new DateTime('now', new DateTimeZone('America/New_York')))->format('l, F j, Y \a\t g:i A T') . "\n"
-        . 'All speaker questions, with a CSV export: https://' . $host . "/admin/?tab=questions\n\n"
-        . "Reply to this email to answer the asker directly.\n";
-
-    $headers = [
-        'From: NextGen Summit Website <' . $from . '>',
-        'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8',
-        'Content-Transfer-Encoding: 8bit',
-    ];
-    $asker = filter_var($d['email'] ?? '', FILTER_VALIDATE_EMAIL);
-    if ($asker) {
-        $headers[] = 'Reply-To: ' . $asker;
-    }
-    $encoded = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($subject, 'UTF-8', 'B', "\r\n") : $subject;
-    try {
-        if (!@mail($to, $encoded, $body, implode("\r\n", $headers), '-f' . $from)) {
-            error_log('Next Gen Summit: the speaker question email to ' . $to . ' was not accepted for delivery.');
-        }
-    } catch (Throwable $e) {
-        error_log('Next Gen Summit: speaker question email failed: ' . $e->getMessage());
     }
 }

@@ -1,6 +1,6 @@
 /* NextGen Summit — the speaker Q&A drawer (#ask-speakers), opened from the card at the top of
    the FAQ. The form is the FAQ's question form marked for the speakers, so /api/register.php
-   stores it with the other questions (admin, Questions tab) and emails the team a copy. Every
+   stores it in the site database, listed at /admin/speakers/. Every
    required answer is checked here first and again on the server, which names any field it
    refuses so it can be marked. On a local preview server there is no PHP, so the preview shows
    the thank-you and says nothing was sent, as site.js does for the other forms. */

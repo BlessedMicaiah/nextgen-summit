@@ -106,6 +106,55 @@
   };
   var ACCENT_FALLBACK = ['#1FC7BE', '#06403D'];
 
+  /* ---------------------------------------------------------------------
+     THE HEADLINES
+
+     One line per founder, and every one of them is a compression of that founder's own
+     blurb in pc-founders.js -- their verb, their noun, their claim. Nothing is invented,
+     nothing is upgraded, and no line makes a claim the founder did not make themselves.
+     The `from` field is the clause it was taken from, so the next person can check a line
+     against its source without going hunting.
+
+     Keyed by entrant id rather than by position, so the running order can change without
+     a single line landing on the wrong founder.
+     ------------------------------------------------------------------ */
+  var LINES = {
+    'entrant-01': { line: 'Nourish, don’t destroy.',
+                    from: 'nourish the good bacteria in your mouth, rather than destroying them' },
+    'entrant-03': { line: 'Take the burn out of spicy.',
+                    from: 'alleviates the burn and digestive discomfort that accompanies spicy food' },
+    'entrant-06': { line: 'Camera-guided braiding.',
+                    from: 'making DIY hairstyling faster, easier, and more affordable through camera-guided technology' },
+    'entrant-07': { line: 'Flip the rental screening.',
+                    from: 'BeforeKeys flips rental screening' },
+    'entrant-05': { line: 'Your whole closet, digital.',
+                    from: 'organize, discover, and style their wardrobes through an easy-to-use digital closet app' },
+    'entrant-02': { line: 'Pay the caregivers fairly.',
+                    from: 'matches families with caregivers … and compensates caregivers fairly' },
+    'entrant-14': { line: 'The next K-culture hit, owned at home.',
+                    from: 'so the next global K-culture hit belongs to the community it comes from' },
+    'entrant-12': { line: 'Healthier hydration for Baltimore.',
+                    from: 'healthier hydration that creates socioeconomic opportunity in Baltimore' },
+    'entrant-04': { line: 'Vision boards you can actually run.',
+                    from: 'turns vision boards into executable life plans' },
+    'entrant-13': { line: 'Local creators, on demand.',
+                    from: 'connecting brands … with local creators on demand' }
+  };
+
+  /* ---------------------------------------------------------------------
+     THE DRIFT
+
+     The rack moves on its own: slow, continuous, and seamless because the shelf holds
+     several identical copies of the collection and the scroll position wraps by exactly
+     one copy's width. A wrap is invisible -- you are looking at the same pixels either
+     side of it.
+
+     It is the native scroller that moves, not a transform, which is what keeps a finger
+     drag, a trackpad, the arrows and the keyboard all working exactly as they did.
+     ------------------------------------------------------------------ */
+  var DRIFT_PX_S = 14;       /* px per second: a shelf you notice, not a carousel */
+  var DRIFT_RESUME = 2800;   /* ms of stillness before it picks up again */
+
   /* NextGen's own editorial lines. Nothing here is a founder's words. */
   var COVER_KICKER = 'A story worth opening';
   var END = {
@@ -135,6 +184,8 @@
   var btnClose = $('[data-mag-close]', reader);
   var railPrev = $('[data-shelf-prev]');
   var railNext = $('[data-shelf-next]');
+  var linesEl = $('[data-mag-lines]');
+  var rackWrap = $('.mag-rack__wrap');
 
   var issues = [];
   var at = -1;
@@ -307,8 +358,21 @@
      The cover. One component: the shelf and the reader render the same markup, and the
      stylesheet scales every dimension from the container's own width.
      ------------------------------------------------------------------ */
+  /* The cover sets a name at 13.4% of its own width, which is the right size for nine of
+     the ten and too big for a word like UGOCHINYERE -- it ran off the artwork and the
+     cover's own overflow cut the last letter off. A name cannot be hyphenated and must not
+     be abbreviated, so the type gives way instead: the longest word decides the size, and
+     only for the covers that need it. 8.8 is measured, not guessed -- UGOCHINYERE at the
+     full size came to 320px in a 265px box, and that ratio is what this reproduces. */
+  function nameFit(f) {
+    var longest = 0;
+    String(f.name || '').split(/\s+/).forEach(function (w) { longest = Math.max(longest, w.length); });
+    return longest > 9 ? Math.min(1, 8.8 / longest) : 1;
+  }
+
   function coverHTML(f, i, full) {
     var img = portraitSrc(f);
+    var fit = nameFit(f);
     /* only a finished issue invites you in */
     var invite = isReady(f)
       ? '<span class="mag-cover__open">Open the story'
@@ -333,7 +397,9 @@
       +   '<span>'
       +     '<span class="mag-cover__rule"></span>'
       +     '<span class="mag-cover__kicker">' + esc(COVER_KICKER) + '</span>'
-      +     '<span class="mag-cover__name">' + esc(f.name) + '</span>'
+      +     '<span class="mag-cover__name"'
+      +       (fit < 1 ? ' style="--name-fit:' + fit.toFixed(3) + '"' : '') + '>'
+      +       esc(f.name) + '</span>'
       +     '<span class="mag-cover__co">' + esc(f.company) + '</span>'
       +     '<span class="mag-cover__blurb">' + esc(f.blurb || '') + '</span>'
       +     '<span class="mag-cover__foot">'
@@ -350,14 +416,29 @@
   /* ---------------------------------------------------------------------
      The rack.
      ------------------------------------------------------------------ */
-  function slotHTML(f, i) {
+  /* `live` marks the one copy of the collection that the keyboard and screen readers see.
+     The drifting rack holds the same ten issues three times over so the scroll position can
+     wrap without a visible jump; the other two copies are scenery, hidden from the
+     accessibility tree and out of the tab order. They stay clickable, because a cover you
+     can see is a cover you expect to be able to press. */
+  function slotHTML(f, i, live) {
     var ready = isReady(f);
     var ink = accentOf(f);
     var no = String(i + 1).padStart(2, '0');
+    /* A shelf of real magazines is never perfectly square, and they do not all sit the same
+       distance forward. A hair of tilt and a hair of depth, worked out from the issue
+       number so the shelf looks the same on every visit rather than reshuffling itself.
+       Depth is light and shadow only -- nothing moves off the ledge, because the ledge is
+       one continuous plank and a floating magazine would give the game away. */
+    var tilt = ((i * 7919) % 11 - 5) * 0.08;          /* -0.40deg .. +0.40deg */
+    var back = ((i * 104729) % 7) / 9;                /*  0 (front) .. 0.67 (back) */
     return ''
       + '<li class="mag-slot ' + (ready ? 'mag-slot--ready' : 'mag-slot--soon') + '"'
-      +     ' style="--issue:' + ink[0] + ';--issue-dk:' + ink[1] + '" data-slot="' + i + '">'
+      +     ' style="--issue:' + ink[0] + ';--issue-dk:' + ink[1]
+      +            ';--tilt:' + tilt.toFixed(2) + 'deg;--back:' + back.toFixed(2) + '"'
+      +     ' data-slot="' + i + '"' + (live ? '' : ' aria-hidden="true"') + '>'
       +   '<button class="mag-slot__btn" type="button" data-go="' + i + '"'
+      +           (live ? ' data-live="1"' : ' tabindex="-1"')
       +           (ready ? '' : ' disabled')
       +           ' aria-label="' + (ready
                     ? 'Open issue ' + (i + 1) + ', ' + esc(f.name) + ' of ' + esc(f.company)
@@ -375,9 +456,22 @@
   }
 
   function drawShelf() {
-    shelf.innerHTML = issues.map(slotHTML).join('');
+    /* Three copies when the rack drifts, one when it does not. A phone shows the rack as a
+       vertical column and reduced motion shows it still -- in both cases a second copy
+       would be ten magazines of duplicate scenery with nothing to gain. */
+    loop.copies = wantsLoop() ? 3 : 1;
+    loop.live = loop.copies > 1 ? 1 : 0;
+
+    var html = '';
+    for (var c = 0; c < loop.copies; c++) {
+      var isLive = (c === loop.live);
+      html += issues.map(function (f, i) { return slotHTML(f, i, isLive); }).join('');
+    }
+    shelf.innerHTML = html;
+
     if (totEl) totEl.textContent = String(issues.length).padStart(2, '0');
     fitChips(shelf);
+    measureLoop();
     railState();
     if (noteEl) {
       var done = issues.filter(isReady);
@@ -392,6 +486,8 @@
 
   function railState() {
     if (!railPrev || !railNext) return;
+    /* A rack with no ends has no end to be stuck at. */
+    if (loop.on) { railPrev.disabled = false; railNext.disabled = false; return; }
     var max = shelf.scrollWidth - shelf.clientWidth - 2;
     railPrev.disabled = shelf.scrollLeft <= 2;
     railNext.disabled = shelf.scrollLeft >= max;
@@ -400,12 +496,142 @@
   function nudgeRail(dir) {
     var slot = shelf.querySelector('.mag-slot');
     var step = slot ? slot.offsetWidth * 3 : 320;
+    hold();
     shelf.scrollBy({ left: dir * step, behavior: reduced ? 'auto' : 'smooth' });
   }
 
   function markSlot() {
     var all = shelf.querySelectorAll('.mag-slot');
-    for (var i = 0; i < all.length; i++) all[i].classList.toggle('mag-slot--open', i === at);
+    for (var i = 0; i < all.length; i++) {
+      all[i].classList.toggle('mag-slot--open',
+        parseInt(all[i].getAttribute('data-slot'), 10) === at);
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     The drift.
+
+     The shelf is the native horizontal scroller it always was -- a finger drag, a trackpad,
+     the arrow buttons and the keyboard all still own it. All this adds is a few hundredths
+     of a pixel per frame, and a wrap by exactly one copy's width when the position runs off
+     the end of the middle copy. Since the copies are identical, the wrap is unseeable.
+
+     The position is kept as our own float. Writing `scrollLeft += 0.23` and reading it back
+     would lose the fraction on a browser that rounds, and a rack that rounds its drift away
+     is a rack that never moves.
+     ------------------------------------------------------------------ */
+  var loop = {
+    on: false, copies: 1, live: 0, span: 0,
+    pos: 0, locks: 0, until: 0, raf: 0, last: 0, seen: true
+  };
+
+  function wantsLoop() { return !reduced && !phone(); }
+  function now() { return window.performance ? performance.now() : 0; }
+
+  function setPos(x) { loop.pos = x; shelf.scrollLeft = x; }
+  function hold(ms) { loop.until = now() + (ms == null ? DRIFT_RESUME : ms); }
+  function lock(on) {
+    loop.locks = Math.max(0, loop.locks + (on ? 1 : -1));
+    if (!on) hold(500);            /* a short breath after the pointer leaves */
+  }
+  function heldAt(t) {
+    return loop.locks > 0 || document.hidden || !reader.hidden || !loop.seen || t < loop.until;
+  }
+
+  function measureLoop() {
+    loop.on = false; loop.span = 0;
+    shelf.classList.toggle('is-looping', false);
+    if (loop.copies < 2 || !issues.length) return;
+
+    var all = shelf.querySelectorAll('.mag-slot');
+    if (all.length < issues.length * 2) return;
+    var span = all[issues.length].offsetLeft - all[0].offsetLeft;
+    /* One copy has to be wider than the window, or wrapping would show the seam. It always
+       is at these sizes; the guard is here so a future slot width cannot break it quietly. */
+    if (!(span > 0) || span <= shelf.clientWidth + 24) return;
+
+    loop.span = span;
+    loop.on = true;
+    shelf.classList.add('is-looping');
+    setPos(span * loop.live);
+    loop.last = 0;
+    if (!loop.raf) loop.raf = requestAnimationFrame(frame);
+  }
+
+  function frame(t) {
+    loop.raf = 0;
+    if (!loop.on) return;
+    if (!loop.last) loop.last = t;
+    var dt = Math.min(0.05, (t - loop.last) / 1000);
+    loop.last = t;
+
+    if (!heldAt(t)) {
+      var lo = loop.span * loop.live, hi = lo + loop.span;
+      var x = loop.pos + DRIFT_PX_S * dt;
+      /* back into the middle copy, by exactly one copy -- the same pixels, either way */
+      if (x >= hi) x -= loop.span;
+      else if (x < lo - 0.5) x += loop.span;
+      setPos(x);
+    }
+    loop.raf = requestAnimationFrame(frame);
+  }
+
+  /* ---------------------------------------------------------------------
+     The headlines.
+
+     Ten lines, each one taken from its founder's own blurb and each one a way into that
+     founder's issue. Built from `issues`, so a line can only ever point at the founder it
+     was written from -- the running order can be reshuffled and nothing drifts apart.
+     ------------------------------------------------------------------ */
+  function lineHTML(f, i) {
+    var L = LINES[f.entrant];
+    if (!L) return '';                    /* no line on file: no headline invented */
+    var ready = isReady(f);
+    var ink = accentOf(f);
+    return ''
+      + '<li class="mag-line" style="--issue:' + ink[0] + ';--issue-dk:' + ink[1]
+      +            ';--d:' + (i * 55) + 'ms" data-line="' + i + '">'
+      +   '<button class="mag-line__btn" type="button" data-go="' + i + '"' + (ready ? '' : ' disabled')
+      +     ' aria-label="Open issue ' + (i + 1) + ', ' + esc(f.name)
+      +     ' of ' + esc(f.company) + '">'
+      +     '<span class="mag-line__no">' + String(i + 1).padStart(2, '0') + '</span>'
+      +     '<span class="mag-line__say">' + esc(L.line) + '</span>'
+      +     '<span class="mag-line__who"><b>' + esc(f.name) + '</b>'
+      +       '<i>' + esc(f.company) + '</i></span>'
+      +     '<span class="mag-line__go" aria-hidden="true">'
+      +       '<svg viewBox="0 0 24 24"><path d="M5 12h13M12 5l7 7-7 7"/></svg></span>'
+      +   '</button>'
+      + '</li>';
+  }
+
+  function drawLines() {
+    if (!linesEl) return;
+    linesEl.innerHTML = issues.map(lineHTML).join('');
+    var sec = linesEl.closest ? linesEl.closest('.mag-lines') : null;
+    if (sec) sec.hidden = !linesEl.children.length;
+    watch(linesEl);
+  }
+
+  /* One-shot reveal. Nothing animates on the way out and nothing re-animates on the way
+     back -- a page that keeps re-performing itself is a page you stop reading. */
+  function watch(el) {
+    if (!el) return;
+    if (reduced || !window.IntersectionObserver) { el.classList.add('is-in'); return; }
+    /* The hidden starting state is added here, by script, and never sits in the stylesheet.
+       A rack that starts at opacity 0 in CSS is a rack that stays invisible on the day the
+       script does not run -- and this rack is the page. */
+    el.classList.add('is-rv');
+    var io = new IntersectionObserver(function (rows) {
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].isIntersecting) { rows[i].target.classList.add('is-in'); io.unobserve(rows[i].target); }
+      }
+      /* threshold 0, deliberately. The rack is ten covers tall on a phone -- some 4,500px --
+         and asking for a percentage of THAT to be on screen is asking for something that
+         never happens above the fold. It left the whole rack invisible until you had
+         scrolled past where it should have been. A reveal is for the moment a thing
+         arrives; the first pixel is that moment. */
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0 });
+    io.observe(el);
   }
 
   /* ---------------------------------------------------------------------
@@ -627,9 +853,15 @@
     (document.scrollingElement || document.body).scrollTop = lastScroll;
     var f = issues[at];
     track('top10_close', { entrant_id: f ? f.entrant : '', slot: at + 1 });
-    /* back to the issue you came from, in the rack, exactly where you left it */
-    var btn = shelf.querySelector('[data-go="' + at + '"]');
-    if (btn) btn.focus({ preventScroll: true });
+    /* Back to whatever opened it: the headline if that is where you came from, otherwise
+       the issue in the rack, exactly where you left it. `data-live` is the one copy of the
+       rack that the keyboard sees -- focusing a drifting duplicate would scroll the shelf
+       out from under them. */
+    var fromLine = lastFocus && lastFocus.closest && linesEl
+      && linesEl.contains(lastFocus) ? lastFocus : null;
+    var btn = fromLine || shelf.querySelector('[data-live][data-go="' + at + '"]')
+      || shelf.querySelector('[data-go="' + at + '"]');
+    if (btn && btn.focus) btn.focus({ preventScroll: true });
     else if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
 
@@ -682,8 +914,62 @@
     if (!btn || btn.disabled) return;
     openIssue(parseInt(btn.getAttribute('data-go'), 10));
   });
-  shelf.addEventListener('scroll', railState, { passive: true });
-  window.addEventListener('resize', railState);
+  /* A headline is the same door as its cover. */
+  if (linesEl) linesEl.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('[data-go]') : null;
+    if (!btn || btn.disabled) return;
+    var i = parseInt(btn.getAttribute('data-go'), 10);
+    var f = issues[i];
+    track('top10_headline', { entrant_id: f ? f.entrant : '', slot: i + 1 });
+    openIssue(i);
+  });
+
+  shelf.addEventListener('scroll', function () {
+    railState();
+    /* Someone else moved it. Take our float to where the scroller actually is, and get out
+       of the way until they are done. */
+    if (loop.on && Math.abs(shelf.scrollLeft - loop.pos) > 3) {
+      loop.pos = shelf.scrollLeft;
+      hold();
+    }
+  }, { passive: true });
+
+  /* The rack stops for anyone paying attention to it. */
+  if (rackWrap) {
+    rackWrap.addEventListener('mouseenter', function () { lock(true); });
+    rackWrap.addEventListener('mouseleave', function () { lock(false); });
+    rackWrap.addEventListener('focusin', function () { lock(true); });
+    rackWrap.addEventListener('focusout', function () { lock(false); });
+    rackWrap.addEventListener('pointerdown', function () { lock(true); });
+    rackWrap.addEventListener('touchstart', function () { lock(true); }, { passive: true });
+  }
+  window.addEventListener('pointerup', function () { if (loop.locks) lock(false); });
+  window.addEventListener('touchend', function () { if (loop.locks) lock(false); }, { passive: true });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) hold(400); });
+
+  /* Off screen, it holds still: no reason to spend a phone's battery on a rack nobody is
+     looking at, and no reason to have drifted three magazines along by the time they are. */
+  if (window.IntersectionObserver && rackWrap) {
+    new IntersectionObserver(function (rows) {
+      loop.seen = rows[0].isIntersecting;
+      if (loop.seen) hold(300);
+    }, { threshold: 0 }).observe(rackWrap);
+  }
+
+  /* Crossing the phone breakpoint changes the rack from a drifting shelf to a still column
+     and back, and the number of copies with it. */
+  var sized = null;
+  window.addEventListener('resize', function () {
+    railState();
+    if (sized) clearTimeout(sized);
+    sized = setTimeout(function () {
+      sized = null;
+      if (!issues.length) return;
+      var want = wantsLoop() ? 3 : 1;
+      if (want !== loop.copies) drawShelf();
+      else measureLoop();
+    }, 200);
+  });
 
   if (railPrev) railPrev.addEventListener('click', function () { nudgeRail(-1); });
   if (railNext) railNext.addEventListener('click', function () { nudgeRail(1); });
@@ -777,6 +1063,9 @@
         return;
       }
       drawShelf();
+      drawLines();
+      watch($('.mag-rack__frame'));
+      watch($('.mag-judges__grid'));
       track('top10_rack', { entrants: issues.length, ready: issues.filter(isReady).length });
     });
   }

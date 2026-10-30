@@ -35,11 +35,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
 
-<link rel="stylesheet" href="/assets/css/site.css?v=20261029-s11">
-<link rel="stylesheet" href="/assets/css/magazine.css?v=20261029-s11">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261029-s12">
+<link rel="stylesheet" href="/assets/css/magazine.css?v=20261029-s12">
 
-<script src="/assets/js/pc-founders.js?v=20261029-s11" defer></script>
-<script src="/assets/js/magazine.js?v=20261029-s11" defer></script>
+<script src="/assets/js/pc-founders.js?v=20261029-s12" defer></script>
+<script src="/assets/js/magazine.js?v=20261029-s12" defer></script>
 </head>
 
 <body class="mag-body">
@@ -63,6 +63,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </header>
 
 <main class="mag">
+
+  <!-- ==================== the campaign backdrop ====================
+       The page is lit like a shoot rather than printed on a flat wall. Three layers, and
+       nothing here is a picture of anybody:
+
+       __shot   a single 7 KB wash composited offline from the ten approved founder
+                portraits -- scaled, stacked and blurred past any reading of a face, so what
+                is left is the real colour of the real shoot. No stock, no invented people,
+                no AI. Rebuilt by the same ffmpeg command any time the ten change.
+       __wash   the grade: a warm key light above the rack where the ledge is, and the
+                page's own dark falling in at the edges. This is what keeps the covers
+                legible, so it is the layer to tune, not the photograph.
+       __grain  film grain. The one thing that makes a flat gradient look photographed.
+
+       Fixed, so the covers travel over a still set -- the depth comes from the parallax,
+       not from moving the background. -->
+  <div class="mag-bg" aria-hidden="true">
+    <div class="mag-bg__shot"></div>
+    <div class="mag-bg__wash"></div>
+    <div class="mag-bg__grain"></div>
+  </div>
 
   <!-- ==================== the masthead block ==================== -->
   <section class="mag-head" aria-labelledby="mag-title">
@@ -90,6 +111,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       </button>
 
       <div class="mag-rack__frame">
+        <!-- The cover line, set at the size a magazine sets it and left behind the stock.
+             Decoration, and only decoration: every word of it is also in the masthead
+             above, so it is hidden from the accessibility tree rather than read twice. -->
+        <p class="mag-rack__word" aria-hidden="true">The Next Ten</p>
+
         <ul class="mag-rack__shelf" data-mag-shelf role="list">
           <li class="mag-rack__loading">Loading the collection&hellip;</li>
         </ul>
@@ -103,6 +129,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </div>
 
     <p class="mag-rack__note" data-mag-note></p>
+  </section>
+
+
+  <!-- ==================== the headlines ====================
+       Ten lines, one per founder, each one a compression of that founder's own blurb and
+       each one a door into their issue. The text lives in LINES in magazine.js next to the
+       clause it came from, so a line can be checked against its source without hunting;
+       the list itself is built from the same `issues` array the rack is built from, so a
+       headline cannot drift onto the wrong founder.
+
+       Hidden until magazine.js fills it: an empty editorial section is worse than none. -->
+  <section class="mag-lines" id="in-their-words" aria-labelledby="lines-title" hidden>
+    <div class="mag-lines__in">
+      <p class="mag-lines__eyebrow">In their words</p>
+      <h2 class="mag-lines__t" id="lines-title">Ten ideas.<br>Pick one.</h2>
+      <p class="mag-lines__sub">Every line below is the founder&rsquo;s own. Press one to open their issue.</p>
+      <ul class="mag-lines__list" data-mag-lines role="list"></ul>
+    </div>
   </section>
 
 

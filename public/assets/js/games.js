@@ -1,5 +1,5 @@
 /* ============================================================================
-   NEXTGEN GAMES — BACK THE NEXT
+   NEXTGEN GAMES — NEXTGEN VENTURE
    The NG$10,000 Founder Challenge
 
    One page, four panels: sign in, the room, review, and the portfolio you end up with.
@@ -767,11 +767,12 @@
 
   var SAYS = {
     email: 'That address does not look right. Check it and try again.',
+    not_registered: 'We could not find that email in the NextGen Summit registrations. Use the address you registered with.',
     disposable: 'That looks like a throwaway address. Please use one you can read today.',
     cooldown: 'A code just went out. Give it a moment before asking for another.',
     addr_daily: 'That address has asked for too many codes today.',
-    ip_burst: 'A lot of codes are being requested from this network right now. Try again in a minute.',
-    ip_hourly: 'Too many codes from this network in the last hour. Try again shortly.',
+    ip_burst: 'A lot of people are signing in from this network right now. Try again in a minute.',
+    ip_hourly: 'Too many sign-ins from this network in the last hour. Try again shortly.',
     mail_not_configured: 'Email sign-in is not switched on here yet.',
     mail: 'The code could not be sent. Try again in a moment.',
     code: 'That code is not right.',
@@ -792,7 +793,8 @@
 
   function step(which) {
     $('[data-step="email"]').hidden = which !== 'email';
-    $('[data-step="code"]').hidden = which !== 'code';
+    var codeStep = $('[data-step="code"]');            // gone since the code was dropped
+    if (codeStep) codeStep.hidden = which !== 'code';
     signinMsg('');
     var el = which === 'code' ? $('[data-code]') : $('[data-email]');
     if (el) setTimeout(function () { el.focus(); }, 60);
@@ -856,35 +858,17 @@
       var v = $('[data-email]').value.trim();
       if (!v) { signinMsg('Enter your email address.', 'bad'); return; }
       this.disabled = true;
-      signinMsg('Sending a code…');
+      signinMsg('Checking your registration…');
       var btn = this;
-      api('otp-start', { email: v }).then(function (r) {
+      /* Email only, no code (30 October): the server checks the address against the
+         NextGen Summit registrations and signs straight in. */
+      api('email-signin', { email: v }).then(function (r) {
         btn.disabled = false;
         if (!r.ok) { signinMsg(says(r) + (r.wait ? ' (' + r.wait + 's)' : ''), 'bad'); return; }
-        email = v;
-        $('[data-mask]').textContent = r.mask || v;
-        step('code');
-        signinMsg('Code sent. It expires in ten minutes.', 'ok');
-      });
-    });
-
-    $('[data-verify]').addEventListener('click', function () {
-      var c = $('[data-code]').value.replace(/\D+/g, '');
-      if (c.length !== 6) { signinMsg('Enter the six digits from your email.', 'bad'); return; }
-      this.disabled = true;
-      signinMsg('Checking…');
-      var btn = this;
-      api('otp-check', { email: email, code: c }).then(function (r) {
-        btn.disabled = false;
-        if (!r.ok) {
-          signinMsg(says(r) + (typeof r.tries_left === 'number' ? ' ' + r.tries_left + ' left.' : ''), 'bad');
-          return;
-        }
+        signinMsg('');
         take(r); email = ''; banner(); route();
       });
     });
-
-    $('[data-again]').addEventListener('click', function () { step('email'); });
 
     $('[data-play]').addEventListener('click', enterRoom);
 
@@ -898,7 +882,7 @@
       });
     });
 
-    [['data-email', 'data-send'], ['data-code', 'data-verify']].forEach(function (p) {
+    [['data-email', 'data-send']].forEach(function (p) {
       $('[' + p[0] + ']').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); $('[' + p[1] + ']').click(); }
       });
@@ -1053,10 +1037,6 @@
       if (!r.ok) { signinMsg(says(r), 'bad'); return; }
       take(r);
       $('[data-demo-wrap]').hidden = !(S.demoAllowed && !S.signedIn);
-      if (!S.mailReady && !S.signedIn) {
-        signinMsg('Email sign-in is not available on this server yet.', 'bad');
-        $('[data-send]').disabled = true;
-      }
       banner();
       route();
     });

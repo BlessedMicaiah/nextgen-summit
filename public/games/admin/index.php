@@ -182,7 +182,7 @@ $top = $rows ? max(array_column($rows, 'ngd')) : 0;
 <div class="wrap">
 
 <h1>NextGen Games &middot; Control</h1>
-<p class="sub">Back the Next &mdash; The NG$10,000 Founder Challenge. NG$ is fictional: nothing here
+<p class="sub">NextGen Venture &mdash; The NG$10,000 Founder Challenge. NG$ is fictional: nothing here
    is money, a pledge, or a People&rsquo;s Choice vote.</p>
 
 <?php if ($notice !== ''): ?><p class="note"><?= h($notice) ?></p><?php endif; ?>

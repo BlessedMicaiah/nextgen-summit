@@ -172,6 +172,22 @@ switch ($action) {
 
     /* ---- sign in ---- */
 
+    /* Email only, no code (30 October). See ngg_email_signin() in ng-games-otp.php. */
+    case 'email-signin': {
+        $email = is_string($in['email'] ?? null) ? $in['email'] : '';
+        $r = ngg_email_signin($email);
+        if (!$r['ok']) {
+            ngg_out(400, $r);
+        }
+        /* A new identity in an old session must not inherit the old one's anything. */
+        session_regenerate_id(true);
+        $_SESSION['ngg_ident'] = $r['ident'];
+        $_SESSION['ngg_mask'] = $r['mask'];
+        $_SESSION['ngg_demo'] = false;
+        ngg_player_seen($r['ident'], $email, false);
+        ngg_out(200, ngg_state());
+    }
+
     case 'otp-start': {
         $email = is_string($in['email'] ?? null) ? $in['email'] : '';
         $r = ngg_otp_start($email);

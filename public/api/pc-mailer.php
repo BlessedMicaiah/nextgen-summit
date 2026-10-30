@@ -459,7 +459,7 @@ function pc_email_code_body(string $code, string $purpose = 'vote', int $minutes
         $ignore = "If you didn't request this code, you can ignore this email - nothing has been confirmed.";
     } elseif ($purpose === 'game') {
         $head = 'Your NextGen Games code';
-        $why = 'Enter this code to start Back the Next and pick up your NG$10,000 of virtual NextGen capital.';
+        $why = 'Enter this code to start NextGen Venture and pick up your NG$10,000 of virtual NextGen capital.';
         $ignore = "If you didn't request this code, you can ignore this email - no game has been started.";
     } else {
         $head = 'Your voting verification code';

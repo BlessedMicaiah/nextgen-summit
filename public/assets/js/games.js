@@ -61,6 +61,7 @@
     mask: '', draft: {}, portfolio: null
   };
   var email = '';              /* only while signing in; never stored anywhere */
+  var arrive = false;          /* should the ten roll in the next time the room is drawn */
   var sheetFor = null;
   var moveAmt = 1000;
   var saveTimer = null;
@@ -106,6 +107,42 @@
       ? '<img src="' + esc(src) + '"' + set + focal + ' alt="" loading="lazy" decoding="async">'
       : '<span class="gm-face__init">' + esc(f.name.split(' ').map(function (w) { return w[0]; }).join('').slice(0, 2)) + '</span>';
     return '<span class="gm-face ' + (cls || '') + '" style="--tint:' + f.tint + '"' + (attrs || '') + '>' + inner + '</span>';
+  }
+
+  /* ---------------------------------------------------------------- what is remembered
+
+     Two small flags, and neither is anything about a person.
+
+     The opening plays once a SESSION, so a second page in the same visit does not replay
+     it; a head script reads the same key before first paint, which is what stops a flash
+     of it on the way to the hub. The briefing is shown once a BROWSER, so somebody coming
+     back to finish a portfolio is not told the rules again.
+
+     Both are wrapped: storage throws outright in some private modes, and a game that could
+     not start because it could not write a flag would be a poor trade. */
+  function flag(store, key, set) {
+    try {
+      var s = window[store];
+      if (!s) return false;
+      if (set) { s.setItem(key, '1'); return true; }
+      return s.getItem(key) === '1';
+    } catch (e) { return false; }
+  }
+
+  function intro() {
+    var el = $('[data-intro]');
+    if (!el) return;
+    var drop = function () { if (el.parentNode) el.parentNode.removeChild(el); };
+    if (reduced || flag('sessionStorage', 'ngg_intro')) { drop(); return; }
+    flag('sessionStorage', 'ngg_intro', true);
+    el.addEventListener('click', function () {
+      el.classList.add('is-out');
+      setTimeout(drop, 340);
+    });
+    /* The CSS animation hides it on its own at 1.95s -- that is what makes the opening
+       safe without script at all. This only takes it out of the page a moment after, so
+       nothing invisible is left sitting over the hub. */
+    setTimeout(drop, 2100);
   }
 
   /* ---------------------------------------------------------------- the wire */
@@ -181,7 +218,7 @@
   /* ---------------------------------------------------------------- screens */
   function show(name) {
     $$('[data-screen]').forEach(function (el) { el.hidden = el.getAttribute('data-screen') !== name; });
-    $('[data-bar]').hidden = (name === 'signin');
+    $('[data-bar]').hidden = (name === 'signin' || name === 'brief');
     dock(name === 'room' && !S.submitted);
     window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
   }
@@ -230,11 +267,24 @@
   }
 
   /* ---------------------------------------------------------------- the room */
+  /* Where a founder rolls in from. Four edges in turn, so the ten arrive as a pattern
+     rather than a scatter, and each one turns as it travels -- which is what reads as a
+     roll rather than a slide. Taken from the position, so it is the same every time. */
+  var FROM = [
+    ['-128%', '-42%', '-170deg'],
+    ['0%', '-178%', '150deg'],
+    ['128%', '-42%', '170deg'],
+    ['0%', '172%', '-150deg']
+  ];
+
   function cardHTML(f, i) {
     var n = S.draft[f.id] || 0;
+    var from = FROM[i % 4];
     return ''
-      + '<button class="gm-f gm-f--in' + (n > 0 ? ' is-backed' : '') + '" type="button"'
-      +   ' style="--tint:' + f.tint + ';--d:' + (i * 40) + 'ms" data-open="' + f.id + '"'
+      + '<button class="gm-f' + (arrive ? '' : ' gm-f--in') + (n > 0 ? ' is-backed' : '') + '" type="button"'
+      +   ' style="--tint:' + f.tint + ';--d:' + (i * (arrive ? 72 : 40)) + 'ms'
+      +   ';--fx:' + from[0] + ';--fy:' + from[1] + ';--fr:' + from[2] + '"'
+      +   ' data-open="' + f.id + '"'
       +   ' aria-label="' + esc(f.name) + ' of ' + esc(f.company)
       +   (n > 0 ? ', currently backed with ' + ngd(n) : ', not backed yet') + '">'
       +   faceHTML(f, '', ' data-face="' + f.id + '"')
@@ -246,8 +296,26 @@
 
   function paintRoom() {
     var grid = $('[data-grid]');
+    grid.classList.remove('is-arriving', 'is-in');
     grid.innerHTML = FOUNDERS.map(cardHTML).join('');
-    requestAnimationFrame(function () { grid.classList.add('is-in'); });
+
+    if (arrive) {
+      /* The circles land first and the room assembles around them: the wallet and the
+         heading follow them in, the dock last. .is-in is deliberately NOT set here -- the
+         arrival animation owns the cards' transform, and the two would fight over it. */
+      grid.classList.add('is-arriving');
+      ['[data-bar]', '[data-banner]', '[data-room-head]'].forEach(function (s, k) {
+        var el = $(s);
+        if (!el) return;
+        el.classList.remove('gm-late');
+        void el.offsetWidth;
+        el.style.setProperty('--ld', (260 + k * 110) + 'ms');
+        el.classList.add('gm-late');
+      });
+      setTimeout(function () { grid.classList.remove('is-arriving'); }, 1700);
+    } else {
+      requestAnimationFrame(function () { grid.classList.add('is-in'); });
+    }
     paintDock();
   }
 
@@ -617,10 +685,36 @@
     if (el) setTimeout(function () { el.focus(); }, 60);
   }
 
+  /* ---------------------------------------------------------------- the briefing */
+
+  /* Shown to somebody who has just arrived with nothing placed and has not been told the
+     rules on this browser before. Anyone returning to a wallet they have already started
+     goes straight back to it. */
+  function owedBrief() {
+    return !S.submitted && invested() === 0 && !flag('localStorage', 'ngg_briefed');
+  }
+
+  function paintBrief() {
+    $('[data-brief-amt]').textContent = ngd(BUDGET);
+    $('[data-brief-say]').textContent = 'You\u2019ve been given ' + ngd(BUDGET)
+      + ' of virtual NextGen capital to back the ten founders pitching live tonight.';
+  }
+
+  /* Let's play: remember it, then draw the room with the ten rolling in. */
+  function enterRoom() {
+    flag('localStorage', 'ngg_briefed', true);
+    arrive = !reduced;
+    paintBar();
+    paintRoom();
+    show('room');
+    arrive = false;
+  }
+
   /* ---------------------------------------------------------------- routing */
   function route() {
     if (!S.signedIn) { show('signin'); return; }
     if (S.submitted) { paintBar(); paintDone(); show('done'); return; }
+    if (owedBrief()) { paintBrief(); show('brief'); return; }
     paintBar(); paintRoom(); show('room');
   }
 
@@ -678,6 +772,8 @@
     });
 
     $('[data-again]').addEventListener('click', function () { step('email'); });
+
+    $('[data-play]').addEventListener('click', enterRoom);
 
     $('[data-demo]').addEventListener('click', function () {
       this.disabled = true;
@@ -819,6 +915,7 @@
   }
 
   function start() {
+    intro();
     /* the cluster of ten faces appears on the hub and the sign-in; nothing else is needed
        for it, so it is drawn wherever it is asked for, game page or not */
     $$('[data-cluster]').forEach(function (el) { el.innerHTML = clusterHTML(null); });

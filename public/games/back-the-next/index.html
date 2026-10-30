@@ -22,23 +22,40 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/games.css?v=20261030-s16">
+<script>/* the opening plays once a session; this marks it before anything is drawn */
+try{if(sessionStorage.getItem('ngg_intro')==='1')document.documentElement.className+=' ngg-seen';}catch(e){}</script>
+<link rel="stylesheet" href="/assets/css/games.css?v=20261030-s17">
 
 <!-- The founders' photographs, descriptions and films, read from the same verified data
      the rest of the site runs on. games.js joins to it by entrant id and invents nothing. -->
-<script src="/assets/js/pc-founders.js?v=20261030-s16" defer></script>
-<script src="/assets/js/games.js?v=20261030-s16" defer></script>
+<script src="/assets/js/pc-founders.js?v=20261030-s17" defer></script>
+<script src="/assets/js/games.js?v=20261030-s17" defer></script>
 </head>
 
 <body class="gm">
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PRVSWFBN"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
+<!-- ==================== the opening ====================
+     Pure CSS: the animation ends on hidden, so this clears itself even if the script never
+     runs. games.js only lets a tap skip it and keeps it to once a session. -->
+<div class="gm-intro" data-intro role="presentation">
+  <span class="gm-intro__bloom" aria-hidden="true"></span>
+  <span class="gm-lock gm-lock--hero">
+    <span class="gm-lock__wm">nextgen</span>
+    <span class="gm-lock__games">Games</span>
+  </span>
+  <button class="gm-intro__skip" type="button">Skip</button>
+</div>
+
 <!-- ==================== the bar ==================== -->
 <header class="gm-bar" data-bar hidden>
   <div class="gm-bar__in">
     <div class="gm-bar__top">
-      <a class="gm-bar__mark" href="/games/">next<i>gen</i> games</a>
+      <a class="gm-lock gm-lock--bar" href="/games/" aria-label="NextGen Games">
+        <span class="gm-lock__wm">nextgen</span>
+        <span class="gm-lock__games">Games</span>
+      </a>
       <span class="gm-bar__game">Back the Next</span>
       <span class="gm-bar__who" data-who></span>
       <button class="gm-bar__out" type="button" data-signout>Sign out</button>
@@ -107,11 +124,32 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </div>
   </section>
 
-  <!-- ==================== 2. the room ==================== -->
+  <!-- ==================== 2. the briefing ====================
+       Three lines and a button. It is shown once per browser, and only to somebody who has
+       not placed anything yet -- coming back to a wallet already started goes straight to
+       it. The amount is read from the server's budget, never written here. -->
+  <section class="gm-screen" data-screen="brief" hidden>
+    <div class="gm-brief">
+      <p class="gm-brief__kick">You&rsquo;re in the game.</p>
+      <p class="gm-brief__amt gm-ngd" data-brief-amt>NG$10,000</p>
+      <h1 class="gm-disp">Your money.<br>Your moves.</h1>
+      <p class="gm-brief__say" data-brief-say></p>
+      <button class="gm-btn gm-btn--wide" type="button" data-play>
+        Let&rsquo;s play
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
+             fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+             stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+      </button>
+      <p class="gm-brief__fine"><b>NG$ is not money.</b> It buys nothing and it is not a
+        pledge &mdash; it is a way of saying who you&rsquo;d back.</p>
+    </div>
+  </section>
+
+  <!-- ==================== 3. the room ==================== -->
   <section class="gm-screen" data-screen="room" hidden>
     <div class="gm-screen__in">
       <p class="gm-banner" data-banner hidden></p>
-      <div class="gm-room__head">
+      <div class="gm-room__head" data-room-head>
         <p class="gm-kick">The NG$10,000 Founder Challenge</p>
         <h1 class="gm-disp">Who are you backing?</h1>
         <p>Tap a founder to read about them and place NG$. Back as many or as few as you like.</p>
@@ -124,7 +162,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </div>
   </section>
 
-  <!-- ==================== 3. review ==================== -->
+  <!-- ==================== 4. review ==================== -->
   <section class="gm-screen" data-screen="review" hidden>
     <div class="gm-screen__in">
       <p class="gm-kick">Review</p>
@@ -138,7 +176,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </div>
   </section>
 
-  <!-- ==================== 4. the portfolio you ended up with ==================== -->
+  <!-- ==================== 5. the portfolio you ended up with ==================== -->
   <section class="gm-screen" data-screen="done" hidden>
     <div class="gm-screen__in gm-done">
       <div class="gm-cluster gm-cluster--big gm-pop" data-done-cluster aria-hidden="true"></div>

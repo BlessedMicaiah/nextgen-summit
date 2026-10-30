@@ -66,6 +66,12 @@ function ngg_ident(): string
     return (string) ($_SESSION['ngg_ident'] ?? '');
 }
 
+/** The review-store shortcut, where the guard that decides it exists at all. */
+function ngg_demo_possible(): bool
+{
+    return function_exists('pc_store_is_review') && pc_store_is_review();
+}
+
 /* ---------- what the page is allowed to know ---------- */
 
 function ngg_state(): array
@@ -87,8 +93,10 @@ function ngg_state(): array
         'mail_ready' => pc_smtp_configured(),
         /* Only ever true on the review store, and that is decided by pc_store_is_review(),
            which wants the directory name AND a host that is not the live one AND a database
-           already sitting there. */
-        'demo_allowed' => pc_store_is_review(),
+           already sitting there. The function itself lives on the staging branch's pc-lib.php
+           and is not on main -- so on a production build it does not exist, and this has to
+           say "no" rather than fatal. Found by diffing the release branch, not by luck. */
+        'demo_allowed' => ngg_demo_possible(),
     ];
     if ($ident === '') {
         return $state;
@@ -191,7 +199,7 @@ switch ($action) {
        directory AND a host that is not nextgensummit.us AND a database already in place.
        The identity is random, so it cannot be used to reach anybody else's wallet. */
     case 'demo-signin': {
-        if (!pc_store_is_review()) {
+        if (!ngg_demo_possible()) {
             ngg_out(403, ['ok' => false, 'reason' => 'not_available']);
         }
         session_regenerate_id(true);

@@ -283,6 +283,12 @@ function ngg_registered(string $email): array
             return ['found' => true, 'unavailable' => false];
         }
     }
+    /* A miss against a list we could not refresh is not a "no": during an Eventbrite outage
+       anybody who registered after the last good pull would be turned away, and "try again
+       in a minute" would not help them. Treat it as unreachable and let them in. */
+    if ($idx['stale']) {
+        return ['found' => false, 'unavailable' => true];
+    }
     return ['found' => false, 'unavailable' => false];
 }
 

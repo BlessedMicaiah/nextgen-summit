@@ -1,5 +1,5 @@
 <?php
-/* NextGen Games — BACK THE NEXT: the store.
+/* NextGen Games — NEXTGEN VENTURE: the store.
  *
  * A player gets NG$10,000 of fictional NextGen capital and decides how much of it to put
  * behind each of the ten finalists. NG$ is not money, not a pledge, and not a vote. This

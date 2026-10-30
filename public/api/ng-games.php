@@ -172,16 +172,10 @@ switch ($action) {
 
     /* ---- sign in ---- */
 
-    case 'otp-start': {
+    /* Email only, no code (30 October). See ngg_email_signin() in ng-games-otp.php. */
+    case 'email-signin': {
         $email = is_string($in['email'] ?? null) ? $in['email'] : '';
-        $r = ngg_otp_start($email);
-        ngg_out($r['ok'] ? 200 : 400, $r);
-    }
-
-    case 'otp-check': {
-        $email = is_string($in['email'] ?? null) ? $in['email'] : '';
-        $code = is_string($in['code'] ?? null) ? $in['code'] : (string) ($in['code'] ?? '');
-        $r = ngg_otp_check($email, $code);
+        $r = ngg_email_signin($email);
         if (!$r['ok']) {
             ngg_out(400, $r);
         }
@@ -193,6 +187,10 @@ switch ($action) {
         ngg_player_seen($r['ident'], $email, false);
         ngg_out(200, ngg_state());
     }
+
+    /* otp-start and otp-check were removed with the code (30 October): nothing calls them,
+       and a mail-sending endpoint with no page in front of it is surface for nothing. The
+       functions behind them are still in ng-games-otp.php if the code ever comes back. */
 
     /* ---- a way in while the review site is being reviewed ----
        Never reachable on the live site: pc_store_is_review() wants the review data

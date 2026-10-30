@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/pc-identity.php';
 require_once __DIR__ . '/pc-mailer.php';
+require_once __DIR__ . '/pc-attendee.php';   // the Eventbrite registration index, read-only
 
 const NGG_CODE_TTL = 600;           // ten minutes
 const NGG_MAX_TRIES = 5;
@@ -224,3 +225,111 @@ function ngg_otp_check(string $email, string $code): array
     ngg_otp_note($ident, 'check', true);
     return ['ok' => true, 'ident' => $ident, 'mask' => (string) $row['mask']];
 }
+
+
+/* ============================================================================
+   SIGNING IN WITH AN EMAIL ALONE (30 October)
+
+   Leadership's call on the day: the game is meant to be quick, so the six-digit code is
+   gone. A player types the address they registered for NextGen Summit with and is in.
+
+   What still holds:
+   - The address has to belong to an eligible Eventbrite registration -- the same index
+     and the same "attending, not cancelled, not refunded" test the People's Choice
+     attendee bonus reads. Nothing here writes to that index or to any People's Choice
+     table, and nothing here sends mail.
+   - One address is still one wallet: the identity is the same hash as before.
+   - If Eventbrite cannot be read at all (no token, no network, no cache yet), the address
+     is let in rather than turning a room of real attendees away at the moment the game
+     is announced. That case is logged as 'signin-open'.
+
+   What no longer holds, and leadership was told: anybody who knows a registered
+   attendee's address can open that attendee's wallet. NG$ is not money.
+
+   The forced Eventbrite refresh on a miss (somebody who bought a ticket at the door) is
+   rate-limited to once a minute for the whole site, so a room full of typos cannot turn
+   into a room full of Eventbrite API walks. */
+
+const NGG_EB_FORCE_EVERY = 60;
+
+function ngg_eb_force_due(): bool
+{
+    ngg_otp_tables();
+    $db = pc_db();
+    if (!$db) {
+        return false;
+    }
+    $s = $db->prepare("SELECT MAX(ts) t FROM ngg_otp_log WHERE ident = '*' AND action = 'eb-refresh'");
+    $s->execute();
+    $last = (int) ($s->fetch()['t'] ?? 0);
+    return time() - $last >= NGG_EB_FORCE_EVERY;
+}
+
+/** @return array{found:bool,unavailable:bool} */
+function ngg_registered(string $email): array
+{
+    $k = pc_email_key($email);
+    $idx = pc_eb_email_index(false);
+    if (!$idx['ok'] && $idx['stale']) {
+        return ['found' => false, 'unavailable' => true];
+    }
+    if (isset($idx['map'][$k])) {
+        return ['found' => true, 'unavailable' => false];
+    }
+    if (!$idx['stale'] && ngg_eb_force_due()) {
+        ngg_otp_note('*', 'eb-refresh', true);
+        $idx = pc_eb_email_index(true);
+        if (isset($idx['map'][$k])) {
+            return ['found' => true, 'unavailable' => false];
+        }
+    }
+    /* A miss against a list we could not refresh is not a "no": during an Eventbrite outage
+       anybody who registered after the last good pull would be turned away, and "try again
+       in a minute" would not help them. Treat it as unreachable and let them in. */
+    if ($idx['stale']) {
+        return ['found' => false, 'unavailable' => true];
+    }
+    return ['found' => false, 'unavailable' => false];
+}
+
+/**
+ * Sign in with an address alone.
+ *
+ * @return array{ok:bool,reason?:string,wait?:int,ident?:string,mask?:string}
+ */
+function ngg_email_signin(string $email): array
+{
+    $email = trim($email);
+    if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+        return ['ok' => false, 'reason' => 'email'];
+    }
+    if (pc_email_disposable($email)) {
+        return ['ok' => false, 'reason' => 'disposable'];
+    }
+    // the per-network brakes from the code path, counted on sign-in attempts instead
+    ngg_otp_tables();
+    $db = pc_db();
+    if (!$db) {
+        return ['ok' => false, 'reason' => 'store'];
+    }
+    $ip = ngs_ip_hash();
+    $n = $db->prepare("SELECT COUNT(*) n FROM ngg_otp_log WHERE ip_hash = ? AND action LIKE 'signin%' AND ts > ?");
+    $n->execute([$ip, time() - 60]);
+    if ((int) ($n->fetch()['n'] ?? 0) >= NGG_MAX_PER_IP_PER_MINUTE) {
+        return ['ok' => false, 'reason' => 'ip_burst', 'wait' => 60];
+    }
+    $n->execute([$ip, time() - 3600]);
+    if ((int) ($n->fetch()['n'] ?? 0) >= NGG_MAX_PER_IP_PER_HOUR) {
+        return ['ok' => false, 'reason' => 'ip_hourly'];
+    }
+
+    $ident = pc_email_identity($email);
+    $reg = ngg_registered($email);
+    if (!$reg['found'] && !$reg['unavailable']) {
+        ngg_otp_note($ident, 'signin', false);
+        return ['ok' => false, 'reason' => 'not_registered'];
+    }
+    ngg_otp_note($ident, $reg['unavailable'] ? 'signin-open' : 'signin', true);
+    return ['ok' => true, 'ident' => $ident, 'mask' => pc_email_mask($email)];
+}
+

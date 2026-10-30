@@ -661,6 +661,15 @@
       paintBar(); paintDone(); show('done');
       var hero = $('[data-done-hero]');
       if (hero && !reduced) { hero.classList.remove('gm-pop'); void hero.offsetWidth; hero.classList.add('gm-pop'); }
+    }).catch(function (e) {
+      /* The portfolio may well be saved -- this only means the screen could not be drawn.
+         Never leave a live-event button reading "Locking in..." with nothing happening:
+         give it back, say so, and let `boot()` find out from the server what is actually
+         true rather than guessing from here. */
+      sending = false;
+      if (btn) { btn.disabled = false; btn.textContent = 'Lock it in'; }
+      try { console.error('NextGen Games: submit paint failed', e); } catch (x) {}
+      boot();
     });
   }
 

@@ -297,7 +297,13 @@
 .gm-sheet__x svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.4;
                    stroke-linecap: round; }
 .gm-sheet__id { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 0 17px 13px; }
-.gm-sheet__id h2 { margin: 5px 0 0; font-size: clamp(21px, 6vw, 28px); }
+/* The ten editorial scenes have very different backgrounds, and a few of them are pale
+   exactly where the name sits. The gradient does most of the work; the shadow is what
+   makes it hold on all ten rather than on most of them. */
+.gm-sheet__id h2 {
+  margin: 5px 0 0; font-size: clamp(21px, 6vw, 28px);
+  text-shadow: 0 2px 14px rgba(10,13,16,.9), 0 1px 3px rgba(10,13,16,.7);
+}
 .gm-sheet__brand { display: flex; align-items: center; gap: 9px; margin-top: 8px; }
 .gm-sheet__logo {
   height: 36px; width: auto; border-radius: 7px; background: #fff; padding: 4px 7px;

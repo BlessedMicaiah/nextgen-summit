@@ -185,6 +185,8 @@
   var railPrev = $('[data-shelf-prev]');
   var railNext = $('[data-shelf-next]');
   var linesEl = $('[data-mag-lines]');
+  var factEl = $('[data-mag-fact]');
+  var factAt = 0, factTimer = null, factHold = 0;
   var rackWrap = $('.mag-rack__wrap');
 
   var issues = [];
@@ -602,6 +604,85 @@
       +       '<svg viewBox="0 0 24 24"><path d="M5 12h13M12 5l7 7-7 7"/></svg></span>'
       +   '</button>'
       + '</li>';
+  }
+
+  /* ---------------------------------------------------------------------
+     Did you know.
+
+     The founder's own sentence, trimmed at a full stop when their description runs to
+     more than one and the first can stand alone. Nothing is written here, so nothing can
+     be invented here. A founder with no description on file is skipped rather than given
+     something to say.
+     ------------------------------------------------------------------ */
+  var FACT_EVERY = 6200;
+
+  function factFor(f) {
+    var b = f && f.blurb ? String(f.blurb).trim() : '';
+    if (!b) return null;
+    var cut = b.indexOf('. ');
+    return (cut > 40 && cut < b.length - 2) ? b.slice(0, cut + 1) : b;
+  }
+
+  function factStep() {
+    if (!factEl || factEl.hidden || !issues.length) return;
+    var tries = 0, say = null, f = null;
+    while (tries++ < issues.length && !say) {
+      f = issues[factAt % issues.length];
+      say = factFor(f);
+      if (!say) factAt++;
+    }
+    if (!say) { factEl.hidden = true; return; }
+
+    var ink = accentOf(f);
+    factEl.style.setProperty('--issue', ink[0]);
+    factEl.setAttribute('aria-label', 'Did you know: ' + say + ' \u2014 ' + f.name
+      + ' of ' + f.company + '. Open their issue.');
+    $('[data-fact-k]', factEl).textContent = (factAt % 2) ? 'Fun fact' : 'Did you know?';
+    $('[data-fact-say]', factEl).textContent = say;
+    $('[data-fact-who]', factEl).textContent = f.name + ' \u00b7 ' + f.company;
+    var pic = f.story || f.shot || '';
+    $('[data-fact-pic]', factEl).innerHTML = pic
+      ? '<img src="' + esc(pic) + '" alt=""' + (f.storyFocal
+          ? ' style="object-position:' + esc(f.storyFocal) + '"' : '')
+        + ' loading="lazy" decoding="async">'
+      : '';
+
+    var slot = $('[data-fact-slot]', factEl);
+    slot.classList.remove('mag-fact__slot');
+    void slot.offsetWidth;
+    slot.classList.add('mag-fact__slot');
+
+    var bar = $('[data-fact-bar]', factEl);
+    bar.style.setProperty('--every', FACT_EVERY + 'ms');
+    bar.classList.remove('is-running');
+    void bar.offsetWidth;
+    if (!reduced) bar.classList.add('is-running');
+  }
+
+  function factStart() {
+    if (!factEl) return;
+    if (!issues.some(factFor)) { factEl.hidden = true; return; }
+    factEl.hidden = false;
+    factStep();
+    if (factTimer) clearInterval(factTimer);
+    factTimer = setInterval(function () {
+      if (factHold > 0 || document.hidden) return;
+      factAt++;
+      factStep();
+    }, FACT_EVERY);
+
+    factEl.addEventListener('click', function () {
+      var f = issues[factAt % issues.length];
+      if (!f) return;
+      var i = issues.indexOf(f);
+      if (i >= 0 && isReady(f)) openIssue(i);
+    });
+    ['mouseenter', 'focus'].forEach(function (ev) {
+      factEl.addEventListener(ev, function () { factHold++; }, true);
+    });
+    ['mouseleave', 'blur'].forEach(function (ev) {
+      factEl.addEventListener(ev, function () { factHold = Math.max(0, factHold - 1); }, true);
+    });
   }
 
   function drawLines() {
@@ -1064,6 +1145,7 @@
       }
       drawShelf();
       drawLines();
+      factStart();
       watch($('.mag-rack__frame'));
       watch($('.mag-judges__grid'));
       track('top10_rack', { entrants: issues.length, ready: issues.filter(isReady).length });

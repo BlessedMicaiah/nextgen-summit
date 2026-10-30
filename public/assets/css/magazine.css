@@ -1213,3 +1213,68 @@
   .mag-rack__frame.is-rv, .mag-line.is-rv { opacity: 1 !important; transform: none !important; }
   .mag-bg__shot { filter: blur(8px); transform: none; animation: none; }
 }
+
+/* ============================================================================
+   DID YOU KNOW — the rotating card
+
+   The same idea as the one in NextGen Games, in this page's own voice: a brass kicker, a
+   hairline box, Fraunces for the sentence. One fact at a time, and every sentence is the
+   founder's own -- taken from their description in the verified founder data and trimmed
+   at a full stop, never rewritten into a claim they did not make.
+
+   It is a button, and it opens that founder's issue. That is why it sits above the rack:
+   it sends people to a founder they would otherwise have scrolled past.
+
+   It holds while a pointer is on it, while it has focus, and while the tab is in the
+   background, so nobody loses a sentence halfway through.
+   ========================================================================= */
+.mag-fact-wrap { padding: 0 var(--gut); }
+.mag-fact {
+  position: relative; display: block; width: 100%; max-width: 1420px; margin: 0 auto;
+  text-align: left; padding: clamp(14px, 2.2vw, 20px) clamp(15px, 2.4vw, 24px);
+  border: 1px solid var(--hair); border-radius: 4px; overflow: hidden;
+  background: linear-gradient(140deg, rgba(197,154,102,.08) 0%, rgba(20,24,27,0) 58%),
+              rgba(27,32,36,.6);
+  color: var(--ink); cursor: pointer;
+  transition: border-color .4s var(--ease), background-color .4s var(--ease);
+}
+.mag-fact:hover { border-color: var(--wood-hi); }
+.mag-fact__k {
+  display: inline-block; margin: 0 0 9px;
+  font: 700 10px/1 var(--f-sans); letter-spacing: .3em; text-transform: uppercase;
+  color: var(--wood-hi);
+}
+.mag-fact__body { display: grid; grid-template-columns: 1fr auto; gap: clamp(12px, 2vw, 22px);
+                  align-items: center; }
+.mag-fact__say {
+  margin: 0; font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: clamp(16px, 2.3vw, 24px); line-height: 1.22; letter-spacing: -.02em;
+  color: var(--ink); text-wrap: pretty;
+}
+.mag-fact__who {
+  margin: 9px 0 0; font: 700 10px/1.3 var(--f-sans); letter-spacing: .16em;
+  text-transform: uppercase; color: var(--issue, var(--wood-hi));
+}
+.mag-fact__pic {
+  width: clamp(54px, 7vw, 74px); aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+  flex: none; background: var(--bg-2);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--issue, var(--hair));
+}
+.mag-fact__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mag-fact__slot { animation: mag-fact-in .55s var(--ease) both; }
+@keyframes mag-fact-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.mag-fact__bar {
+  position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
+  background: var(--wood-hi); opacity: .45; transform-origin: 0 50%;
+}
+.mag-fact__bar.is-running { animation: mag-fact-bar var(--every, 6200ms) linear both; }
+@keyframes mag-fact-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mag-fact__slot { animation: none; }
+  .mag-fact__bar { display: none; }
+}

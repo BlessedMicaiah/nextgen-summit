@@ -35,11 +35,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
 
-<link rel="stylesheet" href="/assets/css/site.css?v=20261030-s17">
-<link rel="stylesheet" href="/assets/css/magazine.css?v=20261030-s17">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261030-s19">
+<link rel="stylesheet" href="/assets/css/magazine.css?v=20261030-s19">
 
-<script src="/assets/js/pc-founders.js?v=20261030-s17" defer></script>
-<script src="/assets/js/magazine.js?v=20261030-s17" defer></script>
+<script src="/assets/js/pc-founders.js?v=20261030-s19" defer></script>
+<script src="/assets/js/magazine.js?v=20261030-s19" defer></script>
 </head>
 
 <body class="mag-body">
@@ -96,6 +96,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <p class="mag-head__status" data-mag-status hidden></p>
     </div>
   </section>
+
+  <!-- ==================== did you know ====================
+       One founder's own sentence at a time, above the rack, so somebody who came for one
+       name leaves having read about another. Filled by magazine.js from the same verified
+       founder data the covers are built from; hidden until it has something to say. -->
+  <div class="mag-fact-wrap">
+    <button class="mag-fact" type="button" data-mag-fact hidden>
+      <span class="mag-fact__k" data-fact-k>Did you know?</span>
+      <span class="mag-fact__body">
+        <span class="mag-fact__slot" data-fact-slot>
+          <span class="mag-fact__say" data-fact-say></span>
+          <span class="mag-fact__who" data-fact-who></span>
+        </span>
+        <span class="mag-fact__pic" data-fact-pic></span>
+      </span>
+      <span class="mag-fact__bar" data-fact-bar aria-hidden="true"></span>
+    </button>
+  </div>
 
   <!-- ==================== the rack ====================
        Desktop: a horizontal shelf, covers standing side by side on a wooden ledge.

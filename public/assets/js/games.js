@@ -64,6 +64,8 @@
   var arrive = false;          /* should the ten roll in the next time the room is drawn */
   var sheetFor = null;
   var moveAmt = 1000;
+  var pending = null;          /* the amount chosen in the panel, not yet confirmed */
+  var factAt = 0, factTimer = null, factHold = 0;
   var saveTimer = null;
   var shown = { cap: 0, inv: 0, left: 0 };     /* what the wallet currently reads, for the tween */
 
@@ -304,6 +306,7 @@
          heading follow them in, the dock last. .is-in is deliberately NOT set here -- the
          arrival animation owns the cards' transform, and the two would fight over it. */
       grid.classList.add('is-arriving');
+      factStart();
       ['[data-bar]', '[data-banner]', '[data-room-head]'].forEach(function (s, k) {
         var el = $(s);
         if (!el) return;
@@ -315,8 +318,77 @@
       setTimeout(function () { grid.classList.remove('is-arriving'); }, 1700);
     } else {
       requestAnimationFrame(function () { grid.classList.add('is-in'); });
+      factStart();
     }
     paintDock();
+  }
+
+  /* ---------------------------------------------------------------- did you know
+
+     One sentence at a time, and every sentence is the founder's own: it is taken from
+     their description in the site's verified data and trimmed at a full stop, never
+     rewritten. A founder with nothing on file is simply skipped rather than given
+     something to say.
+
+     The card is a button, because the fact belongs to somebody and tapping it should open
+     them -- which is the reason it sits above the grid at all. */
+  var FACT_EVERY = 5600;
+
+  function factFor(f) {
+    var rec = site(f);
+    var b = rec && rec.blurb ? String(rec.blurb).trim() : '';
+    if (!b) return null;
+    /* the first sentence, if there is more than one and it is long enough to stand alone */
+    var cut = b.indexOf('. ');
+    var say = (cut > 40 && cut < b.length - 2) ? b.slice(0, cut + 1) : b;
+    return { f: f, say: say };
+  }
+
+  function factStep() {
+    var card = $('[data-fact]');
+    if (!card || card.hidden) return;
+    var tries = 0, item = null;
+    while (tries++ < FOUNDERS.length && !item) {
+      item = factFor(FOUNDERS[factAt % FOUNDERS.length]);
+      if (!item) factAt++;
+    }
+    if (!item) { card.hidden = true; return; }
+
+    var f = item.f;
+    card.style.setProperty('--tint', f.tint);
+    card.setAttribute('aria-label', 'Did you know: ' + item.say + ' \u2014 '
+      + f.name + ' of ' + f.company + '. Open their profile.');
+    $('[data-fact-k]').textContent = (factAt % 2) ? 'Fun fact!' : 'Did you know?';
+    $('[data-fact-say]').textContent = item.say;
+    $('[data-fact-who]').textContent = f.name + ' \u00b7 ' + f.company;
+    $('[data-fact-face]').innerHTML = faceHTML(f, 'is-backed');
+
+    var slot = $('[data-fact-slot]');
+    slot.classList.remove('gm-fact__slot');
+    void slot.offsetWidth;
+    slot.classList.add('gm-fact__slot');
+
+    var bar = $('[data-fact-bar]');
+    bar.style.setProperty('--every', FACT_EVERY + 'ms');
+    bar.classList.remove('is-running');
+    void bar.offsetWidth;
+    if (!reduced) bar.classList.add('is-running');
+  }
+
+  function factStart() {
+    var card = $('[data-fact]');
+    if (!card) return;
+    if (!FOUNDERS.some(factFor)) { card.hidden = true; return; }
+    card.hidden = false;
+    factStep();
+    if (factTimer) clearInterval(factTimer);
+    /* It keeps its place while somebody is reading it or the tab is in the background --
+       losing a sentence halfway through is the one way a rotating card is annoying. */
+    factTimer = setInterval(function () {
+      if (factHold > 0 || document.hidden) return;
+      factAt++;
+      factStep();
+    }, FACT_EVERY);
   }
 
   function paintDock() {
@@ -373,7 +445,10 @@
 
     $('[data-move]').classList.remove('is-open');
     moveAmt = 1000;
-    paintAlloc();
+    pending = null;
+    $('[data-alloc-panel]').hidden = true;
+    $('[data-custom]').hidden = true;
+    paintAlloc(false);
     sheet.hidden = false;
     requestAnimationFrame(function () { sheet.classList.add('is-up'); });
     document.body.style.overflow = 'hidden';
@@ -398,27 +473,63 @@
     sheetFor = null;
   }
 
-  function paintAlloc() {
+  /* The panel is shut unless it was already open for this founder. What is behind them
+     and what is left to place sit above it either way. */
+  function paintAlloc(keepOpen) {
     if (!sheetFor) return;
     var f = sheetFor;
     var now = S.draft[f.id] || 0;
-    $('[data-alloc-now]').innerHTML = 'Behind ' + esc(f.name.split(' ')[0]) + ' <b class="gm-ngd">' + ngd(now) + '</b>';
-
     var free = available() + now;
-    var html = '';
-    CHIPS.forEach(function (c) {
-      html += '<button class="gm-chip" type="button" data-chip="' + c + '"'
-        + (now + c > free ? ' disabled' : '') + '>+' + ngd(c) + '</button>';
-    });
-    html += '<button class="gm-chip" type="button" data-chip="max"' + (available() <= 0 ? ' disabled' : '') + '>All in</button>';
-    html += '<button class="gm-chip gm-chip--clear" type="button" data-chip="0"' + (now <= 0 ? ' disabled' : '') + '>Remove</button>';
-    $('[data-chips]').innerHTML = html;
+    var first = f.name.split(' ')[0];
 
-    var input = $('[data-amount]');
-    input.value = now > 0 ? String(now) : '';
-    $('[data-alloc-go]').textContent = now > 0 ? 'Update' : 'Back this founder';
-    note('You have ' + ngd(available()) + ' left to place.', false);
+    $('[data-alloc-now]').innerHTML = 'Behind ' + esc(first)
+      + ' <b class="gm-ngd">' + ngd(now) + '</b>';
+    $('[data-alloc-left]').innerHTML = 'Left <b class="gm-ngd">' + ngd(available()) + '</b>';
+
+    $('[data-alloc-open]').textContent = now > 0 ? 'Change this investment' : 'Back this founder';
+    $('[data-alloc-shed]').hidden = now <= 0;
+
+    /* NG$5,000, everything that is free, or a number of their own */
+    var pick = '';
+    pick += '<button type="button" data-pick="5000"' + (5000 > free ? ' disabled' : '')
+         + (pending === 5000 ? ' class="is-on"' : '') + '>' + ngd(5000) + '<small>Flat</small></button>';
+    pick += '<button type="button" data-pick="max"' + (free <= 0 ? ' disabled' : '')
+         + (pending === free && free > 0 ? ' class="is-on"' : '') + '>All in<small>'
+         + ngd(free) + '</small></button>';
+    pick += '<button type="button" data-pick="custom"'
+         + (pending === 'custom' ? ' class="is-on"' : '') + '>Custom<small>Your call</small></button>';
+    $('[data-pick]').innerHTML = pick;
+
+    var go = $('[data-alloc-go]');
+    var amount = typeof pending === 'number' ? pending : null;
+    go.textContent = amount === null ? 'Confirm'
+      : (amount === now ? 'No change' : 'Place ' + ngd(amount));
+    go.disabled = amount === null || amount === now;
+
+    if (!keepOpen) {
+      $('[data-alloc-panel]').hidden = true;
+      $('[data-custom]').hidden = true;
+    }
+    note(now > 0
+      ? ngd(now) + ' is behind ' + first + '. ' + ngd(available()) + ' still to place.'
+      : 'You have ' + ngd(available()) + ' left to place.', false);
     paintMove();
+  }
+
+  function openPanel(on) {
+    var p = $('[data-alloc-panel]');
+    p.hidden = !on;
+    p.classList.toggle('is-open', !!on);
+    /* one action at a time: the button that opened this is not also a thing to press
+       while it is open */
+    $('[data-alloc-shut]').hidden = !!on;
+    if (!on) { pending = null; $('[data-custom]').hidden = true; }
+    paintAlloc(on);
+    if (on) {
+      /* the panel is at the bottom of a sheet; make sure the confirm is reachable */
+      var s = $('.gm-sheet__scroll');
+      if (s) setTimeout(function () { s.scrollTop = s.scrollHeight; }, 60);
+    }
   }
 
   function note(text, bad) {
@@ -441,7 +552,8 @@
     markCard(f);
     paintBar();
     paintDock();
-    paintAlloc();
+    pending = null;
+    paintAlloc(false);
     saveDraft();
     /* The face is the destination, so it has to be on screen. The panel's controls sit in a
        sticky footer and stay put whatever the scroll position, so bringing the top of the
@@ -514,7 +626,8 @@
       + (left > 0 ? from.name.split(' ')[0] + ' keeps ' + ngd(left) + '.' : 'Nothing left behind ' + from.name.split(' ')[0] + '.'), false);
     /* repaint after the tokens have left, so the row the token is flying to is the row
        it started from */
-    setTimeout(paintAlloc, reduced ? 0 : 520);
+    setTimeout(function () { paintAlloc($('[data-alloc-panel]').hidden === false); },
+               reduced ? 0 : 520);
     return true;
   }
 
@@ -800,25 +913,60 @@
     $('[data-sheet-x]').addEventListener('click', closeSheet);
     $('[data-sheet-veil]').addEventListener('click', closeSheet);
 
-    $('[data-chips]').addEventListener('click', function (e) {
-      var c = e.target.closest ? e.target.closest('[data-chip]') : null;
-      if (!c || c.disabled || !sheetFor) return;
-      var v = c.getAttribute('data-chip');
+    $('[data-alloc-open]').addEventListener('click', function () { openPanel(true); });
+    $('[data-alloc-close]').addEventListener('click', function () { openPanel(false); });
+    $('[data-alloc-shed]').addEventListener('click', function () {
+      if (sheetFor) place(sheetFor, 0);
+    });
+
+    $('[data-pick]').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-pick]') : null;
+      if (!b || b.disabled || !sheetFor) return;
+      var v = b.getAttribute('data-pick');
       var now = S.draft[sheetFor.id] || 0;
-      if (v === 'max') place(sheetFor, now + available());
-      else if (v === '0') place(sheetFor, 0);
-      else place(sheetFor, now + parseInt(v, 10));
+      var free = available() + now;
+      if (v === 'custom') {
+        pending = 'custom';
+        paintAlloc(true);
+        $('[data-custom]').hidden = false;
+        var i = $('[data-amount]');
+        i.value = now > 0 ? String(now) : '';
+        setTimeout(function () { i.focus(); i.select(); }, 40);
+        return;
+      }
+      $('[data-custom]').hidden = true;
+      pending = v === 'max' ? free : Math.min(parseInt(v, 10), free);
+      paintAlloc(true);
+    });
+
+    /* typing is choosing: the confirm follows the field */
+    $('[data-amount]').addEventListener('input', function () {
+      var raw = this.value.trim();
+      if (raw === '') { pending = 'custom'; }
+      else if (!/^\d+$/.test(raw)) { note('Whole NG$ only — no decimals.', true); return; }
+      else { pending = parseInt(raw, 10); }
+      paintAlloc(true);
+      $('[data-custom]').hidden = false;
     });
 
     $('[data-alloc-go]').addEventListener('click', function () {
-      if (!sheetFor) return;
-      var raw = $('[data-amount]').value.trim();
-      if (raw === '') { place(sheetFor, 0); return; }
-      if (!/^\d+$/.test(raw)) { note('Whole NG$ only — no decimals.', true); return; }
-      place(sheetFor, parseInt(raw, 10));
+      if (!sheetFor || typeof pending !== 'number') return;
+      if (place(sheetFor, pending)) { openPanel(false); }
     });
+
     $('[data-amount]').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); $('[data-alloc-go]').click(); }
+    });
+
+    $('[data-fact]').addEventListener('click', function () {
+      var f = FOUNDERS[factAt % FOUNDERS.length];
+      if (f) openSheet(f.id);
+    });
+    ['mouseenter', 'focus'].forEach(function (ev) {
+      $('[data-fact]').addEventListener(ev, function () { factHold++; }, true);
+    });
+    ['mouseleave', 'blur'].forEach(function (ev) {
+      $('[data-fact]').addEventListener(ev, function () { factHold = Math.max(0, factHold - 1); }, true);
     });
 
     /* moving NG$ */

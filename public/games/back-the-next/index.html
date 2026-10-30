@@ -24,12 +24,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
 <script>/* the opening plays once a session; this marks it before anything is drawn */
 try{if(sessionStorage.getItem('ngg_intro')==='1')document.documentElement.className+=' ngg-seen';}catch(e){}</script>
-<link rel="stylesheet" href="/assets/css/games.css?v=20261030-s17">
+<link rel="stylesheet" href="/assets/css/games.css?v=20261030-s19">
 
 <!-- The founders' photographs, descriptions and films, read from the same verified data
      the rest of the site runs on. games.js joins to it by entrant id and invents nothing. -->
-<script src="/assets/js/pc-founders.js?v=20261030-s17" defer></script>
-<script src="/assets/js/games.js?v=20261030-s17" defer></script>
+<script src="/assets/js/pc-founders.js?v=20261030-s19" defer></script>
+<script src="/assets/js/games.js?v=20261030-s19" defer></script>
 </head>
 
 <body class="gm">
@@ -154,6 +154,18 @@ try{if(sessionStorage.getItem('ngg_intro')==='1')document.documentElement.classN
         <h1 class="gm-disp">Who are you backing?</h1>
         <p>Tap a founder to read about them and place NG$. Back as many or as few as you like.</p>
       </div>
+      <button class="gm-fact" type="button" data-fact hidden>
+        <span class="gm-fact__k" data-fact-k>Did you know?</span>
+        <span class="gm-fact__body">
+          <span class="gm-fact__slot" data-fact-slot>
+            <span class="gm-fact__say" data-fact-say></span>
+            <span class="gm-fact__who" data-fact-who></span>
+          </span>
+          <span data-fact-face></span>
+        </span>
+        <span class="gm-fact__bar" data-fact-bar aria-hidden="true"></span>
+      </button>
+
       <div class="gm-grid" data-grid role="list"></div>
       <p class="gm-note">
         Nothing is final until you lock your portfolio in. <b>NG$ is fictional</b> &mdash;
@@ -230,28 +242,47 @@ try{if(sessionStorage.getItem('ngg_intro')==='1')document.documentElement.classN
     </div>
 
     <div class="gm-alloc">
-      <p class="gm-alloc__now" data-alloc-now></p>
-      <div class="gm-chips" data-chips></div>
-      <div class="gm-amount">
-        <span class="gm-amount__wrap">
-          <span class="gm-amount__pre">NG$</span>
-          <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0"
-                 aria-label="Amount of NG$ to place" data-amount>
-        </span>
-        <button class="gm-btn" type="button" data-alloc-go>Back this founder</button>
+      <!-- outside the panel, so they read whether it is open or shut -->
+      <div class="gm-alloc__head">
+        <p class="gm-alloc__now" data-alloc-now></p>
+        <p class="gm-alloc__left" data-alloc-left></p>
       </div>
-      <p class="gm-alloc__note" data-alloc-note role="status" aria-live="polite"></p>
 
-      <!-- Moving NG$ from this founder to another, without clearing anything. -->
-      <div class="gm-move" data-move hidden>
+      <!-- shut: one action -->
+      <div class="gm-alloc__shut" data-alloc-shut>
+        <button class="gm-btn" type="button" data-alloc-open>Back this founder</button>
+        <button class="gm-alloc__edit" type="button" data-alloc-shed hidden>Remove</button>
+      </div>
+
+      <!-- open: three choices and a confirm -->
+      <div class="gm-alloc__panel" data-alloc-panel hidden>
+        <div class="gm-pick" data-pick></div>
+        <div class="gm-custom" data-custom hidden>
+          <div class="gm-amount">
+            <span class="gm-amount__wrap">
+              <span class="gm-amount__pre">NG$</span>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0"
+                     aria-label="Amount of NG$ to place" data-amount>
+            </span>
+          </div>
+        </div>
+        <p class="gm-alloc__note" data-alloc-note role="status" aria-live="polite"></p>
+        <div class="gm-alloc__do">
+          <button class="gm-alloc__edit" type="button" data-alloc-close>Close</button>
+          <button class="gm-btn" type="button" data-alloc-go>Confirm</button>
+        </div>
+
+        <!-- Moving NG$ from this founder to another, without clearing anything. -->
+        <div class="gm-move" data-move hidden>
         <button class="gm-move__t" type="button" data-move-t aria-expanded="false">
           Move some of it to another founder
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
-        <div class="gm-move__body">
-          <div class="gm-chips" data-move-chips></div>
-          <p class="gm-move__how" data-move-how></p>
-          <div class="gm-move__row" data-move-row></div>
+          <div class="gm-move__body">
+            <div class="gm-chips" data-move-chips></div>
+            <p class="gm-move__how" data-move-how></p>
+            <div class="gm-move__row" data-move-row></div>
+          </div>
         </div>
       </div>
     </div>

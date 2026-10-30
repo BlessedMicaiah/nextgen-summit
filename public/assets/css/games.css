@@ -689,3 +689,134 @@
   .gm-late { animation: none; }
   .gm-brief > * { animation: none; }
 }
+
+/* ============================================================================
+   THE INVESTMENT PANEL, SHUT BY DEFAULT
+
+   Eight controls used to sit under every founder: four step chips, All in, Remove, an
+   amount field and a button. On a phone that is most of the screen, and it made the
+   transaction the subject of the page instead of the founder.
+
+   Now there is one action. Tap it and three choices appear -- NG$5,000, All in, Custom --
+   and a confirm. Close puts it away without moving anything. What is behind this founder
+   and what is left to place are outside the panel, so they are readable whether it is open
+   or shut: the brief's one thing that must never be hidden.
+
+   Nothing underneath changed. place(), move() and every validation are the same functions
+   the old controls called.
+   ========================================================================= */
+.gm-alloc__head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  margin: 0 0 10px;
+}
+.gm-alloc__now {
+  display: flex; align-items: baseline; gap: 8px; margin: 0;
+  font: 700 10.5px/1 var(--f-sans); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.gm-alloc__now b { font-size: 19px; letter-spacing: -.02em; text-transform: none;
+                   color: var(--coin); font-weight: 800; }
+.gm-alloc__left { font: 700 10.5px/1 var(--f-sans); letter-spacing: .1em;
+                  text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
+.gm-alloc__left b { color: var(--go); font-weight: 800; }
+
+.gm-alloc__shut { display: flex; gap: 8px; }
+.gm-alloc__shut .gm-btn { flex: 1; }
+.gm-alloc__edit {
+  flex: none; min-height: 48px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--line); background: none; color: var(--ink-2);
+  font: 700 12.5px/1 var(--f-sans);
+}
+.gm-alloc__edit:hover { border-color: var(--go); color: var(--ink); }
+
+.gm-alloc__panel { overflow: hidden; }
+.gm-alloc__panel[hidden] { display: none !important; }
+.gm-alloc__panel.is-open { animation: gm-panel .34s var(--ease) both; }
+@keyframes gm-panel {
+  from { opacity: 0; transform: translateY(-8px); max-height: 0; }
+  to   { opacity: 1; transform: none; max-height: 420px; }
+}
+
+/* the three choices */
+.gm-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.gm-pick button {
+  min-height: 56px; padding: 8px 6px; border-radius: 13px;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
+  display: grid; place-items: center; gap: 2px;
+  font: 800 13px/1.1 var(--f-sans); text-align: center;
+  transition: border-color .2s var(--ease), background .2s var(--ease), transform .12s var(--ease);
+}
+.gm-pick button small { font: 700 8.5px/1 var(--f-sans); letter-spacing: .14em;
+                        text-transform: uppercase; color: var(--ink-3); }
+.gm-pick button:hover:not(:disabled) { border-color: var(--go); }
+.gm-pick button:active:not(:disabled) { transform: scale(.96); }
+.gm-pick button:disabled { opacity: .3; cursor: default; }
+.gm-pick button.is-on { border-color: var(--coin); background: rgba(255,216,77,.13); color: var(--coin); }
+.gm-pick button.is-on small { color: var(--coin); }
+
+.gm-custom { margin-top: 8px; }
+.gm-custom[hidden] { display: none; }
+
+.gm-alloc__do { display: flex; gap: 8px; margin-top: 10px; }
+.gm-alloc__do .gm-btn { flex: 1; }
+.gm-alloc__shed {
+  flex: none; min-height: 48px; padding: 0 15px; border-radius: 999px;
+  border: 1px solid var(--line); background: none; color: var(--ink-2);
+  font: 700 12.5px/1 var(--f-sans);
+}
+.gm-alloc__shed:hover { border-color: var(--stop); color: var(--stop); }
+
+/* ============================================================================
+   DID YOU KNOW — the rotating card
+
+   One fact at a time, in the founders' own words. Every line is a sentence from that
+   founder's description in the site's verified data; nothing is written here and nothing
+   is summarised into a claim they did not make.
+
+   It is a button: the fact on screen belongs to a founder, and tapping it opens them. That
+   is the whole point of putting it above the grid -- it sends people to businesses they
+   would have scrolled past.
+
+   It stops when a pointer is on it, when it has keyboard focus, and when the tab is in the
+   background, so nobody loses a sentence halfway through reading it.
+   ========================================================================= */
+.gm-fact {
+  position: relative; display: block; width: 100%; text-align: left;
+  margin: 0 0 clamp(14px, 3vw, 22px); padding: 13px 15px 14px;
+  border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+  background:
+    radial-gradient(90% 150% at 100% 0%, rgba(255,216,77,.12) 0%, transparent 62%),
+    var(--bg-2);
+  transition: border-color .3s var(--ease), transform .3s var(--ease);
+}
+.gm-fact:hover { border-color: var(--coin); transform: translateY(-2px); }
+.gm-fact__k {
+  display: inline-block; margin: 0 0 7px; padding: 3px 9px 4px; border-radius: 999px;
+  background: var(--coin); color: #2A2100;
+  font: 800 9px/1.3 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+}
+.gm-fact__body { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+.gm-fact__say {
+  margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink);
+  font-weight: 600; text-wrap: pretty;
+}
+.gm-fact__who { margin: 6px 0 0; font: 700 10px/1.3 var(--f-sans); letter-spacing: .1em;
+                text-transform: uppercase; color: var(--tint, var(--go)); }
+.gm-fact .gm-face { --sz: 50px; --ring: var(--tint, var(--go)); }
+/* the swap */
+.gm-fact__slot { animation: gm-fact-in .5s var(--ease) both; }
+@keyframes gm-fact-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: none; }
+}
+/* how long until the next one */
+.gm-fact__bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
+                background: var(--coin); transform-origin: 0 50%; opacity: .5; }
+.gm-fact__bar.is-running { animation: gm-fact-bar var(--every, 5600ms) linear both; }
+@keyframes gm-fact-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-alloc__panel.is-open { animation: none; }
+  .gm-fact__slot { animation: none; }
+  .gm-fact__bar { display: none; }
+}

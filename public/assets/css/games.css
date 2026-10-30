@@ -514,13 +514,13 @@
    well above where the kicker lands -- at 40% it was still half-lit under the eyebrow. */
 .gm-tile__art::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(14,18,22,0) 22%, rgba(14,18,22,.58) 56%,
-                                      rgba(14,18,22,.97) 100%);
+  background: linear-gradient(180deg, rgba(14,18,22,0) 14%, rgba(14,18,22,.55) 48%,
+                                      rgba(14,18,22,.93) 78%, rgba(14,18,22,1) 100%);
 }
 /* grid, not flow: the tile's parts are spans inside an <a>, and inline spans would run the
    kicker, the title and the description together on the same lines */
 .gm-tile__txt {
-  position: relative; z-index: 2; margin-top: -58px;
+  position: relative; z-index: 2; margin-top: -30px;
   padding: 0 clamp(15px, 4vw, 26px) clamp(17px, 4vw, 26px);
   display: grid; justify-items: start;
 }

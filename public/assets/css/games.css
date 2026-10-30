@@ -1,0 +1,545 @@
+/* ============================================================================
+   NEXTGEN GAMES — BACK THE NEXT
+   The NG$10,000 Founder Challenge
+
+   Phone first, in the literal sense: every size here is written for a 375px screen and
+   allowed to grow, and the desktop layout is the same components with more room. The
+   artwork does the talking -- ten flat cartoons on ten bright cards -- so the chrome stays
+   quiet: one typeface for display, one for everything else, and no decoration that a thumb
+   has to work around.
+
+   NG$ is fictional currency. It is never styled like money and never called dollars.
+   ========================================================================= */
+
+.gm {
+  --bg:       #0E1216;
+  --bg-2:     #151B21;
+  --card:     #1A2128;
+  --ink:      #F4F7F9;
+  --ink-2:    #AEBAC4;
+  --ink-3:    #78868F;
+  --line:     rgba(244,247,249,.14);
+  --line-2:   rgba(244,247,249,.08);
+
+  --go:       #1FC7BE;     /* the site's turquoise: every primary action */
+  --go-deep:  #06403D;
+  --on-go:    #04231F;
+  --coin:     #FFD84D;     /* NG$ itself, wherever an amount is the subject */
+  --warm:     #C59A66;
+  --stop:     #FF6B5A;
+
+  --f-display: "Fraunces", Georgia, serif;
+  --f-sans: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --gut: clamp(14px, 4vw, 34px);
+
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 500 15px/1.55 var(--f-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+.gm *, .gm *::before, .gm *::after { box-sizing: border-box; }
+.gm [hidden] { display: none !important; }
+.gm img { max-width: 100%; display: block; }
+.gm button { font: inherit; color: inherit; cursor: pointer; }
+
+.gm-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+.gm-disp {
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  letter-spacing: -.035em; line-height: .95;
+}
+.gm-kick {
+  font: 800 10.5px/1 var(--f-sans); letter-spacing: .26em; text-transform: uppercase;
+  color: var(--warm);
+}
+
+/* a number that is NG$ is always set like this: tabular, so figures stop jumping */
+.gm-ngd { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+
+/* ---------------------------------------------------------------- buttons */
+.gm-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 13px 22px; border: 0; border-radius: 999px;
+  background: var(--go); color: var(--on-go);
+  font-weight: 800; font-size: 14.5px; letter-spacing: .01em;
+  transition: transform .18s var(--ease), filter .18s var(--ease);
+}
+.gm-btn:hover { filter: brightness(1.07); }
+.gm-btn:active { transform: scale(.97); }
+.gm-btn:disabled { opacity: .4; cursor: default; transform: none; filter: none; }
+.gm-btn--ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.gm-btn--ghost:hover { border-color: var(--go); }
+.gm-btn--wide { width: 100%; }
+.gm-btn--sm { min-height: 40px; padding: 9px 16px; font-size: 13px; }
+.gm *:focus-visible { outline: 2px solid var(--go); outline-offset: 3px; border-radius: 8px; }
+
+/* ============================================================================
+   THE BAR — who you are, and what is left
+   ========================================================================= */
+.gm-bar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(14,18,22,.93); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line-2);
+  padding: 10px var(--gut) 11px;
+}
+.gm-bar__in { max-width: 1180px; margin: 0 auto; }
+.gm-bar__top { display: flex; align-items: center; gap: 12px; }
+.gm-bar__mark {
+  font-family: var(--f-display); font-weight: 900; font-size: 15px; letter-spacing: -.02em;
+  color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+.gm-bar__mark i { font-style: normal; color: var(--go); }
+.gm-bar__who { margin-left: auto; font-size: 11px; color: var(--ink-3); }
+
+.gm-wallet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 9px; }
+.gm-wallet__cell {
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 11px;
+  padding: 8px 10px 9px;
+}
+.gm-wallet__cell b {
+  display: block; font-size: clamp(15px, 4.4vw, 19px); font-weight: 800; line-height: 1.15;
+}
+.gm-wallet__cell span {
+  display: block; font: 700 9px/1.3 var(--f-sans); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3); margin-top: 2px;
+}
+.gm-wallet__cell--left b { color: var(--coin); }
+.gm-wallet__cell--in b { color: var(--go); }
+
+/* the player's own segmented bar: their allocation, nobody else's */
+.gm-split {
+  display: flex; height: 6px; border-radius: 4px; overflow: hidden; margin-top: 9px;
+  background: rgba(244,247,249,.09);
+}
+.gm-split__seg { height: 100%; transition: width .45s var(--ease); }
+.gm-split__rest { height: 100%; flex: 1; }
+
+/* ============================================================================
+   SCREENS
+   ========================================================================= */
+.gm-screen { padding: clamp(18px, 5vw, 40px) var(--gut) 120px; }
+.gm-screen__in { max-width: 1180px; margin: 0 auto; }
+
+/* ---------- sign in ---------- */
+.gm-signin { max-width: 430px; margin: 0 auto; text-align: center;
+             padding-top: clamp(14px, 6vh, 56px); }
+/* Capped by HEIGHT, not width. The cutouts are tall portraits, so a width that looks modest
+   on paper pushed the email field off the bottom of a 375px phone -- the one screen this
+   page exists for. */
+.gm-signin__art {
+  height: min(30svh, 260px); width: auto; max-width: 100%;
+  margin: 0 auto clamp(10px, 2.4vw, 18px); display: block; object-fit: contain;
+  filter: drop-shadow(0 16px 26px rgba(0,0,0,.5));
+}
+.gm-signin h1 { margin: 0 0 10px; font-size: clamp(27px, 8vw, 38px); }
+.gm-signin p { margin: 0 0 20px; color: var(--ink-2); font-size: 14.5px; }
+.gm-field { text-align: left; margin: 0 0 12px; }
+.gm-field label {
+  display: block; font: 700 10px/1 var(--f-sans); letter-spacing: .18em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 7px;
+}
+.gm-field input {
+  width: 100%; min-height: 52px; padding: 14px 16px; border-radius: 13px;
+  background: var(--bg-2); border: 1px solid var(--line); color: var(--ink);
+  font: 600 16px/1.3 var(--f-sans);     /* 16px: anything less and iOS zooms the page */
+}
+.gm-field input::placeholder { color: var(--ink-3); font-weight: 500; }
+.gm-field input:focus { border-color: var(--go); outline: none; }
+.gm-code input { text-align: center; letter-spacing: .5em; font-size: 23px; font-weight: 800;
+                 padding-left: .5em; }
+.gm-msg { margin: 12px 0 0; font-size: 13.5px; min-height: 20px; }
+.gm-msg--bad { color: var(--stop); }
+.gm-msg--ok { color: var(--go); }
+.gm-fine { margin-top: 22px; font-size: 11.5px; line-height: 1.7; color: var(--ink-3); }
+
+/* ---------- the room ---------- */
+.gm-room__head { margin: 0 0 clamp(14px, 3vw, 22px); }
+.gm-room__head h1 { margin: 6px 0 0; font-size: clamp(25px, 7vw, 40px); }
+.gm-room__head p { margin: 8px 0 0; color: var(--ink-2); font-size: 14px; max-width: 54ch; }
+
+.gm-grid {
+  display: grid; gap: clamp(10px, 2.4vw, 18px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 700px)  { .gm-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .gm-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+/* A founder card. The tint is the card's own, set per founder as --tint, and the cartoon
+   stands on it: the art is the card, the text is a caption underneath it. */
+.gm-card {
+  position: relative; display: flex; flex-direction: column; width: 100%;
+  padding: 0; border: 1px solid var(--line-2); border-radius: 16px; overflow: hidden;
+  background: var(--card); text-align: left;
+  transition: transform .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease);
+}
+.gm-card:hover, .gm-card:focus-visible { transform: translateY(-4px); border-color: var(--tint, var(--go)); }
+.gm-card.is-backed { border-color: var(--tint, var(--go)); box-shadow: 0 0 0 1px var(--tint, var(--go)) inset; }
+
+.gm-card__art {
+  position: relative; aspect-ratio: 1 / 1; display: grid; place-items: end center;
+  background:
+    radial-gradient(120% 90% at 50% 112%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 62%),
+    linear-gradient(170deg, color-mix(in srgb, var(--tint, #1FC7BE) 92%, white) 0%,
+                            var(--tint, #1FC7BE) 100%);
+  overflow: hidden;
+}
+/* color-mix is new enough to want a floor under it; without this the card would be bare
+   on an older phone rather than merely flatter. */
+@supports not (background: color-mix(in srgb, red 50%, white)) {
+  .gm-card__art { background: var(--tint, #1FC7BE); }
+}
+.gm-card__art img {
+  width: 92%; height: 96%; object-fit: contain; object-position: bottom center;
+  transition: transform .35s var(--ease);
+}
+.gm-card:hover .gm-card__art img { transform: translateY(-3px) scale(1.035); }
+
+.gm-card__no {
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  padding: 3px 8px; border-radius: 999px; background: rgba(12,16,19,.72);
+  font: 800 10px/1.5 var(--f-sans); letter-spacing: .1em; color: #fff;
+}
+.gm-card__tag {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  padding: 4px 9px; border-radius: 999px; background: var(--coin); color: #2A2100;
+  font: 800 11px/1.3 var(--f-sans); letter-spacing: -.01em;
+  opacity: 0; transform: translateY(-6px) scale(.9);
+  transition: opacity .3s var(--ease), transform .3s var(--ease);
+}
+.gm-card.is-backed .gm-card__tag { opacity: 1; transform: none; }
+
+/* grid, for the same reason the tile needs it: these are spans inside a <button>, and
+   inline spans put the founder's name and their venture on the same line. */
+.gm-card__txt { padding: 10px 11px 13px; display: grid; }
+.gm-card__name {
+  margin: 0; font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: clamp(14px, 3.9vw, 17px); line-height: 1.08; letter-spacing: -.02em;
+}
+.gm-card__co {
+  margin: 4px 0 0; font: 700 10.5px/1.35 var(--f-sans); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+
+/* the stagger as the rack of founders arrives */
+.gm-card--in { opacity: 0; transform: translateY(14px); }
+.gm-grid.is-in .gm-card--in {
+  opacity: 1; transform: none;
+  transition: opacity .5s var(--ease) var(--d, 0ms), transform .5s var(--ease) var(--d, 0ms);
+}
+
+/* ---------- the review bar, pinned where a thumb already is ---------- */
+.gm-dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+  padding: 11px var(--gut) calc(11px + env(safe-area-inset-bottom));
+  background: rgba(14,18,22,.95); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line-2);
+  transform: translateY(104%); transition: transform .4s var(--ease);
+}
+.gm-dock.is-up { transform: none; }
+.gm-dock__in {
+  max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 12px;
+}
+.gm-dock__sum { font-size: 12px; color: var(--ink-2); line-height: 1.35; }
+.gm-dock__sum b { display: block; color: var(--ink); font-size: 15px; font-weight: 800; }
+.gm-dock .gm-btn { margin-left: auto; flex: none; }
+
+/* ============================================================================
+   THE FOUNDER DRAWER — a sheet on a phone, a dialog on a desk.
+   It never leaves the game: no link out, no navigation, nothing that loses a wallet.
+   ========================================================================= */
+.gm-sheet {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end;
+  justify-content: center; padding: 0;
+}
+.gm-sheet[hidden] { display: none; }
+.gm-sheet__veil {
+  position: absolute; inset: 0; background: rgba(6,9,11,.72);
+  backdrop-filter: blur(3px); opacity: 0; transition: opacity .3s var(--ease);
+}
+.gm-sheet.is-up .gm-sheet__veil { opacity: 1; }
+.gm-sheet__box {
+  position: relative; width: 100%; max-width: 560px; max-height: 92svh;
+  background: var(--bg-2); border-radius: 22px 22px 0 0;
+  border: 1px solid var(--line-2); border-bottom: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateY(100%); transition: transform .42s var(--ease);
+}
+.gm-sheet.is-up .gm-sheet__box { transform: none; }
+@media (min-width: 760px) {
+  .gm-sheet { align-items: center; padding: 24px; }
+  .gm-sheet__box { border-radius: 22px; border-bottom: 1px solid var(--line-2);
+                   max-height: 88svh; transform: translateY(18px) scale(.985); }
+}
+
+.gm-sheet__scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* the wrapper is what the close button and the name are positioned against */
+.gm-sheet__top { position: relative; }
+.gm-sheet__hero { position: relative; aspect-ratio: 16 / 10; background: var(--card); }
+.gm-sheet__hero img { width: 100%; height: 100%; object-fit: cover; }
+/* the founder's name sits around three quarters of the way down the artwork, so the fall
+   to dark has to be well underway by then or the name reads at half contrast */
+.gm-sheet__hero::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(21,27,33,0) 26%, rgba(21,27,33,.62) 58%,
+                                      rgba(21,27,33,.98) 100%);
+}
+.gm-sheet__x {
+  position: absolute; top: 10px; right: 10px; z-index: 3;
+  width: 38px; height: 38px; border-radius: 50%; border: 0; display: grid; place-items: center;
+  background: rgba(10,13,16,.66); backdrop-filter: blur(6px);
+}
+.gm-sheet__x svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.4;
+                   stroke-linecap: round; }
+.gm-sheet__id { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 0 17px 13px; }
+.gm-sheet__id h2 { margin: 5px 0 0; font-size: clamp(21px, 6vw, 28px); }
+.gm-sheet__brand { display: flex; align-items: center; gap: 9px; margin-top: 8px; }
+.gm-sheet__logo {
+  height: 36px; width: auto; border-radius: 7px; background: #fff; padding: 4px 7px;
+  object-fit: contain; max-width: 156px;
+}
+/* No logo on file for two of the ten. The venture's name, set properly, stands in for it --
+   never a mark invented to fill the space. */
+.gm-sheet__wordmark {
+  font-family: var(--f-display); font-weight: 900;
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+  font-size: 17px; letter-spacing: -.02em; color: var(--ink);
+  padding: 3px 11px 4px; border: 1px solid var(--line); border-radius: 8px;
+}
+
+.gm-sheet__body { padding: 15px 17px 4px; }
+.gm-sheet__blurb { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.65; }
+.gm-film {
+  margin: 14px 0 0; border-radius: 13px; overflow: hidden; background: #000;
+  border: 1px solid var(--line-2);
+}
+.gm-film video { width: 100%; height: auto; display: block; max-height: 48svh; }
+.gm-nofilm {
+  margin: 13px 0 0; padding: 11px 13px; border-radius: 11px; background: var(--card);
+  border: 1px solid var(--line-2); font-size: 12.5px; color: var(--ink-3);
+}
+
+/* ---------- the allocation controls ---------- */
+.gm-alloc {
+  position: sticky; bottom: 0; background: var(--bg-2);
+  border-top: 1px solid var(--line-2); padding: 13px 17px calc(15px + env(safe-area-inset-bottom));
+}
+.gm-alloc__now {
+  display: flex; align-items: baseline; gap: 8px; margin: 0 0 10px;
+  font: 700 11px/1 var(--f-sans); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.gm-alloc__now b {
+  font-size: 19px; letter-spacing: -.02em; text-transform: none; color: var(--coin);
+  font-weight: 800;
+}
+.gm-chips { display: flex; gap: 7px; margin: 0 0 10px; flex-wrap: wrap; }
+.gm-chip {
+  flex: 1 1 auto; min-width: 66px; min-height: 42px; padding: 9px 10px;
+  border-radius: 11px; border: 1px solid var(--line); background: var(--card);
+  font: 800 13px/1 var(--f-sans); color: var(--ink);
+  transition: background .2s var(--ease), border-color .2s var(--ease), transform .12s var(--ease);
+}
+.gm-chip:hover:not(:disabled) { border-color: var(--go); }
+.gm-chip:active:not(:disabled) { transform: scale(.95); }
+.gm-chip:disabled { opacity: .32; cursor: default; }
+.gm-chip--clear { color: var(--stop); }
+
+.gm-amount { display: flex; gap: 8px; align-items: center; }
+.gm-amount__wrap { position: relative; flex: 1; }
+.gm-amount__pre {
+  position: absolute; left: 13px; top: 50%; translate: 0 -50%;
+  font: 800 14px/1 var(--f-sans); color: var(--ink-3); pointer-events: none;
+}
+.gm-amount input {
+  width: 100%; min-height: 50px; padding: 12px 13px 12px 48px; border-radius: 12px;
+  background: var(--card); border: 1px solid var(--line); color: var(--ink);
+  font: 800 17px/1.2 var(--f-sans); font-variant-numeric: tabular-nums;
+}
+.gm-amount input:focus { border-color: var(--go); outline: none; }
+.gm-amount .gm-btn { flex: none; min-width: 132px; }
+.gm-alloc__note { margin: 9px 0 0; font-size: 11.5px; color: var(--ink-3); min-height: 17px; }
+.gm-alloc__note.is-bad { color: var(--stop); }
+
+/* ============================================================================
+   REVIEW AND RESULT
+   ========================================================================= */
+.gm-list { list-style: none; margin: clamp(14px, 3vw, 22px) 0 0; padding: 0;
+           border-top: 1px solid var(--line-2); }
+.gm-row {
+  display: flex; align-items: center; gap: 12px; padding: 11px 2px;
+  border-bottom: 1px solid var(--line-2);
+}
+.gm-row.is-zero { opacity: .42; }
+.gm-row__pic {
+  width: 46px; height: 46px; border-radius: 11px; flex: none; overflow: hidden;
+  background: var(--tint, var(--card)); display: grid; place-items: end center;
+}
+.gm-row__pic img { width: 92%; height: 96%; object-fit: contain; object-position: bottom; }
+.gm-row__id { min-width: 0; flex: 1; }
+.gm-row__id b { display: block; font-size: 14px; font-weight: 800; letter-spacing: -.01em; }
+.gm-row__id span { display: block; font-size: 11px; color: var(--ink-3);
+                   text-transform: uppercase; letter-spacing: .09em; }
+.gm-row__amt { font-weight: 800; font-size: 15px; white-space: nowrap; }
+.gm-row.is-zero .gm-row__amt { color: var(--ink-3); font-weight: 600; }
+.gm-row__amt b { color: var(--coin); }
+
+.gm-tot {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin: clamp(16px, 3vw, 24px) 0 0;
+}
+.gm-tot__cell {
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 13px; padding: 13px;
+}
+.gm-tot__cell b { display: block; font-size: 23px; font-weight: 800; letter-spacing: -.02em; }
+.gm-tot__cell span { font: 700 9.5px/1.3 var(--f-sans); letter-spacing: .14em;
+                     text-transform: uppercase; color: var(--ink-3); }
+.gm-tot__cell--in b { color: var(--go); }
+.gm-tot__cell--left b { color: var(--coin); }
+
+.gm-ask {
+  margin: clamp(16px, 3vw, 22px) 0 0; padding: 15px 16px; border-radius: 14px;
+  background: var(--bg-2); border: 1px solid var(--line);
+}
+.gm-ask p { margin: 0 0 13px; font-size: 14.5px; }
+.gm-ask__row { display: flex; gap: 10px; flex-wrap: wrap; }
+.gm-ask__row .gm-btn { flex: 1 1 150px; }
+
+/* ---------- the result ---------- */
+.gm-done { text-align: center; }
+.gm-done__hero {
+  width: 100%; border-radius: 18px; overflow: hidden; margin: 0 0 clamp(16px, 3vw, 24px);
+  border: 1px solid var(--line-2);
+}
+.gm-done h1 { margin: 0 0 8px; font-size: clamp(27px, 8vw, 44px); }
+.gm-done__sub { margin: 0 auto 6px; color: var(--ink-2); font-size: 14.5px; max-width: 46ch; }
+.gm-done .gm-list { text-align: left; }
+.gm-badge {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px;
+  padding: 7px 15px; border-radius: 999px; background: rgba(31,199,190,.14);
+  border: 1px solid rgba(31,199,190,.4); color: var(--go);
+  font: 800 11px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
+}
+
+/* ---------- small print that has to be read ---------- */
+.gm-note {
+  margin: clamp(22px, 4vw, 34px) auto 0; max-width: 58ch;
+  font-size: 11.5px; line-height: 1.75; color: var(--ink-3); text-align: center;
+}
+.gm-note b { color: var(--ink-2); font-weight: 700; }
+
+.gm-banner {
+  margin: 0 0 clamp(14px, 3vw, 20px); padding: 11px 14px; border-radius: 12px;
+  font-size: 13px; line-height: 1.6;
+  background: rgba(255,216,77,.11); border: 1px solid rgba(255,216,77,.34); color: #FFE9A3;
+}
+.gm-banner--stop { background: rgba(255,107,90,.1); border-color: rgba(255,107,90,.4);
+                   color: #FFC2BA; }
+
+/* ============================================================================
+   MOTION — three effects, and that is the budget
+   ========================================================================= */
+
+/* 1. coins, when NG$ goes behind a founder */
+.gm-coins { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
+.gm-coin {
+  position: absolute; width: 15px; height: 15px; border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #FFF0AE 0%, var(--coin) 48%, #C9A218 100%);
+  box-shadow: 0 0 9px rgba(255,216,77,.55);
+  animation: gm-coin-fly var(--dur, 900ms) cubic-bezier(.22,.62,.3,1) forwards;
+}
+@keyframes gm-coin-fly {
+  0%   { opacity: 0; transform: translate(0, 0) scale(.5); }
+  12%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -150px)) scale(1.05); }
+}
+
+/* 2. a sparkle the first time a founder is opened */
+.gm-spark {
+  position: fixed; z-index: 70; pointer-events: none;
+  font: 800 12px/1 var(--f-sans); color: var(--coin); white-space: nowrap;
+  animation: gm-spark-up 1.4s var(--ease) forwards;
+}
+@keyframes gm-spark-up {
+  0%   { opacity: 0; transform: translateY(6px) scale(.9); }
+  18%  { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-26px); }
+}
+
+/* 3. the finish */
+.gm-pop { animation: gm-pop-in .7s var(--ease) both; }
+@keyframes gm-pop-in {
+  from { opacity: 0; transform: translateY(16px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm *, .gm *::before, .gm *::after {
+    animation-duration: .001ms !important; transition-duration: .001ms !important;
+  }
+  .gm-coins { display: none; }
+  .gm-card--in { opacity: 1 !important; transform: none !important; }
+  .gm-sheet__box { transform: none !important; }
+}
+
+/* ============================================================================
+   THE HUB — /games/
+   ========================================================================= */
+.gm-hub { min-height: 100svh; display: flex; flex-direction: column; }
+.gm-hub__in {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  max-width: 1080px; margin: 0 auto; width: 100%;
+  padding: clamp(28px, 7vh, 70px) var(--gut) clamp(34px, 8vh, 72px);
+}
+.gm-hub__title {
+  margin: 10px 0 0; font-size: clamp(38px, 13vw, 92px); line-height: .88;
+}
+.gm-hub__title i { font-style: normal; color: var(--go); }
+.gm-hub__line { margin: 14px 0 0; font-size: clamp(15px, 4.4vw, 20px); color: var(--ink-2); }
+
+.gm-tile {
+  display: block; margin: clamp(22px, 5vw, 36px) 0 0; text-decoration: none; color: inherit;
+  border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--bg-2);
+  transition: transform .3s var(--ease), border-color .3s var(--ease);
+}
+.gm-tile:hover { transform: translateY(-4px); border-color: var(--go); }
+.gm-tile__art { position: relative; aspect-ratio: 16 / 9; background: var(--card); }
+.gm-tile__art img { width: 100%; height: 100%; object-fit: cover; }
+/* The text block sits over the lower third of the artwork, so the fall to dark has to begin
+   well above where the kicker lands -- at 40% it was still half-lit under the eyebrow. */
+.gm-tile__art::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(14,18,22,0) 22%, rgba(14,18,22,.58) 56%,
+                                      rgba(14,18,22,.97) 100%);
+}
+/* grid, not flow: the tile's parts are spans inside an <a>, and inline spans would run the
+   kicker, the title and the description together on the same lines */
+.gm-tile__txt {
+  position: relative; z-index: 2; margin-top: -58px;
+  padding: 0 clamp(15px, 4vw, 26px) clamp(17px, 4vw, 26px);
+  display: grid; justify-items: start;
+}
+.gm-tile__name { margin: 6px 0 0; font-size: clamp(23px, 6.6vw, 38px); }
+.gm-tile__sub { margin: 7px 0 0; color: var(--ink-2); font-size: 13.5px; }
+.gm-tile .gm-btn { margin-top: clamp(13px, 3vw, 18px); }
+
+/* the short entrance: under two seconds, and it never blocks the button */
+.gm-fade { animation: gm-fade-in .85s var(--ease) both; }
+.gm-fade--2 { animation-delay: .14s; }
+.gm-fade--3 { animation-delay: .28s; }
+.gm-fade--4 { animation-delay: .42s; }
+@keyframes gm-fade-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.gm-foot {
+  padding: 0 var(--gut) clamp(24px, 5vh, 40px); text-align: center;
+  font-size: 11.5px; color: var(--ink-3); line-height: 1.75;
+}
+.gm-foot a { color: var(--warm); }

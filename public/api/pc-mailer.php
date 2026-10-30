@@ -443,24 +443,37 @@ function pc_smtp_probe(): array
 }
 
 /* ---------- the message ----------
-   One template, two purposes. The bonus used to build its own plain message and hand it
-   to mail(); sharing this means both arrive looking like NextGen and travel the same
-   authenticated route. */
+   One template, three purposes. The bonus used to build its own plain message and hand it
+   to mail(); sharing this means all of them arrive looking like NextGen and travel the same
+   authenticated route.
+
+   The plain-text half used to be written out longhand in the voting wording, whatever
+   purpose it was called with -- so a registration code arrived as HTML about registration
+   and text about casting a vote. It is built from the same two strings as the HTML now, so
+   a new purpose cannot say two different things to the same reader. */
 function pc_email_code_body(string $code, string $purpose = 'vote', int $minutes = 10): array
 {
-    $isBonus = $purpose === 'bonus';
-    $head = $isBonus ? 'Your registration verification code' : 'Your voting verification code';
-    $why  = $isBonus
-        ? "Enter this code to confirm your NextGen Summit registration and unlock two extra voting points."
-        : "Enter this code to verify your email and cast your People's Choice vote.";
+    if ($purpose === 'bonus') {
+        $head = 'Your registration verification code';
+        $why = 'Enter this code to confirm your NextGen Summit registration and unlock two extra voting points.';
+        $ignore = "If you didn't request this code, you can ignore this email - nothing has been confirmed.";
+    } elseif ($purpose === 'game') {
+        $head = 'Your NextGen Games code';
+        $why = 'Enter this code to start Back the Next and pick up your NG$10,000 of virtual NextGen capital.';
+        $ignore = "If you didn't request this code, you can ignore this email - no game has been started.";
+    } else {
+        $head = 'Your voting verification code';
+        $why = "Enter this code to verify your email and cast your People's Choice vote.";
+        $ignore = "If you didn't request this code, you can ignore this email - no vote has been cast.";
+    }
     $mins = max(1, $minutes) . ' minutes';
     $pre = 'Your NextGen Summit code is ' . $code . '. It expires in ' . $mins . '.';
     $text = "NEXTGEN SUMMIT\n\n"
-        . "Your voting verification code\n\n"
+        . $head . "\n\n"
         . '    ' . $code . "\n\n"
-        . "Enter this code to verify your email and cast your People's Choice vote.\n\n"
+        . $why . "\n\n"
         . 'This code expires in ' . $mins . ".\n"
-        . "If you didn't request this code, you can ignore this email - no vote has been cast.\n\n"
+        . $ignore . "\n\n"
         . "NextGen Summit 2026\n";
 
     $digits = '';

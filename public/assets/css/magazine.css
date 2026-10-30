@@ -1252,7 +1252,12 @@
   font-size: clamp(16px, 2.3vw, 24px); line-height: 1.22; letter-spacing: -.02em;
   color: var(--ink); text-wrap: pretty;
 }
+/* block, not inline: these are spans inside a <button>, and inline ones run the
+   attribution straight on from the end of the sentence. */
+.mag-fact__say { display: block; }
+.mag-fact__slot { display: block; }
 .mag-fact__who {
+  display: block;
   margin: 9px 0 0; font: 700 10px/1.3 var(--f-sans); letter-spacing: .16em;
   text-transform: uppercase; color: var(--issue, var(--wood-hi));
 }

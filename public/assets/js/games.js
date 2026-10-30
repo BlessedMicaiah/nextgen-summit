@@ -767,7 +767,7 @@
 
   var SAYS = {
     email: 'That address does not look right. Check it and try again.',
-    not_registered: 'We could not find that email in the NextGen Summit registrations. Use the address you registered with.',
+    not_registered: 'We could not find that email in the NextGen Summit registrations. Use the address you registered with \u2014 or, if you only just got your ticket, try again in a minute.',
     disposable: 'That looks like a throwaway address. Please use one you can read today.',
     cooldown: 'A code just went out. Give it a moment before asking for another.',
     addr_daily: 'That address has asked for too many codes today.',

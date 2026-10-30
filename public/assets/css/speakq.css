@@ -1,0 +1,113 @@
+/* NextGen Summit — questions for the speakers, at the top of the FAQ drawer.
+   A card of its own above the accordion: the lineup's faces, a speech bubble cycling through
+   the kind of thing people ask, and one line of linked text to the program team's form. */
+
+.spq{position:relative;margin:0 0 clamp(36px,6vh,56px);padding:clamp(20px,3.4vw,26px);border-radius:20px;background:var(--ink);color:#fff;overflow:hidden;isolation:isolate}
+/* a slow turquoise glow in the corner, the site's accent on the dark card */
+.spq::before{content:"";position:absolute;z-index:-1;right:-30%;top:-60%;width:80%;aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(31,199,190,.42),rgba(31,199,190,0) 70%);animation:spq-glow 9s var(--ease-io) infinite alternate}
+@keyframes spq-glow{to{transform:translate3d(-18%,22%,0) scale(1.15)}}
+
+.spq__top{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.spq__faces{display:flex;margin:0;padding:0;list-style:none}
+.spq__faces li{position:relative;width:40px;height:40px;margin-left:-10px;border-radius:50%;border:2px solid var(--ink);overflow:hidden;background:#24242B;flex:none}
+.spq__faces li:first-child{margin-left:0}
+.spq__faces img{display:block}
+/* each avatar is framed on the face: the photos are 620x868 portraits with the head in the top
+   half, at different sizes, so a plain cover crop cut the tops of heads off and left two of the
+   faces small. --fz zooms the photo (1 = as wide as the circle); --fx and --fy move it, as a
+   share of the circle. Measured per photo; a new photo without values shows from its top. */
+.spq__faces img,.sqd__face img{position:absolute;left:var(--fx,0%);top:var(--fy,0%);width:calc(var(--fz,1) * 100%);max-width:none;height:auto}
+[src*="speakers/tisha-edwards-"]{--fz:1.12;--fx:-6.1%}
+[src*="speakers/tunde-onakoya-"]{--fz:1.12;--fx:-6.1%}
+[src*="speakers/michael-ley-"]{--fz:1.18;--fx:-5.4%}
+[src*="speakers/jack-scalise-"]{--fz:1.63;--fx:-34.5%;--fy:-14.6%}
+[src*="speakers/jamar-simms-"]{--fz:1.75;--fx:-32.1%;--fy:-21.7%}
+.spq__more{display:grid;place-items:center;font:800 12px/1 var(--f-sans);color:var(--ink);background:var(--accent)!important}
+.spq__k{display:flex;align-items:center;gap:8px;font:700 11px/1.3 var(--f-sans);letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.spq__dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(31,199,190,.6);animation:spq-ping 2.4s var(--ease) infinite}
+@keyframes spq-ping{70%,100%{box-shadow:0 0 0 9px rgba(31,199,190,0)}}
+
+/* the bubble: three questions stacked in one cell, each in turn */
+.spq__bubble{position:relative;display:grid;margin:clamp(18px,3vh,24px) 0 0;padding:14px 18px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);font:600 15px/1.45 var(--f-sans);color:rgba(255,255,255,.9)}
+.spq__q{grid-area:1/1;opacity:0;transform:translate3d(0,8px,0);animation:spq-q 12s var(--ease) infinite}
+.spq__q:nth-child(2){animation-delay:-8s}
+.spq__q:nth-child(3){animation-delay:-4s}
+@keyframes spq-q{0%{opacity:0;transform:translate3d(0,8px,0)}5%,28%{opacity:1;transform:none}33%,100%{opacity:0;transform:translate3d(0,-8px,0)}}
+
+.spq__t{margin-top:clamp(18px,3vh,24px);font:800 clamp(22px,2.4vw,26px)/1.12 var(--f-sans);letter-spacing:.01em;text-transform:uppercase}
+.spq__p{margin-top:8px;font:500 15px/1.55 var(--f-sans);color:rgba(255,255,255,.72);max-width:38ch}
+
+/* linked text, not a button: an underline that fills in and an arrow that travels */
+.spq__go{display:inline-flex;align-items:center;gap:10px;margin-top:clamp(16px,2.6vh,20px);padding:4px 0;font:800 16px/1.3 var(--f-sans);color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/30% 2px no-repeat;transition:background-size .5s var(--ease),color .3s}
+.spq__go:hover,.spq__go:focus-visible{background-size:100% 2px;color:#fff}
+.spq__go:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:2px}
+.spq__arr{display:inline-block;transition:transform .5s var(--ease)}
+.spq__go:hover .spq__arr,.spq__go:focus-visible .spq__arr{transform:translateX(6px)}
+
+.spq__k{white-space:nowrap}
+.spq__go{white-space:nowrap}
+
+@media (max-width:440px){
+  .spq{padding:18px}
+  .spq__faces li{width:32px;height:32px;margin-left:-9px}
+  .spq__k{gap:7px;letter-spacing:.14em}
+  .spq__bubble{padding:12px 14px;font-size:14px}
+  .spq__go{font-size:15px;gap:8px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .spq::before,.spq__dot{animation:none}
+  .spq__q{animation:none}
+  .spq__q:first-child{opacity:1;transform:none}
+}
+
+/* ============================================================================
+   The speaker Q&A drawer (#ask-speakers): who it is for as a row of faces, then the question.
+   Fields, errors and buttons are the site's own (.field, .form__error, .btn).
+   ========================================================================= */
+.sqd,.sqd-done{margin-top:clamp(26px,6vh,56px)}
+.sqd[hidden],.sqd-done[hidden]{display:none}
+.sqd-done{outline:none}
+.sqd__title{font-size:clamp(46px,6vw,78px);line-height:.95}
+.sqd-done .sqd__title{margin-top:14px}
+.sqd__lede{margin-top:14px;font:500 16px/1.55 var(--f-sans);color:var(--ink-2);max-width:44ch}
+.sqd__lede b{color:var(--ink)}
+
+.sqd__pick{margin:clamp(28px,4.4vh,40px) 0 0;padding:0;border:0;min-width:0}
+.sqd__k{padding:0;margin-bottom:12px;font:700 11px/1.3 var(--f-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.sqd__whos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px}
+.sqd__who{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 2px 10px;border-radius:12px;cursor:pointer;text-align:center;transition:background-color .3s var(--ease)}
+.sqd__who:hover{background:rgba(var(--shade),.04)}
+.sqd__who input{position:absolute;opacity:0;width:1px;height:1px}
+.sqd__face{position:relative;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;overflow:hidden;background:#24242B;color:#fff;font:800 13px/1 var(--f-sans);letter-spacing:.08em;text-transform:uppercase;box-shadow:0 0 0 2px var(--paper),0 0 0 2px var(--rule);transition:box-shadow .35s var(--ease),transform .5s var(--ease)}
+.sqd__who--any .sqd__face{background:var(--ink)}
+.sqd__face img{filter:grayscale(.35);transition:filter .4s var(--ease)}
+.sqd__name{font:700 12px/1.25 var(--f-sans);color:var(--ink-2)}
+.sqd__name b{display:block;font-weight:800;color:var(--ink)}
+.sqd__who--any .sqd__name{font-weight:800;color:var(--ink)}
+/* chosen: a turquoise ring, the face in full colour and a small lift */
+.sqd__who input:checked + .sqd__face{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--accent);transform:translateY(-2px)}
+.sqd__who input:checked + .sqd__face img{filter:none}
+.sqd__who input:checked ~ .sqd__name{color:var(--accent-ink)}
+.sqd__who input:checked ~ .sqd__name b{color:var(--accent-ink)}
+.sqd__who input:focus-visible + .sqd__face{outline:2px solid var(--accent-ink);outline-offset:6px}
+
+.sqd .field{margin-top:clamp(22px,3.4vh,30px)}
+.sqd__count{margin-top:6px;text-align:right;font:600 12px/1.3 var(--f-sans);color:var(--ink-2)}
+.sqd__pair{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.sqd .form__error{margin-top:22px}
+.sqd__actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:clamp(24px,3.6vh,32px)}
+
+@media (max-width:560px){
+  .sqd__pair{grid-template-columns:1fr}
+  .sqd__actions .btn{width:100%}
+}
+@media (max-width:400px){
+  .sqd__whos{gap:12px 4px}
+  .sqd__face{width:54px;height:54px}
+  .sqd__name{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){
+  .sqd__face,.sqd__face img{transition:none}
+  .sqd__who input:checked + .sqd__face{transform:none}
+}

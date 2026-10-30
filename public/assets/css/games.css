@@ -2,11 +2,16 @@
    NEXTGEN GAMES — BACK THE NEXT
    The NG$10,000 Founder Challenge
 
+   Second pass. The cartoons are gone: every founder is their own photograph, the same
+   square story crop the People's Choice page shows in its bubbles, set in a circle with
+   a ring in that founder's colour. The page is the NextGen site's own palette and type --
+   Fraunces for the few display lines, Montserrat for everything else -- so the game reads
+   as a room in the same building rather than a different building.
+
    Phone first, in the literal sense: every size here is written for a 375px screen and
-   allowed to grow, and the desktop layout is the same components with more room. The
-   artwork does the talking -- ten flat cartoons on ten bright cards -- so the chrome stays
-   quiet: one typeface for display, one for everything else, and no decoration that a thumb
-   has to work around.
+   allowed to grow. The energy comes from the money moving, not from decoration: a token
+   leaves the wallet and lands on a face, a token leaves one face and lands on another, and
+   a burst of them marks the moment a portfolio is locked. Three effects. That is the budget.
 
    NG$ is fictional currency. It is never styled like money and never called dollars.
    ========================================================================= */
@@ -22,7 +27,6 @@
   --line-2:   rgba(244,247,249,.08);
 
   --go:       #1FC7BE;     /* the site's turquoise: every primary action */
-  --go-deep:  #06403D;
   --on-go:    #04231F;
   --coin:     #FFD84D;     /* NG$ itself, wherever an amount is the subject */
   --warm:     #C59A66;
@@ -42,12 +46,12 @@
 .gm [hidden] { display: none !important; }
 .gm img { max-width: 100%; display: block; }
 .gm button { font: inherit; color: inherit; cursor: pointer; }
+.gm *:focus-visible { outline: 2px solid var(--go); outline-offset: 3px; border-radius: 8px; }
 
 .gm-sr {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
   overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
-
 .gm-disp {
   font-family: var(--f-display); font-weight: 900;
   font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
@@ -57,8 +61,6 @@
   font: 800 10.5px/1 var(--f-sans); letter-spacing: .26em; text-transform: uppercase;
   color: var(--warm);
 }
-
-/* a number that is NG$ is always set like this: tabular, so figures stop jumping */
 .gm-ngd { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 
 /* ---------------------------------------------------------------- buttons */
@@ -76,36 +78,69 @@
 .gm-btn--ghost:hover { border-color: var(--go); }
 .gm-btn--wide { width: 100%; }
 .gm-btn--sm { min-height: 40px; padding: 9px 16px; font-size: 13px; }
-.gm *:focus-visible { outline: 2px solid var(--go); outline-offset: 3px; border-radius: 8px; }
+
+/* ============================================================================
+   THE FACE — one component, several sizes.
+   A founder is a circle of their photograph with a ring in their colour. The ring is grey
+   until there is NG$ behind them, then it is theirs. The same markup draws the grid, the
+   panel, the transfer row, the review list and the cluster on the hub.
+   ========================================================================= */
+.gm-face {
+  position: relative; display: block; flex: none; border-radius: 50%; overflow: hidden;
+  width: var(--sz, 96px); height: var(--sz, 96px);
+  background: var(--card);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--ring, rgba(244,247,249,.22));
+  transition: box-shadow .35s var(--ease), transform .35s var(--ease);
+}
+.gm-face img { width: 100%; height: 100%; object-fit: cover; }
+.gm-face__init {
+  width: 100%; height: 100%; display: grid; place-items: center;
+  font-family: var(--f-display); font-weight: 900; font-size: calc(var(--sz, 96px) * .34);
+  color: var(--ink-2); background: var(--card);
+}
+.is-backed .gm-face, .gm-face.is-backed { --ring: var(--tint, var(--go)); }
+
+/* the pulse: the moment NG$ lands on a face */
+.gm-face.is-pulse { animation: gm-pulse .72s var(--ease); }
+@keyframes gm-pulse {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--tint, var(--go)); }
+  35%  { transform: scale(1.09); box-shadow: 0 0 0 3px var(--bg), 0 0 0 9px var(--tint, var(--go)), 0 0 34px var(--tint, var(--go)); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--tint, var(--go)); }
+}
 
 /* ============================================================================
    THE BAR — who you are, and what is left
    ========================================================================= */
 .gm-bar {
   position: sticky; top: 0; z-index: 40;
-  background: rgba(14,18,22,.93); backdrop-filter: blur(14px);
+  background: rgba(14,18,22,.94); backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line-2);
-  padding: 10px var(--gut) 11px;
+  padding: 9px var(--gut) 10px;
 }
-.gm-bar__in { max-width: 1180px; margin: 0 auto; }
-.gm-bar__top { display: flex; align-items: center; gap: 12px; }
+.gm-bar__in { max-width: 1120px; margin: 0 auto; }
+.gm-bar__top { display: flex; align-items: center; gap: 10px; }
 .gm-bar__mark {
   font-family: var(--f-display); font-weight: 900; font-size: 15px; letter-spacing: -.02em;
   color: var(--ink); text-decoration: none; white-space: nowrap;
 }
 .gm-bar__mark i { font-style: normal; color: var(--go); }
-.gm-bar__who { margin-left: auto; font-size: 11px; color: var(--ink-3); }
+.gm-bar__game { font: 800 9.5px/1 var(--f-sans); letter-spacing: .2em; text-transform: uppercase;
+                color: var(--warm); white-space: nowrap; }
+.gm-bar__who { margin-left: auto; font-size: 11px; color: var(--ink-3); white-space: nowrap;
+               overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+.gm-bar__out { background: none; border: 0; padding: 0 0 0 8px; font-size: 11px;
+               color: var(--ink-3); text-decoration: underline; white-space: nowrap; }
 
-.gm-wallet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 9px; }
+.gm-wallet { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 7px; margin-top: 8px; }
 .gm-wallet__cell {
   background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 11px;
-  padding: 8px 10px 9px;
+  padding: 7px 10px 8px;
 }
 .gm-wallet__cell b {
-  display: block; font-size: clamp(15px, 4.4vw, 19px); font-weight: 800; line-height: 1.15;
+  display: block; font-size: clamp(15px, 4.3vw, 19px); font-weight: 800; line-height: 1.15;
 }
 .gm-wallet__cell span {
-  display: block; font: 700 9px/1.3 var(--f-sans); letter-spacing: .14em;
+  display: block; font: 700 8.5px/1.3 var(--f-sans); letter-spacing: .14em;
   text-transform: uppercase; color: var(--ink-3); margin-top: 2px;
 }
 .gm-wallet__cell--left b { color: var(--coin); }
@@ -113,7 +148,7 @@
 
 /* the player's own segmented bar: their allocation, nobody else's */
 .gm-split {
-  display: flex; height: 6px; border-radius: 4px; overflow: hidden; margin-top: 9px;
+  display: flex; height: 5px; border-radius: 4px; overflow: hidden; margin-top: 8px;
   background: rgba(244,247,249,.09);
 }
 .gm-split__seg { height: 100%; transition: width .45s var(--ease); }
@@ -122,22 +157,14 @@
 /* ============================================================================
    SCREENS
    ========================================================================= */
-.gm-screen { padding: clamp(18px, 5vw, 40px) var(--gut) 120px; }
-.gm-screen__in { max-width: 1180px; margin: 0 auto; }
+.gm-screen { padding: clamp(16px, 4.5vw, 36px) var(--gut) 124px; }
+.gm-screen__in { max-width: 1120px; margin: 0 auto; }
 
 /* ---------- sign in ---------- */
 .gm-signin { max-width: 430px; margin: 0 auto; text-align: center;
-             padding-top: clamp(14px, 6vh, 56px); }
-/* Capped by HEIGHT, not width. The cutouts are tall portraits, so a width that looks modest
-   on paper pushed the email field off the bottom of a 375px phone -- the one screen this
-   page exists for. */
-.gm-signin__art {
-  height: min(30svh, 260px); width: auto; max-width: 100%;
-  margin: 0 auto clamp(10px, 2.4vw, 18px); display: block; object-fit: contain;
-  filter: drop-shadow(0 16px 26px rgba(0,0,0,.5));
-}
-.gm-signin h1 { margin: 0 0 10px; font-size: clamp(27px, 8vw, 38px); }
-.gm-signin p { margin: 0 0 20px; color: var(--ink-2); font-size: 14.5px; }
+             padding-top: clamp(8px, 3vh, 36px); }
+.gm-signin h1 { margin: 8px 0 8px; font-size: clamp(27px, 8vw, 38px); }
+.gm-signin p { margin: 0 0 18px; color: var(--ink-2); font-size: 14.5px; }
 .gm-field { text-align: left; margin: 0 0 12px; }
 .gm-field label {
   display: block; font: 700 10px/1 var(--f-sans); letter-spacing: .18em;
@@ -155,111 +182,92 @@
 .gm-msg { margin: 12px 0 0; font-size: 13.5px; min-height: 20px; }
 .gm-msg--bad { color: var(--stop); }
 .gm-msg--ok { color: var(--go); }
-.gm-fine { margin-top: 22px; font-size: 11.5px; line-height: 1.7; color: var(--ink-3); }
+.gm-fine { margin-top: 20px; font-size: 11.5px; line-height: 1.7; color: var(--ink-3); }
+
+/* ---------- the cluster: ten faces, overlapping, as a row ----------
+   The hub, the sign-in and the finish all use it. Pure CSS over real photographs; there is
+   no hero image file anywhere in the game any more. */
+.gm-cluster { display: flex; justify-content: center; padding: 6px 0; }
+/* Sized so that ten of them, each overlapping the last by a fifth, fit a 375px screen with
+   room to spare: 34px + nine steps of 26px is 273px. The first cut used 11vw and ran off
+   both edges of a phone. */
+.gm-cluster .gm-face { --sz: clamp(34px, 8.6vw, 58px); margin-left: calc(var(--sz) * -.22);
+                       box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring, rgba(244,247,249,.2)); }
+.gm-cluster .gm-face:first-child { margin-left: 0; }
+.gm-cluster .gm-face.is-dim { filter: saturate(.3) brightness(.5); }
+.gm-cluster--big .gm-face { --sz: clamp(38px, 9.4vw, 84px); }
 
 /* ---------- the room ---------- */
-.gm-room__head { margin: 0 0 clamp(14px, 3vw, 22px); }
-.gm-room__head h1 { margin: 6px 0 0; font-size: clamp(25px, 7vw, 40px); }
-.gm-room__head p { margin: 8px 0 0; color: var(--ink-2); font-size: 14px; max-width: 54ch; }
+.gm-room__head { margin: 0 0 clamp(12px, 3vw, 20px); }
+.gm-room__head h1 { margin: 5px 0 0; font-size: clamp(24px, 6.8vw, 38px); }
+.gm-room__head p { margin: 6px 0 0; color: var(--ink-2); font-size: 13.5px; max-width: 48ch; }
 
 .gm-grid {
-  display: grid; gap: clamp(10px, 2.4vw, 18px);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: grid; gap: clamp(12px, 3vw, 22px) clamp(6px, 2vw, 14px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-@media (min-width: 700px)  { .gm-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 1000px) { .gm-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 560px)  { .gm-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 880px)  { .gm-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
-/* A founder card. The tint is the card's own, set per founder as --tint, and the cartoon
-   stands on it: the art is the card, the text is a caption underneath it. */
-.gm-card {
-  position: relative; display: flex; flex-direction: column; width: 100%;
-  padding: 0; border: 1px solid var(--line-2); border-radius: 16px; overflow: hidden;
-  background: var(--card); text-align: left;
-  transition: transform .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease);
+/* A founder in the grid: face, amount, name, venture. The whole thing is the button. */
+.gm-f {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  width: 100%; padding: 6px 2px 4px; border: 0; background: none; text-align: center;
+  border-radius: 14px;
 }
-.gm-card:hover, .gm-card:focus-visible { transform: translateY(-4px); border-color: var(--tint, var(--go)); }
-.gm-card.is-backed { border-color: var(--tint, var(--go)); box-shadow: 0 0 0 1px var(--tint, var(--go)) inset; }
-
-.gm-card__art {
-  position: relative; aspect-ratio: 1 / 1; display: grid; place-items: end center;
-  background:
-    radial-gradient(120% 90% at 50% 112%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 62%),
-    linear-gradient(170deg, color-mix(in srgb, var(--tint, #1FC7BE) 92%, white) 0%,
-                            var(--tint, #1FC7BE) 100%);
-  overflow: hidden;
-}
-/* color-mix is new enough to want a floor under it; without this the card would be bare
-   on an older phone rather than merely flatter. */
-@supports not (background: color-mix(in srgb, red 50%, white)) {
-  .gm-card__art { background: var(--tint, #1FC7BE); }
-}
-.gm-card__art img {
-  width: 92%; height: 96%; object-fit: contain; object-position: bottom center;
-  transition: transform .35s var(--ease);
-}
-.gm-card:hover .gm-card__art img { transform: translateY(-3px) scale(1.035); }
-
-.gm-card__no {
-  position: absolute; top: 8px; left: 8px; z-index: 2;
-  padding: 3px 8px; border-radius: 999px; background: rgba(12,16,19,.72);
-  font: 800 10px/1.5 var(--f-sans); letter-spacing: .1em; color: #fff;
-}
-.gm-card__tag {
-  position: absolute; top: 8px; right: 8px; z-index: 2;
-  padding: 4px 9px; border-radius: 999px; background: var(--coin); color: #2A2100;
-  font: 800 11px/1.3 var(--f-sans); letter-spacing: -.01em;
-  opacity: 0; transform: translateY(-6px) scale(.9);
+.gm-f .gm-face { --sz: clamp(78px, 24vw, 108px); }
+.gm-f:hover .gm-face, .gm-f:focus-visible .gm-face { transform: translateY(-3px); }
+.gm-f__amt {
+  position: absolute; top: 2px; right: 50%; translate: 54% 0; z-index: 2;
+  padding: 3px 8px; border-radius: 999px; background: var(--coin); color: #2A2100;
+  font: 800 10.5px/1.3 var(--f-sans); letter-spacing: -.01em; white-space: nowrap;
+  opacity: 0; transform: translateY(-5px) scale(.9);
   transition: opacity .3s var(--ease), transform .3s var(--ease);
 }
-.gm-card.is-backed .gm-card__tag { opacity: 1; transform: none; }
-
-/* grid, for the same reason the tile needs it: these are spans inside a <button>, and
-   inline spans put the founder's name and their venture on the same line. */
-.gm-card__txt { padding: 10px 11px 13px; display: grid; }
-.gm-card__name {
-  margin: 0; font-family: var(--f-display); font-weight: 900;
+.gm-f.is-backed .gm-f__amt { opacity: 1; transform: none; }
+.gm-f__name {
+  margin: 9px 0 0; font-family: var(--f-display); font-weight: 900;
   font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
-  font-size: clamp(14px, 3.9vw, 17px); line-height: 1.08; letter-spacing: -.02em;
+  font-size: clamp(12.5px, 3.5vw, 15.5px); line-height: 1.08; letter-spacing: -.02em;
+  text-wrap: balance;
 }
-.gm-card__co {
-  margin: 4px 0 0; font: 700 10.5px/1.35 var(--f-sans); letter-spacing: .08em;
-  text-transform: uppercase; color: var(--ink-3);
+.gm-f__co {
+  margin: 3px 0 0; font: 700 9px/1.3 var(--f-sans); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-3); text-wrap: balance;
 }
 
-/* the stagger as the rack of founders arrives */
-.gm-card--in { opacity: 0; transform: translateY(14px); }
-.gm-grid.is-in .gm-card--in {
+/* the stagger as the ten arrive */
+.gm-f--in { opacity: 0; transform: translateY(12px); }
+.gm-grid.is-in .gm-f--in {
   opacity: 1; transform: none;
-  transition: opacity .5s var(--ease) var(--d, 0ms), transform .5s var(--ease) var(--d, 0ms);
+  transition: opacity .45s var(--ease) var(--d, 0ms), transform .45s var(--ease) var(--d, 0ms);
 }
 
-/* ---------- the review bar, pinned where a thumb already is ---------- */
+/* ---------- the dock, pinned where a thumb already is ---------- */
 .gm-dock {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
-  padding: 11px var(--gut) calc(11px + env(safe-area-inset-bottom));
+  padding: 10px var(--gut) calc(10px + env(safe-area-inset-bottom));
   background: rgba(14,18,22,.95); backdrop-filter: blur(14px);
   border-top: 1px solid var(--line-2);
   transform: translateY(104%); transition: transform .4s var(--ease);
 }
 .gm-dock.is-up { transform: none; }
-.gm-dock__in {
-  max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 12px;
-}
-.gm-dock__sum { font-size: 12px; color: var(--ink-2); line-height: 1.35; }
-.gm-dock__sum b { display: block; color: var(--ink); font-size: 15px; font-weight: 800; }
+.gm-dock__in { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.gm-dock__sum { font-size: 11.5px; color: var(--ink-2); line-height: 1.35; min-width: 0; }
+.gm-dock__sum b { display: block; color: var(--ink); font-size: 14.5px; font-weight: 800; }
 .gm-dock .gm-btn { margin-left: auto; flex: none; }
 
 /* ============================================================================
-   THE FOUNDER DRAWER — a sheet on a phone, a dialog on a desk.
+   THE FOUNDER PANEL — a sheet on a phone, a dialog on a desk.
    It never leaves the game: no link out, no navigation, nothing that loses a wallet.
    ========================================================================= */
 .gm-sheet {
   position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end;
-  justify-content: center; padding: 0;
+  justify-content: center;
 }
 .gm-sheet[hidden] { display: none; }
 .gm-sheet__veil {
-  position: absolute; inset: 0; background: rgba(6,9,11,.72);
+  position: absolute; inset: 0; background: rgba(6,9,11,.7);
   backdrop-filter: blur(3px); opacity: 0; transition: opacity .3s var(--ease);
 }
 .gm-sheet.is-up .gm-sheet__veil { opacity: 1; }
@@ -276,221 +284,232 @@
   .gm-sheet__box { border-radius: 22px; border-bottom: 1px solid var(--line-2);
                    max-height: 88svh; transform: translateY(18px) scale(.985); }
 }
-
 .gm-sheet__scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-/* the wrapper is what the close button and the name are positioned against */
-.gm-sheet__top { position: relative; }
-.gm-sheet__hero { position: relative; aspect-ratio: 16 / 10; background: var(--card); }
-.gm-sheet__hero img { width: 100%; height: 100%; object-fit: cover; }
-/* the founder's name sits around three quarters of the way down the artwork, so the fall
-   to dark has to be well underway by then or the name reads at half contrast */
-.gm-sheet__hero::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(21,27,33,0) 26%, rgba(21,27,33,.62) 58%,
-                                      rgba(21,27,33,.98) 100%);
+
+/* the head: a big face on a wash of the founder's colour */
+.gm-sheet__head {
+  position: relative; display: flex; align-items: center; gap: 14px;
+  padding: 18px 56px 16px 17px;
+  background:
+    radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--tint, #1FC7BE) 30%, transparent) 0%, transparent 70%),
+    var(--bg-2);
 }
-.gm-sheet__x {
-  position: absolute; top: 10px; right: 10px; z-index: 3;
-  width: 38px; height: 38px; border-radius: 50%; border: 0; display: grid; place-items: center;
-  background: rgba(10,13,16,.66); backdrop-filter: blur(6px);
+@supports not (background: color-mix(in srgb, red 50%, white)) {
+  .gm-sheet__head { background: var(--bg-2); }
 }
-.gm-sheet__x svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.4;
-                   stroke-linecap: round; }
-.gm-sheet__id { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 0 17px 13px; }
-/* The ten editorial scenes have very different backgrounds, and a few of them are pale
-   exactly where the name sits. The gradient does most of the work; the shadow is what
-   makes it hold on all ten rather than on most of them. */
-.gm-sheet__id h2 {
-  margin: 5px 0 0; font-size: clamp(21px, 6vw, 28px);
-  text-shadow: 0 2px 14px rgba(10,13,16,.9), 0 1px 3px rgba(10,13,16,.7);
-}
-.gm-sheet__brand { display: flex; align-items: center; gap: 9px; margin-top: 8px; }
+.gm-sheet__head .gm-face { --sz: clamp(78px, 22vw, 104px); --ring: var(--tint, var(--go)); }
+.gm-sheet__id { min-width: 0; }
+.gm-sheet__id h2 { margin: 0; font-size: clamp(19px, 5.6vw, 26px); }
+.gm-sheet__brand { display: flex; align-items: center; gap: 9px; margin-top: 7px; flex-wrap: wrap; }
 .gm-sheet__logo {
-  height: 36px; width: auto; border-radius: 7px; background: #fff; padding: 4px 7px;
-  object-fit: contain; max-width: 156px;
+  height: 32px; width: auto; border-radius: 7px; background: #fff; padding: 4px 7px;
+  object-fit: contain; max-width: 140px;
 }
 /* No logo on file for two of the ten. The venture's name, set properly, stands in for it --
    never a mark invented to fill the space. */
 .gm-sheet__wordmark {
   font-family: var(--f-display); font-weight: 900;
   font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
-  font-size: 17px; letter-spacing: -.02em; color: var(--ink);
-  padding: 3px 11px 4px; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 15px; letter-spacing: -.02em; color: var(--ink);
+  padding: 3px 10px 4px; border: 1px solid var(--line); border-radius: 8px;
 }
+.gm-sheet__x {
+  position: absolute; top: 12px; right: 12px; z-index: 3;
+  width: 36px; height: 36px; border-radius: 50%; border: 0; display: grid; place-items: center;
+  background: rgba(244,247,249,.08);
+}
+.gm-sheet__x svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 2.4;
+                   stroke-linecap: round; }
 
-.gm-sheet__body { padding: 15px 17px 4px; }
-.gm-sheet__blurb { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.65; }
-.gm-film {
-  margin: 14px 0 0; border-radius: 13px; overflow: hidden; background: #000;
-  border: 1px solid var(--line-2);
-}
-.gm-film video { width: 100%; height: auto; display: block; max-height: 48svh; }
-.gm-nofilm {
-  margin: 13px 0 0; padding: 11px 13px; border-radius: 11px; background: var(--card);
-  border: 1px solid var(--line-2); font-size: 12.5px; color: var(--ink-3);
-}
+.gm-sheet__body { padding: 2px 17px 6px; }
+.gm-sheet__blurb { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.62; }
+.gm-film { margin: 13px 0 0; border-radius: 13px; overflow: hidden; background: #000;
+           border: 1px solid var(--line-2); }
+.gm-film video { width: 100%; height: auto; display: block; max-height: 44svh; }
+.gm-nofilm { margin: 12px 0 0; padding: 10px 13px; border-radius: 11px; background: var(--card);
+             border: 1px solid var(--line-2); font-size: 12.5px; color: var(--ink-3); }
 
 /* ---------- the allocation controls ---------- */
 .gm-alloc {
   position: sticky; bottom: 0; background: var(--bg-2);
-  border-top: 1px solid var(--line-2); padding: 13px 17px calc(15px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line-2); padding: 12px 17px calc(14px + env(safe-area-inset-bottom));
 }
 .gm-alloc__now {
-  display: flex; align-items: baseline; gap: 8px; margin: 0 0 10px;
+  display: flex; align-items: baseline; gap: 8px; margin: 0 0 9px;
   font: 700 11px/1 var(--f-sans); letter-spacing: .13em; text-transform: uppercase;
   color: var(--ink-3);
 }
-.gm-alloc__now b {
-  font-size: 19px; letter-spacing: -.02em; text-transform: none; color: var(--coin);
-  font-weight: 800;
-}
-.gm-chips { display: flex; gap: 7px; margin: 0 0 10px; flex-wrap: wrap; }
+.gm-alloc__now b { font-size: 19px; letter-spacing: -.02em; text-transform: none;
+                   color: var(--coin); font-weight: 800; }
+.gm-chips { display: flex; gap: 6px; margin: 0 0 9px; flex-wrap: wrap; }
 .gm-chip {
-  flex: 1 1 auto; min-width: 66px; min-height: 42px; padding: 9px 10px;
+  flex: 1 1 auto; min-width: 62px; min-height: 42px; padding: 9px 9px;
   border-radius: 11px; border: 1px solid var(--line); background: var(--card);
-  font: 800 13px/1 var(--f-sans); color: var(--ink);
+  font: 800 12.5px/1 var(--f-sans); color: var(--ink);
   transition: background .2s var(--ease), border-color .2s var(--ease), transform .12s var(--ease);
 }
 .gm-chip:hover:not(:disabled) { border-color: var(--go); }
 .gm-chip:active:not(:disabled) { transform: scale(.95); }
 .gm-chip:disabled { opacity: .32; cursor: default; }
 .gm-chip--clear { color: var(--stop); }
+.gm-chip.is-on { border-color: var(--coin); background: rgba(255,216,77,.12); color: var(--coin); }
 
 .gm-amount { display: flex; gap: 8px; align-items: center; }
 .gm-amount__wrap { position: relative; flex: 1; }
-.gm-amount__pre {
-  position: absolute; left: 13px; top: 50%; translate: 0 -50%;
-  font: 800 14px/1 var(--f-sans); color: var(--ink-3); pointer-events: none;
-}
+.gm-amount__pre { position: absolute; left: 13px; top: 50%; translate: 0 -50%;
+                  font: 800 14px/1 var(--f-sans); color: var(--ink-3); pointer-events: none; }
 .gm-amount input {
   width: 100%; min-height: 50px; padding: 12px 13px 12px 48px; border-radius: 12px;
   background: var(--card); border: 1px solid var(--line); color: var(--ink);
   font: 800 17px/1.2 var(--f-sans); font-variant-numeric: tabular-nums;
 }
 .gm-amount input:focus { border-color: var(--go); outline: none; }
-.gm-amount .gm-btn { flex: none; min-width: 132px; }
-.gm-alloc__note { margin: 9px 0 0; font-size: 11.5px; color: var(--ink-3); min-height: 17px; }
+.gm-amount .gm-btn { flex: none; min-width: 128px; }
+.gm-alloc__note { margin: 8px 0 0; font-size: 11.5px; color: var(--ink-3); min-height: 17px; }
 .gm-alloc__note.is-bad { color: var(--stop); }
+
+/* ---------- moving NG$ to another founder ----------
+   Shown only once this founder holds something. Pick how much, tap a face, and the money
+   goes there -- without touching anything else in the portfolio. */
+.gm-move { margin-top: 11px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.gm-move__t {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 7px 0; border: 0; background: none; text-align: left;
+  font: 800 12px/1.3 var(--f-sans); color: var(--ink);
+}
+.gm-move__t svg { width: 15px; height: 15px; fill: none; stroke: var(--ink-2); stroke-width: 2.2;
+                  stroke-linecap: round; stroke-linejoin: round; transition: transform .3s var(--ease); }
+.gm-move.is-open .gm-move__t svg { transform: rotate(180deg); }
+.gm-move__body { display: none; padding-top: 6px; }
+.gm-move.is-open .gm-move__body { display: block; }
+.gm-move__how { margin: 0 0 8px; font-size: 11.5px; color: var(--ink-3); }
+.gm-move__how b { color: var(--coin); }
+.gm-move__row {
+  display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.gm-move__row::-webkit-scrollbar { display: none; }
+.gm-move__to {
+  flex: none; width: 66px; padding: 0; border: 0; background: none; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.gm-move__to .gm-face { --sz: 50px; box-shadow: 0 0 0 2px var(--bg-2), 0 0 0 4px var(--ring, rgba(244,247,249,.22)); }
+.gm-move__to span { font: 700 9.5px/1.2 var(--f-sans); color: var(--ink-2); white-space: nowrap;
+                    overflow: hidden; text-overflow: ellipsis; max-width: 66px; }
+.gm-move__to em { font-style: normal; font: 800 9.5px/1 var(--f-sans); color: var(--coin); }
+.gm-move__to:active .gm-face { transform: scale(.94); }
 
 /* ============================================================================
    REVIEW AND RESULT
    ========================================================================= */
-.gm-list { list-style: none; margin: clamp(14px, 3vw, 22px) 0 0; padding: 0;
+.gm-list { list-style: none; margin: clamp(12px, 3vw, 20px) 0 0; padding: 0;
            border-top: 1px solid var(--line-2); }
-.gm-row {
-  display: flex; align-items: center; gap: 12px; padding: 11px 2px;
-  border-bottom: 1px solid var(--line-2);
-}
-.gm-row.is-zero { opacity: .42; }
-.gm-row__pic {
-  width: 46px; height: 46px; border-radius: 11px; flex: none; overflow: hidden;
-  background: var(--tint, var(--card)); display: grid; place-items: end center;
-}
-.gm-row__pic img { width: 92%; height: 96%; object-fit: contain; object-position: bottom; }
+.gm-row { display: flex; align-items: center; gap: 12px; padding: 10px 2px;
+          border-bottom: 1px solid var(--line-2); }
+.gm-row.is-zero { opacity: .4; }
+.gm-row .gm-face { --sz: 44px; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring, rgba(244,247,249,.2)); }
 .gm-row__id { min-width: 0; flex: 1; }
 .gm-row__id b { display: block; font-size: 14px; font-weight: 800; letter-spacing: -.01em; }
-.gm-row__id span { display: block; font-size: 11px; color: var(--ink-3);
+.gm-row__id span { display: block; font-size: 10.5px; color: var(--ink-3);
                    text-transform: uppercase; letter-spacing: .09em; }
 .gm-row__amt { font-weight: 800; font-size: 15px; white-space: nowrap; }
 .gm-row.is-zero .gm-row__amt { color: var(--ink-3); font-weight: 600; }
 .gm-row__amt b { color: var(--coin); }
 
-.gm-tot {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-  margin: clamp(16px, 3vw, 24px) 0 0;
-}
-.gm-tot__cell {
-  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 13px; padding: 13px;
-}
+.gm-tot { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: clamp(14px, 3vw, 22px) 0 0; }
+.gm-tot__cell { background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 13px; padding: 13px; }
 .gm-tot__cell b { display: block; font-size: 23px; font-weight: 800; letter-spacing: -.02em; }
 .gm-tot__cell span { font: 700 9.5px/1.3 var(--f-sans); letter-spacing: .14em;
                      text-transform: uppercase; color: var(--ink-3); }
 .gm-tot__cell--in b { color: var(--go); }
 .gm-tot__cell--left b { color: var(--coin); }
 
-.gm-ask {
-  margin: clamp(16px, 3vw, 22px) 0 0; padding: 15px 16px; border-radius: 14px;
-  background: var(--bg-2); border: 1px solid var(--line);
-}
+.gm-ask { margin: clamp(14px, 3vw, 22px) 0 0; padding: 15px 16px; border-radius: 14px;
+          background: var(--bg-2); border: 1px solid var(--line); }
 .gm-ask p { margin: 0 0 13px; font-size: 14.5px; }
 .gm-ask__row { display: flex; gap: 10px; flex-wrap: wrap; }
 .gm-ask__row .gm-btn { flex: 1 1 150px; }
 
-/* ---------- the result ---------- */
 .gm-done { text-align: center; }
-.gm-done__hero {
-  width: 100%; border-radius: 18px; overflow: hidden; margin: 0 0 clamp(16px, 3vw, 24px);
-  border: 1px solid var(--line-2);
-}
-.gm-done h1 { margin: 0 0 8px; font-size: clamp(27px, 8vw, 44px); }
+.gm-done h1 { margin: 10px 0 8px; font-size: clamp(27px, 8vw, 44px); }
 .gm-done__sub { margin: 0 auto 6px; color: var(--ink-2); font-size: 14.5px; max-width: 46ch; }
 .gm-done .gm-list { text-align: left; }
+.gm-done .gm-cluster { margin: 6px 0 14px; }
 .gm-badge {
-  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px;
+  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 6px;
   padding: 7px 15px; border-radius: 999px; background: rgba(31,199,190,.14);
   border: 1px solid rgba(31,199,190,.4); color: var(--go);
   font: 800 11px/1 var(--f-sans); letter-spacing: .14em; text-transform: uppercase;
 }
 
-/* ---------- small print that has to be read ---------- */
-.gm-note {
-  margin: clamp(22px, 4vw, 34px) auto 0; max-width: 58ch;
-  font-size: 11.5px; line-height: 1.75; color: var(--ink-3); text-align: center;
-}
+.gm-note { margin: clamp(20px, 4vw, 30px) auto 0; max-width: 58ch;
+           font-size: 11.5px; line-height: 1.75; color: var(--ink-3); text-align: center; }
 .gm-note b { color: var(--ink-2); font-weight: 700; }
-
-.gm-banner {
-  margin: 0 0 clamp(14px, 3vw, 20px); padding: 11px 14px; border-radius: 12px;
-  font-size: 13px; line-height: 1.6;
-  background: rgba(255,216,77,.11); border: 1px solid rgba(255,216,77,.34); color: #FFE9A3;
+.gm-banner { margin: 0 0 clamp(12px, 3vw, 18px); padding: 11px 14px; border-radius: 12px;
+             font-size: 13px; line-height: 1.6;
+             background: rgba(255,216,77,.11); border: 1px solid rgba(255,216,77,.34); color: #FFE9A3; }
+.gm-banner--stop { background: rgba(255,107,90,.1); border-color: rgba(255,107,90,.4); color: #FFC2BA; }
+.gm-toast {
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 80;
+  translate: -50% 0; max-width: calc(100% - 32px); padding: 10px 15px; border-radius: 11px;
+  background: #2A1613; border: 1px solid rgba(255,107,90,.5); color: #FFD0C9;
+  font-size: 12.5px; line-height: 1.45; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  opacity: 0; transition: opacity .3s var(--ease); pointer-events: none;
 }
-.gm-banner--stop { background: rgba(255,107,90,.1); border-color: rgba(255,107,90,.4);
-                   color: #FFC2BA; }
+.gm-toast.is-on { opacity: 1; }
 
 /* ============================================================================
-   MOTION — three effects, and that is the budget
+   THE MONEY MOVING — the three effects
    ========================================================================= */
+.gm-fx { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
 
-/* 1. coins, when NG$ goes behind a founder */
-.gm-coins { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
-.gm-coin {
-  position: absolute; width: 15px; height: 15px; border-radius: 50%;
-  background: radial-gradient(circle at 36% 32%, #FFF0AE 0%, var(--coin) 48%, #C9A218 100%);
-  box-shadow: 0 0 9px rgba(255,216,77,.55);
-  animation: gm-coin-fly var(--dur, 900ms) cubic-bezier(.22,.62,.3,1) forwards;
+/* a NextGen token: a coin with the mark on it */
+.gm-token {
+  position: absolute; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 36% 30%, #FFF2B8 0%, var(--coin) 46%, #C9A218 100%);
+  box-shadow: 0 0 0 1.5px rgba(201,162,24,.9), 0 3px 10px rgba(0,0,0,.45), 0 0 12px rgba(255,216,77,.5);
+  font: 900 9px/1 var(--f-sans); color: #4A3800; letter-spacing: -.04em;
+  animation: gm-fly var(--dur, 820ms) cubic-bezier(.3,.7,.2,1) var(--delay, 0ms) forwards;
+  opacity: 0; will-change: transform, opacity;
 }
-@keyframes gm-coin-fly {
-  0%   { opacity: 0; transform: translate(0, 0) scale(.5); }
-  12%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -150px)) scale(1.05); }
-}
-
-/* 2. a sparkle the first time a founder is opened */
-.gm-spark {
-  position: fixed; z-index: 70; pointer-events: none;
-  font: 800 12px/1 var(--f-sans); color: var(--coin); white-space: nowrap;
-  animation: gm-spark-up 1.4s var(--ease) forwards;
-}
-@keyframes gm-spark-up {
-  0%   { opacity: 0; transform: translateY(6px) scale(.9); }
-  18%  { opacity: 1; transform: none; }
-  100% { opacity: 0; transform: translateY(-26px); }
+@keyframes gm-fly {
+  0%   { opacity: 0; transform: translate(0, 0) scale(.6); }
+  10%  { opacity: 1; transform: translate(calc(var(--dx) * .06), calc(var(--dy) * .06 - 10px)) scale(1); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.5); }
 }
 
-/* 3. the finish */
+/* the finish: a ring of tokens from the centre, under a short word */
+.gm-burst {
+  position: fixed; inset: 0; z-index: 75; display: grid; place-items: center;
+  background: rgba(14,18,22,.86); backdrop-filter: blur(6px);
+  animation: gm-burst-in .25s var(--ease) both;
+}
+.gm-burst[hidden] { display: none; }
+.gm-burst.is-out { animation: gm-burst-out .35s var(--ease) both; }
+.gm-burst__word { position: relative; z-index: 2; text-align: center; }
+.gm-burst__word .gm-kick { display: block; margin-bottom: 10px; }
+.gm-burst__word h2 { margin: 0; font-size: clamp(34px, 11vw, 64px); color: var(--ink); }
+.gm-burst .gm-token { animation: gm-radiate 1.05s cubic-bezier(.2,.75,.3,1) var(--delay, 0ms) forwards; }
+@keyframes gm-radiate {
+  0%   { opacity: 0; transform: translate(0,0) scale(.4); }
+  12%  { opacity: 1; transform: translate(calc(var(--dx) * .18), calc(var(--dy) * .18)) scale(1.05); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.7) rotate(40deg); }
+}
+@keyframes gm-burst-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gm-burst-out { from { opacity: 1; } to { opacity: 0; } }
 .gm-pop { animation: gm-pop-in .7s var(--ease) both; }
-@keyframes gm-pop-in {
-  from { opacity: 0; transform: translateY(16px) scale(.97); }
-  to   { opacity: 1; transform: none; }
-}
+@keyframes gm-pop-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   .gm *, .gm *::before, .gm *::after {
     animation-duration: .001ms !important; transition-duration: .001ms !important;
   }
-  .gm-coins { display: none; }
-  .gm-card--in { opacity: 1 !important; transform: none !important; }
+  .gm-fx { display: none; }
+  .gm-f--in { opacity: 1 !important; transform: none !important; }
   .gm-sheet__box { transform: none !important; }
+  .gm-face.is-pulse { animation: none; }
 }
 
 /* ============================================================================
@@ -500,52 +519,34 @@
 .gm-hub__in {
   flex: 1; display: flex; flex-direction: column; justify-content: center;
   max-width: 1080px; margin: 0 auto; width: 100%;
-  padding: clamp(28px, 7vh, 70px) var(--gut) clamp(34px, 8vh, 72px);
+  padding: clamp(28px, 7vh, 70px) var(--gut) clamp(30px, 8vh, 64px);
 }
-.gm-hub__title {
-  margin: 10px 0 0; font-size: clamp(38px, 13vw, 92px); line-height: .88;
-}
+.gm-hub__title { margin: 10px 0 0; font-size: clamp(38px, 13vw, 92px); line-height: .88; }
 .gm-hub__title i { font-style: normal; color: var(--go); }
 .gm-hub__line { margin: 14px 0 0; font-size: clamp(15px, 4.4vw, 20px); color: var(--ink-2); }
 
 .gm-tile {
-  display: block; margin: clamp(22px, 5vw, 36px) 0 0; text-decoration: none; color: inherit;
-  border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--bg-2);
+  display: grid; margin: clamp(20px, 5vw, 34px) 0 0; text-decoration: none; color: inherit;
+  border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
+  padding: clamp(18px, 5vw, 30px) clamp(16px, 4.5vw, 28px);
+  background:
+    radial-gradient(80% 100% at 100% 0%, rgba(31,199,190,.16) 0%, transparent 60%),
+    radial-gradient(60% 90% at 0% 100%, rgba(255,216,77,.12) 0%, transparent 60%),
+    var(--bg-2);
   transition: transform .3s var(--ease), border-color .3s var(--ease);
 }
 .gm-tile:hover { transform: translateY(-4px); border-color: var(--go); }
-.gm-tile__art { position: relative; aspect-ratio: 16 / 9; background: var(--card); }
-.gm-tile__art img { width: 100%; height: 100%; object-fit: cover; }
-/* The text block sits over the lower third of the artwork, so the fall to dark has to begin
-   well above where the kicker lands -- at 40% it was still half-lit under the eyebrow. */
-.gm-tile__art::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(14,18,22,0) 14%, rgba(14,18,22,.55) 48%,
-                                      rgba(14,18,22,.93) 78%, rgba(14,18,22,1) 100%);
-}
-/* grid, not flow: the tile's parts are spans inside an <a>, and inline spans would run the
-   kicker, the title and the description together on the same lines */
-.gm-tile__txt {
-  position: relative; z-index: 2; margin-top: -30px;
-  padding: 0 clamp(15px, 4vw, 26px) clamp(17px, 4vw, 26px);
-  display: grid; justify-items: start;
-}
-.gm-tile__name { margin: 6px 0 0; font-size: clamp(23px, 6.6vw, 38px); }
-.gm-tile__sub { margin: 7px 0 0; color: var(--ink-2); font-size: 13.5px; }
-.gm-tile .gm-btn { margin-top: clamp(13px, 3vw, 18px); }
+.gm-tile .gm-cluster { justify-content: flex-start; margin: 2px 0 14px; }
+.gm-tile__name { margin: 6px 0 0; font-size: clamp(25px, 7vw, 42px); }
+.gm-tile__sub { margin: 8px 0 0; color: var(--ink-2); font-size: 13.5px; max-width: 50ch; }
+.gm-tile .gm-btn { margin-top: clamp(14px, 3vw, 20px); justify-self: start; }
 
-/* the short entrance: under two seconds, and it never blocks the button */
 .gm-fade { animation: gm-fade-in .85s var(--ease) both; }
 .gm-fade--2 { animation-delay: .14s; }
 .gm-fade--3 { animation-delay: .28s; }
 .gm-fade--4 { animation-delay: .42s; }
-@keyframes gm-fade-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: none; }
-}
+@keyframes gm-fade-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-.gm-foot {
-  padding: 0 var(--gut) clamp(24px, 5vh, 40px); text-align: center;
-  font-size: 11.5px; color: var(--ink-3); line-height: 1.75;
-}
+.gm-foot { padding: 0 var(--gut) clamp(24px, 5vh, 40px); text-align: center;
+           font-size: 11.5px; color: var(--ink-3); line-height: 1.75; }
 .gm-foot a { color: var(--warm); }

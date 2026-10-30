@@ -34,7 +34,19 @@ const NGG_CODE_TTL = 600;           // ten minutes
 const NGG_MAX_TRIES = 5;
 const NGG_COOLDOWN = 45;            // a live room re-reads its inbox faster than a voter did
 const NGG_MAX_PER_ADDR_PER_DAY = 8;
-const NGG_MAX_PER_IP_PER_HOUR = 60; // one venue, one wifi, hundreds of phones
+
+/* THE VENUE IS ONE IP ADDRESS.
+
+   Hundreds of phones on the Gordon Center wifi arrive here as a single address, so a
+   per-IP ceiling sized for a bedroom would lock the whole room out of the game at the
+   moment it is announced from the stage. The first cut of this file said 60 an hour,
+   which is a bedroom number. What actually protects the relay and the inbox is the
+   PER-ADDRESS pair above -- the cooldown and the daily cap -- and those are untouched.
+
+   The per-IP limits that remain are there to catch a script, not a crowd: a burst cap a
+   person cannot reach by hand, and an hourly cap a venue cannot reach by playing. */
+const NGG_MAX_PER_IP_PER_MINUTE = 90;
+const NGG_MAX_PER_IP_PER_HOUR = 1500;
 
 function ngg_otp_tables(): void
 {
@@ -108,6 +120,9 @@ function ngg_otp_gate(string $ident): array
     }
     if (ngg_otp_count('ident', $ident, 86400) >= NGG_MAX_PER_ADDR_PER_DAY) {
         return ['ok' => false, 'reason' => 'addr_daily'];
+    }
+    if (ngg_otp_count('ip_hash', ngs_ip_hash(), 60) >= NGG_MAX_PER_IP_PER_MINUTE) {
+        return ['ok' => false, 'reason' => 'ip_burst', 'wait' => 60];
     }
     if (ngg_otp_count('ip_hash', ngs_ip_hash(), 3600) >= NGG_MAX_PER_IP_PER_HOUR) {
         return ['ok' => false, 'reason' => 'ip_hourly'];

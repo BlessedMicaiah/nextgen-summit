@@ -24,8 +24,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
 <link rel="stylesheet" href="/assets/css/games.css?v=20261030-s15">
 
-<!-- The founders' own descriptions and films, read from the same verified data the rest of
-     the site runs on. games.js joins to it by entrant id and invents nothing. -->
+<!-- The founders' photographs, descriptions and films, read from the same verified data
+     the rest of the site runs on. games.js joins to it by entrant id and invents nothing. -->
 <script src="/assets/js/pc-founders.js?v=20261030-s15" defer></script>
 <script src="/assets/js/games.js?v=20261030-s15" defer></script>
 </head>
@@ -39,19 +39,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <div class="gm-bar__in">
     <div class="gm-bar__top">
       <a class="gm-bar__mark" href="/games/">next<i>gen</i> games</a>
+      <span class="gm-bar__game">Back the Next</span>
       <span class="gm-bar__who" data-who></span>
-      <button class="gm-bar__who" type="button" data-signout
-              style="background:none;border:0;padding:0 0 0 10px;text-decoration:underline">Sign out</button>
+      <button class="gm-bar__out" type="button" data-signout>Sign out</button>
     </div>
     <div class="gm-wallet">
-      <div class="gm-wallet__cell">
-        <b class="gm-ngd" data-w-cap>NG$10,000</b><span>Capital</span>
-      </div>
-      <div class="gm-wallet__cell gm-wallet__cell--in">
-        <b class="gm-ngd" data-w-in>NG$0</b><span>Backed</span>
-      </div>
       <div class="gm-wallet__cell gm-wallet__cell--left">
         <b class="gm-ngd" data-w-left>NG$10,000</b><span>Available</span>
+      </div>
+      <div class="gm-wallet__cell gm-wallet__cell--in">
+        <b class="gm-ngd" data-w-in>NG$0</b><span>Invested</span>
+      </div>
+      <div class="gm-wallet__cell">
+        <b data-w-n>0</b><span data-w-n-label>Founders backed</span>
       </div>
     </div>
     <div class="gm-split" data-split aria-hidden="true"></div>
@@ -63,7 +63,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <!-- ==================== 1. sign in ==================== -->
   <section class="gm-screen" data-screen="signin">
     <div class="gm-signin">
-      <img class="gm-signin__art" src="/assets/img/games/cutout/f08.webp" alt="" decoding="async">
+      <div class="gm-cluster gm-cluster--big" data-cluster aria-hidden="true"></div>
       <p class="gm-kick">Back the Next</p>
       <h1 class="gm-disp">Pick up your<br>NG$10,000.</h1>
       <p>We send a six-digit code to your email so your wallet comes back to you on any
@@ -114,14 +114,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <div class="gm-room__head">
         <p class="gm-kick">The NG$10,000 Founder Challenge</p>
         <h1 class="gm-disp">Who are you backing?</h1>
-        <p>Ten founders pitching live tonight. Put your virtual capital behind as many or as
-           few as you like &mdash; all ten are optional, and you can keep what you don&rsquo;t place.</p>
+        <p>Tap a founder to read about them and place NG$. Back as many or as few as you like.</p>
       </div>
       <div class="gm-grid" data-grid role="list"></div>
       <p class="gm-note">
-        Tap any founder to read what they do and watch their pitch. Nothing is final until
-        you lock your portfolio in. <b>NG$ is fictional</b> &mdash; this is a game, separate
-        from the People&rsquo;s Choice Award.
+        Nothing is final until you lock your portfolio in. <b>NG$ is fictional</b> &mdash;
+        this is a game, separate from the People&rsquo;s Choice Award.
       </p>
     </div>
   </section>
@@ -131,16 +129,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <div class="gm-screen__in">
       <p class="gm-kick">Review</p>
       <h1 class="gm-disp" style="margin:6px 0 0;font-size:clamp(25px,7vw,40px)">Your portfolio.</h1>
-
       <div class="gm-tot">
-        <div class="gm-tot__cell gm-tot__cell--in">
-          <b class="gm-ngd" data-review-in>NG$0</b><span>Backed</span>
-        </div>
-        <div class="gm-tot__cell gm-tot__cell--left">
-          <b class="gm-ngd" data-review-left>NG$10,000</b><span>Kept</span>
-        </div>
+        <div class="gm-tot__cell gm-tot__cell--in"><b class="gm-ngd" data-review-in>NG$0</b><span>Invested</span></div>
+        <div class="gm-tot__cell gm-tot__cell--left"><b class="gm-ngd" data-review-left>NG$10,000</b><span>Kept</span></div>
       </div>
-
       <ul class="gm-list" data-review-list></ul>
       <div class="gm-ask" data-ask></div>
     </div>
@@ -149,25 +141,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <!-- ==================== 4. the portfolio you ended up with ==================== -->
   <section class="gm-screen" data-screen="done" hidden>
     <div class="gm-screen__in gm-done">
-      <div class="gm-done__hero gm-pop" data-done-hero>
-        <img src="/assets/img/games/hero.webp"
-             alt="Illustrations of the ten NextGen finalists" decoding="async">
-      </div>
+      <div class="gm-cluster gm-cluster--big gm-pop" data-done-cluster aria-hidden="true"></div>
       <p class="gm-badge">Portfolio locked in</p>
       <h1 class="gm-disp">You&rsquo;re officially<br>a NextGen backer!</h1>
       <p class="gm-done__sub" data-done-sub></p>
-
       <div class="gm-tot">
-        <div class="gm-tot__cell gm-tot__cell--in">
-          <b class="gm-ngd" data-done-in>NG$0</b><span>Backed</span>
-        </div>
-        <div class="gm-tot__cell gm-tot__cell--left">
-          <b class="gm-ngd" data-done-left>NG$0</b><span>Kept</span>
-        </div>
+        <div class="gm-tot__cell gm-tot__cell--in"><b class="gm-ngd" data-done-in>NG$0</b><span>Invested</span></div>
+        <div class="gm-tot__cell gm-tot__cell--left"><b class="gm-ngd" data-done-left>NG$0</b><span>Kept</span></div>
       </div>
-
       <ul class="gm-list" data-done-list></ul>
-
       <p class="gm-note">
         This is your portfolio and only yours. Screenshot it and share it.
         What the rest of the room backed stays hidden until the NextGen team reveals it.
@@ -186,27 +168,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </div>
 </div>
 
-<!-- ==================== the founder drawer ====================
+<!-- ==================== the founder panel ====================
      Stays inside the game. No link out to the magazine or the People's Choice page: a
      player who navigates away mid-wallet has to find their way back. -->
-<div class="gm-sheet" data-sheet role="dialog" aria-modal="true"
-     aria-labelledby="gm-sheet-name" hidden>
+<div class="gm-sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="gm-sheet-name" hidden>
   <div class="gm-sheet__veil" data-sheet-veil></div>
   <div class="gm-sheet__box">
     <div class="gm-sheet__scroll">
-      <!-- The close button and the name sit ON the artwork, so they live inside a wrapper
-           that is the thing they are positioned against. They cannot live inside
-           [data-sheet-hero] itself: the script replaces its contents with each founder's
-           scene, which would take them with it. -->
-      <div class="gm-sheet__top">
-        <div class="gm-sheet__hero" data-sheet-hero></div>
-        <button class="gm-sheet__x" type="button" data-sheet-x aria-label="Close">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
+      <div class="gm-sheet__head" data-sheet-head>
+        <div data-sheet-face></div>
         <div class="gm-sheet__id">
           <h2 class="gm-disp" id="gm-sheet-name" data-sheet-name></h2>
           <div class="gm-sheet__brand" data-sheet-brand></div>
         </div>
+        <button class="gm-sheet__x" type="button" data-sheet-x aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
       </div>
       <div class="gm-sheet__body">
         <p class="gm-sheet__blurb" data-sheet-blurb></p>
@@ -226,11 +203,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <button class="gm-btn" type="button" data-alloc-go>Back this founder</button>
       </div>
       <p class="gm-alloc__note" data-alloc-note role="status" aria-live="polite"></p>
+
+      <!-- Moving NG$ from this founder to another, without clearing anything. -->
+      <div class="gm-move" data-move hidden>
+        <button class="gm-move__t" type="button" data-move-t aria-expanded="false">
+          Move some of it to another founder
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="gm-move__body">
+          <div class="gm-chips" data-move-chips></div>
+          <p class="gm-move__how" data-move-how></p>
+          <div class="gm-move__row" data-move-row></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="gm-coins" data-coins aria-hidden="true"></div>
+<div class="gm-fx" data-fx aria-hidden="true"></div>
+<div class="gm-burst" data-burst aria-hidden="true" hidden>
+  <div class="gm-burst__word">
+    <span class="gm-kick">Portfolio locked in</span>
+    <h2 class="gm-disp">You backed<br>the next.</h2>
+  </div>
+</div>
+<p class="gm-toast" data-toast role="status" aria-live="polite"></p>
 
 </body>
 </html>

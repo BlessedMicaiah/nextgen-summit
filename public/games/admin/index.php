@@ -61,6 +61,7 @@ function money(int $n): string
 }
 
 $notice = '';
+$preview = false;
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (!$authed) {
@@ -92,6 +93,26 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         } elseif ($do === 'hide') {
             ngg_set('reveal', '0');
             $notice = 'Totals are hidden again.';
+        } elseif ($do === 'purge-demo') {
+            /* Two clicks, not one: the first POST shows exactly what would go, the second
+               carries the confirm field and does it. The rows are written to a file before
+               the DELETE and nothing is removed if that file cannot be written and read back. */
+            if (($_POST['confirm'] ?? '') === 'yes') {
+                $r = ngg_purge_demo();
+                if ($r['ok']) {
+                    $rm = $r['removed'];
+                    $notice = sprintf('Demo records removed: %d portfolio(s), %d draft(s), %d player(s).%s',
+                        $rm['portfolios'], $rm['drafts'], $rm['players'],
+                        $r['backup'] !== '' ? ' Backed up first to ' . $r['backup'] . ' in the data directory.' : '');
+                } else {
+                    $notice = 'Nothing was removed: ' . ($r['reason'] === 'backup_write'
+                        ? 'the backup file could not be written.'
+                        : ($r['reason'] === 'backup_verify' ? 'the backup did not read back correctly.'
+                        : 'the delete failed and was rolled back.'));
+                }
+            } else {
+                $preview = true;
+            }
         } elseif ($do === 'signout') {
             $_SESSION = [];
             session_destroy();
@@ -105,6 +126,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
 $open = ngg_open();
 $revealed = ngg_revealed();
+$demo = $authed ? ngg_demo_rows() : ['players' => [], 'portfolios' => [], 'drafts' => 0];
+$demoN = count($demo['players']) + count($demo['portfolios']) + $demo['drafts'];
 $totals = $authed ? ngg_totals() : ['players' => 0, 'submitted' => 0, 'invested' => 0];
 $rows = $authed ? ngg_standings() : [];
 $top = $rows ? max(array_column($rows, 'ngd')) : 0;
@@ -152,6 +175,7 @@ $top = $rows ? max(array_column($rows, 'ngd')) : 0;
           background:#10151A; border:1px solid var(--line); color:var(--ink); }
   .warn { color:var(--dim); font-size:12.5px; margin-top:10px; line-height:1.65; }
   a { color:var(--brand); }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--ink-2, #ccc); }
 </style>
 </head>
 <body>
@@ -175,6 +199,8 @@ $top = $rows ? max(array_column($rows, 'ngd')) : 0;
   </form>
 
 <?php else: ?>
+
+  <p class="note" style="background:rgba(197,154,102,.1);border-color:rgba(197,154,102,.35)">Store ready: every game table exists and the database is answering.</p>
 
   <div class="card">
     <h2>Submissions</h2>
@@ -241,6 +267,46 @@ $top = $rows ? max(array_column($rows, 'ngd')) : 0;
     </table>
     <p class="warn">Ordered by NG$ backed. This is a game, not the People&rsquo;s Choice
       result, and it decides nothing about the competition.</p>
+  </div>
+
+  <div class="card">
+    <h2>Demo records</h2>
+    <?php if ($demoN === 0): ?>
+      <p style="margin:6px 0 0">None. Every player in the store signed in with an email code.</p>
+    <?php else: ?>
+      <p style="margin:6px 0 0"><b><?= count($demo['portfolios']) ?></b> demo portfolio(s),
+        <b><?= $demo['drafts'] ?></b> draft(s) and <b><?= count($demo['players']) ?></b> demo
+        player(s) from testing on the review site. A demo row is one whose identity begins
+        <code>demo:</code> <i>and</i> is flagged <code>demo = 1</code>; nothing written through
+        an email code can match that.</p>
+      <?php if ($preview): ?>
+        <table>
+          <thead><tr><th>Portfolio</th><th class="n">Backed</th><th class="n">NG$</th><th>When (UTC)</th></tr></thead>
+          <tbody>
+          <?php foreach ($demo['portfolios'] as $r): ?>
+            <tr><td><code><?= h(substr((string) $r['ident'], 0, 14)) ?>&hellip;</code></td>
+                <td class="n"><?= (int) $r['backed'] ?></td>
+                <td class="n"><?= money((int) $r['invested']) ?></td>
+                <td><?= h($r['created_at']) ?></td></tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+        <p class="warn">These rows, the <?= $demo['drafts'] ?> draft(s) and the
+          <?= count($demo['players']) ?> player row(s) will be written to a backup file beside
+          the database first. Nothing else in the store is touched.</p>
+        <form method="post" class="row">
+          <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="confirm" value="yes">
+          <button class="stop" name="do" value="purge-demo" type="submit">Yes, remove them</button>
+          <a href="<?= h(strtok((string) $_SERVER['REQUEST_URI'], '?')) ?>"><button type="button">Keep them</button></a>
+        </form>
+      <?php else: ?>
+        <form method="post" class="row">
+          <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <button name="do" value="purge-demo" type="submit">Show what would be removed</button>
+        </form>
+      <?php endif; ?>
+    <?php endif; ?>
   </div>
 
   <form method="post" class="row">

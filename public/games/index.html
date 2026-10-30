@@ -23,6 +23,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,900,100,0&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap">
 <link rel="stylesheet" href="/assets/css/games.css?v=20261030-s15">
+
+<!-- The ten faces on the tile are the founders' own photographs, drawn from the site's
+     verified founder data. No artwork file lives in the game. -->
+<script src="/assets/js/pc-founders.js?v=20261030-s15" defer></script>
+<script src="/assets/js/games.js?v=20261030-s15" defer></script>
 </head>
 
 <body class="gm gm-hub">
@@ -34,21 +39,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <h1 class="gm-disp gm-hub__title gm-fade gm-fade--2">NEXTGEN<br><i>GAMES</i></h1>
   <p class="gm-hub__line gm-fade gm-fade--3">Ten founders. NG$10,000. Your next move.</p>
 
-  <!-- One tile, because there is one game. The entrance is a fade, it lasts well under two
+  <!-- One tile, because there is one game. The entrance is a fade, well under two
        seconds, and it never sits in front of the button: the link is in the markup and
        clickable from the first frame whatever the animation is doing. -->
   <a class="gm-tile gm-fade gm-fade--4" href="/games/back-the-next/">
-    <span class="gm-tile__art">
-      <img src="/assets/img/games/hero.webp"
-           alt="Illustrations of the ten NextGen finalists" decoding="async">
-    </span>
-    <span class="gm-tile__txt">
-      <span class="gm-kick">Game 01 &middot; Live tonight</span>
-      <span class="gm-disp gm-tile__name">Back the Next</span>
-      <span class="gm-tile__sub">The NG$10,000 Founder Challenge &mdash; back the founders you
-        believe in with virtual NextGen capital, and keep what you don&rsquo;t place.</span>
-      <span class="gm-btn">Play Back the Next</span>
-    </span>
+    <span class="gm-cluster" data-cluster aria-hidden="true"></span>
+    <span class="gm-kick">Game 01 &middot; Live tonight</span>
+    <span class="gm-disp gm-tile__name">Back the Next</span>
+    <span class="gm-tile__sub">The NG$10,000 Founder Challenge &mdash; back the founders you
+      believe in with virtual NextGen capital, and keep what you don&rsquo;t place.</span>
+    <span class="gm-btn">Play Back the Next</span>
   </a>
 </div>
 

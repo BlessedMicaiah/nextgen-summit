@@ -394,6 +394,95 @@ function ngg_totals(): array
     return $out;
 }
 
+/* ---------- the demo records, and getting rid of them ----------
+
+   A demo player is one who signed in through the review-store shortcut: their ident begins
+   `demo:` and every row they wrote carries demo = 1. Both marks are checked, so a row has
+   to be a demo row twice over before it is counted here, and nothing that a real person
+   wrote through an email code can match.
+
+   Only the game's own tables are read or touched. pc_votes, pc_voter and the rest of the
+   People's Choice store are not named anywhere in these two functions. */
+
+/** @return array{players:list<array>,portfolios:list<array>,drafts:int} */
+function ngg_demo_rows(): array
+{
+    ngg_tables();
+    $out = ['players' => [], 'portfolios' => [], 'drafts' => 0];
+    $db = pc_db();
+    if (!$db) {
+        return $out;
+    }
+    $out['players'] = $db->query("SELECT ident, created_at FROM ngg_players
+                                  WHERE demo = 1 AND ident LIKE 'demo:%' ORDER BY ts")->fetchAll();
+    $out['portfolios'] = $db->query("SELECT ident, invested, unspent, backed, created_at FROM ngg_portfolios
+                                     WHERE demo = 1 AND ident LIKE 'demo:%' ORDER BY ts")->fetchAll();
+    $out['drafts'] = (int) $db->query("SELECT COUNT(*) n FROM ngg_drafts
+                                       WHERE ident LIKE 'demo:%'")->fetch()['n'];
+    return $out;
+}
+
+/**
+ * Remove the demo rows, after writing them to a file first.
+ *
+ * The backup goes beside the database, outside the web root, as JSON with a timestamp in
+ * its name. It is written and re-read before a single DELETE runs; if it cannot be written,
+ * nothing is deleted. Everything happens inside one transaction so a failure part way
+ * leaves the store as it was.
+ *
+ * @return array{ok:bool,reason?:string,backup?:string,removed?:array{players:int,portfolios:int,drafts:int}}
+ */
+function ngg_purge_demo(): array
+{
+    ngg_tables();
+    $db = pc_db();
+    if (!$db) {
+        return ['ok' => false, 'reason' => 'store'];
+    }
+    $rows = ngg_demo_rows();
+    $n = count($rows['players']) + count($rows['portfolios']) + $rows['drafts'];
+    if ($n === 0) {
+        return ['ok' => true, 'backup' => '', 'removed' => ['players' => 0, 'portfolios' => 0, 'drafts' => 0]];
+    }
+
+    /* the full rows, not the summary, so a restore is possible */
+    $full = [
+        'written_at' => ngs_now(),
+        'players' => $db->query("SELECT * FROM ngg_players WHERE demo = 1 AND ident LIKE 'demo:%'")->fetchAll(),
+        'portfolios' => $db->query("SELECT * FROM ngg_portfolios WHERE demo = 1 AND ident LIKE 'demo:%'")->fetchAll(),
+        'drafts' => $db->query("SELECT * FROM ngg_drafts WHERE ident LIKE 'demo:%'")->fetchAll(),
+    ];
+    try {
+        $file = ngs_data_dir() . '/ngg-demo-backup-' . gmdate('Ymd-His') . '.json';
+        $json = json_encode($full, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        if ($json === false || @file_put_contents($file, $json, LOCK_EX) === false) {
+            return ['ok' => false, 'reason' => 'backup_write'];
+        }
+        $back = json_decode((string) @file_get_contents($file), true);
+        if (!is_array($back) || count($back['portfolios'] ?? []) !== count($full['portfolios'])) {
+            return ['ok' => false, 'reason' => 'backup_verify'];
+        }
+    } catch (Throwable $e) {
+        return ['ok' => false, 'reason' => 'backup_write'];
+    }
+
+    try {
+        $db->beginTransaction();
+        $p = $db->exec("DELETE FROM ngg_portfolios WHERE demo = 1 AND ident LIKE 'demo:%'");
+        $d = $db->exec("DELETE FROM ngg_drafts WHERE ident LIKE 'demo:%'");
+        $u = $db->exec("DELETE FROM ngg_players WHERE demo = 1 AND ident LIKE 'demo:%'");
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        error_log('NextGen Games: demo purge rolled back: ' . $e->getMessage());
+        return ['ok' => false, 'reason' => 'delete'];
+    }
+    return ['ok' => true, 'backup' => basename($file),
+            'removed' => ['players' => (int) $u, 'portfolios' => (int) $p, 'drafts' => (int) $d]];
+}
+
 /** The ten, with their totals attached, biggest first. Admin and post-reveal only. */
 function ngg_standings(): array
 {

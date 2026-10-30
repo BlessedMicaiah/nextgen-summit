@@ -14,11 +14,13 @@
    accept a portfolio twice. If the two ever disagree, the server is right and this file is
    a bug.
 
-   WHERE THE WORDS COME FROM
+   WHERE THE FACES AND THE WORDS COME FROM
 
-   Names, ventures, descriptions and films are read from window.NGS_FOUNDERS -- the same
-   verified founder data the rest of the site runs on -- joined by entrant id. Nothing about
-   a pitch is written in this file, so nothing about a pitch can be invented in it.
+   Every founder is their own photograph -- the square story crop the People's Choice page
+   already shows -- read from window.NGS_FOUNDERS along with their description, film and
+   logo, joined by entrant id. There is no artwork of any kind inside the game: no cartoon,
+   no illustration, no hero image. Nothing about a founder is written in this file, so
+   nothing about a founder can be invented in it.
 
    NG$ IS NOT MONEY. It is never called dollars, never formatted as currency, and buys
    nothing. It is a way of saying who you would back.
@@ -29,25 +31,21 @@
   var API = '/api/ng-games.php';
   var BUDGET = 10000;
   var CHIPS = [500, 1000, 2500, 5000];
+  var MOVE_CHIPS = [500, 1000, 2500];
 
-  /* The ten, in the running order for the live show.
-
-     `art` is the cartoon's file stem. The supplied package had already applied the Gemini
-     crosswalk -- its F01 is Caleb Orji, not the Gemini F01 -- and the pairing was checked
-     founder by founder against the real photographs before any of it was imported. The
-     tints are the game's own palette, chosen so no two neighbours clash; they are not taken
-     from anybody's logo. */
+  /* The ten, in the running order for the live show. The tints are the game's own palette,
+     chosen so no two neighbours clash; they are not taken from anybody's logo. */
   var FOUNDERS = [
-    { id: 'f01', art: 'f01', entrant: 'entrant-01', name: 'Caleb Orji',                   company: 'Haptol Labs',           tint: '#00A3E6' },
-    { id: 'f02', art: 'f02', entrant: 'entrant-03', name: 'Muyiwa Ogunsola',              company: 'Sooz',                  tint: '#1FC7BE' },
-    { id: 'f03', art: 'f03', entrant: 'entrant-06', name: 'Velma Funebe',                 company: 'iBraid',                tint: '#EC008C' },
-    { id: 'f04', art: 'f04', entrant: 'entrant-07', name: 'Divine Ayomide Fiolu',         company: 'BeforeKeys LLC',        tint: '#A77BE8' },
-    { id: 'f05', art: 'f05', entrant: 'entrant-05', name: 'Ethan Edouard',                company: 'Lookbook',              tint: '#8FD14F' },
-    { id: 'f06', art: 'f06', entrant: 'entrant-02', name: 'Annrita Karu',                 company: 'Credible blossom',      tint: '#FFC53D' },
-    { id: 'f07', art: 'f07', entrant: 'entrant-14', name: 'Kate Mina Lin',                company: 'K8Culture Productions', tint: '#7A8CFF' },
-    { id: 'f08', art: 'f08', entrant: 'entrant-12', name: 'Joyson BaLisamore',            company: "Jay's Watermelonade",   tint: '#FF6B5A' },
-    { id: 'f09', art: 'f09', entrant: 'entrant-04', name: 'Ariel Laura Métayer',     company: 'The Luminous Lab',      tint: '#F2A1C8' },
-    { id: 'f10', art: 'f10', entrant: 'entrant-13', name: 'Ugochinyere Blessing Okogeri', company: 'Offguardz',             tint: '#00C27A' }
+    { id: 'f01', entrant: 'entrant-01', name: 'Caleb Orji',                   company: 'Haptol Labs',           tint: '#00A3E6' },
+    { id: 'f02', entrant: 'entrant-03', name: 'Muyiwa Ogunsola',              company: 'Sooz',                  tint: '#1FC7BE' },
+    { id: 'f03', entrant: 'entrant-06', name: 'Velma Funebe',                 company: 'iBraid',                tint: '#EC008C' },
+    { id: 'f04', entrant: 'entrant-07', name: 'Divine Ayomide Fiolu',         company: 'BeforeKeys LLC',        tint: '#A77BE8' },
+    { id: 'f05', entrant: 'entrant-05', name: 'Ethan Edouard',                company: 'Lookbook',              tint: '#8FD14F' },
+    { id: 'f06', entrant: 'entrant-02', name: 'Annrita Karu',                 company: 'Credible blossom',      tint: '#FFC53D' },
+    { id: 'f07', entrant: 'entrant-14', name: 'Kate Mina Lin',                company: 'K8Culture Productions', tint: '#7A8CFF' },
+    { id: 'f08', entrant: 'entrant-12', name: 'Joyson BaLisamore',            company: "Jay's Watermelonade",   tint: '#FF6B5A' },
+    { id: 'f09', entrant: 'entrant-04', name: 'Ariel Laura Métayer',     company: 'The Luminous Lab',      tint: '#F2A1C8' },
+    { id: 'f10', entrant: 'entrant-13', name: 'Ugochinyere Blessing Okogeri', company: 'Offguardz',             tint: '#00C27A' }
   ];
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -60,12 +58,13 @@
   var S = {
     open: true, revealed: false, signedIn: false, submitted: false,
     mailReady: true, demoAllowed: false, demo: false,
-    mask: '', draft: {}, portfolio: null, booted: false
+    mask: '', draft: {}, portfolio: null
   };
   var email = '';              /* only while signing in; never stored anywhere */
   var sheetFor = null;
-  var openedOne = false;
+  var moveAmt = 1000;
   var saveTimer = null;
+  var shown = { cap: 0, inv: 0, left: 0 };     /* what the wallet currently reads, for the tween */
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -79,17 +78,34 @@
     return t;
   }
   function available() { return BUDGET - invested(); }
+  function backedCount(alloc) {
+    var n = 0;
+    for (var k in alloc) if (alloc[k] > 0) n++;
+    return n;
+  }
   function byId(id) {
     for (var i = 0; i < FOUNDERS.length; i++) if (FOUNDERS[i].id === id) return FOUNDERS[i];
     return null;
   }
-  /* The verified site record for a founder: description, film, logo. Absent on a page that
-     did not load pc-founders.js, which is why every reader below copes with null. */
+  /* The verified site record for a founder: photograph, description, film, logo. */
   function site(f) {
     var all = window.NGS_FOUNDERS;
     if (!Array.isArray(all)) return null;
     for (var i = 0; i < all.length; i++) if (all[i] && all[i].entrant === f.entrant) return all[i];
     return null;
+  }
+
+  /* The face. The story crop with its focal point, in a ring. If the site record is
+     somehow missing, initials on a plain circle -- never a stand-in picture. */
+  function faceHTML(f, cls, attrs) {
+    var rec = site(f);
+    var src = rec && (rec.story || rec.shot) ? (rec.story || rec.shot) : '';
+    var set = rec && rec.story && rec.story2x ? ' srcset="' + esc(rec.story) + ' 1x, ' + esc(rec.story2x) + ' 2x"' : '';
+    var focal = rec && (rec.storyFocal || rec.focal) ? ' style="object-position:' + esc(rec.storyFocal || rec.focal) + '"' : '';
+    var inner = src
+      ? '<img src="' + esc(src) + '"' + set + focal + ' alt="" loading="lazy" decoding="async">'
+      : '<span class="gm-face__init">' + esc(f.name.split(' ').map(function (w) { return w[0]; }).join('').slice(0, 2)) + '</span>';
+    return '<span class="gm-face ' + (cls || '') + '" style="--tint:' + f.tint + '"' + (attrs || '') + '>' + inner + '</span>';
   }
 
   /* ---------------------------------------------------------------- the wire */
@@ -130,14 +146,36 @@
   }
 
   /* The draft follows the player around without them thinking about it. Debounced, because
-     a thumb on a chip four times in a second is one intention, not four. */
+     a thumb on a chip four times in a second is one intention, not four. A save that fails
+     says so, once, and is tried again on the next change -- the allocation itself is still
+     here on the screen and is sent whole every time, so nothing is lost by a miss. */
+  var saveFailed = false;
   function saveDraft() {
     if (!S.signedIn || S.submitted) return;
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
       saveTimer = null;
-      api('save-draft', { alloc: S.draft });
+      api('save-draft', { alloc: S.draft }).then(function (r) {
+        if (r.ok) { if (saveFailed) { saveFailed = false; toast(''); } return; }
+        if (r.reason === 'already_submitted') { boot(); return; }
+        if (!saveFailed) {
+          saveFailed = true;
+          toast('Your last change could not be saved — check your signal. It is still on '
+            + 'screen and will be saved with your next tap.');
+        }
+      });
     }, 450);
+  }
+
+  var toastTimer = null;
+  function toast(text) {
+    var t = $('[data-toast]');
+    if (!t) return;
+    if (toastTimer) clearTimeout(toastTimer);
+    if (!text) { t.classList.remove('is-on'); return; }
+    t.textContent = text;
+    t.classList.add('is-on');
+    toastTimer = setTimeout(function () { t.classList.remove('is-on'); }, 5200);
   }
 
   /* ---------------------------------------------------------------- screens */
@@ -147,54 +185,62 @@
     dock(name === 'room' && !S.submitted);
     window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
   }
-
   function dock(up) {
     var d = $('[data-dock]');
-    if (!d) return;
-    d.classList.toggle('is-up', !!up);
+    if (d) d.classList.toggle('is-up', !!up);
+  }
+
+  /* The three wallet figures count to their new value rather than jumping to it. */
+  function tween(el, from, to) {
+    if (!el) return;
+    if (reduced || from === to) { el.textContent = ngd(to); return; }
+    var t0 = null, dur = 420;
+    function step(t) {
+      if (!t0) t0 = t;
+      var k = Math.min(1, (t - t0) / dur);
+      k = 1 - Math.pow(1 - k, 3);
+      el.textContent = ngd(Math.round(from + (to - from) * k));
+      if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
   }
 
   function paintBar() {
     var bar = $('[data-bar]');
     if (!bar) return;
-    var inv = S.submitted && S.portfolio ? S.portfolio.invested : invested();
-    var left = S.submitted && S.portfolio ? S.portfolio.unspent : available();
-    $('[data-w-cap]').textContent = ngd(BUDGET);
-    $('[data-w-in]').textContent = ngd(inv);
-    $('[data-w-left]').textContent = ngd(left);
-    $('[data-who]').textContent = S.mask ? S.mask : '';
+    var final = S.submitted && S.portfolio;
+    var inv = final ? S.portfolio.invested : invested();
+    var left = final ? S.portfolio.unspent : available();
+    var alloc = final ? S.portfolio.alloc : S.draft;
 
-    var alloc = S.submitted && S.portfolio ? S.portfolio.alloc : S.draft;
-    var split = $('[data-split]');
+    tween($('[data-w-left]'), shown.left, left);
+    tween($('[data-w-in]'), shown.inv, inv);
+    shown.left = left; shown.inv = inv;
+    var n = backedCount(alloc);
+    $('[data-w-n]').textContent = String(n);
+    $('[data-w-n-label]').textContent = n === 1 ? 'Founder backed' : 'Founders backed';
+    $('[data-who]').textContent = S.mask || '';
+
     var html = '';
     FOUNDERS.forEach(function (f) {
-      var n = alloc[f.id] || 0;
-      if (n > 0) {
-        html += '<span class="gm-split__seg" style="width:' + (n / BUDGET * 100) + '%;background:'
-              + f.tint + '" title="' + esc(f.name) + '"></span>';
-      }
+      var a = alloc[f.id] || 0;
+      if (a > 0) html += '<span class="gm-split__seg" style="width:' + (a / BUDGET * 100) + '%;background:' + f.tint + '"></span>';
     });
-    html += '<span class="gm-split__rest"></span>';
-    split.innerHTML = html;
+    $('[data-split]').innerHTML = html + '<span class="gm-split__rest"></span>';
   }
 
   /* ---------------------------------------------------------------- the room */
   function cardHTML(f, i) {
     var n = S.draft[f.id] || 0;
     return ''
-      + '<button class="gm-card gm-card--in' + (n > 0 ? ' is-backed' : '') + '" type="button"'
-      +   ' style="--tint:' + f.tint + ';--d:' + (i * 45) + 'ms" data-open="' + f.id + '"'
+      + '<button class="gm-f gm-f--in' + (n > 0 ? ' is-backed' : '') + '" type="button"'
+      +   ' style="--tint:' + f.tint + ';--d:' + (i * 40) + 'ms" data-open="' + f.id + '"'
       +   ' aria-label="' + esc(f.name) + ' of ' + esc(f.company)
       +   (n > 0 ? ', currently backed with ' + ngd(n) : ', not backed yet') + '">'
-      +   '<span class="gm-card__art">'
-      +     '<span class="gm-card__no">' + String(i + 1).padStart(2, '0') + '</span>'
-      +     '<span class="gm-card__tag" data-tag="' + f.id + '">' + ngd(n) + '</span>'
-      +     '<img src="/assets/img/games/cutout/' + f.art + '.webp" alt="" loading="lazy" decoding="async">'
-      +   '</span>'
-      +   '<span class="gm-card__txt">'
-      +     '<span class="gm-card__name">' + esc(f.name) + '</span>'
-      +     '<span class="gm-card__co">' + esc(f.company) + '</span>'
-      +   '</span>'
+      +   faceHTML(f, '', ' data-face="' + f.id + '"')
+      +   '<span class="gm-f__amt gm-ngd" data-tag="' + f.id + '">' + ngd(n) + '</span>'
+      +   '<span class="gm-f__name">' + esc(f.name) + '</span>'
+      +   '<span class="gm-f__co">' + esc(f.company) + '</span>'
       + '</button>';
   }
 
@@ -206,12 +252,11 @@
   }
 
   function paintDock() {
-    var n = 0;
-    for (var k in S.draft) if (S.draft[k] > 0) n++;
+    var n = backedCount(S.draft);
     $('[data-dock-sum]').innerHTML =
       '<b>' + ngd(invested()) + ' placed</b>'
-      + (n ? n + (n === 1 ? ' founder backed' : ' founders backed') + ' · ' + ngd(available()) + ' left'
-           : 'Every founder is optional — ' + ngd(available()) + ' still to place');
+      + (n ? n + (n === 1 ? ' founder' : ' founders') + ' · ' + ngd(available()) + ' left'
+           : 'Tap a founder to start — ' + ngd(available()) + ' to place');
   }
 
   function markCard(f) {
@@ -225,7 +270,7 @@
       + (n > 0 ? ', currently backed with ' + ngd(n) : ', not backed yet'));
   }
 
-  /* ---------------------------------------------------------------- the drawer */
+  /* ---------------------------------------------------------------- the panel */
   function openSheet(id) {
     var f = byId(id);
     if (!f) return;
@@ -233,12 +278,10 @@
     var rec = site(f);
     var sheet = $('[data-sheet]');
 
-    $('[data-sheet-hero]').innerHTML =
-      '<img src="/assets/img/games/scene/' + f.art + '.webp" alt="" decoding="async">';
+    $('[data-sheet-head]').style.setProperty('--tint', f.tint);
+    $('[data-sheet-face]').innerHTML = faceHTML(f, '', ' data-sheet-pic');
     $('[data-sheet-name]').textContent = f.name;
 
-    /* Two of the ten have no logo anywhere in the project. Their venture's name is set
-       properly instead; nothing is drawn to stand in for a mark that does not exist. */
     var brand = $('[data-sheet-brand]');
     if (rec && rec.logo) {
       brand.innerHTML = '<img class="gm-sheet__logo" src="' + esc(rec.logo) + '" alt="'
@@ -247,27 +290,26 @@
       brand.innerHTML = '<span class="gm-sheet__wordmark">' + esc(f.company) + '</span>';
     }
 
-    $('[data-sheet-blurb]').textContent = rec && rec.blurb ? rec.blurb : '';
-    $('[data-sheet-blurb]').hidden = !(rec && rec.blurb);
+    var blurb = $('[data-sheet-blurb]');
+    blurb.textContent = rec && rec.blurb ? rec.blurb : '';
+    blurb.hidden = !(rec && rec.blurb);
 
     var film = $('[data-sheet-film]');
     var src = rec && rec.video && rec.video.type === 'file' ? rec.video.src : '';
-    if (src) {
-      film.innerHTML = '<div class="gm-film"><video controls playsinline preload="none"'
+    film.innerHTML = src
+      ? '<div class="gm-film"><video controls playsinline preload="none"'
         + (rec.poster ? ' poster="' + esc(rec.poster) + '"' : '')
-        + '><source src="' + esc(src) + '" type="video/mp4"></video></div>';
-    } else {
-      film.innerHTML = '<p class="gm-nofilm">No pitch film on file for this founder yet — '
-        + 'their description above is what the Summit has on record.</p>';
-    }
+        + '><source src="' + esc(src) + '" type="video/mp4"></video></div>'
+      : '<p class="gm-nofilm">No pitch film on file for this founder yet — their description '
+        + 'above is what the Summit has on record.</p>';
 
+    $('[data-move]').classList.remove('is-open');
+    moveAmt = 1000;
     paintAlloc();
     sheet.hidden = false;
     requestAnimationFrame(function () { sheet.classList.add('is-up'); });
     document.body.style.overflow = 'hidden';
     $('[data-sheet-x]').focus({ preventScroll: true });
-
-    if (!openedOne && !reduced) { openedOne = true; spark(); }
   }
 
   function closeSheet() {
@@ -279,7 +321,7 @@
     var back = sheetFor;
     setTimeout(function () {
       sheet.hidden = true;
-      $('[data-sheet-film]').innerHTML = '';     /* drop the video element, not just its sound */
+      $('[data-sheet-film]').innerHTML = '';
     }, reduced ? 0 : 380);
     if (back) {
       var btn = $('[data-open="' + back.id + '"]');
@@ -292,27 +334,23 @@
     if (!sheetFor) return;
     var f = sheetFor;
     var now = S.draft[f.id] || 0;
-    $('[data-alloc-now]').innerHTML = 'Behind ' + esc(f.name.split(' ')[0]) + ' <b class="gm-ngd">'
-      + ngd(now) + '</b>';
+    $('[data-alloc-now]').innerHTML = 'Behind ' + esc(f.name.split(' ')[0]) + ' <b class="gm-ngd">' + ngd(now) + '</b>';
 
-    var free = available() + now;      /* what this founder could hold if it took everything free */
-    var chips = $('[data-chips]');
+    var free = available() + now;
     var html = '';
     CHIPS.forEach(function (c) {
       html += '<button class="gm-chip" type="button" data-chip="' + c + '"'
-        + (c > free ? ' disabled' : '') + '>+' + ngd(c).replace('NG$', 'NG$') + '</button>';
+        + (now + c > free ? ' disabled' : '') + '>+' + ngd(c) + '</button>';
     });
-    html += '<button class="gm-chip" type="button" data-chip="max"'
-      + (free <= 0 ? ' disabled' : '') + '>All in</button>';
-    html += '<button class="gm-chip gm-chip--clear" type="button" data-chip="0"'
-      + (now <= 0 ? ' disabled' : '') + '>Remove</button>';
-    chips.innerHTML = html;
+    html += '<button class="gm-chip" type="button" data-chip="max"' + (available() <= 0 ? ' disabled' : '') + '>All in</button>';
+    html += '<button class="gm-chip gm-chip--clear" type="button" data-chip="0"' + (now <= 0 ? ' disabled' : '') + '>Remove</button>';
+    $('[data-chips]').innerHTML = html;
 
     var input = $('[data-amount]');
     input.value = now > 0 ? String(now) : '';
-    input.max = String(free);
     $('[data-alloc-go]').textContent = now > 0 ? 'Update' : 'Back this founder';
     note('You have ' + ngd(available()) + ' left to place.', false);
+    paintMove();
   }
 
   function note(text, bad) {
@@ -328,10 +366,7 @@
     var free = available() + now;
     if (!isFinite(want) || want < 0) { note('That is not an amount of NG$.', true); return false; }
     want = Math.floor(want);
-    if (want > free) {
-      note('You only have ' + ngd(free) + ' available for this founder.', true);
-      return false;
-    }
+    if (want > free) { note('You only have ' + ngd(free) + ' available for this founder.', true); return false; }
     if (want === now) return false;
     if (want === 0) delete S.draft[f.id]; else S.draft[f.id] = want;
 
@@ -340,33 +375,102 @@
     paintDock();
     paintAlloc();
     saveDraft();
-    if (want > now) coins();
+    /* The face is the destination, so it has to be on screen. The panel's controls sit in a
+       sticky footer and stay put whatever the scroll position, so bringing the top of the
+       panel back into view costs the player nothing -- and without it the tokens flew to a
+       point above the phone whenever somebody had scrolled down to the film. */
+    var scroller = $('.gm-sheet__scroll');
+    if (scroller && scroller.scrollTop > 0) scroller.scrollTop = 0;
+    var face = $('[data-sheet-pic]');
+    if (want > now) {
+      flyTo($('[data-w-left]'), face, Math.min(6, 1 + Math.round((want - now) / 1000)), function () { pulse(face); });
+    } else if (want < now) {
+      flyTo(face, $('[data-w-left]'), 3);
+    }
+    return true;
+  }
+
+  /* ---------------------------------------------------------------- moving NG$ between founders */
+  function paintMove() {
+    var f = sheetFor;
+    var wrap = $('[data-move]');
+    var now = S.draft[f.id] || 0;
+    wrap.hidden = now <= 0;
+    if (now <= 0) return;
+    if (moveAmt > now) moveAmt = now;
+
+    var chips = '';
+    MOVE_CHIPS.forEach(function (c) {
+      if (c > now) return;
+      chips += '<button class="gm-chip' + (moveAmt === c ? ' is-on' : '') + '" type="button" data-move-amt="' + c + '">' + ngd(c) + '</button>';
+    });
+    chips += '<button class="gm-chip' + (moveAmt === now ? ' is-on' : '') + '" type="button" data-move-amt="' + now + '">All ' + ngd(now) + '</button>';
+    $('[data-move-chips]').innerHTML = chips;
+    $('[data-move-how]').innerHTML = 'Move <b class="gm-ngd">' + ngd(moveAmt) + '</b> of '
+      + esc(f.name.split(' ')[0]) + '’s ' + ngd(now) + ' to:';
+
+    var row = '';
+    FOUNDERS.forEach(function (o) {
+      if (o.id === f.id) return;
+      var a = S.draft[o.id] || 0;
+      row += '<button class="gm-move__to' + (a > 0 ? ' is-backed' : '') + '" type="button" data-move-to="' + o.id + '"'
+        + ' aria-label="Move ' + ngd(moveAmt) + ' to ' + esc(o.name) + '">'
+        + faceHTML(o, '', ' data-move-face="' + o.id + '"')
+        + '<span>' + esc(o.name.split(' ')[0]) + '</span>'
+        + '<em class="gm-ngd">' + (a > 0 ? ngd(a) : '—') + '</em>'
+        + '</button>';
+    });
+    $('[data-move-row]').innerHTML = row;
+  }
+
+  function move(from, to, amt) {
+    var have = S.draft[from.id] || 0;
+    amt = Math.min(Math.floor(amt), have);
+    if (amt <= 0) return false;
+    var left = have - amt;
+    if (left === 0) delete S.draft[from.id]; else S.draft[from.id] = left;
+    S.draft[to.id] = (S.draft[to.id] || 0) + amt;
+
+    markCard(from); markCard(to);
+    paintBar(); paintDock();
+    saveDraft();
+
+    /* From the amount under this founder's name to the face that was tapped. Both live in
+       the sticky footer, a few lines apart, so the whole flight is on screen whatever the
+       panel above it is scrolled to. */
+    var target = $('[data-move-face="' + to.id + '"]');
+    flyTo($('[data-alloc-now] b') || $('[data-alloc-now]'), target, Math.min(6, 1 + Math.round(amt / 1000)), function () {
+      pulse(target);
+    });
+    note(ngd(amt) + ' moved to ' + to.name.split(' ')[0] + '. '
+      + (left > 0 ? from.name.split(' ')[0] + ' keeps ' + ngd(left) + '.' : 'Nothing left behind ' + from.name.split(' ')[0] + '.'), false);
+    /* repaint after the tokens have left, so the row the token is flying to is the row
+       it started from */
+    setTimeout(paintAlloc, reduced ? 0 : 520);
     return true;
   }
 
   /* ---------------------------------------------------------------- review */
-  function rowHTML(f, n, dim) {
+  function rowHTML(f, n) {
     return ''
-      + '<li class="gm-row' + (n > 0 ? '' : ' is-zero') + '" style="--tint:' + f.tint + '">'
-      +   '<span class="gm-row__pic"><img src="/assets/img/games/cutout/' + f.art
-      +     '.webp" alt="" loading="lazy" decoding="async"></span>'
+      + '<li class="gm-row' + (n > 0 ? ' is-backed' : ' is-zero') + '" style="--tint:' + f.tint + '">'
+      +   faceHTML(f, n > 0 ? 'is-backed' : '')
       +   '<span class="gm-row__id"><b>' + esc(f.name) + '</b><span>' + esc(f.company) + '</span></span>'
       +   '<span class="gm-row__amt gm-ngd">' + (n > 0 ? '<b>' + ngd(n) + '</b>' : ngd(0)) + '</span>'
       + '</li>';
   }
+  function listHTML(alloc) {
+    var backed = FOUNDERS.filter(function (f) { return (alloc[f.id] || 0) > 0; });
+    var rest = FOUNDERS.filter(function (f) { return !(alloc[f.id] || 0); });
+    return backed.map(function (f) { return rowHTML(f, alloc[f.id]); }).join('')
+      + rest.map(function (f) { return rowHTML(f, 0); }).join('');
+  }
 
   function paintReview() {
     var inv = invested(), left = available();
-    var backed = FOUNDERS.filter(function (f) { return (S.draft[f.id] || 0) > 0; });
-    var rest = FOUNDERS.filter(function (f) { return !(S.draft[f.id] || 0); });
-
-    $('[data-review-list]').innerHTML =
-      backed.map(function (f) { return rowHTML(f, S.draft[f.id]); }).join('')
-      + rest.map(function (f) { return rowHTML(f, 0); }).join('');
-
+    $('[data-review-list]').innerHTML = listHTML(S.draft);
     $('[data-review-in]').textContent = ngd(inv);
     $('[data-review-left]').textContent = ngd(left);
-
     var ask = $('[data-ask]');
     if (inv === 0) {
       ask.innerHTML = '<p>You haven’t backed anyone. That is a real answer — but it '
@@ -375,8 +479,7 @@
         + '<button class="gm-btn gm-btn--ghost" type="button" data-go="room">Go back and pick</button>'
         + '<button class="gm-btn" type="button" data-submit>Lock in NG$0 anyway</button></div>';
     } else if (left > 0) {
-      ask.innerHTML = '<p>You’re keeping <b class="gm-ngd">' + ngd(left)
-        + '</b> — ready to lock in your portfolio?</p>'
+      ask.innerHTML = '<p>You’re keeping <b class="gm-ngd">' + ngd(left) + '</b> — ready to lock in your portfolio?</p>'
         + '<div class="gm-ask__row">'
         + '<button class="gm-btn gm-btn--ghost" type="button" data-go="room">Place more</button>'
         + '<button class="gm-btn" type="button" data-submit>Lock it in</button></div>';
@@ -389,58 +492,89 @@
   }
 
   /* ---------------------------------------------------------------- the result */
+  function clusterHTML(alloc) {
+    return FOUNDERS.map(function (f) {
+      var on = !alloc || (alloc[f.id] || 0) > 0;
+      return faceHTML(f, alloc ? (on ? 'is-backed' : 'is-dim') : '');
+    }).join('');
+  }
+
   function paintDone() {
     var p = S.portfolio;
     if (!p) return;
-    var backed = FOUNDERS.filter(function (f) { return (p.alloc[f.id] || 0) > 0; });
-    var rest = FOUNDERS.filter(function (f) { return !(p.alloc[f.id] || 0); });
-    $('[data-done-list]').innerHTML =
-      backed.map(function (f) { return rowHTML(f, p.alloc[f.id]); }).join('')
-      + rest.map(function (f) { return rowHTML(f, 0); }).join('');
+    $('[data-done-cluster]').innerHTML = clusterHTML(p.alloc);
+    $('[data-done-list]').innerHTML = listHTML(p.alloc);
     $('[data-done-in]').textContent = ngd(p.invested);
     $('[data-done-left]').textContent = ngd(p.unspent);
     $('[data-done-sub]').textContent = p.backed === 0
       ? 'You kept all ' + ngd(BUDGET) + ' of your virtual capital.'
-      : 'You put ' + ngd(p.invested) + ' behind ' + p.backed
-        + (p.backed === 1 ? ' founder.' : ' founders.');
+      : 'You put ' + ngd(p.invested) + ' behind ' + p.backed + (p.backed === 1 ? ' founder.' : ' founders.');
   }
 
   /* ---------------------------------------------------------------- effects */
-  function coins() {
-    if (reduced) return;
-    var layer = $('[data-coins]');
-    if (!layer) return;
-    var box = $('[data-alloc-go]').getBoundingClientRect();
-    var target = $('[data-w-in]').getBoundingClientRect();
-    for (var i = 0; i < 12; i++) {
-      (function (i) {
-        var c = document.createElement('span');
-        c.className = 'gm-coin';
-        var x = box.left + box.width / 2 + (Math.random() - 0.5) * 60;
-        var y = box.top + box.height / 2;
-        c.style.left = x + 'px';
-        c.style.top = y + 'px';
-        c.style.setProperty('--dx', (target.left + target.width / 2 - x) + 'px');
-        c.style.setProperty('--dy', (target.top + 10 - y) + 'px');
-        c.style.setProperty('--dur', (720 + Math.random() * 380) + 'ms');
-        c.style.animationDelay = (i * 32) + 'ms';
-        layer.appendChild(c);
-        setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 1600);
-      }(i));
-    }
+  function centre(el) {
+    var b = el.getBoundingClientRect();
+    return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
   }
 
-  function spark() {
-    var layer = $('[data-coins]');
-    if (!layer) return;
-    var el = document.createElement('span');
-    el.className = 'gm-spark';
-    el.textContent = '✦ now you’re looking';
-    el.style.left = '50%';
-    el.style.top = '26%';
-    el.style.transform = 'translateX(-50%)';
-    layer.appendChild(el);
-    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 1600);
+  /* Tokens from one element to another. The layer is fixed and above everything, so the
+     wallet in the bar and a face inside the sheet are both fair game. */
+  function flyTo(fromEl, toEl, count, done) {
+    if (reduced || !fromEl || !toEl) { if (done) done(); return; }
+    var layer = $('[data-fx]');
+    if (!layer) { if (done) done(); return; }
+    var a = centre(fromEl), b = centre(toEl);
+    var n = Math.max(1, count | 0);
+    for (var i = 0; i < n; i++) {
+      var t = document.createElement('span');
+      t.className = 'gm-token';
+      t.textContent = 'NG';
+      var jx = (Math.random() - 0.5) * 26, jy = (Math.random() - 0.5) * 18;
+      t.style.left = (a.x - 11 + jx) + 'px';
+      t.style.top = (a.y - 11 + jy) + 'px';
+      t.style.setProperty('--dx', (b.x - a.x - jx) + 'px');
+      t.style.setProperty('--dy', (b.y - a.y - jy) + 'px');
+      t.style.setProperty('--dur', (700 + Math.random() * 260) + 'ms');
+      t.style.setProperty('--delay', (i * 55) + 'ms');
+      layer.appendChild(t);
+      (function (el) { setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 1500); }(t));
+    }
+    if (done) setTimeout(done, 520 + n * 55);
+  }
+
+  function pulse(el) {
+    if (!el || reduced) return;
+    el.classList.remove('is-pulse');
+    void el.offsetWidth;
+    el.classList.add('is-pulse');
+    setTimeout(function () { el.classList.remove('is-pulse'); }, 800);
+  }
+
+  /* The finish: a ring of tokens under one line, then the portfolio. */
+  function burst(done) {
+    var b = $('[data-burst]');
+    if (!b || reduced) { if (done) done(); return; }
+    $$('.gm-token', b).forEach(function (t) { t.parentNode.removeChild(t); });
+    b.classList.remove('is-out');
+    b.hidden = false;
+    var cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+    for (var i = 0; i < 22; i++) {
+      var t = document.createElement('span');
+      t.className = 'gm-token';
+      t.textContent = 'NG';
+      var ang = (i / 22) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+      var r = Math.min(window.innerWidth, window.innerHeight) * (0.32 + Math.random() * 0.16);
+      t.style.left = (cx - 11) + 'px';
+      t.style.top = (cy - 11) + 'px';
+      t.style.setProperty('--dx', (Math.cos(ang) * r) + 'px');
+      t.style.setProperty('--dy', (Math.sin(ang) * r) + 'px');
+      t.style.setProperty('--delay', (i * 14) + 'ms');
+      b.appendChild(t);
+    }
+    setTimeout(function () {
+      b.classList.add('is-out');
+      setTimeout(function () { b.hidden = true; if (done) done(); }, 340);
+    }, 1150);
   }
 
   /* ---------------------------------------------------------------- sign in */
@@ -455,6 +589,7 @@
     disposable: 'That looks like a throwaway address. Please use one you can read today.',
     cooldown: 'A code just went out. Give it a moment before asking for another.',
     addr_daily: 'That address has asked for too many codes today.',
+    ip_burst: 'A lot of codes are being requested from this network right now. Try again in a minute.',
     ip_hourly: 'Too many codes from this network in the last hour. Try again shortly.',
     mail_not_configured: 'Email sign-in is not switched on here yet.',
     mail: 'The code could not be sent. Try again in a moment.',
@@ -463,11 +598,13 @@
     attempts: 'Too many tries. Ask for a new code.',
     no_pending: 'Ask for a code first.',
     network: 'No connection. Check your signal and try again.',
-    store: 'The game store is unavailable. Tell the NextGen team.',
+    store: 'The game store is busy. Wait a moment and try again — nothing you placed is lost.',
+    server: 'Something went wrong on our side. Try again — your allocation is still on screen.',
     closed: 'Submissions have closed.',
     over_budget: 'That is more than NG$10,000.',
     not_whole: 'NG$ comes in whole numbers only.',
     unknown_founder: 'That founder is not in this game.',
+    shape: 'That request was not understood. Reload and try again.',
     already_submitted: 'Your portfolio is already locked in.'
   };
   function says(r) { return SAYS[r && r.reason] || 'Something went wrong. Try again.'; }
@@ -487,18 +624,14 @@
     paintBar(); paintRoom(); show('room');
   }
 
-  /* Both notices can be true at once, and the first version showed only the demo one -- so a
-     demo player on a closed game was told the thing that mattered least and found out the
-     rest by having a submission refused. Closed goes first, because it changes what they can
-     do; the demo note goes after, because it changes what their result means. */
   function banner() {
     var b = $('[data-banner]');
     if (!b) return;
     var say = [];
     var stop = false;
     if (!S.open && !S.submitted) {
-      say.push('<b>Submissions are closed.</b> You can still look around and read the '
-        + 'founders, but a new portfolio cannot be locked in.');
+      say.push('<b>Submissions are closed.</b> You can still look around and read the founders, '
+        + 'but a new portfolio cannot be locked in.');
       stop = true;
     }
     if (S.demo) {
@@ -512,7 +645,6 @@
 
   /* ---------------------------------------------------------------- wiring */
   function wire() {
-    /* ---- sign in ---- */
     $('[data-send]').addEventListener('click', function () {
       var v = $('[data-email]').value.trim();
       if (!v) { signinMsg('Enter your email address.', 'bad'); return; }
@@ -521,10 +653,7 @@
       var btn = this;
       api('otp-start', { email: v }).then(function (r) {
         btn.disabled = false;
-        if (!r.ok) {
-          signinMsg(says(r) + (r.wait ? ' (' + r.wait + 's)' : ''), 'bad');
-          return;
-        }
+        if (!r.ok) { signinMsg(says(r) + (r.wait ? ' (' + r.wait + 's)' : ''), 'bad'); return; }
         email = v;
         $('[data-mask]').textContent = r.mask || v;
         step('code');
@@ -541,14 +670,10 @@
       api('otp-check', { email: email, code: c }).then(function (r) {
         btn.disabled = false;
         if (!r.ok) {
-          signinMsg(says(r) + (typeof r.tries_left === 'number'
-            ? ' ' + r.tries_left + ' left.' : ''), 'bad');
+          signinMsg(says(r) + (typeof r.tries_left === 'number' ? ' ' + r.tries_left + ' left.' : ''), 'bad');
           return;
         }
-        take(r);
-        email = '';
-        banner();
-        route();
+        take(r); email = ''; banner(); route();
       });
     });
 
@@ -570,13 +695,11 @@
       });
     });
 
-    /* ---- the room ---- */
     $('[data-grid]').addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('[data-open]') : null;
       if (b) openSheet(b.getAttribute('data-open'));
     });
 
-    /* ---- the drawer ---- */
     var sheet = $('[data-sheet]');
     $('[data-sheet-x]').addEventListener('click', closeSheet);
     $('[data-sheet-veil]').addEventListener('click', closeSheet);
@@ -602,11 +725,24 @@
       if (e.key === 'Enter') { e.preventDefault(); $('[data-alloc-go]').click(); }
     });
 
+    /* moving NG$ */
+    $('[data-move-t]').addEventListener('click', function () { $('[data-move]').classList.toggle('is-open'); });
+    $('[data-move-chips]').addEventListener('click', function (e) {
+      var c = e.target.closest ? e.target.closest('[data-move-amt]') : null;
+      if (!c) return;
+      moveAmt = parseInt(c.getAttribute('data-move-amt'), 10);
+      paintMove();
+    });
+    $('[data-move-row]').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-move-to]') : null;
+      if (!b || !sheetFor) return;
+      var to = byId(b.getAttribute('data-move-to'));
+      if (to) move(sheetFor, to, moveAmt);
+    });
+
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !sheet.hidden) { e.preventDefault(); closeSheet(); }
     });
-
-    /* Focus stays in the sheet while it is up; it is a dialog over a page of buttons. */
     sheet.addEventListener('keydown', function (e) {
       if (e.key !== 'Tab' || sheet.hidden) return;
       var f = $$('button:not([disabled]), input, video, [tabindex]:not([tabindex="-1"])', sheet)
@@ -617,7 +753,6 @@
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
-    /* ---- moving between panels ---- */
     document.addEventListener('click', function (e) {
       var g = e.target.closest ? e.target.closest('[data-go]') : null;
       if (g) {
@@ -658,14 +793,9 @@
       }
       S.submitted = true;
       S.portfolio = r.portfolio;
-      paintBar(); paintDone(); show('done');
-      var hero = $('[data-done-hero]');
-      if (hero && !reduced) { hero.classList.remove('gm-pop'); void hero.offsetWidth; hero.classList.add('gm-pop'); }
+      paintBar(); paintDone();
+      burst(function () { show('done'); });
     }).catch(function (e) {
-      /* The portfolio may well be saved -- this only means the screen could not be drawn.
-         Never leave a live-event button reading "Locking in..." with nothing happening:
-         give it back, say so, and let `boot()` find out from the server what is actually
-         true rather than guessing from here. */
       sending = false;
       if (btn) { btn.disabled = false; btn.textContent = 'Lock it in'; }
       try { console.error('NextGen Games: submit paint failed', e); } catch (x) {}
@@ -678,7 +808,6 @@
     return api('state', {}).then(function (r) {
       if (!r.ok) { signinMsg(says(r), 'bad'); return; }
       take(r);
-      S.booted = true;
       $('[data-demo-wrap]').hidden = !(S.demoAllowed && !S.signedIn);
       if (!S.mailReady && !S.signedIn) {
         signinMsg('Email sign-in is not available on this server yet.', 'bad');
@@ -690,7 +819,10 @@
   }
 
   function start() {
-    if (!$('[data-screen="room"]')) return;         /* not the game page */
+    /* the cluster of ten faces appears on the hub and the sign-in; nothing else is needed
+       for it, so it is drawn wherever it is asked for, game page or not */
+    $$('[data-cluster]').forEach(function (el) { el.innerHTML = clusterHTML(null); });
+    if (!$('[data-screen="room"]')) return;         /* the hub: done */
     wire();
     boot();
   }

@@ -70,6 +70,12 @@ function ngg_ident(): string
 
 function ngg_state(): array
 {
+    /* Every table the game will need exists by the time the first screen loads -- not at
+       the first submission from a crowd, when a CREATE TABLE under a hundred phones is the
+       last thing anybody wants to be doing. */
+    ngg_tables();
+    ngg_otp_tables();
+
     $ident = ngg_ident();
     $state = [
         'ok' => true,
@@ -148,10 +154,11 @@ function ngg_alloc_in(array $in): array
     return $in['alloc'];
 }
 
-/* A crude brake on hammering, the same one the vote endpoint uses. */
-if (ngs_recent_from_ip(ngs_ip_hash(), 300) > 60) {
-    ngg_out(429, ['ok' => false, 'reason' => 'rate']);
-}
+/* No per-IP brake on this endpoint, and that is deliberate. The one it borrowed from the
+   vote endpoint counts rows in the registrations table from this address -- waitlist,
+   volunteer, Speaker Q&A questions -- and the venue is one address. Sixty questions sent
+   from the room in five minutes would have switched the game off for everybody in it.
+   Sign-in has its own limits in ng-games-otp.php; everything else here needs a session. */
 
 switch ($action) {
 

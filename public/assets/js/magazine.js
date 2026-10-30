@@ -246,10 +246,9 @@
       var chosen = ISSUES.ids.map(function (id) { return map[id]; }).filter(Boolean);
       if (chosen.length) {
         if (ISSUES.confirmed) {
-          say('The live line-up',
-            'These ten founders pitch live at NextGen Summit on 30 October. They are shown '
-            + 'in the running order supplied for the show \u2014 that order is not a '
-            + 'ranking, and not the People\u2019s Choice result.');
+          say('The official lineup',
+            'Meet the finalists in their official pitching order. '
+            + 'Placement does not indicate ranking or People\u2019s Choice results.');
         } else {
           say('A design collection, not a result',
             'Voting is open until 11:59pm ET on 28 October. These ten issues are the '
